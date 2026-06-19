@@ -1,69 +1,165 @@
-# Prerequisites
-*.d
+# ============================================================================
+# NPKDB — AI-Native Multi-Model Database in Nitpick — .gitignore
+# ============================================================================
 
-# Compiled Object files
-*.slo
-*.lo
+# --------------------------------------------------------------------------
+# Build output
+# --------------------------------------------------------------------------
+build/
+out/
+bin/
+obj/
+dist/
+
+# --------------------------------------------------------------------------
+# Nitpick compiler output
+# --------------------------------------------------------------------------
+*.npko
+*.ll
+*.bc
+*.s
+*.ir
+
+# --------------------------------------------------------------------------
+# Native object / library / binary artifacts
+# --------------------------------------------------------------------------
 *.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
 *.so
+*.so.*
+*.a
 *.dylib
 *.dll
-*.so.*
-
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
 *.exe
 *.out
-*.app
 
-# Build directories
-build/
-Build/
-build-*/
-
-# CMake generated files
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
-install_manifest.txt
-compile_commands.json
-
-# Temporary files
-*.tmp
-*.log
-*.bak
-*.swp
-
-# vcpkg
-vcpkg_installed/
-
-# debug information files
+# --------------------------------------------------------------------------
+# LLVM / Clang artifacts
+# --------------------------------------------------------------------------
+*.pch
+*.gch
+*.dSYM/
 *.dwo
+*.dwp
 
-# test output & cache
-Testing/
-.cache/
+# --------------------------------------------------------------------------
+# npkbld build system state
+# --------------------------------------------------------------------------
+.npkbld/
+.build_state/
+.nitpick_make/
+.aria_make/
+
+# --------------------------------------------------------------------------
+# Debug & profiling artifacts
+# --------------------------------------------------------------------------
+*.debug
+/core
+/core.*
+vgcore.*
+perf.data
+perf.data.old
+*.flamegraph
+
+# --------------------------------------------------------------------------
+# Database data files (never commit live data)
+# --------------------------------------------------------------------------
+*.db
+*.wal
+*.sst
+*.log
+data/
+wal/
+sstables/
+snapshots/
+index/
+
+# --------------------------------------------------------------------------
+# Test artifacts & coverage
+# --------------------------------------------------------------------------
+test_output/
+*.test_result
+coverage/
+*.gcno
+*.gcda
+*.gcov
+*.profraw
+*.profdata
+
+# --------------------------------------------------------------------------
+# Benchmark results (track separately if needed)
+# --------------------------------------------------------------------------
+bench_output/
+*.bench
+
+# --------------------------------------------------------------------------
+# Documentation build
+# --------------------------------------------------------------------------
+docs/_build/
+docs/html/
+docs/latex/
+
+# --------------------------------------------------------------------------
+# IDE and editor files
+# --------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+.vim/
+tags
+TAGS
+*.kate-swp
+.clangd/
+
+# --------------------------------------------------------------------------
+# OS-generated files
+# --------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --------------------------------------------------------------------------
+# Temporary / scratch files
+# --------------------------------------------------------------------------
+tmp/
+temp/
+scratch/
+*.tmp
+*.bak
+*.orig
+*.rej
+
+# --------------------------------------------------------------------------
+# CMake (if used for C shim components)
+# --------------------------------------------------------------------------
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile.cmake
+compile_commands.json
+install_manifest.txt
+CTestTestfile.cmake
+
+# --------------------------------------------------------------------------
+# Packaging
+# --------------------------------------------------------------------------
+*.deb
+*.rpm
+*.AppImage
+*.snap
+*.tar.gz
+*.tar.xz
+*.tar.bz2
+*.zip
