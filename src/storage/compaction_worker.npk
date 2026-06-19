@@ -1,0 +1,103 @@
+// src/storage/compaction_worker.npk
+// Background compaction thread for NPKDB
+
+use "channel.npk".*;
+use "thread.npk".*;
+use "compaction.npk".*;
+use "level_manager.npk".*;
+
+extern "nitpick_libc_mem" {
+    func:nitpick_libc_mem_malloc = int64(int64:size);
+    func:nitpick_libc_mem_free = void(int64:ptr);
+    func:npk_mem_read_int64 = int64(int64:ptr, int64:offset);
+    func:npk_mem_write_int64 = void(int64:ptr, int64:offset, int64:val);
+}
+
+extern func:nitpick_libc_thread_spawn = int64(wild ?*:func, int64:arg);
+
+// Compaction request types
+pub fixed int64:COMPACT_SHUTDOWN = 0i64;
+pub fixed int64:COMPACT_L0       = 1i64;
+pub fixed int64:COMPACT_LEVEL    = 2i64;
+
+// Worker context struct offsets
+// 0: lm
+// 8: channel
+fixed int64:CTX_OFF_LM = 0i64;
+fixed int64:CTX_OFF_CH = 8i64;
+fixed int64:CTX_SIZE   = 16i64;
+
+// The background worker loop
+pub func:compaction_worker_loop = int64(int64:ctx) {
+    if (ctx == 0i64) { pass(0i64); }
+    
+    int64:lm = npk_mem_read_int64(ctx, CTX_OFF_LM);
+    int64:ch = npk_mem_read_int64(ctx, CTX_OFF_CH);
+    
+    while (1i64 == 1i64) {
+        int64:msg = Channel.recv(ch) ?! -1i64;
+        
+        if (msg == COMPACT_SHUTDOWN) {
+            break;
+        }
+        
+        if (msg == COMPACT_L0) {
+            drop(compact_level(lm, 0i64));
+        }
+        
+        // Relinquish CPU so query threads aren't starved
+        drop(Thread.yield());
+    }
+    
+    // Do NOT free the context here; wp_shutdown will free it to avoid use-after-free
+    // if shutdown is called while thread is starting. Actually, the thread can free it
+    // because wp_shutdown won't use it after joining. Let's let wp_shutdown free it.
+    
+    pass(0i64);
+};
+
+// Start the compaction worker thread.
+// Returns a context pointer that contains the channel and thread ID.
+// Return struct:
+// 0: channel handle
+// 8: thread handle
+// 16: worker ctx (to free later)
+pub func:compaction_worker_start = int64(int64:lm, ?->:worker_fn) {
+    int64:ch = Channel.create(16i32) ?! 0i64;
+    if (ch <= 0i64) { pass(0i64); }
+    
+    int64:ctx = nitpick_libc_mem_malloc(CTX_SIZE);
+    drop(npk_mem_write_int64(ctx, CTX_OFF_LM, lm));
+    drop(npk_mem_write_int64(ctx, CTX_OFF_CH, ch));
+    
+    int64:tid = nitpick_libc_thread_spawn(worker_fn, ctx);
+    if (tid < 0i64) {
+        drop(Channel.destroy(ch));
+        drop(nitpick_libc_mem_free(ctx));
+        pass(0i64);
+    }
+    
+    int64:ret = nitpick_libc_mem_malloc(24i64);
+    drop(npk_mem_write_int64(ret, 0i64, ch));
+    drop(npk_mem_write_int64(ret, 8i64, tid));
+    drop(npk_mem_write_int64(ret, 16i64, ctx));
+    
+    pass(ret);
+};
+
+// Signal the compaction worker to compact L0.
+// non-blocking
+pub func:compaction_signal_l0 = NIL(int64:channel) {
+    if (channel != 0i64) {
+        drop(Channel.try_send(channel, COMPACT_L0));
+    }
+    pass(NIL);
+};
+
+// Signal the compaction worker to shut down.
+pub func:compaction_signal_shutdown = NIL(int64:channel) {
+    if (channel != 0i64) {
+        drop(Channel.send(channel, COMPACT_SHUTDOWN));
+    }
+    pass(NIL);
+};

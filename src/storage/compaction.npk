@@ -354,10 +354,19 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
     // Write new SSTable
     if (rec_count > 0i64) {
         drop(mt_freeze(out_mt));
-        int64:written = sstable_write(new_path, out_mt) ?! -1i64;
-        drop(lm_add_sstable(lm, to_level, new_fid, out_min_k, out_max_k, written, rec_count));
+        int64:s_res = sstable_write(new_path, out_mt) ?! -1i64;
+        drop(mt_destroy(out_mt));
+        
+        if (s_res > 0i64) {
+            g_compaction_stats_total = g_compaction_stats_total + 1i64;
+            g_compaction_stats_bytes_written = g_compaction_stats_bytes_written + s_res;
+            g_compaction_stats_records_merged = g_compaction_stats_records_merged + rec_count;
+            
+            drop(lm_add_sstable(lm, to_level, new_fid, out_min_k, out_max_k, s_res, rec_count));
+        }
+    } else {
+        drop(mt_destroy(out_mt));
     }
-    drop(mt_destroy(out_mt));
     
     // Remove old files
     i = 0i64;
@@ -409,7 +418,24 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
 };
 
 pub func:compact_l0_to_l1 = int64(int64:lm) {
-    pass(compact_level(lm, 0i64) ?! 0i64);
+    pass(compact_level(lm, 0i64));
+};
+
+// Global stat variables
+int64:g_compaction_stats_total = 0i64;
+int64:g_compaction_stats_bytes_written = 0i64;
+int64:g_compaction_stats_records_merged = 0i64;
+
+pub func:compaction_stats_total = int64() {
+    pass(g_compaction_stats_total);
+};
+
+pub func:compaction_stats_bytes_written = int64() {
+    pass(g_compaction_stats_bytes_written);
+};
+
+pub func:compaction_stats_records_merged = int64() {
+    pass(g_compaction_stats_records_merged);
 };
 
 pub func:maybe_compact = int64(int64:lm) {

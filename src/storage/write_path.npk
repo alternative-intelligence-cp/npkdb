@@ -5,6 +5,9 @@ use "wal.npk".*;
 use "memtable.npk".*;
 use "level_manager.npk".*;
 use "flush.npk".*;
+use "compaction_worker.npk".*;
+use "thread.npk".*;
+use "channel.npk".*;
 use "../util/constants.npk".*;
 use "../util/mem_primitives.npk".*;
 
@@ -18,9 +21,10 @@ pub fixed int64:WP_OFF_ACTIVE   = 8i64;
 pub fixed int64:WP_OFF_FROZEN   = 16i64;
 pub fixed int64:WP_OFF_COUNTER  = 24i64;
 pub fixed int64:WP_OFF_LM       = 32i64;
-pub fixed int64:WP_STATE_SIZE   = 40i64;
+pub fixed int64:WP_OFF_WORKER   = 40i64; // Contains {channel, thread, ctx} pointer
+pub fixed int64:WP_STATE_SIZE   = 48i64;
 
-pub func:wp_init = int64(string:data_dir, string:wal_path) {
+pub func:wp_init = int64(string:data_dir, string:wal_path, ?->:worker_fn) {
     int64:wp = nitpick_libc_mem_malloc(WP_STATE_SIZE);
     
     int64:wal_fd = wal_open(wal_path) ?! -1i64;
@@ -39,6 +43,9 @@ pub func:wp_init = int64(string:data_dir, string:wal_path) {
     drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, 0i64));
     drop(npk_mem_write_int64(wp, WP_OFF_COUNTER, 2i64));
     drop(npk_mem_write_int64(wp, WP_OFF_LM, lm));
+    
+    int64:worker = compaction_worker_start(lm, worker_fn) ?! 0i64;
+    drop(npk_mem_write_int64(wp, WP_OFF_WORKER, worker));
     
     pass(wp);
 };
@@ -63,6 +70,15 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
         int64:lm = npk_mem_read_int64(wp, WP_OFF_LM);
         drop(flush_memtable(npk_mem_read_int64(wp, WP_OFF_FROZEN), lm));
         drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, 0i64));
+        
+        int64:l0_count = lm_count_at_level(lm, 0i64) ?! 0i64;
+        if (l0_count >= LM_L0_COMPACTION_THRESHOLD) {
+            int64:worker = npk_mem_read_int64(wp, WP_OFF_WORKER);
+            if (worker != 0i64) {
+                int64:ch = npk_mem_read_int64(worker, 0i64);
+                drop(compaction_signal_l0(ch));
+            }
+        }
     }
     
     // 2. Write to WAL
@@ -118,6 +134,22 @@ pub func:wp_shutdown = NIL(int64:wp) {
         drop(mt_destroy(active_mt));
         
         drop(wp_clear_frozen(wp));
+        
+        int64:worker = npk_mem_read_int64(wp, WP_OFF_WORKER);
+        if (worker != 0i64) {
+            int64:ch = npk_mem_read_int64(worker, 0i64);
+            int64:tid = npk_mem_read_int64(worker, 8i64);
+            int64:ctx = npk_mem_read_int64(worker, 16i64);
+            
+            drop(compaction_signal_shutdown(ch));
+            drop(Thread.sleep_ms(20i64)); // Brief yield for thread to exit
+            drop(Thread.join(tid)); // Important to join to ensure clean shutdown
+            
+            drop(Channel.close(ch));
+            drop(Channel.destroy(ch));
+            drop(nitpick_libc_mem_free(ctx));
+            drop(nitpick_libc_mem_free(worker));
+        }
         
         int64:lm = npk_mem_read_int64(wp, WP_OFF_LM);
         if (lm != 0i64) {

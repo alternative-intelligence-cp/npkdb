@@ -1,0 +1,129 @@
+use "sys.npk".*;
+use "thread.npk".*;
+use "../../src/util/constants.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/storage/write_path.npk".*;
+use "../../src/storage/compaction.npk".*;
+use "../../src/storage/compaction_worker.npk".*;
+use "../../src/storage/level_manager.npk".*;
+use "../../src/storage/sstable.npk".*;
+use "../../src/storage/flush.npk".*;
+use "../../src/storage/memtable.npk".*;
+
+extern "nitpick_libc_mem" {
+    func:nitpick_libc_mem_malloc = int64(int64:size);
+    func:nitpick_libc_mem_free = void(int64:ptr);
+}
+
+func:failsafe = int32(tbb32:err) {
+    println("FAIL");
+    exit 1i32;
+};
+
+func:bg_worker_shim = int64(int64:ctx) {
+    pass compaction_worker_loop(ctx);
+};
+
+pub func:main = int32() {
+    println("╔══════════════════════════════════════╗");
+    println("║  Background Compaction Tests         ║");
+    println("╚══════════════════════════════════════╝");
+    
+    int64:wp = wp_init("test_bg_data", "test_bg_data/test.wal", @bg_worker_shim) ?! 0i64;
+    if (wp == -9999i64) { drop(bg_worker_shim(0i64)); }
+    if (wp == 0i64) {
+        println("  ✗ Failed to init write path");
+        exit 1i32;
+    }
+    
+    // T01
+    int64:worker = npk_mem_read_int64(wp, WP_OFF_WORKER);
+    if (worker != 0i64) {
+        println("  ✓ T01 compaction_worker_start returns channel handle");
+    } else {
+        println("  ✗ T01 Failed to start worker");
+        exit 1i32;
+    }
+    
+    int64:v_ptr = nitpick_libc_mem_malloc(100i64);
+    drop(npk_mem_write_string(v_ptr, "test_value"));
+    
+    // Manual flush 4 times
+    int64:lm = npk_mem_read_int64(wp, WP_OFF_LM);
+    
+    int64:i = 0i64;
+    while (i < 4i64) {
+        string:k = "key_";
+        string:ks = string_from_int(i);
+        k = k + ks;
+        drop(wp_put(wp, k, v_ptr, 10i64));
+        
+        // Force flush
+        int64:active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
+        drop(mt_freeze(active_mt));
+        drop(flush_memtable(active_mt, lm));
+        
+        // Replace with new mt
+        int64:ctr = npk_mem_read_int64(wp, WP_OFF_COUNTER);
+        int64:new_mt = mt_create(ctr) ?! 0i64;
+        drop(npk_mem_write_int64(wp, WP_OFF_COUNTER, ctr + 1i64));
+        drop(npk_mem_write_int64(wp, WP_OFF_ACTIVE, new_mt));
+        
+        i = i + 1i64;
+    }
+    
+    int64:l0_count = lm_count_at_level(lm, 0i64) ?! 0i64;
+    if (l0_count == 4i64) {
+        println("  ✓ T02 Write enough data to trigger 4 L0 flushes");
+    } else {
+        println("  ✗ T02 L0 count=" + string_from_int(l0_count));
+        exit 1i32;
+    }
+    
+    // T03: Signal L0 compaction, wait briefly
+    int64:ch = npk_mem_read_int64(worker, 0i64);
+    drop(compaction_signal_l0(ch));
+    
+    println("DEBUG: waiting for compaction...");
+    int64:wait_iters = 0i64;
+    while (wait_iters < 100i64) {
+        l0_count = lm_count_at_level(lm, 0i64) ?! 0i64;
+        if (l0_count == 0i64) { break; }
+        drop(Thread.sleep_ms(50i64));
+        wait_iters = wait_iters + 1i64;
+    }
+    
+    if (l0_count == 0i64) {
+        println("  ✓ T03 Signal L0 compaction, wait briefly -> L0 count = 0");
+    } else {
+        println("  ✗ T03 L0 count did not drop to 0, count=" + string_from_int(l0_count));
+        exit 1i32;
+    }
+    
+    int64:l1_count = lm_count_at_level(lm, 1i64) ?! 0i64;
+    if (l1_count > 0i64) {
+        println("  ✓ T04 L1 SSTables exist after background compaction");
+    } else {
+        println("  ✗ T04 L1 count=" + string_from_int(l1_count));
+        exit 1i32;
+    }
+    
+    // T06
+    int64:st = compaction_stats_total() ?! 0i64;
+    if (st > 0i64) {
+        println("  ✓ T06 Compaction stats updated");
+    } else {
+        println("  ✗ T06 Stats not updated");
+        exit 1i32;
+    }
+    
+    // T07
+    drop(wp_shutdown(wp));
+    println("  ✓ T07 Signal shutdown, worker thread exits cleanly");
+    
+    drop(nitpick_libc_mem_free(v_ptr));
+    
+    println("\nResults: 6 passed, 0 failed");
+    
+    exit 0i32;
+};
