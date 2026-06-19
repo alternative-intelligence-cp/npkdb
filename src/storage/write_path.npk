@@ -1,6 +1,7 @@
 // src/storage/write_path.npk
 // Unified write path: WAL -> Memtable
 
+use "../util/mem_primitives.npk".*;
 use "wal.npk".*;
 use "memtable.npk".*;
 use "level_manager.npk".*;
@@ -9,7 +10,6 @@ use "compaction_worker.npk".*;
 use "thread.npk".*;
 use "channel.npk".*;
 use "../util/constants.npk".*;
-use "../util/mem_primitives.npk".*;
 
 // Write path state
 // Offset 0: wal_fd (int64)
@@ -22,9 +22,10 @@ pub fixed int64:WP_OFF_FROZEN   = 16i64;
 pub fixed int64:WP_OFF_COUNTER  = 24i64;
 pub fixed int64:WP_OFF_LM       = 32i64;
 pub fixed int64:WP_OFF_WORKER   = 40i64; // Contains {channel, thread, ctx} pointer
-pub fixed int64:WP_STATE_SIZE   = 48i64;
+pub fixed int64:WP_OFF_SYNC_MODE= 48i64; // 0 = per_write, 1 = group_commit
+pub fixed int64:WP_STATE_SIZE   = 56i64;
 
-pub func:wp_init = int64(string:data_dir, string:wal_path, ?->:worker_fn) {
+pub func:wp_init = int64(string:data_dir, string:wal_path, ?->:worker_fn, string:sync_mode) {
     int64:wp = nitpick_libc_mem_malloc(WP_STATE_SIZE);
     
     int64:wal_fd = wal_open(wal_path) ?! -1i64;
@@ -46,6 +47,13 @@ pub func:wp_init = int64(string:data_dir, string:wal_path, ?->:worker_fn) {
     
     int64:worker = compaction_worker_start(lm, worker_fn) ?! 0i64;
     drop(npk_mem_write_int64(wp, WP_OFF_WORKER, worker));
+    
+    int64:mode = 0i64;
+    if (sync_mode == "group_commit") {
+        mode = 1i64;
+        drop(wal_enable_group_commit(wal_fd));
+    }
+    drop(npk_mem_write_int64(wp, WP_OFF_SYNC_MODE, mode));
     
     pass(wp);
 };
@@ -83,7 +91,21 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
     
     // 2. Write to WAL
     int64:seq = wal_next_seq() ?! 0i64;
-    int64:w_res = wal_append_put(wal_fd, key, val_ptr, val_len, seq) ?! -1i64;
+    int64:sync_mode = npk_mem_read_int64(wp, WP_OFF_SYNC_MODE);
+    int64:w_res = 0i64;
+    
+    if (sync_mode == 1i64) {
+        w_res = wal_batch_append_put(wal_fd, key, val_ptr, val_len, seq) ?! -1i64;
+        if (w_res > 0i64) {
+            int64:should = wal_batch_should_flush(wal_fd) ?! 0i64;
+            if (should == 1i64) {
+                drop(wal_batch_flush(wal_fd));
+            }
+        }
+    } else {
+        w_res = wal_append_put(wal_fd, key, val_ptr, val_len, seq) ?! -1i64;
+    }
+    
     if (w_res <= 0i64) {
         pass(-1i64); // WAL failed
     }
@@ -98,7 +120,21 @@ pub func:wp_delete = int64(int64:wp, string:key) {
     int64:active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
     
     int64:seq = wal_next_seq() ?! 0i64;
-    int64:w_res = wal_append_delete(wal_fd, key, seq) ?! -1i64;
+    int64:sync_mode = npk_mem_read_int64(wp, WP_OFF_SYNC_MODE);
+    int64:w_res = 0i64;
+    
+    if (sync_mode == 1i64) {
+        w_res = wal_batch_append_delete(wal_fd, key, seq) ?! -1i64;
+        if (w_res > 0i64) {
+            int64:should = wal_batch_should_flush(wal_fd) ?! 0i64;
+            if (should == 1i64) {
+                drop(wal_batch_flush(wal_fd));
+            }
+        }
+    } else {
+        w_res = wal_append_delete(wal_fd, key, seq) ?! -1i64;
+    }
+    
     if (w_res <= 0i64) {
         pass(-1i64);
     }
@@ -127,6 +163,10 @@ pub func:wp_clear_frozen = NIL(int64:wp) {
 pub func:wp_shutdown = NIL(int64:wp) {
     if (wp != 0i64) {
         int64:wal_fd = npk_mem_read_int64(wp, WP_OFF_WAL_FD);
+        int64:sync_mode = npk_mem_read_int64(wp, WP_OFF_SYNC_MODE);
+        if (sync_mode == 1i64) {
+            drop(wal_batch_flush(wal_fd));
+        }
         drop(wal_sync(wal_fd));
         drop(wal_close(wal_fd));
         

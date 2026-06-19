@@ -1,10 +1,10 @@
 // src/storage/memtable.npk
-// Memtable wrapper around Skip List
+// Memtable implementation wrapping skiplist
 
+use "../util/mem_primitives.npk".*;
 use "skiplist.npk".*;
 use "../util/constants.npk".*;
 use "../util/error_codes.npk".*;
-use "../util/mem_primitives.npk".*;
 
 // Memtable state (stored as a flat buffer):
 //   Offset 0: head (int64) — pointer to Skip List head node

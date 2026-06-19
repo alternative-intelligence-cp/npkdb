@@ -29,7 +29,7 @@ pub func:main = int32() {
     println("║  Background Compaction Tests         ║");
     println("╚══════════════════════════════════════╝");
     
-    int64:wp = wp_init("test_bg_data", "test_bg_data/test.wal", @bg_worker_shim) ?! 0i64;
+    int64:wp = wp_init("test_bg_data", "test_bg_data/test.wal", @bg_worker_shim, "per_write") ?! 0i64;
     if (wp == -9999i64) { drop(bg_worker_shim(0i64)); }
     if (wp == 0i64) {
         println("  ✗ Failed to init write path");

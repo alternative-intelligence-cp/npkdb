@@ -1,0 +1,152 @@
+// tests/test_wal_group/main.npk
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/storage/wal.npk".*;
+use "../../src/util/crc32.npk".*;
+use "../../src/util/constants.npk".*;
+use "../../src/util/error_codes.npk".*;
+
+int64:pass_count = 0i64;
+int64:fail_count = 0i64;
+
+func:check = NIL(bool:cond, string:msg) {
+    if (cond) {
+        pass_count = pass_count + 1i64;
+        println("  ✓ " + msg);
+    } else {
+        fail_count = fail_count + 1i64;
+        println("  ✗ " + msg);
+    }
+    pass(NIL);
+};
+
+func:failsafe = int32(tbb32:err) { exit(1); };
+
+pub func:main = int32() {
+    println("╔══════════════════════════════════════╗");
+    println("║  WAL Group Commit Tests              ║");
+    println("╚══════════════════════════════════════╝");
+    
+    string:wal_path = "test_wal_group.wal";
+    
+    // T01: Enable group commit, append 1 record, batch_should_flush = 0
+    drop(sys(UNLINK, wal_path));
+    int64:wal_fd = wal_open(wal_path) ?! -1i64;
+    drop(wal_enable_group_commit(wal_fd));
+    
+    int64:v1_ptr = nitpick_libc_mem_malloc(10i64);
+    drop(npk_mem_write_string(v1_ptr, "v1"));
+    
+    int64:seq = wal_next_seq() ?! 0i64;
+    drop(wal_batch_append_put(wal_fd, "k1", v1_ptr, 2i64, seq) ?! -1i64);
+    
+    int64:should1 = wal_batch_should_flush(wal_fd) ?! 0i64;
+    drop(check(should1 == 0i64, "T01 Enable group commit, append 1 record, batch_should_flush = 0"));
+    
+    // T02: Append 32 records, batch_should_flush = 1
+    int64:i = 0i64;
+    while (i < 31i64) {
+        seq = wal_next_seq() ?! 0i64;
+        drop(wal_batch_append_put(wal_fd, "kx", v1_ptr, 2i64, seq) ?! -1i64);
+        i = i + 1i64;
+    }
+    int64:should2 = wal_batch_should_flush(wal_fd) ?! 0i64;
+    drop(check(should2 == 1i64, "T02 Append 32 records, batch_should_flush = 1"));
+    
+    // T03: batch_flush writes all 32 records to disk
+    int64:flush_res = wal_batch_flush(wal_fd) ?! -1i64;
+    drop(wal_close(wal_fd));
+    
+    Result<int64>:check_fd_res = sys(OPEN, wal_path, 0i64, 0i64);
+    int64:check_fd = 0i64;
+    if (!check_fd_res.is_error) { check_fd = check_fd_res.value; }
+    
+    Result<int64>:fsize_res = sys(LSEEK, check_fd, 0i64, 2i64);
+    int64:fsize = 0i64;
+    if (!fsize_res.is_error) { fsize = fsize_res.value; }
+    
+    drop(sys(CLOSE, check_fd));
+    drop(check(fsize > 0i64, "T03 batch_flush writes all 32 records to disk"));
+    
+    // T04: Replay WAL after group commit: all 32 records recovered
+    int64:rep1 = wal_replay(wal_path) ?! -1i64;
+    drop(check(rep1 == 32i64, "T04 Replay WAL after group commit: all 32 records recovered"));
+    
+    // T05: Append 10 records, force flush, all 10 recovered
+    drop(sys(UNLINK, wal_path));
+    int64:wal_fd2 = wal_open(wal_path) ?! -1i64;
+    drop(wal_enable_group_commit(wal_fd2));
+    
+    i = 0i64;
+    while (i < 10i64) {
+        seq = wal_next_seq() ?! 0i64;
+        drop(wal_batch_append_put(wal_fd2, "ky", v1_ptr, 2i64, seq) ?! -1i64);
+        i = i + 1i64;
+    }
+    drop(wal_batch_flush(wal_fd2) ?! -1i64);
+    drop(wal_close(wal_fd2));
+    
+    int64:rep2 = wal_replay(wal_path) ?! -1i64;
+    drop(check(rep2 == 10i64, "T05 Append 10 records, force flush, all 10 recovered"));
+    
+    // T06: Group commit: wal_close flushes pending batch automatically
+    drop(sys(UNLINK, wal_path));
+    int64:wal_fd3 = wal_open(wal_path) ?! -1i64;
+    drop(wal_enable_group_commit(wal_fd3));
+    
+    seq = wal_next_seq() ?! 0i64;
+    drop(wal_batch_append_put(wal_fd3, "kz1", v1_ptr, 2i64, seq) ?! -1i64);
+    drop(wal_batch_flush(wal_fd3) ?! -1i64);
+    
+    seq = wal_next_seq() ?! 0i64;
+    drop(wal_batch_append_put(wal_fd3, "kz2", v1_ptr, 2i64, seq) ?! -1i64);
+    
+    // wal_close should automatically flush "kz2"
+    drop(wal_close(wal_fd3));
+    
+    int64:rep3 = wal_replay(wal_path) ?! -1i64;
+    drop(check(rep3 == 2i64, "T06 Group commit: wal_close flushes pending batch automatically"));
+    
+    // T07: Group commit disabled (per_write mode): each write fsynced
+    drop(sys(UNLINK, wal_path));
+    int64:wal_fd4 = wal_open(wal_path) ?! -1i64;
+    
+    seq = wal_next_seq() ?! 0i64;
+    drop(wal_append_put(wal_fd4, "kp1", v1_ptr, 2i64, seq) ?! -1i64);
+    seq = wal_next_seq() ?! 0i64;
+    drop(wal_append_put(wal_fd4, "kp2", v1_ptr, 2i64, seq) ?! -1i64);
+    
+    drop(wal_close(wal_fd4));
+    
+    int64:rep4 = wal_replay(wal_path) ?! -1i64;
+    drop(check(rep4 == 2i64, "T07 Group commit disabled (per_write mode): each write fsynced"));
+    
+    // T08: Mixed puts and deletes in a batch
+    string:wal_path8 = "test_wal_group8.wal";
+    drop(sys(UNLINK, wal_path8));
+    int64:wal_fd5 = wal_open(wal_path8) ?! -1i64;
+    drop(wal_enable_group_commit(wal_fd5));
+    
+    seq = wal_next_seq() ?! 0i64;
+    drop(wal_batch_append_put(wal_fd5, "km1", v1_ptr, 2i64, seq) ?! -1i64);
+    seq = wal_next_seq() ?! 0i64;
+    drop(wal_batch_append_delete(wal_fd5, "km1", seq) ?! -1i64);
+    
+    drop(wal_batch_flush(wal_fd5) ?! -1i64);
+    drop(wal_close(wal_fd5));
+    
+    int64:rep5 = wal_replay(wal_path8) ?! -1i64;
+    println("DEBUG: rep5 = " + string_from_int(rep5));
+    drop(check(rep5 == 2i64, "T08 Mixed puts and deletes in a batch"));
+    
+    drop(nitpick_libc_mem_free(v1_ptr));
+    drop(sys(UNLINK, wal_path8));
+    
+    println("");
+    println("Results: " + string_from_int(pass_count) + " passed, " + string_from_int(fail_count) + " failed");
+    
+    if (fail_count > 0i64) {
+        exit(1);
+    }
+    
+    exit(0);
+};
