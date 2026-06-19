@@ -1,0 +1,103 @@
+// src/storage/memtable.npk
+// Memtable wrapper around Skip List
+
+use "skiplist.npk".*;
+use "../util/constants.npk".*;
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+
+// Memtable state (stored as a flat buffer):
+//   Offset 0: head (int64) — pointer to Skip List head node
+//   Offset 8: frozen (int64) — 0 = active (writable), 1 = frozen (immutable)
+//   Offset 16: id (int64) — unique Memtable identifier
+pub fixed int64:MT_OFF_HEAD   = 0i64;
+pub fixed int64:MT_OFF_FROZEN = 8i64;
+pub fixed int64:MT_OFF_ID     = 16i64;
+pub fixed int64:MT_STATE_SIZE = 24i64;
+
+pub func:mt_create = int64(int64:id) {
+    int64:mt = nitpick_libc_mem_malloc(MT_STATE_SIZE);
+    int64:sl_head = sl_create() ?! 0i64;
+    
+    drop(npk_mem_write_int64(mt, MT_OFF_HEAD, sl_head));
+    drop(npk_mem_write_int64(mt, MT_OFF_FROZEN, 0i64));
+    drop(npk_mem_write_int64(mt, MT_OFF_ID, id));
+    
+    pass(mt);
+};
+
+pub func:mt_destroy = NIL(int64:mt) {
+    if (mt != 0i64) {
+        int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
+        drop(sl_destroy(sl_head));
+        drop(nitpick_libc_mem_free(mt));
+    }
+    pass(NIL);
+};
+
+pub func:mt_put = int64(int64:mt, string:key, int64:val_ptr, int64:val_len) {
+    int64:frozen = npk_mem_read_int64(mt, MT_OFF_FROZEN);
+    if (frozen != 0i64) {
+        pass(ERR_PAGE_FULL => int64); // We map ERR_MEMTABLE_FULL to ERR_PAGE_FULL or we can just return a non-zero error.
+        // Wait, error_codes.npk has no ERR_MEMTABLE_FULL. Let's see if I should just use 10 (ERR_PAGE_FULL)
+        // I'll just return 10i64.
+    }
+    
+    int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
+    drop(sl_insert(sl_head, key, val_ptr, val_len));
+    pass(0i64);
+};
+
+pub func:mt_delete = int64(int64:mt, string:key) {
+    int64:frozen = npk_mem_read_int64(mt, MT_OFF_FROZEN);
+    if (frozen != 0i64) {
+        pass(ERR_PAGE_FULL => int64);
+    }
+    
+    int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
+    drop(sl_delete(sl_head, key));
+    pass(0i64);
+};
+
+pub func:mt_get = int64(int64:mt, string:key) {
+    int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
+    pass(sl_search(sl_head, key) ?! 0i64);
+};
+
+pub func:mt_should_flush = int64(int64:mt) {
+    int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
+    int64:mem = sl_memory_usage(sl_head) ?! 0i64;
+    // MEMTABLE_SIZE_LIMIT = 4 * 1024 * 1024 = 4194304
+    if (mem >= MEMTABLE_SIZE_LIMIT => int64) {
+        pass(1i64);
+    }
+    pass(0i64);
+};
+
+pub func:mt_freeze = NIL(int64:mt) {
+    drop(npk_mem_write_int64(mt, MT_OFF_FROZEN, 1i64));
+    pass(NIL);
+};
+
+pub func:mt_is_frozen = int64(int64:mt) {
+    pass(npk_mem_read_int64(mt, MT_OFF_FROZEN));
+};
+
+pub func:mt_get_id = int64(int64:mt) {
+    pass(npk_mem_read_int64(mt, MT_OFF_ID));
+};
+
+pub func:mt_count = int64(int64:mt) {
+    int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
+    pass(sl_count(sl_head) ?! 0i64);
+};
+
+pub func:mt_memory_usage = int64(int64:mt) {
+    int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
+    pass(sl_memory_usage(sl_head) ?! 0i64);
+};
+
+pub func:mt_first = int64(int64:mt) {
+    int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
+    pass(sl_first(sl_head) ?! 0i64);
+};

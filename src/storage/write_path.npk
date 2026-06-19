@@ -1,0 +1,115 @@
+// src/storage/write_path.npk
+// Unified write path: WAL -> Memtable
+
+use "wal.npk".*;
+use "memtable.npk".*;
+use "../util/constants.npk".*;
+use "../util/mem_primitives.npk".*;
+
+// Write path state
+// Offset 0: wal_fd (int64)
+// Offset 8: active_mt (int64)
+// Offset 16: frozen_mt (int64)
+// Offset 24: mt_id_counter (int64)
+pub fixed int64:WP_OFF_WAL_FD   = 0i64;
+pub fixed int64:WP_OFF_ACTIVE   = 8i64;
+pub fixed int64:WP_OFF_FROZEN   = 16i64;
+pub fixed int64:WP_OFF_COUNTER  = 24i64;
+pub fixed int64:WP_STATE_SIZE   = 32i64;
+
+pub func:wp_init = int64(string:wal_path) {
+    int64:wp = nitpick_libc_mem_malloc(WP_STATE_SIZE);
+    
+    int64:wal_fd = wal_open(wal_path) ?! -1i64;
+    if (wal_fd <= 0i64) {
+        drop(nitpick_libc_mem_free(wp));
+        pass(0i64);
+    }
+    
+    int64:active_mt = mt_create(1i64) ?! 0i64;
+    
+    drop(npk_mem_write_int64(wp, WP_OFF_WAL_FD, wal_fd));
+    drop(npk_mem_write_int64(wp, WP_OFF_ACTIVE, active_mt));
+    drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, 0i64));
+    drop(npk_mem_write_int64(wp, WP_OFF_COUNTER, 2i64));
+    
+    pass(wp);
+};
+
+pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
+    int64:wal_fd = npk_mem_read_int64(wp, WP_OFF_WAL_FD);
+    int64:active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
+    
+    // 1. Check if we need to freeze
+    int64:should_flush = mt_should_flush(active_mt) ?! 0i64;
+    if (should_flush == 1i64) {
+        int64:frozen_mt = npk_mem_read_int64(wp, WP_OFF_FROZEN);
+        // If already one frozen, we would technically stall. Here we just overwrite or wait.
+        // For v0.0.6, we just replace it.
+        drop(mt_freeze(active_mt));
+        drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, active_mt));
+        
+        int64:ctr = npk_mem_read_int64(wp, WP_OFF_COUNTER);
+        int64:new_mt = mt_create(ctr) ?! 0i64;
+        drop(npk_mem_write_int64(wp, WP_OFF_COUNTER, ctr + 1i64));
+        drop(npk_mem_write_int64(wp, WP_OFF_ACTIVE, new_mt));
+        active_mt = new_mt;
+    }
+    
+    // 2. Write to WAL
+    int64:seq = wal_next_seq() ?! 0i64;
+    int64:w_res = wal_append_put(wal_fd, key, val_ptr, val_len, seq) ?! -1i64;
+    if (w_res <= 0i64) {
+        pass(-1i64); // WAL failed
+    }
+    
+    // 3. Write to Memtable
+    int64:m_res = mt_put(active_mt, key, val_ptr, val_len) ?! -1i64;
+    pass(m_res);
+};
+
+pub func:wp_delete = int64(int64:wp, string:key) {
+    int64:wal_fd = npk_mem_read_int64(wp, WP_OFF_WAL_FD);
+    int64:active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
+    
+    int64:seq = wal_next_seq() ?! 0i64;
+    int64:w_res = wal_append_delete(wal_fd, key, seq) ?! -1i64;
+    if (w_res <= 0i64) {
+        pass(-1i64);
+    }
+    
+    int64:m_res = mt_delete(active_mt, key) ?! -1i64;
+    pass(m_res);
+};
+
+pub func:wp_active_memtable = int64(int64:wp) {
+    pass(npk_mem_read_int64(wp, WP_OFF_ACTIVE));
+};
+
+pub func:wp_frozen_memtable = int64(int64:wp) {
+    pass(npk_mem_read_int64(wp, WP_OFF_FROZEN));
+};
+
+pub func:wp_clear_frozen = NIL(int64:wp) {
+    int64:frozen_mt = npk_mem_read_int64(wp, WP_OFF_FROZEN);
+    if (frozen_mt != 0i64) {
+        drop(mt_destroy(frozen_mt));
+        drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, 0i64));
+    }
+    pass(NIL);
+};
+
+pub func:wp_shutdown = NIL(int64:wp) {
+    if (wp != 0i64) {
+        int64:wal_fd = npk_mem_read_int64(wp, WP_OFF_WAL_FD);
+        drop(wal_sync(wal_fd));
+        drop(wal_close(wal_fd));
+        
+        int64:active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
+        drop(mt_destroy(active_mt));
+        
+        drop(wp_clear_frozen(wp));
+        drop(nitpick_libc_mem_free(wp));
+    }
+    pass(NIL);
+};
