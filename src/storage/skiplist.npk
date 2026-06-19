@@ -1,0 +1,254 @@
+// src/storage/skiplist.npk — Memtable Skip List Core
+// Single-threaded probabilistic skip list for in-memory string keys.
+
+use "../../src/util/mem_primitives.npk".*;
+use "../../../nitpick-libc/src/_time.npk".*;
+
+pub fixed int64:SKIPLIST_MAX_LEVEL = 32i64;
+pub fixed int64:SKIPLIST_NODE_HEADER_SIZE = 48i64;
+
+// -----------------------------------------------------------------------------
+// PRNG for Level Generation
+// -----------------------------------------------------------------------------
+
+int64:sl_prng_state = 0i64;
+
+func:sl_seed_prng = NIL() {
+    if (sl_prng_state == 0i64) {
+        int64:ns = libc_monotonic_ns() ?! 123456789i64;
+        sl_prng_state = ns;
+    }
+    pass(NIL);
+};
+
+pub func:sl_random_level = int64() {
+    drop(sl_seed_prng());
+    
+    int64:level = 1i64;
+    while (level < SKIPLIST_MAX_LEVEL) {
+        // LCG
+        sl_prng_state = (sl_prng_state * 1103515245i64 + 12345i64) & 2147483647i64;
+        if ((sl_prng_state % 4i64) == 0i64) {
+            level = level + 1i64;
+        } else {
+            break;
+        }
+    }
+    pass(level);
+};
+
+// -----------------------------------------------------------------------------
+// Node Layout & Management
+// -----------------------------------------------------------------------------
+
+pub func:sl_node_alloc = int64(string:key, int64:val_ptr, int64:val_len, int64:level) {
+    int64:key_len = string_length(key);
+    
+    int64:size = SKIPLIST_NODE_HEADER_SIZE + (level * 8i64);
+    // Add key string data size right after the pointers to keep it flat
+    int64:total_size = size + key_len;
+    
+    int64:node = nitpick_libc_mem_malloc(total_size);
+    
+    // Write key data to the end of the node if not empty
+    int64:key_data_ptr = 0i64;
+    if (key_len > 0i64) {
+        key_data_ptr = node + size;
+        drop(npk_mem_write_string(key_data_ptr, key));
+    }
+    
+    drop(npk_mem_write_int64(node, 0i64, key_data_ptr));
+    drop(npk_mem_write_int64(node, 8i64, key_len));
+    drop(npk_mem_write_int64(node, 16i64, val_ptr));
+    drop(npk_mem_write_int64(node, 24i64, val_len));
+    drop(npk_mem_write_int64(node, 32i64, level));
+    drop(npk_mem_write_int64(node, 40i64, 0i64)); // is_deleted
+    
+    // Zero out forward pointers
+    int64:i = 0i64;
+    while (i < level) {
+        drop(npk_mem_write_int64(node, SKIPLIST_NODE_HEADER_SIZE + (i * 8i64), 0i64));
+        i = i + 1i64;
+    }
+    
+    pass(node);
+};
+
+pub func:sl_node_free = NIL(int64:node) {
+    if (node != 0i64) {
+        drop(nitpick_libc_mem_free(node));
+    }
+    pass(NIL);
+};
+
+pub func:sl_node_key = string(int64:node) {
+    int64:key_ptr = npk_mem_read_int64(node, 0i64);
+    int64:key_len = npk_mem_read_int64(node, 8i64);
+    if (key_ptr == 0i64 || key_len == 0i64) { pass(""); }
+    pass(npk_mem_read_string(key_ptr, key_len));
+};
+
+pub func:sl_node_val_ptr = int64(int64:node) {
+    pass(npk_mem_read_int64(node, 16i64));
+};
+
+pub func:sl_node_val_len = int64(int64:node) {
+    pass(npk_mem_read_int64(node, 24i64));
+};
+
+pub func:sl_node_level = int64(int64:node) {
+    pass(npk_mem_read_int64(node, 32i64));
+};
+
+pub func:sl_node_is_deleted = int64(int64:node) {
+    pass(npk_mem_read_int64(node, 40i64));
+};
+
+pub func:sl_node_set_deleted = NIL(int64:node) {
+    drop(npk_mem_write_int64(node, 40i64, 1i64));
+    pass(NIL);
+};
+
+pub func:sl_node_forward = int64(int64:node, int64:lvl) {
+    pass(npk_mem_read_int64(node, SKIPLIST_NODE_HEADER_SIZE + (lvl * 8i64)));
+};
+
+pub func:sl_node_set_forward = NIL(int64:node, int64:lvl, int64:target) {
+    drop(npk_mem_write_int64(node, SKIPLIST_NODE_HEADER_SIZE + (lvl * 8i64), target));
+    pass(NIL);
+};
+
+// -----------------------------------------------------------------------------
+// Skip List Management
+// -----------------------------------------------------------------------------
+
+int64:g_sl_count = 0i64;
+int64:g_sl_mem_usage = 0i64;
+
+pub func:sl_create = int64() {
+    int64:head = sl_node_alloc("", 0i64, 0i64, SKIPLIST_MAX_LEVEL) ?! 0i64;
+    g_sl_count = 0i64;
+    g_sl_mem_usage = SKIPLIST_NODE_HEADER_SIZE + (SKIPLIST_MAX_LEVEL * 8i64);
+    pass(head);
+};
+
+pub func:sl_destroy = NIL(int64:head) {
+    int64:curr = head;
+    while (curr != 0i64) {
+        int64:nxt = sl_node_forward(curr, 0i64) ?! 0i64;
+        drop(sl_node_free(curr));
+        curr = nxt;
+    }
+    g_sl_count = 0i64;
+    g_sl_mem_usage = 0i64;
+    pass(NIL);
+};
+
+pub func:sl_count = int64(int64:head) {
+    pass(g_sl_count);
+};
+
+pub func:sl_memory_usage = int64(int64:head) {
+    pass(g_sl_mem_usage);
+};
+
+// -----------------------------------------------------------------------------
+// Operations
+// -----------------------------------------------------------------------------
+
+pub func:sl_insert = int64(int64:head, string:key, int64:val_ptr, int64:val_len) {
+    int64:upd_buf = nitpick_libc_mem_malloc(SKIPLIST_MAX_LEVEL * 8i64);
+    
+    int64:curr = head;
+    int64:lvl = SKIPLIST_MAX_LEVEL - 1i64;
+    
+    while (lvl >= 0i64) {
+        while (1i64 == 1i64) {
+            int64:fwd = sl_node_forward(curr, lvl) ?! 0i64;
+            if (fwd == 0i64) { break; }
+            string:fwd_key = sl_node_key(fwd) ?! "";
+            if (fwd_key >= key) { break; } // Nitpick string compare
+            curr = fwd;
+        }
+        drop(npk_mem_write_int64(upd_buf, lvl * 8i64, curr));
+        lvl = lvl - 1i64;
+    }
+    
+    int64:cand = sl_node_forward(curr, 0i64) ?! 0i64;
+    if (cand != 0i64) {
+        string:cand_key = sl_node_key(cand) ?! "";
+        if (cand_key == key) {
+            // Update in place (overwrite ptr/len and remove deleted marker)
+            drop(npk_mem_write_int64(cand, 16i64, val_ptr));
+            drop(npk_mem_write_int64(cand, 24i64, val_len));
+            drop(npk_mem_write_int64(cand, 40i64, 0i64)); // revive
+            drop(nitpick_libc_mem_free(upd_buf));
+            pass(1i64); // Updated
+        }
+    }
+    
+    // Insert new
+    int64:new_lvl = sl_random_level() ?! 1i64;
+    int64:new_node = sl_node_alloc(key, val_ptr, val_len, new_lvl) ?! 0i64;
+    
+    int64:i = 0i64;
+    while (i < new_lvl) {
+        int64:u_node = npk_mem_read_int64(upd_buf, i * 8i64);
+        int64:u_fwd = sl_node_forward(u_node, i) ?! 0i64;
+        drop(sl_node_set_forward(new_node, i, u_fwd));
+        drop(sl_node_set_forward(u_node, i, new_node));
+        i = i + 1i64;
+    }
+    
+    g_sl_count = g_sl_count + 1i64;
+    int64:key_len = string_length(key);
+    g_sl_mem_usage = g_sl_mem_usage + SKIPLIST_NODE_HEADER_SIZE + (new_lvl * 8i64) + key_len;
+    
+    drop(nitpick_libc_mem_free(upd_buf));
+    pass(0i64); // Inserted new
+};
+
+pub func:sl_search = int64(int64:head, string:key) {
+    int64:curr = head;
+    int64:lvl = SKIPLIST_MAX_LEVEL - 1i64;
+    
+    while (lvl >= 0i64) {
+        while (1i64 == 1i64) {
+            int64:fwd = sl_node_forward(curr, lvl) ?! 0i64;
+            if (fwd == 0i64) { break; }
+            string:fwd_key = sl_node_key(fwd) ?! "";
+            if (fwd_key >= key) { break; }
+            curr = fwd;
+        }
+        lvl = lvl - 1i64;
+    }
+    
+    int64:cand = sl_node_forward(curr, 0i64) ?! 0i64;
+    if (cand != 0i64) {
+        string:cand_key = sl_node_key(cand) ?! "";
+        if (cand_key == key) {
+            int64:is_del = sl_node_is_deleted(cand) ?! 0i64;
+            if (is_del == 0i64) {
+                pass(cand);
+            }
+        }
+    }
+    pass(0i64);
+};
+
+pub func:sl_delete = int64(int64:head, string:key) {
+    int64:node = sl_search(head, key) ?! 0i64;
+    if (node != 0i64) {
+        drop(sl_node_set_deleted(node));
+        pass(0i64);
+    }
+    pass(-1i64);
+};
+
+pub func:sl_first = int64(int64:head) {
+    pass(sl_node_forward(head, 0i64) ?! 0i64);
+};
+
+pub func:sl_next = int64(int64:node) {
+    pass(sl_node_forward(node, 0i64) ?! 0i64);
+};
