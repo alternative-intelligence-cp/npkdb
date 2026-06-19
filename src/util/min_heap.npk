@@ -1,0 +1,178 @@
+use "constants.npk".*;
+use "error_codes.npk".*;
+
+
+use "../storage/sstable.npk".*;
+
+pub fixed int64:HEAP_STRUCT_SIZE = 24i64;
+pub fixed int64:HEAP_ELEM_SIZE = 16i64;
+
+pub func:heap_create = int64(int64:capacity) {
+    int64:heap = nitpick_libc_mem_malloc(HEAP_STRUCT_SIZE);
+    int64:array_ptr = nitpick_libc_mem_malloc(capacity * HEAP_ELEM_SIZE);
+    drop(npk_mem_write_int64(heap, 0i64, array_ptr));
+    drop(npk_mem_write_int64(heap, 8i64, 0i64)); // size
+    drop(npk_mem_write_int64(heap, 16i64, capacity));
+    pass(heap);
+};
+
+pub func:heap_destroy = NIL(int64:heap) {
+    int64:array_ptr = npk_mem_read_int64(heap, 0i64);
+    drop(nitpick_libc_mem_free(array_ptr));
+    drop(nitpick_libc_mem_free(heap));
+    pass(NIL);
+};
+
+pub func:heap_size = int64(int64:heap) {
+    pass(npk_mem_read_int64(heap, 8i64));
+};
+
+pub func:heap_is_empty = int64(int64:heap) {
+    int64:sz = npk_mem_read_int64(heap, 8i64);
+    if (sz == 0i64) { pass(1i64); }
+    pass(0i64);
+};
+
+func:heap_swap = NIL(int64:array_ptr, int64:i, int64:j) {
+    int64:i_offset = i * HEAP_ELEM_SIZE;
+    int64:j_offset = j * HEAP_ELEM_SIZE;
+    
+    int64:i_idx = npk_mem_read_int64(array_ptr, i_offset);
+    int64:i_rec = npk_mem_read_int64(array_ptr, i_offset + 8i64);
+    
+    int64:j_idx = npk_mem_read_int64(array_ptr, j_offset);
+    int64:j_rec = npk_mem_read_int64(array_ptr, j_offset + 8i64);
+    
+    drop(npk_mem_write_int64(array_ptr, i_offset, j_idx));
+    drop(npk_mem_write_int64(array_ptr, i_offset + 8i64, j_rec));
+    
+    drop(npk_mem_write_int64(array_ptr, j_offset, i_idx));
+    drop(npk_mem_write_int64(array_ptr, j_offset + 8i64, i_rec));
+    
+    pass(NIL);
+};
+
+// Returns 1 if a < b, 0 otherwise
+func:heap_less = int64(int64:array_ptr, int64:i, int64:j) {
+    int64:i_offset = i * HEAP_ELEM_SIZE;
+    int64:j_offset = j * HEAP_ELEM_SIZE;
+    
+    int64:i_idx = npk_mem_read_int64(array_ptr, i_offset);
+    int64:i_rec = npk_mem_read_int64(array_ptr, i_offset + 8i64);
+    
+    int64:j_idx = npk_mem_read_int64(array_ptr, j_offset);
+    int64:j_rec = npk_mem_read_int64(array_ptr, j_offset + 8i64);
+    
+    string:i_key = sst_rec_key(i_rec) ?! "";
+    string:j_key = sst_rec_key(j_rec) ?! "";
+    
+    if (i_key < j_key) { pass(1i64); }
+    if (i_key > j_key) { pass(0i64); }
+    
+    if (i_idx > j_idx) { pass(1i64); }
+    pass(0i64);
+};
+
+func:heap_up = NIL(int64:array_ptr, int64:j) {
+    while (j > 0i64) {
+        int64:i = (j - 1i64) / 2i64; // parent
+        int64:less = heap_less(array_ptr, j, i) ?! 0i64;
+        if (less == 0i64) {
+            break;
+        }
+        drop(heap_swap(array_ptr, i, j));
+        j = i;
+    }
+    pass(NIL);
+};
+
+func:heap_down = NIL(int64:array_ptr, int64:i0, int64:n) {
+    int64:i = i0;
+    while (1i64 == 1i64) {
+        int64:left = (i * 2i64) + 1i64;
+        if (left >= n) { break; }
+        
+        int64:smallest = left;
+        int64:right = left + 1i64;
+        if (right < n) {
+            int64:less_r = heap_less(array_ptr, right, left) ?! 0i64;
+            if (less_r == 1i64) {
+                smallest = right;
+            }
+        }
+        
+        int64:less_s = heap_less(array_ptr, smallest, i) ?! 0i64;
+        if (less_s == 0i64) { break; }
+        
+        drop(heap_swap(array_ptr, i, smallest));
+        i = smallest;
+    }
+    pass(NIL);
+};
+
+pub func:heap_push = NIL(int64:heap, string:key, int64:iter_idx, int64:record) {
+    int64:array_ptr = npk_mem_read_int64(heap, 0i64);
+    int64:size = npk_mem_read_int64(heap, 8i64);
+    int64:capacity = npk_mem_read_int64(heap, 16i64);
+    
+    if (size >= capacity) {
+        // resize logic if needed (omit for now as size is fixed)
+        pass(NIL);
+    }
+    
+    int64:offset = size * HEAP_ELEM_SIZE;
+    drop(npk_mem_write_int64(array_ptr, offset, iter_idx));
+    drop(npk_mem_write_int64(array_ptr, offset + 8i64, record));
+    
+    drop(npk_mem_write_int64(heap, 8i64, size + 1i64));
+    
+    drop(heap_up(array_ptr, size));
+    
+    pass(NIL);
+};
+
+// Returns record handle, populating iter_idx via a pointer if we had one.
+// Let's create heap_pop, heap_pop_iter_idx. Since we only pop the root,
+// we can read the root elements before removing them.
+pub func:heap_pop_record = int64(int64:heap) {
+    int64:size = npk_mem_read_int64(heap, 8i64);
+    if (size == 0i64) { pass(0i64); }
+    int64:array_ptr = npk_mem_read_int64(heap, 0i64);
+    pass(npk_mem_read_int64(array_ptr, 8i64));
+};
+
+pub func:heap_pop_iter_idx = int64(int64:heap) {
+    int64:size = npk_mem_read_int64(heap, 8i64);
+    if (size == 0i64) { pass(-1i64); }
+    int64:array_ptr = npk_mem_read_int64(heap, 0i64);
+    pass(npk_mem_read_int64(array_ptr, 0i64));
+};
+
+pub func:heap_pop_key = string(int64:heap) {
+    int64:size = npk_mem_read_int64(heap, 8i64);
+    if (size == 0i64) { pass(""); }
+    int64:array_ptr = npk_mem_read_int64(heap, 0i64);
+    int64:rec = npk_mem_read_int64(array_ptr, 8i64);
+    pass(sst_rec_key(rec) ?! "");
+};
+
+pub func:heap_pop = NIL(int64:heap) {
+    int64:size = npk_mem_read_int64(heap, 8i64);
+    if (size == 0i64) { pass(NIL); }
+    
+    int64:array_ptr = npk_mem_read_int64(heap, 0i64);
+    
+    // Swap root with last
+    drop(heap_swap(array_ptr, 0i64, size - 1i64));
+    
+    // Decrement size
+    int64:new_size = size - 1i64;
+    drop(npk_mem_write_int64(heap, 8i64, new_size));
+    
+    // Sift down root
+    if (new_size > 0i64) {
+        drop(heap_down(array_ptr, 0i64, new_size));
+    }
+    
+    pass(NIL);
+};

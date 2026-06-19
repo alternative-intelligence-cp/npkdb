@@ -1,0 +1,206 @@
+// tests/test_sstable_read/main.npk
+use "../../src/storage/sstable.npk".*;
+use "../../src/storage/memtable.npk".*;
+use "../../src/storage/skiplist.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/util/crc32.npk".*;
+
+int64:pass_count = 0i64;
+int64:fail_count = 0i64;
+
+func:check = NIL(bool:cond, string:msg) {
+    if (cond) {
+        pass_count = pass_count + 1i64;
+        println("  ✓ " + msg);
+    } else {
+        fail_count = fail_count + 1i64;
+        println("  ✗ " + msg);
+    }
+    pass(NIL);
+};
+
+func:failsafe = int32(tbb32:err) {
+    println("Fatal test failure");
+    exit(1);
+};
+
+pub func:main = int32() {
+    println("╔══════════════════════════════════════╗");
+    println("║  SSTable Read Tests                  ║");
+    println("╚══════════════════════════════════════╝");
+
+    int64:mt1 = mt_create(1i64) ?! 0i64;
+    
+    // Allocate a value
+    int64:v1 = nitpick_libc_mem_malloc(12i64);
+    drop(npk_mem_write_string(v1, "hello_world1")); // 12 bytes
+    
+    drop(mt_put(mt1, "key_a", v1, 12i64));
+    drop(mt_put(mt1, "key_b", v1, 12i64));
+    drop(mt_put(mt1, "key_c", v1, 12i64));
+    drop(mt_put(mt1, "key_d", v1, 12i64));
+    
+    // Tombstone
+    drop(mt_put(mt1, "key_e_tombstone", v1, 12i64));
+    drop(mt_delete(mt1, "key_e_tombstone"));
+    
+    drop(sstable_write("/tmp/read_test_1.sst", mt1));
+    drop(mt_destroy(mt1));
+    
+    int64:reader1 = sstable_open_read("/tmp/read_test_1.sst") ?! 0i64;
+    drop(check(reader1 != 0i64, "T01 Write 5 records to SSTable, open for reading"));
+    
+    if (reader1 != 0i64) {
+        int64:t_keys = npk_mem_read_int64(reader1, 24i64);
+        drop(check(t_keys == 5i64, "T02 Reader total_keys = 5"));
+        
+        int64:db_cnt = npk_mem_read_int64(reader1, 8i64);
+        drop(check(db_cnt == 1i64, "T03 Reader data_block_count = 1 (small dataset fits in 1 page)"));
+        
+        int64:rec_a = sstable_get(reader1, "key_a") ?! 0i64;
+        drop(check(rec_a != 0i64, "T04 sstable_get(\"key_a\") returns the record"));
+        
+        if (rec_a != 0i64) {
+            string:rk = sst_rec_key(rec_a) ?! "";
+            drop(check(rk == "key_a", "T05 Record key matches \"key_a\""));
+            
+            int64:r_vlen = sst_rec_val_len(rec_a) ?! 0i64;
+            int64:r_vptr = sst_rec_val_ptr(rec_a) ?! 0i64;
+            if (r_vlen == 12i64 && r_vptr != 0i64) {
+                string:rv = npk_mem_read_string(r_vptr, r_vlen);
+                drop(check(rv == "hello_world1", "T06 Record value matches what was written"));
+            } else {
+                drop(check(false, "T06 Record value matches what was written"));
+            }
+            drop(sst_rec_free(rec_a));
+        } else {
+            drop(check(false, "T05 Record key matches \"key_a\""));
+            drop(check(false, "T06 Record value matches what was written"));
+        }
+        
+        int64:rec_non = sstable_get(reader1, "nonexistent") ?! 0i64;
+        drop(check(rec_non == 0i64, "T07 sstable_get(\"nonexistent\") returns 0"));
+        if (rec_non != 0i64) { drop(sst_rec_free(rec_non)); }
+        
+        int64:rec_tomb = sstable_get(reader1, "key_e_tombstone") ?! 0i64;
+        if (rec_tomb != 0i64) {
+            int64:is_t = sst_rec_is_tombstone(rec_tomb) ?! 0i64;
+            drop(check(is_t == 1i64, "T08 sstable_get for tombstone returns record with is_tombstone=1"));
+            drop(sst_rec_free(rec_tomb));
+        } else {
+            drop(check(false, "T08 sstable_get for tombstone returns record with is_tombstone=1"));
+        }
+        
+        drop(sstable_close_read(reader1));
+    } else {
+        drop(check(false, "T02 Reader total_keys = 5"));
+        drop(check(false, "T03 Reader data_block_count = 1 (small dataset fits in 1 page)"));
+        drop(check(false, "T04 sstable_get(\"key_a\") returns the record"));
+        drop(check(false, "T05 Record key matches \"key_a\""));
+        drop(check(false, "T06 Record value matches what was written"));
+        drop(check(false, "T07 sstable_get(\"nonexistent\") returns 0"));
+        drop(check(false, "T08 sstable_get for tombstone returns record with is_tombstone=1"));
+    }
+    
+    // Large write
+    int64:mt2 = mt_create(2i64) ?! 0i64;
+    int64:big_v_ptr = nitpick_libc_mem_malloc(500i64);
+    int64:i = 0i64;
+    while (i < 100i64) {
+        string:k = "key_" + string_pad_left(string_from_int(i), 3i64, 48i64);
+        drop(mt_put(mt2, k, big_v_ptr, 500i64));
+        if (i % 5i64 == 0i64) {
+            drop(mt_delete(mt2, k));
+        }
+        i = i + 1i64;
+    }
+    drop(sstable_write("/tmp/read_test_2.sst", mt2));
+    drop(mt_destroy(mt2));
+    
+    int64:reader2 = sstable_open_read("/tmp/read_test_2.sst") ?! 0i64;
+    if (reader2 != 0i64) {
+        int64:all_found = 1i64;
+        i = 0i64;
+        while (i < 100i64) {
+            string:k2 = "key_" + string_pad_left(string_from_int(i), 3i64, 48i64);
+            int64:rec2 = sstable_get(reader2, k2) ?! 0i64;
+            if (rec2 == 0i64) {
+                all_found = 0i64;
+                break;
+            }
+            drop(sst_rec_free(rec2));
+            i = i + 1i64;
+        }
+        drop(check(all_found == 1i64, "T09 Write 100 records spanning multiple blocks, read each back"));
+        
+        // Iterator
+        int64:iter = sstable_iter_create(reader2) ?! 0i64;
+        if (iter != 0i64) {
+            int64:iter_cnt = 0i64;
+            int64:is_sorted = 1i64;
+            int64:has_tomb = 0i64;
+            string:prev_k = "";
+            
+            while (1i64 == 1i64) {
+                int64:n_rec = sstable_iter_next(iter) ?! 0i64;
+                if (n_rec == 0i64) { break; }
+                
+                string:nk = sst_rec_key(n_rec) ?! "";
+                if (iter_cnt > 0i64 && prev_k >= nk) {
+                    is_sorted = 0i64;
+                }
+                prev_k = nk;
+                
+                int64:is_tt = sst_rec_is_tombstone(n_rec) ?! 0i64;
+                if (is_tt == 1i64) {
+                    has_tomb = 1i64;
+                }
+                
+                iter_cnt = iter_cnt + 1i64;
+                drop(sst_rec_free(n_rec));
+            }
+            
+            drop(check(is_sorted == 1i64, "T10 Iterator produces records in sorted order"));
+            drop(check(iter_cnt == 100i64, "T11 Iterator count = total records written"));
+            drop(check(has_tomb == 1i64, "T12 Iterator over SSTable with tombstones includes them"));
+            
+            drop(sstable_iter_destroy(iter));
+        } else {
+            drop(check(false, "T10 Iterator produces records in sorted order"));
+            drop(check(false, "T11 Iterator count = total records written"));
+            drop(check(false, "T12 Iterator over SSTable with tombstones includes them"));
+        }
+        
+        drop(sstable_close_read(reader2));
+        drop(check(true, "T13 Close reader, verify no leaks (no crash on cleanup)"));
+    } else {
+        drop(check(false, "T09 Write 100 records spanning multiple blocks, read each back"));
+        drop(check(false, "T10 Iterator produces records in sorted order"));
+        drop(check(false, "T11 Iterator count = total records written"));
+        drop(check(false, "T12 Iterator over SSTable with tombstones includes them"));
+        drop(check(false, "T13 Close reader, verify no leaks (no crash on cleanup)"));
+    }
+    
+    int64:reader3 = sstable_open_read("/tmp/nonexistent.sst") ?! 0i64;
+    drop(check(reader3 == 0i64, "T14 Open non-existent file returns error"));
+    if (reader3 != 0i64) { drop(sstable_close_read(reader3)); }
+    
+    int64:fd_bad = sys(OPEN, "/tmp/corrupt.sst", 66i64, 420i64) ?! -1i64; // O_CREAT|O_RDWR
+    if (fd_bad > 0i64) {
+        drop(sys(WRITE, fd_bad, v1, 10i64)); // Write garbage
+        drop(sys(CLOSE, fd_bad));
+    }
+    int64:reader4 = sstable_open_read("/tmp/corrupt.sst") ?! 0i64;
+    drop(check(reader4 == 0i64, "T15 Open file with corrupt footer returns error"));
+    if (reader4 != 0i64) { drop(sstable_close_read(reader4)); }
+    
+    println("");
+    println("Results: " + string_from_int(pass_count) + " passed, " + string_from_int(fail_count) + " failed");
+    
+    drop(sys(UNLINK, "/tmp/read_test_1.sst"));
+    drop(sys(UNLINK, "/tmp/read_test_2.sst"));
+    drop(sys(UNLINK, "/tmp/corrupt.sst"));
+    
+    if (fail_count > 0i64) { exit(1); }
+    exit(0);
+};

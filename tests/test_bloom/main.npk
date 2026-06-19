@@ -1,0 +1,111 @@
+use "../../src/util/bloom.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+
+int64:pass_count = 0i64;
+int64:fail_count = 0i64;
+
+func:check = NIL(bool:cond, string:msg) {
+    if (cond) {
+        pass_count = pass_count + 1i64;
+        println("  ✓ " + msg);
+    } else {
+        fail_count = fail_count + 1i64;
+        println("  ✗ " + msg);
+    }
+    pass(NIL);
+};
+
+pub func:failsafe = int32(tbb32:err) {
+    println("Fatal test failure");
+    exit(1);
+};
+
+pub func:main = int32() {
+    println("╔══════════════════════════════════════╗");
+    println("║  Bloom Filter Tests                  ║");
+    println("╚══════════════════════════════════════╝");
+    
+    int64:h1a = bloom_hash1("test_key") ?! 0i64;
+    int64:h1b = bloom_hash1("test_key") ?! 0i64;
+    drop(check(h1a == h1b, "T07 bloom_hash1 produces deterministic output"));
+    
+    int64:h2a = bloom_hash2("test_key") ?! 0i64;
+    drop(check(h1a != h2a, "T08 bloom_hash2 produces different output than hash1"));
+    
+    int64:bloom1 = bloom_create(100i64) ?! 0i64;
+    drop(check(bloom1 != 0i64, "T01 bloom_create(100) returns handle"));
+    
+    int64:empty_chk = bloom_check(bloom1, "anything") ?! -1i64;
+    drop(check(empty_chk == 0i64, "T02 bloom_check on empty filter = 0"));
+    
+    drop(bloom_add(bloom1, "hello"));
+    int64:hello_chk = bloom_check(bloom1, "hello") ?! -1i64;
+    drop(check(hello_chk == 1i64, "T03 bloom_add(\"hello\"), bloom_check(\"hello\") = 1"));
+    
+    int64:world_chk = bloom_check(bloom1, "world") ?! -1i64;
+    drop(check(world_chk == 0i64, "T04 bloom_check(\"world\") = 0 (not added)"));
+    
+    // Add 100 keys
+    int64:i = 0i64;
+    while (i < 100i64) {
+        string:k = "key_" + string_from_int(i);
+        drop(bloom_add(bloom1, k));
+        i = i + 1i64;
+    }
+    
+    // Check 100 keys present
+    int64:all_present = 1i64;
+    i = 0i64;
+    while (i < 100i64) {
+        string:k = "key_" + string_from_int(i);
+        int64:chk = bloom_check(bloom1, k) ?! 0i64;
+        if (chk == 0i64) { all_present = 0i64; }
+        i = i + 1i64;
+    }
+    drop(check(all_present == 1i64, "T05 Add 100 keys, check all 100 present"));
+    
+    // Check 100 false keys
+    int64:false_positives = 0i64;
+    i = 0i64;
+    while (i < 100i64) {
+        string:k = "false_" + string_from_int(i);
+        int64:chk = bloom_check(bloom1, k) ?! 0i64;
+        if (chk == 1i64) { false_positives = false_positives + 1i64; }
+        i = i + 1i64;
+    }
+    drop(check(false_positives < 5i64, "T06 Check 100 keys NOT added, false positive rate < 5%"));
+    
+    int64:sz = bloom_serialize_size(bloom1) ?! 0i64;
+    int64:buf = bloom_serialize(bloom1) ?! 0i64;
+    
+    int64:bloom2 = bloom_deserialize(buf, sz) ?! 0i64;
+    
+    int64:all_present_ser = 1i64;
+    i = 0i64;
+    while (i < 100i64) {
+        string:k = "key_" + string_from_int(i);
+        int64:chk = bloom_check(bloom2, k) ?! 0i64;
+        if (chk == 0i64) { all_present_ser = 0i64; }
+        i = i + 1i64;
+    }
+    drop(check(all_present_ser == 1i64, "T09 Serialize bloom, deserialize, check all keys still present"));
+    
+    int64:fp_ser = 0i64;
+    i = 0i64;
+    while (i < 100i64) {
+        string:k = "false_" + string_from_int(i);
+        int64:chk = bloom_check(bloom2, k) ?! 0i64;
+        if (chk == 1i64) { fp_ser = fp_ser + 1i64; }
+        i = i + 1i64;
+    }
+    drop(check(fp_ser < 5i64, "T10 Deserialized bloom rejects unknown keys"));
+    
+    drop(bloom_destroy(bloom1));
+    drop(bloom_destroy(bloom2));
+    drop(nitpick_libc_mem_free(buf));
+    
+    println("");
+    println("Results: " + string_from_int(pass_count) + " passed, " + string_from_int(fail_count) + " failed");
+    if (fail_count > 0i64) { exit(1); }
+    exit(0);
+};

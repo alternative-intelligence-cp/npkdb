@@ -122,41 +122,45 @@ pub func:sl_node_set_forward = NIL(int64:node, int64:lvl, int64:target) {
 // Skip List Management
 // -----------------------------------------------------------------------------
 
-int64:g_sl_count = 0i64;
-int64:g_sl_mem_usage = 0i64;
+pub fixed int64:SL_OFF_HEAD = 0i64;
+pub fixed int64:SL_OFF_COUNT = 8i64;
+pub fixed int64:SL_OFF_MEMORY = 16i64;
+pub fixed int64:SL_STRUCT_SIZE = 24i64;
 
 pub func:sl_create = int64() {
+    int64:sl = nitpick_libc_mem_malloc(SL_STRUCT_SIZE);
     int64:head = sl_node_alloc("", 0i64, 0i64, SKIPLIST_MAX_LEVEL) ?! 0i64;
-    g_sl_count = 0i64;
-    g_sl_mem_usage = SKIPLIST_NODE_HEADER_SIZE + (SKIPLIST_MAX_LEVEL * 8i64);
-    pass(head);
+    drop(npk_mem_write_int64(sl, SL_OFF_HEAD, head));
+    drop(npk_mem_write_int64(sl, SL_OFF_COUNT, 0i64));
+    drop(npk_mem_write_int64(sl, SL_OFF_MEMORY, SKIPLIST_NODE_HEADER_SIZE + (SKIPLIST_MAX_LEVEL * 8i64)));
+    pass(sl);
 };
 
-pub func:sl_destroy = NIL(int64:head) {
-    int64:curr = head;
+pub func:sl_destroy = NIL(int64:sl) {
+    int64:curr = npk_mem_read_int64(sl, SL_OFF_HEAD);
     while (curr != 0i64) {
         int64:nxt = sl_node_forward(curr, 0i64) ?! 0i64;
         drop(sl_node_free(curr));
         curr = nxt;
     }
-    g_sl_count = 0i64;
-    g_sl_mem_usage = 0i64;
+    drop(nitpick_libc_mem_free(sl));
     pass(NIL);
 };
 
-pub func:sl_count = int64(int64:head) {
-    pass(g_sl_count);
+pub func:sl_count = int64(int64:sl) {
+    pass(npk_mem_read_int64(sl, SL_OFF_COUNT));
 };
 
-pub func:sl_memory_usage = int64(int64:head) {
-    pass(g_sl_mem_usage);
+pub func:sl_memory_usage = int64(int64:sl) {
+    pass(npk_mem_read_int64(sl, SL_OFF_MEMORY));
 };
 
 // -----------------------------------------------------------------------------
 // Operations
 // -----------------------------------------------------------------------------
 
-pub func:sl_insert = int64(int64:head, string:key, int64:val_ptr, int64:val_len) {
+pub func:sl_insert = int64(int64:sl, string:key, int64:val_ptr, int64:val_len) {
+    int64:head = npk_mem_read_int64(sl, SL_OFF_HEAD);
     int64:upd_buf = nitpick_libc_mem_malloc(SKIPLIST_MAX_LEVEL * 8i64);
     
     int64:curr = head;
@@ -178,10 +182,14 @@ pub func:sl_insert = int64(int64:head, string:key, int64:val_ptr, int64:val_len)
     if (cand != 0i64) {
         string:cand_key = sl_node_key(cand) ?! "";
         if (cand_key == key) {
-            // Update in place (overwrite ptr/len and remove deleted marker)
+            int64:old_val_len = sl_node_val_len(cand) ?! 0i64;
             drop(npk_mem_write_int64(cand, 16i64, val_ptr));
             drop(npk_mem_write_int64(cand, 24i64, val_len));
             drop(npk_mem_write_int64(cand, 40i64, 0i64)); // revive
+            
+            int64:cur_mem = npk_mem_read_int64(sl, SL_OFF_MEMORY);
+            drop(npk_mem_write_int64(sl, SL_OFF_MEMORY, cur_mem - old_val_len + val_len));
+            
             drop(nitpick_libc_mem_free(upd_buf));
             pass(1i64); // Updated
         }
@@ -200,15 +208,19 @@ pub func:sl_insert = int64(int64:head, string:key, int64:val_ptr, int64:val_len)
         i = i + 1i64;
     }
     
-    g_sl_count = g_sl_count + 1i64;
+    int64:cur_count = npk_mem_read_int64(sl, SL_OFF_COUNT);
+    drop(npk_mem_write_int64(sl, SL_OFF_COUNT, cur_count + 1i64));
+    
     int64:key_len = string_length(key);
-    g_sl_mem_usage = g_sl_mem_usage + SKIPLIST_NODE_HEADER_SIZE + (new_lvl * 8i64) + key_len;
+    int64:cur_mem = npk_mem_read_int64(sl, SL_OFF_MEMORY);
+    drop(npk_mem_write_int64(sl, SL_OFF_MEMORY, cur_mem + SKIPLIST_NODE_HEADER_SIZE + (new_lvl * 8i64) + key_len + val_len));
     
     drop(nitpick_libc_mem_free(upd_buf));
     pass(0i64); // Inserted new
 };
 
-pub func:sl_search = int64(int64:head, string:key) {
+pub func:sl_search = int64(int64:sl, string:key) {
+    int64:head = npk_mem_read_int64(sl, SL_OFF_HEAD);
     int64:curr = head;
     int64:lvl = SKIPLIST_MAX_LEVEL - 1i64;
     
@@ -236,16 +248,37 @@ pub func:sl_search = int64(int64:head, string:key) {
     pass(0i64);
 };
 
-pub func:sl_delete = int64(int64:head, string:key) {
-    int64:node = sl_search(head, key) ?! 0i64;
-    if (node != 0i64) {
-        drop(sl_node_set_deleted(node));
-        pass(0i64);
+pub func:sl_delete = int64(int64:sl, string:key) {
+    // Insert a dummy value, then find it and mark deleted
+    drop(sl_insert(sl, key, 0i64, 0i64));
+    
+    int64:head = npk_mem_read_int64(sl, SL_OFF_HEAD);
+    int64:curr = head;
+    int64:lvl = SKIPLIST_MAX_LEVEL - 1i64;
+    
+    while (lvl >= 0i64) {
+        while (1i64 == 1i64) {
+            int64:fwd = sl_node_forward(curr, lvl) ?! 0i64;
+            if (fwd == 0i64) { break; }
+            string:fwd_key = sl_node_key(fwd) ?! "";
+            if (fwd_key >= key) { break; }
+            curr = fwd;
+        }
+        lvl = lvl - 1i64;
     }
-    pass(-1i64);
+    
+    int64:cand = sl_node_forward(curr, 0i64) ?! 0i64;
+    if (cand != 0i64) {
+        string:cand_key = sl_node_key(cand) ?! "";
+        if (cand_key == key) {
+            drop(sl_node_set_deleted(cand));
+        }
+    }
+    pass(0i64);
 };
 
-pub func:sl_first = int64(int64:head) {
+pub func:sl_first = int64(int64:sl) {
+    int64:head = npk_mem_read_int64(sl, SL_OFF_HEAD);
     pass(sl_node_forward(head, 0i64) ?! 0i64);
 };
 

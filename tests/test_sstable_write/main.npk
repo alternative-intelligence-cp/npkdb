@@ -1,0 +1,135 @@
+// tests/test_sstable_write/main.npk
+use "../../src/storage/sstable.npk".*;
+use "../../src/storage/memtable.npk".*;
+use "../../src/storage/skiplist.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/util/crc32.npk".*;
+
+int64:pass_count = 0i64;
+int64:fail_count = 0i64;
+
+func:check = NIL(bool:cond, string:msg) {
+    if (cond) {
+        pass_count = pass_count + 1i64;
+        println("  ✓ " + msg);
+    } else {
+        fail_count = fail_count + 1i64;
+        println("  ✗ " + msg);
+    }
+    pass(NIL);
+};
+
+func:failsafe = int32(tbb32:err) { exit(1); };
+
+func:main = int32() {
+    println("╔══════════════════════════════════════╗");
+    println("║  SSTable Write Tests                 ║");
+    println("╚══════════════════════════════════════╝");
+
+    int64:v_ptr = nitpick_libc_mem_malloc(10i64);
+    drop(npk_mem_write_string(v_ptr, "v"));
+
+    // T01, T02, T03
+    int64:sz1 = sstable_record_size("key1", 1i64, 0i64) ?! 0i64;
+    int64:sz2 = sstable_record_size("key2", 0i64, 1i64) ?! 0i64;
+    
+    // key1 (4) + flag (1) + key_len (4) + val_len (4) + val (1) = 14
+    drop(check(sz1 == 14i64, "T03 Record size calculation matches actual serialized size"));
+
+    int64:rec1 = sstable_serialize_record("key1", v_ptr, 1i64, 0i64) ?! 0i64;
+    int64:f1 = npk_mem_read_byte(rec1, 0i64);
+    int32:kl1 = npk_mem_read_int32(rec1, 1i64);
+    drop(check(f1 == 0i64 && kl1 == 4i32, "T01 Serialize live record, verify format"));
+
+    int64:rec2 = sstable_serialize_record("key2", 0i64, 0i64, 1i64) ?! 0i64;
+    int64:f2 = npk_mem_read_byte(rec2, 0i64);
+    int32:kl2 = npk_mem_read_int32(rec2, 1i64);
+    int32:vl2 = npk_mem_read_int32(rec2, 9i64);
+    drop(check(f2 == 1i64 && kl2 == 4i32 && vl2 == 0i32, "T02 Serialize tombstone record, verify format"));
+
+    drop(nitpick_libc_mem_free(rec1));
+    drop(nitpick_libc_mem_free(rec2));
+
+    // Write SSTable tests
+    string:sst_path = "/tmp/npkdb_test.sst";
+    drop(sys(UNLINK, sst_path));
+    
+    int64:mt = mt_create(1i64) ?! 0i64;
+    drop(mt_put(mt, "a", v_ptr, 1i64));
+    drop(mt_put(mt, "b", v_ptr, 1i64));
+    drop(mt_put(mt, "c", v_ptr, 1i64));
+    drop(mt_put(mt, "d", v_ptr, 1i64));
+    drop(mt_put(mt, "e", v_ptr, 1i64));
+    
+    // T04
+    int64:written = sstable_write(sst_path, mt) ?! 0i64;
+    drop(check(written > 0i64, "T04 Write 5 records to Memtable, flush to SSTable file"));
+    
+    // T05 (8KB data + 23B bloom + 8KB index + 48 footer = 16455)
+    drop(check(written == 16455i64, "T05 SSTable file size is multiple of 8KB + bloom + footer"));
+
+    // T06, T07, T08, T09
+    int64:fd = sys(OPEN, sst_path, 0i64, 0i64) ?! -1i64;
+    int64:footer = nitpick_libc_mem_malloc(48i64);
+    drop(sys(LSEEK, fd, 0i64 - 48i64, 2i64)); // SEEK_END
+    drop(sys(READ, fd, footer, 48i64));
+    
+    int64:db_cnt = npk_mem_read_int64(footer, 0i64);
+    int64:t_keys = npk_mem_read_int64(footer, 32i64);
+    int32:magic = npk_mem_read_int32(footer, 40i64);
+    int32:chk = npk_mem_read_int32(footer, 44i64);
+    
+    int32:exp_magic = 1145192497i32; // "DB01"
+    drop(check(magic == exp_magic, "T06 Read footer from SSTable, verify magic number"));
+    drop(check(db_cnt == 1i64, "T07 Footer data_block_count > 0"));
+    drop(check(t_keys == 5i64, "T08 Footer total_keys = 5"));
+    
+    int64:crc_calc = crc32_compute(footer, 44i64) ?! 0i64;
+    drop(check(chk == @cast_unchecked<int32>(crc_calc), "T09 Footer checksum validates"));
+    
+    drop(nitpick_libc_mem_free(footer));
+    drop(sys(CLOSE, fd));
+    drop(mt_destroy(mt));
+
+    // T10, T11, T12
+    drop(sys(UNLINK, sst_path));
+    int64:mt2 = mt_create(2i64) ?! 0i64;
+    
+    int64:big_v_ptr = nitpick_libc_mem_malloc(500i64); // large enough to span blocks
+    int64:i = 0i64;
+    while (i < 100i64) {
+        string:k = "key_" + string_pad_left(string_from_int(i), 3i64, 48i64);
+        drop(mt_put(mt2, k, big_v_ptr, 500i64));
+        if (i % 5i64 == 0i64) {
+            drop(mt_delete(mt2, k)); // T12: Tombstone
+        }
+        i = i + 1i64;
+    }
+    
+    int64:written2 = sstable_write(sst_path, mt2) ?! 0i64;
+    drop(check(written2 > 0i64, "T10 Write 100 records, flush to SSTable"));
+    
+    int64:fd2 = sys(OPEN, sst_path, 0i64, 0i64) ?! -1i64;
+    int64:footer2 = nitpick_libc_mem_malloc(48i64);
+    drop(sys(LSEEK, fd2, 0i64 - 48i64, 2i64));
+    drop(sys(READ, fd2, footer2, 48i64));
+    
+    int64:db_cnt2 = npk_mem_read_int64(footer2, 0i64);
+    int64:t_keys2 = npk_mem_read_int64(footer2, 32i64);
+    
+    drop(check(db_cnt2 > 1i64, "T11 Write records that span multiple pages"));
+    drop(check(t_keys2 == 100i64, "T12 Write with tombstones mixed in"));
+
+    drop(nitpick_libc_mem_free(footer2));
+    drop(sys(CLOSE, fd2));
+    drop(mt_destroy(mt2));
+    
+    drop(sys(UNLINK, sst_path));
+    drop(nitpick_libc_mem_free(v_ptr));
+    drop(nitpick_libc_mem_free(big_v_ptr));
+
+    println("");
+    println("Results: " + string_from_int(pass_count) + " passed, " + string_from_int(fail_count) + " failed");
+    if (fail_count > 0i64) { exit(1); }
+    exit(0);
+};

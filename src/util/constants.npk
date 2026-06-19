@@ -3,6 +3,15 @@
 // Page layout
 pub fixed int64:PAGE_SIZE           = 8192i64;     // 8KB pages
 pub fixed int64:PAGE_HEADER_SIZE    = 32i64;       // Page header bytes
+// Footer (48 bytes):
+// 0-7: data_block_count (int64)
+// 8-15: index_block_offset (int64)
+// 16-23: bloom_block_offset (int64)
+// 24-31: bloom_block_size (int64)
+// 32-39: total_keys (int64)
+// 40-43: magic (int32)
+// 44-47: crc32 (int32)
+pub fixed int64:SSTABLE_FOOTER_SIZE       = 48i64;
 pub fixed int64:SLOT_SIZE           = 16i64;       // Bytes per slot entry (offset + length)
 
 // WAL

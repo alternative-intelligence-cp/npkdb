@@ -3,6 +3,8 @@
 
 use "wal.npk".*;
 use "memtable.npk".*;
+use "level_manager.npk".*;
+use "flush.npk".*;
 use "../util/constants.npk".*;
 use "../util/mem_primitives.npk".*;
 
@@ -15,9 +17,10 @@ pub fixed int64:WP_OFF_WAL_FD   = 0i64;
 pub fixed int64:WP_OFF_ACTIVE   = 8i64;
 pub fixed int64:WP_OFF_FROZEN   = 16i64;
 pub fixed int64:WP_OFF_COUNTER  = 24i64;
-pub fixed int64:WP_STATE_SIZE   = 32i64;
+pub fixed int64:WP_OFF_LM       = 32i64;
+pub fixed int64:WP_STATE_SIZE   = 40i64;
 
-pub func:wp_init = int64(string:wal_path) {
+pub func:wp_init = int64(string:data_dir, string:wal_path) {
     int64:wp = nitpick_libc_mem_malloc(WP_STATE_SIZE);
     
     int64:wal_fd = wal_open(wal_path) ?! -1i64;
@@ -26,12 +29,16 @@ pub func:wp_init = int64(string:wal_path) {
         pass(0i64);
     }
     
+    int64:lm = lm_create(data_dir) ?! 0i64;
+    drop(flush_ensure_dirs(data_dir));
+    
     int64:active_mt = mt_create(1i64) ?! 0i64;
     
     drop(npk_mem_write_int64(wp, WP_OFF_WAL_FD, wal_fd));
     drop(npk_mem_write_int64(wp, WP_OFF_ACTIVE, active_mt));
     drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, 0i64));
     drop(npk_mem_write_int64(wp, WP_OFF_COUNTER, 2i64));
+    drop(npk_mem_write_int64(wp, WP_OFF_LM, lm));
     
     pass(wp);
 };
@@ -44,8 +51,6 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
     int64:should_flush = mt_should_flush(active_mt) ?! 0i64;
     if (should_flush == 1i64) {
         int64:frozen_mt = npk_mem_read_int64(wp, WP_OFF_FROZEN);
-        // If already one frozen, we would technically stall. Here we just overwrite or wait.
-        // For v0.0.6, we just replace it.
         drop(mt_freeze(active_mt));
         drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, active_mt));
         
@@ -54,6 +59,10 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
         drop(npk_mem_write_int64(wp, WP_OFF_COUNTER, ctr + 1i64));
         drop(npk_mem_write_int64(wp, WP_OFF_ACTIVE, new_mt));
         active_mt = new_mt;
+        
+        int64:lm = npk_mem_read_int64(wp, WP_OFF_LM);
+        drop(flush_memtable(npk_mem_read_int64(wp, WP_OFF_FROZEN), lm));
+        drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, 0i64));
     }
     
     // 2. Write to WAL
@@ -109,6 +118,12 @@ pub func:wp_shutdown = NIL(int64:wp) {
         drop(mt_destroy(active_mt));
         
         drop(wp_clear_frozen(wp));
+        
+        int64:lm = npk_mem_read_int64(wp, WP_OFF_LM);
+        if (lm != 0i64) {
+            drop(lm_destroy(lm));
+        }
+        
         drop(nitpick_libc_mem_free(wp));
     }
     pass(NIL);

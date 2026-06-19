@@ -1,0 +1,421 @@
+use "sstable.npk".*;
+use "level_manager.npk".*;
+use "memtable.npk".*;
+use "../util/constants.npk".*;
+use "../util/error_codes.npk".*;
+
+use "../util/min_heap.npk".*;
+
+pub func:merge_iter_create = int64(int64:iters, int64:readers, int64:count) {
+    int64:merge_iter = nitpick_libc_mem_malloc(32i64);
+    drop(npk_mem_write_int64(merge_iter, 0i64, iters));
+    drop(npk_mem_write_int64(merge_iter, 8i64, count));
+    drop(npk_mem_write_int64(merge_iter, 24i64, readers));
+    
+    int64:heap = heap_create(count) ?! 0i64;
+    drop(npk_mem_write_int64(merge_iter, 16i64, heap));
+    
+    // push first element from each iterator
+    int64:i = 0i64;
+    while (i < count) {
+        int64:iter = npk_mem_read_int64(iters, i * 8i64);
+        int64:rec = sstable_iter_next(iter) ?! 0i64;
+        if (rec != 0i64) {
+            string:key = sst_rec_key(rec) ?! "";
+            drop(heap_push(heap, key, i, rec));
+        }
+        i = i + 1i64;
+    }
+    
+    pass(merge_iter);
+};
+
+pub func:merge_iter_next = int64(int64:merge_iter) {
+    int64:heap = npk_mem_read_int64(merge_iter, 16i64);
+    
+    int64:first_sz = heap_size(heap) ?! 0i64;
+    if (first_sz == 0i64) { pass(0i64); }
+    
+    int64:best_rec = heap_pop_record(heap) ?! 0i64;
+    int64:best_idx = heap_pop_iter_idx(heap) ?! -1i64;
+    string:best_key = heap_pop_key(heap) ?! "";
+    drop(heap_pop(heap));
+    
+    int64:iters = npk_mem_read_int64(merge_iter, 0i64);
+    int64:best_iter = npk_mem_read_int64(iters, best_idx * 8i64);
+    
+    int64:next_rec = sstable_iter_next(best_iter) ?! 0i64;
+    if (next_rec != 0i64) {
+        string:next_key = sst_rec_key(next_rec) ?! "";
+        drop(heap_push(heap, next_key, best_idx, next_rec));
+    }
+    
+    while (1i64 == 1i64) {
+        int64:sz = heap_size(heap) ?! 0i64;
+        if (sz == 0i64) { break; }
+        
+        string:peek_key = heap_pop_key(heap) ?! "";
+        if (peek_key != best_key) { break; }
+        
+        int64:dup_rec = heap_pop_record(heap) ?! 0i64;
+        int64:dup_idx = heap_pop_iter_idx(heap) ?! -1i64;
+        drop(heap_pop(heap));
+        drop(sst_rec_free(dup_rec)); // free old record
+        
+        int64:dup_iter = npk_mem_read_int64(iters, dup_idx * 8i64);
+        int64:dup_next = sstable_iter_next(dup_iter) ?! 0i64;
+        if (dup_next != 0i64) {
+            string:dup_next_key = sst_rec_key(dup_next) ?! "";
+            drop(heap_push(heap, dup_next_key, dup_idx, dup_next));
+        }
+    }
+    
+    pass(best_rec);
+};
+
+pub func:merge_iter_destroy = NIL(int64:merge_iter) {
+    if (merge_iter == 0i64) { pass(NIL); }
+    
+    int64:iters = npk_mem_read_int64(merge_iter, 0i64);
+    int64:count = npk_mem_read_int64(merge_iter, 8i64);
+    int64:readers = npk_mem_read_int64(merge_iter, 24i64);
+    
+    int64:i = 0i64;
+    while (i < count) {
+        int64:iter = npk_mem_read_int64(iters, i * 8i64);
+        drop(sstable_iter_destroy(iter));
+        
+        if (readers != 0i64) {
+            int64:reader = npk_mem_read_int64(readers, i * 8i64);
+            drop(sstable_close_read(reader));
+        }
+        
+        i = i + 1i64;
+    }
+    
+    int64:heap = npk_mem_read_int64(merge_iter, 16i64);
+    
+    // empty heap to free leftover records
+    while (1i64 == 1i64) {
+        int64:sz = heap_size(heap) ?! 0i64;
+        if (sz == 0i64) { break; }
+        int64:rec = heap_pop_record(heap) ?! 0i64;
+        drop(heap_pop(heap));
+        drop(sst_rec_free(rec));
+    }
+    
+    drop(heap_destroy(heap));
+    
+    drop(nitpick_libc_mem_free(iters));
+    if (readers != 0i64) {
+        drop(nitpick_libc_mem_free(readers));
+    }
+    
+    drop(nitpick_libc_mem_free(merge_iter));
+    pass(NIL);
+};
+
+// Helper: sort an array of int64s (file_ids)
+func:sort_int64_array = NIL(int64:arr, int64:count) {
+    int64:i = 0i64;
+    while (i < count) {
+        int64:j = i + 1i64;
+        while (j < count) {
+            int64:a = npk_mem_read_int64(arr, i * 8i64);
+            int64:b = npk_mem_read_int64(arr, j * 8i64);
+            if (a > b) {
+                drop(npk_mem_write_int64(arr, i * 8i64, b));
+                drop(npk_mem_write_int64(arr, j * 8i64, a));
+            }
+            j = j + 1i64;
+        }
+        i = i + 1i64;
+    }
+    pass(NIL);
+};
+
+// Internal function to do the compaction.
+// Collects all files from from_level, computes overlap, collects overlapping files from to_level.
+pub func:compact_level = int64(int64:lm, int64:from_level) {
+    int64:to_level = from_level + 1i64;
+    if (to_level >= LM_MAX_LEVELS) { pass(0i64); }
+    
+    int64:from_count = lm_count_at_level(lm, from_level) ?! 0i64;
+    if (from_count == 0i64) { pass(0i64); }
+    
+    int64:from_files = lm_get_sstables(lm, from_level) ?! 0i64;
+    
+    string:min_k = "";
+    string:max_k = "";
+    int64:i = 0i64;
+    while (i < from_count) {
+        int64:fid = npk_mem_read_int64(from_files, i * 8i64);
+        string:fk_min = lm_get_sstable_min_key(lm, from_level, fid) ?! "";
+        string:fk_max = lm_get_sstable_max_key(lm, from_level, fid) ?! "";
+        
+        if (i == 0i64) {
+            min_k = fk_min;
+            max_k = fk_max;
+        } else {
+            if (fk_min < min_k) { min_k = fk_min; }
+            if (fk_max > max_k) { max_k = fk_max; }
+        }
+        i = i + 1i64;
+    }
+    
+    int64:to_count_total = lm_count_at_level(lm, to_level) ?! 0i64;
+    int64:to_files_all = 0i64;
+    if (to_count_total > 0i64) {
+        to_files_all = lm_get_sstables(lm, to_level) ?! 0i64;
+    }
+    
+    int64:overlap_files = nitpick_libc_mem_malloc(LM_MAX_SSTABLES_PER_LEVEL * 8i64);
+    int64:overlap_count = 0i64;
+    
+    i = 0i64;
+    while (i < to_count_total) {
+        int64:fid = npk_mem_read_int64(to_files_all, i * 8i64);
+        string:fk_min = lm_get_sstable_min_key(lm, to_level, fid) ?! "";
+        string:fk_max = lm_get_sstable_max_key(lm, to_level, fid) ?! "";
+        
+        // Overlap condition: not (fk_max < min_k or fk_min > max_k)
+        int64:no_overlap = 0i64;
+        if (fk_max < min_k) { no_overlap = 1i64; }
+        if (fk_min > max_k) { no_overlap = 1i64; }
+        
+        if (no_overlap == 0i64) {
+            drop(npk_mem_write_int64(overlap_files, overlap_count * 8i64, fid));
+            overlap_count = overlap_count + 1i64;
+        }
+        i = i + 1i64;
+    }
+    
+    if (to_files_all != 0i64) { drop(nitpick_libc_mem_free(to_files_all)); }
+    
+    int64:total_iters = from_count + overlap_count;
+    int64:all_fids = nitpick_libc_mem_malloc(total_iters * 8i64);
+    int64:all_levels = nitpick_libc_mem_malloc(total_iters * 8i64);
+    
+    i = 0i64;
+    while (i < from_count) {
+        int64:fid = npk_mem_read_int64(from_files, i * 8i64);
+        drop(npk_mem_write_int64(all_fids, i * 8i64, fid));
+        drop(npk_mem_write_int64(all_levels, i * 8i64, from_level));
+        i = i + 1i64;
+    }
+    int64:j = 0i64;
+    while (j < overlap_count) {
+        int64:fid = npk_mem_read_int64(overlap_files, j * 8i64);
+        drop(npk_mem_write_int64(all_fids, (from_count + j) * 8i64, fid));
+        drop(npk_mem_write_int64(all_levels, (from_count + j) * 8i64, to_level));
+        j = j + 1i64;
+    }
+    
+    // Sort all_fids (and keep all_levels synced, wait, do we need all_levels? Yes, to get the file path!)
+    // Let's sort both together based on fid
+    i = 0i64;
+    while (i < total_iters) {
+        j = i + 1i64;
+        while (j < total_iters) {
+            int64:fid_a = npk_mem_read_int64(all_fids, i * 8i64);
+            int64:fid_b = npk_mem_read_int64(all_fids, j * 8i64);
+            if (fid_a > fid_b) {
+                int64:lvl_a = npk_mem_read_int64(all_levels, i * 8i64);
+                int64:lvl_b = npk_mem_read_int64(all_levels, j * 8i64);
+                
+                drop(npk_mem_write_int64(all_fids, i * 8i64, fid_b));
+                drop(npk_mem_write_int64(all_fids, j * 8i64, fid_a));
+                
+                drop(npk_mem_write_int64(all_levels, i * 8i64, lvl_b));
+                drop(npk_mem_write_int64(all_levels, j * 8i64, lvl_a));
+            }
+            j = j + 1i64;
+        }
+        i = i + 1i64;
+    }
+    
+    int64:readers = nitpick_libc_mem_malloc(total_iters * 8i64);
+    int64:iters = nitpick_libc_mem_malloc(total_iters * 8i64);
+    
+    i = 0i64;
+    while (i < total_iters) {
+        int64:fid = npk_mem_read_int64(all_fids, i * 8i64);
+        int64:lvl = npk_mem_read_int64(all_levels, i * 8i64);
+        
+        // Wait, how to reconstruct the filename?
+        // Let's copy lm_next_sstable_path logic, but we don't increment next_file_id.
+        // Actually, we can just manually build it.
+        int64:d_ptr = npk_mem_read_int64(lm, 0i64);
+        int64:d_len = npk_mem_read_int64(lm, 8i64);
+        string:dir = npk_mem_read_string(d_ptr, d_len);
+        
+        string:fid_str = string_from_int(fid);
+        while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
+        
+        string:p1 = dir + "/L";
+        string:p2 = p1 + string_from_int(lvl);
+        string:p3 = p2 + "/sst_";
+        string:p4 = p3 + fid_str;
+        string:path = p4 + ".npkdb";
+        
+        int64:reader = sstable_open_read(path) ?! 0i64;
+        int64:iter = sstable_iter_create(reader) ?! 0i64;
+        
+        drop(npk_mem_write_int64(readers, i * 8i64, reader));
+        drop(npk_mem_write_int64(iters, i * 8i64, iter));
+        i = i + 1i64;
+    }
+    
+    int64:m_iter = merge_iter_create(iters, readers, total_iters) ?! 0i64;
+    
+    // Check if we can drop tombstones (if no SSTables exist at levels > to_level)
+    int64:can_drop_tombstones = 1i64;
+    int64:lvl = to_level + 1i64;
+    while (lvl < LM_MAX_LEVELS) {
+        int64:c = lm_count_at_level(lm, lvl) ?! 0i64;
+        if (c > 0i64) {
+            can_drop_tombstones = 0i64;
+            break;
+        }
+        lvl = lvl + 1i64;
+    }
+    
+    // Now iterate and write out to new L1 files.
+    // For simplicity, we write EVERYTHING to ONE new SSTable.
+    // In a real LSM, we'd roll over at 4MB.
+    
+    string:new_path = lm_next_sstable_path(lm, to_level) ?! "";
+    int64:new_fid = lm_get_next_file_id(lm) ?! 1i64;
+    int64:new_fid = new_fid - 1i64; // lm_next_sstable_path increments it
+    
+    // Create a temporary memtable to hold records before writing
+    // Wait, sstable_write takes a memtable!
+    // But we are merging records that might not fit in memory!
+    // We need a sstable_write_from_iter or similar?
+    // Wait, the roadmap says: "when L0 accumulates... compact".
+    // If we just use a memtable, we'd load everything into memory. L0 max size is 4 * 4MB = 16MB.
+    // L1 could be 40MB. 56MB in memory is fine for NPKDB.
+    // Let's use a memtable!
+    int64:out_mt = mt_create(0i64) ?! 0i64;
+    int64:rec_count = 0i64;
+    
+    string:out_min_k = "";
+    string:out_max_k = "";
+    
+    while (1i64 == 1i64) {
+        int64:rec = merge_iter_next(m_iter) ?! 0i64;
+        if (rec == 0i64) { break; }
+        
+        string:k = sst_rec_key(rec) ?! "";
+        int64:is_tomb = sst_rec_is_tombstone(rec) ?! 0i64;
+        
+        int64:can_purge = 1i64;
+        int64:chk_lvl = to_level + 1i64;
+        while (chk_lvl < LM_MAX_LEVELS) {
+            int64:c = lm_count_at_level(lm, chk_lvl) ?! 0i64;
+            if (c > 0i64) {
+                can_purge = 0i64;
+                break;
+            }
+            chk_lvl = chk_lvl + 1i64;
+        }
+        
+        int64:skip = 0i64;
+        if (is_tomb == 1i64) {
+            if (can_purge == 1i64) {
+                skip = 1i64;
+            }
+        }
+        
+        if (skip == 0i64) {
+            int64:v_ptr = sst_rec_val_ptr(rec) ?! 0i64;
+            int64:v_len = sst_rec_val_len(rec) ?! 0i64;
+            if (is_tomb == 1i64) {
+                drop(mt_delete(out_mt, k));
+            } else {
+                drop(mt_put(out_mt, k, v_ptr, v_len));
+            }
+            
+            if (rec_count == 0i64) {
+                out_min_k = k;
+                out_max_k = k;
+            } else {
+                if (k < out_min_k) { out_min_k = k; }
+                if (k > out_max_k) { out_max_k = k; }
+            }
+            rec_count = rec_count + 1i64;
+        }
+        
+        drop(sst_rec_free(rec));
+    }
+    
+    drop(merge_iter_destroy(m_iter));
+    
+    // Write new SSTable
+    if (rec_count > 0i64) {
+        drop(mt_freeze(out_mt));
+        int64:written = sstable_write(new_path, out_mt) ?! -1i64;
+        drop(lm_add_sstable(lm, to_level, new_fid, out_min_k, out_max_k, written, rec_count));
+    }
+    drop(mt_destroy(out_mt));
+    
+    // Remove old files
+    i = 0i64;
+    while (i < from_count) {
+        int64:fid = npk_mem_read_int64(from_files, i * 8i64);
+        drop(lm_remove_sstable(lm, from_level, fid));
+        
+        int64:d_ptr = npk_mem_read_int64(lm, 0i64);
+        int64:d_len = npk_mem_read_int64(lm, 8i64);
+        string:dir = npk_mem_read_string(d_ptr, d_len);
+        string:fid_str = string_from_int(fid);
+        while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
+        string:p1 = dir + "/L";
+        string:p2 = p1 + string_from_int(from_level);
+        string:p3 = p2 + "/sst_";
+        string:p4 = p3 + fid_str;
+        string:path = p4 + ".npkdb";
+        drop(sys(UNLINK, path));
+        
+        i = i + 1i64;
+    }
+    
+    j = 0i64;
+    while (j < overlap_count) {
+        int64:fid = npk_mem_read_int64(overlap_files, j * 8i64);
+        drop(lm_remove_sstable(lm, to_level, fid));
+        
+        int64:d_ptr = npk_mem_read_int64(lm, 0i64);
+        int64:d_len = npk_mem_read_int64(lm, 8i64);
+        string:dir = npk_mem_read_string(d_ptr, d_len);
+        string:fid_str = string_from_int(fid);
+        while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
+        string:p1 = dir + "/L";
+        string:p2 = p1 + string_from_int(to_level);
+        string:p3 = p2 + "/sst_";
+        string:p4 = p3 + fid_str;
+        string:path = p4 + ".npkdb";
+        drop(sys(UNLINK, path));
+        
+        j = j + 1i64;
+    }
+    
+    drop(nitpick_libc_mem_free(from_files));
+    drop(nitpick_libc_mem_free(overlap_files));
+    drop(nitpick_libc_mem_free(all_fids));
+    drop(nitpick_libc_mem_free(all_levels));
+    
+    pass(rec_count);
+};
+
+pub func:compact_l0_to_l1 = int64(int64:lm) {
+    pass(compact_level(lm, 0i64) ?! 0i64);
+};
+
+pub func:maybe_compact = int64(int64:lm) {
+    int64:needs = lm_l0_needs_compaction(lm) ?! 0i64;
+    if (needs == 1i64) {
+        pass(compact_l0_to_l1(lm) ?! 0i64);
+    }
+    pass(0i64);
+};

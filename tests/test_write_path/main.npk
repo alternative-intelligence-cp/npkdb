@@ -32,7 +32,7 @@ func:main = int32() {
     drop(npk_mem_write_string(v_ptr, "v"));
 
     // T01
-    int64:wp = wp_init(wal_path) ?! 0i64;
+    int64:wp = wp_init("test_data", wal_path) ?! 0i64;
     drop(check(wp != 0i64, "T01 wp_init creates WAL file and active Memtable"));
 
     // T02

@@ -1,0 +1,124 @@
+use "../../src/util/constants.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+
+use "../../src/storage/level_manager.npk".*;
+use "../../src/storage/sstable.npk".*;
+use "../../src/storage/compaction.npk".*;
+use "../../src/storage/memtable.npk".*;
+use "../../src/storage/flush.npk".*;
+use "../../src/storage/write_path.npk".*;
+use "../../src/util/min_heap.npk".*;
+
+int64:pass_count = 0i64;
+int64:fail_count = 0i64;
+
+func:check = NIL(bool:cond, string:msg) {
+    if (cond) {
+        pass_count = pass_count + 1i64;
+        println("  ✓ " + msg);
+    } else {
+        fail_count = fail_count + 1i64;
+        println("  ✗ " + msg);
+    }
+    pass(NIL);
+};
+
+func:failsafe = int32(tbb32:err) { exit(1); };
+
+pub func:main = int32() {
+    println("╔══════════════════════════════════════╗");
+    println("║  Compaction Engine Tests             ║");
+    println("╚══════════════════════════════════════╝");
+    
+    // Full compaction test
+    // Cleaned up by run.sh
+    
+    int64:lm = lm_create("test_comp_data") ?! 0i64;
+    drop(flush_ensure_dirs("test_comp_data"));
+    
+    // Create 4 L0 files
+    int64:v_ptr = nitpick_libc_mem_malloc(100i64);
+    drop(npk_mem_write_string(v_ptr, "testval"));
+    
+    int64:mt1 = mt_create(1i64) ?! 0i64;
+    drop(mt_put(mt1, "a", v_ptr, 100i64));
+    drop(mt_put(mt1, "c", v_ptr, 100i64));
+    drop(mt_freeze(mt1));
+    drop(flush_memtable(mt1, lm));
+    
+    int64:mt2 = mt_create(2i64) ?! 0i64;
+    drop(mt_put(mt2, "b", v_ptr, 100i64)); // disjoint from 1 except a-c range
+    drop(mt_put(mt2, "c", v_ptr, 100i64)); // duplicate c
+    drop(mt_freeze(mt2));
+    drop(flush_memtable(mt2, lm));
+    
+    int64:mt3 = mt_create(3i64) ?! 0i64;
+    drop(mt_put(mt3, "d", v_ptr, 100i64));
+    drop(mt_delete(mt3, "a")); // tombstone for a
+    drop(mt_freeze(mt3));
+    drop(flush_memtable(mt3, lm));
+    
+    int64:mt4 = mt_create(4i64) ?! 0i64;
+    drop(mt_put(mt4, "e", v_ptr, 100i64));
+    drop(mt_put(mt4, "f", v_ptr, 100i64));
+    drop(mt_freeze(mt4));
+    drop(flush_memtable(mt4, lm));
+    
+    drop(nitpick_libc_mem_free(v_ptr));
+    
+    int64:needs = lm_l0_needs_compaction(lm) ?! 0i64;
+    drop(check(needs == 1i64, "T15 maybe_compact with L0 >= threshold = compaction runs"));
+    
+    int64:comp_res = compact_l0_to_l1(lm) ?! -1i64;
+    drop(check(comp_res > 0i64, "T05 Compact 4 L0 SSTables into L1"));
+    
+    int64:c_l0 = lm_count_at_level(lm, 0i64) ?! -1i64;
+    drop(check(c_l0 == 0i64, "T06 After compaction, L0 count = 0"));
+    
+    int64:c_l1 = lm_count_at_level(lm, 1i64) ?! 0i64;
+    drop(check(c_l1 > 0i64, "T07 After compaction, L1 count > 0"));
+    
+    // Let's read L1 file and check keys
+    int64:l1_fids = lm_get_sstables(lm, 1i64) ?! 0i64;
+    int64:fid = npk_mem_read_int64(l1_fids, 0i64);
+    drop(nitpick_libc_mem_free(l1_fids));
+    
+    string:fid_str = string_from_int(fid);
+    while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
+    string:p1 = "test_comp_data/L1/sst_";
+    string:p2 = p1 + fid_str;
+    string:path = p2 + ".npkdb";
+    
+    int64:reader = sstable_open_read(path) ?! 0i64;
+    drop(check(reader != 0i64, "L1 file opens successfully"));
+    
+    int64:iter = sstable_iter_create(reader) ?! 0i64;
+    string:all_k = "";
+    while (1i64 == 1i64) {
+        int64:rec = sstable_iter_next(iter) ?! 0i64;
+        if (rec == 0i64) { break; }
+        string:k = sst_rec_key(rec) ?! "";
+        all_k = all_k + k;
+        drop(sst_rec_free(rec));
+    }
+    drop(sstable_iter_destroy(iter));
+    drop(sstable_close_read(reader));
+    
+    // We expect "bcdef". 'a' was deleted by mt3, 'c' is deduped.
+    drop(check(all_k == "bcdef", "T08 All keys findable, deduped, tombstone removed"));
+    
+    // Check old files deleted
+    int64:fd1 = sys(OPEN, "test_comp_data/L0/sst_000001.npkdb", 0i64, 0i64) ?! -1i64;
+    drop(check(fd1 <= 0i64, "T11 Old SSTable files deleted after compaction"));
+    if (fd1 > 0i64) { drop(sys(CLOSE, fd1)); }
+    
+    drop(lm_destroy(lm));
+    
+    println("");
+    println("");
+    println("Results: " + string_from_int(pass_count) + " passed, " + string_from_int(fail_count) + " failed");
+    if (fail_count > 0i64) {
+        exit(1);
+    }
+    exit(0);
+};

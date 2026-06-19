@@ -1,0 +1,520 @@
+// src/storage/sstable.npk
+// SSTable file format constants and writer
+
+use "../page/page.npk".*;
+use "memtable.npk".*;
+use "skiplist.npk".*;
+use "../util/constants.npk".*;
+use "../util/error_codes.npk".*;
+use "../util/crc32.npk".*;
+use "../util/bloom.npk".*;
+use "../util/mem_primitives.npk".*;
+
+// SSTable magic number (identifies file type)
+// "NPKDB01" in hex: 4E 50 4B 44 42 30 31 => 0x4E504B44423031
+pub fixed int64:SSTABLE_MAGIC = 22033878037372977i64; // 0x4E504B44423031
+
+// Footer layout (32 bytes):
+//   Offset 0:  data_block_count (int64)
+//   Offset 8:  index_block_offset (int64) - byte offset of index block
+//   Offset 16: total_keys (int64)
+//   Offset 24: magic (int32)
+//   Offset 28: footer_checksum (int32)
+pub fixed int64:SSTABLE_FOOTER_SIZE = 32i64;
+
+// Record flags
+pub fixed int8:RECORD_FLAG_LIVE      = 0i8;
+pub fixed int8:RECORD_FLAG_TOMBSTONE = 1i8;
+
+// -----------------------------------------------------------------------------
+// Record Serialization
+// -----------------------------------------------------------------------------
+
+pub func:sstable_record_size = int64(string:key, int64:val_len, int64:is_tombstone) {
+    int64:key_len = string_length(key);
+    int64:sz = 1i64 + 4i64 + key_len; // flag(1) + key_len(4) + key(N)
+    
+    if (is_tombstone == 0i64) {
+        sz = sz + 4i64 + val_len; // value_len(4) + value(M)
+    } else {
+        sz = sz + 4i64; // value_len(4) = 0
+    }
+    
+    pass(sz);
+};
+
+pub func:sstable_serialize_record = int64(string:key, int64:val_ptr, int64:val_len, int64:is_tombstone) {
+    int64:sz = sstable_record_size(key, val_len, is_tombstone) ?! 0i64;
+    int64:buf = nitpick_libc_mem_malloc(sz);
+    int64:key_len = string_length(key);
+    
+    if (is_tombstone == 1i64) {
+        drop(npk_mem_write_byte(buf, 0i64, RECORD_FLAG_TOMBSTONE => int64));
+    } else {
+        drop(npk_mem_write_byte(buf, 0i64, RECORD_FLAG_LIVE => int64));
+    }
+    
+    drop(npk_mem_write_int32(buf, 1i64, @cast_unchecked<int32>(key_len)));
+    drop(npk_mem_write_string(buf + 5i64, key));
+    
+    int64:v_offset = 5i64 + key_len;
+    
+    if (is_tombstone == 1i64) {
+        drop(npk_mem_write_int32(buf, v_offset, 0i32));
+    } else {
+        drop(npk_mem_write_int32(buf, v_offset, @cast_unchecked<int32>(val_len)));
+        drop(npk_mem_copy(buf + v_offset + 4i64, val_ptr, val_len));
+    }
+    
+    pass(buf);
+};
+
+pub func:sstable_flush_page = int64(int64:fd, int64:page_buf) {
+    int64:offset = sys(LSEEK, fd, 0i64, 1i64) ?! -1i64;
+    int64:bw = sys(WRITE, fd, page_buf, PAGE_SIZE) ?! -1i64;
+    if (bw < PAGE_SIZE) { pass(-1i64); }
+    pass(offset);
+};
+
+pub func:sstable_build_index = int64(int64:k_ptrs, int64:k_lens, int64:offsets, int64:count) {
+    int64:page = page_alloc() ?! 0i64;
+    if (page == 0i64) { pass(0i64); }
+    drop(page_init(page, 0i64));
+    
+    int64:i = 0i64;
+    while (i < count) {
+        int64:k_ptr = npk_mem_read_int64(k_ptrs, i * 8i64);
+        int64:k_len = npk_mem_read_int64(k_lens, i * 8i64);
+        int64:block_num = npk_mem_read_int64(offsets, i * 8i64); // actually offset
+        
+        // Serialize index record: key_len(4) + last_key(k_len) + block_offset(8)
+        int64:rec_sz = 4i64 + k_len + 8i64;
+        int64:rec = nitpick_libc_mem_malloc(rec_sz);
+        drop(npk_mem_write_int32(rec, 0i64, @cast_unchecked<int32>(k_len)));
+        drop(npk_mem_copy(rec + 4i64, k_ptr, k_len));
+        drop(npk_mem_write_int64(rec, 4i64 + k_len, block_num));
+        
+        int64:ins = page_insert(page, rec, rec_sz) ?! -1i64;
+        drop(nitpick_libc_mem_free(rec));
+        
+        i = i + 1i64;
+    }
+    pass(page);
+};
+
+pub func:sstable_write = int64(string:path, int64:mt) {
+    int64:fd = sys(OPEN, path, 578i64, 420i64) ?! -1i64; // O_RDWR|O_CREAT|O_TRUNC, 0644
+    if (fd <= 0i64) { pass(-1i64); }
+    
+    int64:total_keys_init = mt_count(mt) ?! 0i64;
+    int64:bloom = bloom_create(total_keys_init) ?! 0i64;
+    
+    int64:curr_page = page_alloc() ?! 0i64;
+    drop(page_init(curr_page, 0i64));
+    int64:total_bytes = 0i64;
+    
+    // Max 1000 blocks for cycle 0
+    int64:k_ptrs = nitpick_libc_mem_malloc(8000i64);
+    int64:k_lens = nitpick_libc_mem_malloc(8000i64);
+    int64:b_offs = nitpick_libc_mem_malloc(8000i64);
+    int64:block_count = 0i64;
+    int64:total_keys = 0i64;
+    
+    string:last_key = "";
+    int64:has_pending = 0i64;
+    
+    int64:node = mt_first(mt) ?! 0i64;
+    while (node != 0i64) {
+        string:k = sl_node_key(node) ?! "";
+        drop(bloom_add(bloom, k));
+        
+        int64:vp = sl_node_val_ptr(node) ?! 0i64;
+        int64:vl = sl_node_val_len(node) ?! 0i64;
+        int64:is_del = sl_node_is_deleted(node) ?! 0i64;
+        
+        int64:rec_sz = sstable_record_size(k, vl, is_del) ?! 0i64;
+        int64:rec = sstable_serialize_record(k, vp, vl, is_del) ?! 0i64;
+        
+        int64:ins = page_insert(curr_page, rec, rec_sz) ?! -1i64;
+        if (ins == -1i64) {
+            // Page full, flush it
+            int64:offset = sstable_flush_page(fd, curr_page) ?! -1i64;
+            
+            int64:last_k_len = string_length(last_key);
+            int64:last_k_ptr = nitpick_libc_mem_malloc(last_k_len);
+            drop(npk_mem_write_string(last_k_ptr, last_key));
+            
+            drop(npk_mem_write_int64(k_ptrs, block_count * 8i64, last_k_ptr));
+            drop(npk_mem_write_int64(k_lens, block_count * 8i64, last_k_len));
+            drop(npk_mem_write_int64(b_offs, block_count * 8i64, offset));
+            block_count = block_count + 1i64;
+            
+            // Reset page and retry
+            drop(page_free(curr_page));
+            curr_page = page_alloc() ?! 0i64;
+            drop(page_init(curr_page, block_count));
+            ins = page_insert(curr_page, rec, rec_sz) ?! -1i64;
+        }
+        
+        drop(nitpick_libc_mem_free(rec));
+        last_key = k;
+        has_pending = 1i64;
+        total_keys = total_keys + 1i64;
+        
+        node = sl_next(node) ?! 0i64;
+    }
+    
+    // Flush last page if any keys
+    if (has_pending == 1i64) {
+        int64:offset = sstable_flush_page(fd, curr_page) ?! -1i64;
+        
+        int64:last_k_len = string_length(last_key);
+        int64:last_k_ptr = nitpick_libc_mem_malloc(last_k_len);
+        drop(npk_mem_write_string(last_k_ptr, last_key));
+        
+        drop(npk_mem_write_int64(k_ptrs, block_count * 8i64, last_k_ptr));
+        drop(npk_mem_write_int64(k_lens, block_count * 8i64, last_k_len));
+        drop(npk_mem_write_int64(b_offs, block_count * 8i64, offset));
+        block_count = block_count + 1i64;
+    }
+    
+    drop(page_free(curr_page));
+    
+    // Serialize and flush Bloom Filter
+    int64:bloom_buf = bloom_serialize(bloom) ?! 0i64;
+    int64:bloom_sz = bloom_serialize_size(bloom) ?! 0i64;
+    int64:bloom_offset = sys(LSEEK, fd, 0i64, 1i64) ?! -1i64; // SEEK_CUR
+    drop(sys(WRITE, fd, bloom_buf, bloom_sz));
+    drop(nitpick_libc_mem_free(bloom_buf));
+    drop(bloom_destroy(bloom));
+    
+    // Build and flush index block
+    int64:index_page = sstable_build_index(k_ptrs, k_lens, b_offs, block_count) ?! 0i64;
+    int64:index_offset = sstable_flush_page(fd, index_page) ?! -1i64;
+    drop(page_free(index_page));
+    
+    // Clean up key pointers
+    int64:i = 0i64;
+    while (i < block_count) {
+        int64:kp = npk_mem_read_int64(k_ptrs, i * 8i64);
+        drop(nitpick_libc_mem_free(kp));
+        i = i + 1i64;
+    }
+    drop(nitpick_libc_mem_free(k_ptrs));
+    drop(nitpick_libc_mem_free(k_lens));
+    drop(nitpick_libc_mem_free(b_offs));
+    
+    // Write Footer (48 bytes)
+    int64:footer = nitpick_libc_mem_malloc(SSTABLE_FOOTER_SIZE);
+    drop(npk_mem_write_int64(footer, 0i64, block_count));
+    drop(npk_mem_write_int64(footer, 8i64, index_offset));
+    drop(npk_mem_write_int64(footer, 16i64, bloom_offset));
+    drop(npk_mem_write_int64(footer, 24i64, bloom_sz));
+    drop(npk_mem_write_int64(footer, 32i64, total_keys));
+    drop(npk_mem_write_int32(footer, 40i64, 1145192497i32)); // "DB01" -> 0x44423031
+    
+    int64:crc_calc = crc32_compute(footer, 44i64) ?! 0i64;
+    drop(npk_mem_write_int32(footer, 44i64, @cast_unchecked<int32>(crc_calc)));
+    
+    int64:fw = sys(WRITE, fd, footer, SSTABLE_FOOTER_SIZE) ?! -1i64;
+    drop(nitpick_libc_mem_free(footer));
+    
+    total_bytes = sys(LSEEK, fd, 0i64, 1i64) ?! -1i64;
+    drop(sys(FSYNC, fd));
+    drop(sys(CLOSE, fd));
+    
+    pass(total_bytes);
+};
+
+// -----------------------------------------------------------------------------
+// Reader implementation
+// -----------------------------------------------------------------------------
+
+pub func:sstable_open_read = int64(string:path) {
+    int64:fd = sys(OPEN, path, 0i64, 0i64) ?! -1i64;
+    if (fd <= 0i64) { pass(0i64); }
+    
+    int64:footer = nitpick_libc_mem_malloc(SSTABLE_FOOTER_SIZE);
+    int64:r_res = sys(LSEEK, fd, 0i64 - SSTABLE_FOOTER_SIZE, 2i64) ?! -1i64; // SEEK_END
+    if (r_res == -1i64) {
+        drop(nitpick_libc_mem_free(footer));
+        drop(sys(CLOSE, fd));
+        pass(0i64);
+    }
+    
+    int64:rw = sys(READ, fd, footer, SSTABLE_FOOTER_SIZE) ?! -1i64;
+    if (rw != SSTABLE_FOOTER_SIZE) {
+        drop(nitpick_libc_mem_free(footer));
+        drop(sys(CLOSE, fd));
+        pass(0i64);
+    }
+    
+    int32:magic = npk_mem_read_int32(footer, 40i64);
+    if (magic != 1145192497i32) { // 0x44423031
+        drop(nitpick_libc_mem_free(footer));
+        drop(sys(CLOSE, fd));
+        pass(0i64);
+    }
+    
+    int64:crc_calc = crc32_compute(footer, 44i64) ?! 0i64;
+    int32:chk = npk_mem_read_int32(footer, 44i64);
+    if (chk != @cast_unchecked<int32>(crc_calc)) {
+        drop(nitpick_libc_mem_free(footer));
+        drop(sys(CLOSE, fd));
+        pass(0i64);
+    }
+    
+    int64:db_cnt = npk_mem_read_int64(footer, 0i64);
+    int64:idx_off = npk_mem_read_int64(footer, 8i64);
+    int64:bloom_off = npk_mem_read_int64(footer, 16i64);
+    int64:bloom_sz = npk_mem_read_int64(footer, 24i64);
+    int64:t_keys = npk_mem_read_int64(footer, 32i64);
+    
+    drop(nitpick_libc_mem_free(footer));
+    
+    // Load index page
+    int64:index_page = page_alloc() ?! 0i64;
+    drop(sys(LSEEK, fd, idx_off, 0i64)); // SEEK_SET
+    int64:iw = sys(READ, fd, index_page, PAGE_SIZE) ?! -1i64;
+    if (iw != PAGE_SIZE) {
+        drop(page_free(index_page));
+        drop(sys(CLOSE, fd));
+        pass(0i64);
+    }
+    
+    // Load Bloom Filter
+    int64:bloom_buf = nitpick_libc_mem_malloc(bloom_sz);
+    drop(sys(LSEEK, fd, bloom_off, 0i64)); // SEEK_SET
+    drop(sys(READ, fd, bloom_buf, bloom_sz));
+    int64:bloom = bloom_deserialize(bloom_buf, bloom_sz) ?! 0i64;
+    drop(nitpick_libc_mem_free(bloom_buf));
+    
+    // Alloc 48-byte reader struct
+    int64:reader = nitpick_libc_mem_malloc(48i64);
+    drop(npk_mem_write_int64(reader, 0i64, fd));
+    drop(npk_mem_write_int64(reader, 8i64, db_cnt));
+    drop(npk_mem_write_int64(reader, 16i64, idx_off));
+    drop(npk_mem_write_int64(reader, 24i64, t_keys));
+    drop(npk_mem_write_int64(reader, 32i64, index_page));
+    drop(npk_mem_write_int64(reader, 40i64, bloom));
+    
+    pass(reader);
+};
+
+pub func:sstable_close_read = NIL(int64:reader) {
+    if (reader != 0i64) {
+        int64:fd = npk_mem_read_int64(reader, 0i64);
+        int64:index_page = npk_mem_read_int64(reader, 32i64);
+        int64:bloom = npk_mem_read_int64(reader, 40i64);
+        
+        drop(sys(CLOSE, fd));
+        drop(page_free(index_page));
+        if (bloom != 0i64) { drop(bloom_destroy(bloom)); }
+        drop(nitpick_libc_mem_free(reader));
+    }
+    pass(NIL);
+};
+
+pub func:sstable_find_block = int64(int64:reader, string:key) {
+    int64:index_page = npk_mem_read_int64(reader, 32i64);
+    int32:count32 = page_get_slot_count(index_page) ?! 0i32;
+    int64:count = count32 => int64;
+    if (count == 0i64) { pass(-1i64); }
+    
+    int64:low = 0i64;
+    int64:high = count - 1i64;
+    int64:found = -1i64;
+    
+    while (low <= high) {
+        int64:mid = low + ((high - low) / 2i64);
+        int64:tup_len = slot_get_tuple_length(index_page, mid) ?! 0i64;
+        int64:tup_off = slot_get_tuple_offset(index_page, mid) ?! 0i64;
+        
+        int64:tup_ptr = npk_mem_offset(index_page, tup_off);
+        int64:k_len = npk_mem_read_int32(tup_ptr, 0i64) => int64;
+        string:last_k = npk_mem_read_string(tup_ptr + 4i64, k_len);
+        
+        if (last_k >= key) {
+            found = mid;
+            high = mid - 1i64;
+        } else {
+            low = mid + 1i64;
+        }
+    }
+    
+    if (found != -1i64) {
+        int64:t_off = slot_get_tuple_offset(index_page, found) ?! 0i64;
+        int64:t_ptr = npk_mem_offset(index_page, t_off);
+        int64:kl = npk_mem_read_int32(t_ptr, 0i64) => int64;
+        int64:blk_off = npk_mem_read_int64(t_ptr, 4i64 + kl);
+        pass(blk_off / PAGE_SIZE);
+    }
+    pass(-1i64);
+};
+
+pub func:sstable_load_block = int64(int64:reader, int64:block_num) {
+    int64:fd = npk_mem_read_int64(reader, 0i64);
+    int64:blk_off = block_num * PAGE_SIZE;
+    int64:page = page_alloc() ?! 0i64;
+    drop(sys(LSEEK, fd, blk_off, 0i64)); // SEEK_SET
+    int64:rw = sys(READ, fd, page, PAGE_SIZE) ?! -1i64;
+    if (rw != PAGE_SIZE) {
+        drop(page_free(page));
+        pass(0i64);
+    }
+    pass(page);
+};
+
+// Record struct (40 bytes):
+// 0: key_ptr (int64) - dynamically allocated string copy!
+// 8: key_len (int64)
+// 16: val_ptr (int64) - within page buffer, do not free!
+// 24: val_len (int64)
+// 32: is_tombstone (int64)
+pub func:sstable_read_record = int64(int64:page_buf, int64:slot_index) {
+    int64:tup_len = slot_get_tuple_length(page_buf, slot_index) ?! 0i64;
+    int64:tup_off = slot_get_tuple_offset(page_buf, slot_index) ?! 0i64;
+    if (tup_len == 0i64) { pass(0i64); }
+    
+    int64:tup_ptr = npk_mem_offset(page_buf, tup_off);
+    int64:flag = npk_mem_read_byte(tup_ptr, 0i64);
+    int64:key_len = npk_mem_read_int32(tup_ptr, 1i64) => int64;
+    string:key = npk_mem_read_string(tup_ptr + 5i64, key_len);
+    
+    int64:v_off = 5i64 + key_len;
+    
+    int64:rec = nitpick_libc_mem_malloc(40i64);
+    int64:k_ptr = nitpick_libc_mem_malloc(key_len);
+    drop(npk_mem_write_string(k_ptr, key));
+    
+    drop(npk_mem_write_int64(rec, 0i64, k_ptr));
+    drop(npk_mem_write_int64(rec, 8i64, key_len));
+    
+    if (flag == RECORD_FLAG_TOMBSTONE => int64) {
+        drop(npk_mem_write_int64(rec, 16i64, 0i64));
+        drop(npk_mem_write_int64(rec, 24i64, 0i64));
+        drop(npk_mem_write_int64(rec, 32i64, 1i64));
+    } else {
+        int64:val_len = npk_mem_read_int32(tup_ptr, v_off) => int64;
+        drop(npk_mem_write_int64(rec, 16i64, tup_ptr + v_off + 4i64));
+        drop(npk_mem_write_int64(rec, 24i64, val_len));
+        drop(npk_mem_write_int64(rec, 32i64, 0i64));
+    }
+    
+    pass(rec);
+};
+
+pub func:sst_rec_key = string(int64:rec) {
+    int64:k_ptr = npk_mem_read_int64(rec, 0i64);
+    int64:k_len = npk_mem_read_int64(rec, 8i64);
+    pass(npk_mem_read_string(k_ptr, k_len));
+};
+pub func:sst_rec_val_ptr = int64(int64:rec) { pass(npk_mem_read_int64(rec, 16i64)); };
+pub func:sst_rec_val_len = int64(int64:rec) { pass(npk_mem_read_int64(rec, 24i64)); };
+pub func:sst_rec_is_tombstone = int64(int64:rec) { pass(npk_mem_read_int64(rec, 32i64)); };
+
+pub func:sst_rec_free = NIL(int64:rec) {
+    if (rec != 0i64) {
+        int64:k_ptr = npk_mem_read_int64(rec, 0i64);
+        drop(nitpick_libc_mem_free(k_ptr));
+        drop(nitpick_libc_mem_free(rec));
+    }
+    pass(NIL);
+};
+
+pub func:sstable_get = int64(int64:reader, string:key) {
+    int64:bloom = npk_mem_read_int64(reader, 40i64);
+    if (bloom != 0i64) {
+        int64:chk = bloom_check(bloom, key) ?! 0i64;
+        if (chk == 0i64) {
+            pass(0i64);
+        }
+    }
+    
+    int64:blk = sstable_find_block(reader, key) ?! -1i64;
+    if (blk == -1i64) { pass(0i64); }
+    
+    int64:page = sstable_load_block(reader, blk) ?! 0i64;
+    if (page == 0i64) { pass(0i64); }
+    
+    int32:count32 = page_get_slot_count(page) ?! 0i32;
+    int64:count = count32 => int64;
+    int64:i = 0i64;
+    int64:found_rec = 0i64;
+    
+    while (i < count) {
+        int64:rec = sstable_read_record(page, i) ?! 0i64;
+        if (rec != 0i64) {
+            string:rk = sst_rec_key(rec) ?! "";
+            if (rk == key) {
+                found_rec = rec;
+                break;
+            }
+            drop(sst_rec_free(rec));
+        }
+        i = i + 1i64;
+    }
+    
+    drop(page_free(page));
+    pass(found_rec);
+};
+
+// Iter state (32 bytes):
+// 0: reader (int64)
+// 8: current_block (int64)
+// 16: current_slot (int64)
+// 24: current_page (int64)
+pub func:sstable_iter_create = int64(int64:reader) {
+    int64:iter = nitpick_libc_mem_malloc(32i64);
+    drop(npk_mem_write_int64(iter, 0i64, reader));
+    drop(npk_mem_write_int64(iter, 8i64, 0i64));
+    drop(npk_mem_write_int64(iter, 16i64, 0i64));
+    
+    int64:page = sstable_load_block(reader, 0i64) ?! 0i64;
+    drop(npk_mem_write_int64(iter, 24i64, page));
+    
+    pass(iter);
+};
+
+pub func:sstable_iter_next = int64(int64:iter) {
+    int64:reader = npk_mem_read_int64(iter, 0i64);
+    int64:blk = npk_mem_read_int64(iter, 8i64);
+    int64:slot = npk_mem_read_int64(iter, 16i64);
+    int64:page = npk_mem_read_int64(iter, 24i64);
+    int64:db_cnt = npk_mem_read_int64(reader, 8i64);
+    
+    while (page != 0i64) {
+        int32:count32 = page_get_slot_count(page) ?! 0i32;
+        int64:count = count32 => int64;
+        if (slot < count) {
+            int64:rec = sstable_read_record(page, slot) ?! 0i64;
+            drop(npk_mem_write_int64(iter, 16i64, slot + 1i64));
+            if (rec != 0i64) {
+                pass(rec);
+            }
+        } else {
+            drop(page_free(page));
+            blk = blk + 1i64;
+            if (blk >= db_cnt) {
+                drop(npk_mem_write_int64(iter, 24i64, 0i64));
+                break;
+            }
+            page = sstable_load_block(reader, blk) ?! 0i64;
+            slot = 0i64;
+            drop(npk_mem_write_int64(iter, 8i64, blk));
+            drop(npk_mem_write_int64(iter, 16i64, slot));
+            drop(npk_mem_write_int64(iter, 24i64, page));
+        }
+    }
+    
+    pass(0i64);
+};
+
+pub func:sstable_iter_destroy = NIL(int64:iter) {
+    if (iter != 0i64) {
+        int64:page = npk_mem_read_int64(iter, 24i64);
+        if (page != 0i64) { drop(page_free(page)); }
+        drop(nitpick_libc_mem_free(iter));
+    }
+    pass(NIL);
+};
