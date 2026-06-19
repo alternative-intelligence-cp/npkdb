@@ -128,3 +128,148 @@ pub func:page_read_tuple_string = string(int64:buf, int64:slot_index) {
     int64:str_ptr = npk_mem_offset(buf, tup_off);
     pass(npk_mem_read_string(str_ptr, tup_len));
 };
+
+// Returns 1 if the page cannot fit a record of the given size, 0 otherwise.
+pub func:page_is_full = int64(int64:buf, int64:record_size) {
+    int64:space = page_free_space(buf) ?! 0i64;
+    if (space < record_size + SLOT_SIZE) {
+        pass(1i64);
+    }
+    pass(0i64);
+};
+
+// Returns the total number of live (non-deleted) records on the page.
+pub func:page_live_count = int64(int64:buf) {
+    int64:count = (page_get_slot_count(buf) ?! 0i32) => int64;
+    int64:live = 0i64;
+    int64:i = 0i64;
+    while (i < count) {
+        int64:len = slot_get_tuple_length(buf, i) ?! 0i64;
+        if (len > 0i64) {
+            live = live + 1i64;
+        }
+        i = i + 1i64;
+    }
+    pass(live);
+};
+
+// Returns the total bytes used by live tuple data
+pub func:page_used_bytes = int64(int64:buf) {
+    int64:count = (page_get_slot_count(buf) ?! 0i32) => int64;
+    int64:used = 0i64;
+    int64:i = 0i64;
+    while (i < count) {
+        int64:len = slot_get_tuple_length(buf, i) ?! 0i64;
+        if (len > 0i64) {
+            used = used + len;
+        }
+        i = i + 1i64;
+    }
+    pass(used);
+};
+
+// Insert a variable-length record into the page.
+pub func:page_insert = int64(int64:buf, int64:data_ptr, int64:data_len) {
+    if (data_len <= 0i64) {
+        fail(ERR_PAGE_CORRUPT => tbb8);
+    }
+    int64:is_full = page_is_full(buf, data_len) ?! 1i64;
+    if (is_full == 1i64) {
+        fail(ERR_PAGE_FULL => tbb8);
+    }
+
+    int64:tend = (page_get_tuple_end(buf) ?! 0i32) => int64;
+    int64:new_toff = tend - data_len + 1i64;
+
+    drop(npk_mem_copy(buf + new_toff, data_ptr, data_len));
+
+    int64:scnt = (page_get_slot_count(buf) ?! 0i32) => int64;
+    drop(slot_write(buf, scnt, new_toff, data_len));
+
+    int64:foff = (page_get_free_offset(buf) ?! 0i32) => int64;
+    drop(npk_mem_write_int32(buf, HDR_OFF_SLOT_COUNT, (scnt + 1i64) => int32));
+    drop(npk_mem_write_int32(buf, HDR_OFF_FREE_OFFSET, (foff + SLOT_SIZE) => int32));
+    drop(npk_mem_write_int32(buf, HDR_OFF_TUPLE_END, (new_toff - 1i64) => int32));
+
+    pass(scnt);
+};
+
+// Mark a record as deleted by zeroing its slot entry.
+pub func:page_delete = NIL(int64:buf, int64:slot_index) {
+    int64:count = (page_get_slot_count(buf) ?! 0i32) => int64;
+    if (slot_index >= 0i64 && slot_index < count) {
+        drop(slot_write(buf, slot_index, 0i64, 0i64));
+    }
+    pass(NIL);
+};
+
+// Returns 1 if the slot contains a live record, 0 if deleted/tombstoned.
+pub func:page_slot_is_alive = int64(int64:buf, int64:slot_index) {
+    int64:len = slot_get_tuple_length(buf, slot_index) ?! 0i64;
+    if (len > 0i64) {
+        pass(1i64);
+    }
+    pass(0i64);
+};
+
+// Update the record at slot_index with new data.
+pub func:page_update = int64(int64:buf, int64:slot_index, int64:data_ptr, int64:data_len) {
+    int64:count = (page_get_slot_count(buf) ?! 0i32) => int64;
+    if (slot_index < 0i64 || slot_index >= count) {
+        fail(ERR_PAGE_INVALID_SLOT => tbb8);
+    }
+
+    int64:old_len = slot_get_tuple_length(buf, slot_index) ?! 0i64;
+    if (old_len == 0i64) {
+        fail(ERR_PAGE_INVALID_SLOT => tbb8); // Already deleted
+    }
+
+    if (data_len <= old_len) {
+        // Overwrite in-place
+        int64:old_off = slot_get_tuple_offset(buf, slot_index) ?! 0i64;
+        drop(npk_mem_copy(buf + old_off, data_ptr, data_len));
+        drop(slot_write(buf, slot_index, old_off, data_len));
+        pass(slot_index);
+    }
+
+    // Otherwise, delete and insert
+    drop(page_delete(buf, slot_index));
+    int64:new_idx = page_insert(buf, data_ptr, data_len) ?! -1i64;
+    if (new_idx == -1i64) {
+        fail(ERR_PAGE_FULL => tbb8);
+    }
+    pass(new_idx);
+};
+
+// Compact the page by removing dead slots and consolidating tuple space.
+pub func:page_defragment = int64(int64:buf) {
+    int64:temp = page_alloc() ?! 0i64;
+    if (temp == 0i64) {
+        pass(0i64);
+    }
+
+    int64:free_before = page_free_space(buf) ?! 0i64;
+
+    drop(npk_mem_copy(temp, buf, PAGE_HEADER_SIZE));
+
+    drop(npk_mem_write_int32(temp, HDR_OFF_FREE_OFFSET, PAGE_HEADER_SIZE => int32));
+    drop(npk_mem_write_int32(temp, HDR_OFF_TUPLE_END, (PAGE_SIZE - 1i64) => int32));
+    drop(npk_mem_write_int32(temp, HDR_OFF_SLOT_COUNT, 0i32));
+
+    int64:orig_count = (page_get_slot_count(buf) ?! 0i32) => int64;
+    int64:i = 0i64;
+    while (i < orig_count) {
+        int64:len = slot_get_tuple_length(buf, i) ?! 0i64;
+        if (len > 0i64) {
+            int64:off = slot_get_tuple_offset(buf, i) ?! 0i64;
+            drop(page_insert(temp, buf + off, len));
+        }
+        i = i + 1i64;
+    }
+
+    drop(npk_mem_copy(buf, temp, PAGE_SIZE));
+    drop(page_free(temp));
+
+    int64:free_after = page_free_space(buf) ?! 0i64;
+    pass(free_after - free_before);
+};
