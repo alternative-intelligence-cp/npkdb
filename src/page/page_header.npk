@@ -1,0 +1,26 @@
+// page_header.npk — Slotted Page header layout
+//
+// Physical layout (32 bytes):
+//   Offset  0: page_id       (int64, 8 bytes) — unique page identifier
+//   Offset  8: checksum      (uint32, 4 bytes) — CRC32 of page contents (bytes 12–8191)
+//   Offset 12: free_offset   (int32, 4 bytes) — byte offset where free space begins (after last slot)
+//   Offset 16: tuple_end     (int32, 4 bytes) — byte offset where tuple region ends (grows backward from 8191)
+//   Offset 20: slot_count    (int32, 4 bytes) — number of active slots
+//   Offset 24: flags         (int32, 4 bytes) — page type flags (0=data, 1=index, 2=overflow)
+//   Offset 28: reserved      (int32, 4 bytes) — reserved for future use
+
+use "../util/constants.npk".*;
+
+// Page type flags
+pub fixed int32:PAGE_FLAG_DATA     = 0i32;
+pub fixed int32:PAGE_FLAG_INDEX    = 1i32;
+pub fixed int32:PAGE_FLAG_OVERFLOW = 2i32;
+
+// Header field offsets (byte positions within page)
+pub fixed int64:HDR_OFF_PAGE_ID     = 0i64;
+pub fixed int64:HDR_OFF_CHECKSUM    = 8i64;
+pub fixed int64:HDR_OFF_FREE_OFFSET = 12i64;
+pub fixed int64:HDR_OFF_TUPLE_END   = 16i64;
+pub fixed int64:HDR_OFF_SLOT_COUNT  = 20i64;
+pub fixed int64:HDR_OFF_FLAGS       = 24i64;
+pub fixed int64:HDR_OFF_RESERVED    = 28i64;

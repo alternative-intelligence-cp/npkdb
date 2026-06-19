@@ -1,0 +1,32 @@
+// mem_primitives.npk — Raw memory access
+// Wraps the C builtins provided by Nitpick runtime
+
+extern "nitpick_libc_mem" {
+    func:npk_mem_read_byte     = int64(int64:ptr, int64:offset);
+    func:npk_mem_write_byte    = int64(int64:ptr, int64:offset, int64:val);
+    func:npk_mem_read_int32    = int32(int64:ptr, int64:offset);
+    func:npk_mem_read_int64    = int64(int64:ptr, int64:offset);
+    func:npk_mem_write_int64   = int64(int64:ptr, int64:offset, int64:val);
+    func:npk_mem_read_string   = string(int64:ptr, int64:max_len);
+    func:npk_mem_write_string  = int64(int64:ptr, string:s);
+    func:npk_mem_copy          = int64(int64:dst, int64:src, int64:n);
+    func:npk_mem_set           = int64(int64:dst, int64:val, int64:n);
+    func:npk_mem_compare       = int64(int64:a, int64:b, int64:n);
+    func:npk_mem_offset        = int64(int64:ptr, int64:offset);
+    func:npk_mem_ptr_size      = int64();
+
+    func:nitpick_libc_mem_malloc  = int64(int64:size);
+    func:nitpick_libc_mem_calloc  = int64(int64:count, int64:size);
+    func:nitpick_libc_mem_realloc = int64(int64:ptr, int64:size);
+    func:nitpick_libc_mem_free    = void(int64:ptr);
+}
+
+pub func:npk_mem_write_int32 = int64(int64:ptr, int64:offset, int32:val) {
+    int64:v = val => int64;
+    drop(npk_mem_write_byte(ptr, offset, v & 255i64));
+    drop(npk_mem_write_byte(ptr, offset + 1i64, (v >> 8) & 255i64));
+    drop(npk_mem_write_byte(ptr, offset + 2i64, (v >> 16) & 255i64));
+    drop(npk_mem_write_byte(ptr, offset + 3i64, (v >> 24) & 255i64));
+    pass(0i64);
+};
+
