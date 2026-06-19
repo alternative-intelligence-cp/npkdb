@@ -120,3 +120,120 @@ pub func:wal_append_checkpoint = int64(int64:wal_fd, int64:seq) {
     int64:res = wal_append(wal_fd, WAL_RECORD_CHECKPOINT, seq, 0i64, 0i64) ?! 0i64;
     pass(res);
 };
+
+// -----------------------------------------------------------------------------
+// WAL Reader & Recovery
+// -----------------------------------------------------------------------------
+
+pub func:wal_open_read = int64(string:path) {
+    Result<int64>:fd_res = sys(OPEN, path, 0i64, 0i64);
+    if (fd_res.is_error) {
+        pass(0i64);
+    }
+    pass(fd_res.value);
+};
+
+pub func:wal_read_next = int64(int64:wal_fd) {
+    int64:hdr_buf = nitpick_libc_mem_malloc(16i64);
+    Result<int64>:r_res = sys(READ, wal_fd, hdr_buf, 16i64);
+    if (r_res.is_error) {
+        drop(nitpick_libc_mem_free(hdr_buf));
+        pass(-1i64);
+    }
+    int64:bytes_read = r_res.value;
+    if (bytes_read == 0i64) {
+        drop(nitpick_libc_mem_free(hdr_buf));
+        pass(0i64); // EOF
+    }
+    if (bytes_read < 16i64) {
+        drop(nitpick_libc_mem_free(hdr_buf));
+        pass(-1i64); // Torn write
+    }
+    
+    int64:crc32_stored_signed = npk_mem_read_int32(hdr_buf, 0i64) => int64;
+    int64:crc32_stored = crc32_stored_signed & 4294967295i64;
+    int64:record_length = npk_mem_read_int32(hdr_buf, 4i64) => int64;
+    
+    if (record_length < 16i64) {
+        drop(nitpick_libc_mem_free(hdr_buf));
+        pass(-1i64); // Corrupt length
+    }
+    
+    int64:full_buf = nitpick_libc_mem_malloc(record_length);
+    drop(npk_mem_copy(full_buf, hdr_buf, 16i64));
+    drop(nitpick_libc_mem_free(hdr_buf));
+    
+    int64:rem_len = record_length - 16i64;
+    if (rem_len > 0i64) {
+        Result<int64>:r2_res = sys(READ, wal_fd, full_buf + 16i64, rem_len);
+        if (r2_res.is_error) {
+            drop(nitpick_libc_mem_free(full_buf));
+            pass(-1i64);
+        }
+        int64:b2 = r2_res.value;
+        if (b2 < rem_len) {
+            drop(nitpick_libc_mem_free(full_buf));
+            pass(-1i64); // Torn write
+        }
+    }
+    
+    int64:comp_crc = crc32_compute(full_buf + 4i64, record_length - 4i64) ?! -1i64;
+    if (comp_crc != crc32_stored) {
+        drop(nitpick_libc_mem_free(full_buf));
+        pass(-1i64); // CRC mismatch
+    }
+    
+    pass(full_buf);
+};
+
+pub func:wal_record_type = int32(int64:record_buf) {
+    pass(npk_mem_read_int32(record_buf, 8i64));
+};
+
+pub func:wal_record_seq = int32(int64:record_buf) {
+    pass(npk_mem_read_int32(record_buf, 12i64));
+};
+
+pub func:wal_record_key = string(int64:record_buf) {
+    int64:key_len = npk_mem_read_int32(record_buf, 16i64) => int64;
+    if (key_len <= 0i64) { pass(""); }
+    pass(npk_mem_read_string(record_buf + 20i64, key_len));
+};
+
+pub func:wal_record_value_ptr = int64(int64:record_buf) {
+    int64:key_len = npk_mem_read_int32(record_buf, 16i64) => int64;
+    pass(record_buf + 24i64 + key_len);
+};
+
+pub func:wal_record_value_len = int64(int64:record_buf) {
+    int64:key_len = npk_mem_read_int32(record_buf, 16i64) => int64;
+    pass(npk_mem_read_int32(record_buf, 20i64 + key_len) => int64);
+};
+
+pub func:wal_replay = int64(string:wal_path) {
+    int64:fd = wal_open_read(wal_path) ?! 0i64;
+    if (fd <= 0i64) { pass(0i64); }
+    
+    int64:count = 0i64;
+    while (1i64 == 1i64) {
+        int64:rec = wal_read_next(fd) ?! -1i64;
+        if (rec == 0i64) { break; }
+        if (rec == -1i64) {
+            println("WARNING: WAL torn/corrupt record detected. Halting replay.");
+            break;
+        }
+        drop(nitpick_libc_mem_free(rec));
+        count = count + 1i64;
+    }
+    drop(sys(CLOSE, fd));
+    pass(count);
+};
+
+pub func:wal_truncate = int64(string:path) {
+    Result<int64>:fd_res = sys(OPEN, path, 513i64, 420i64); // O_WRONLY | O_TRUNC = 513
+    if (fd_res.is_error) {
+        pass(-1i64);
+    }
+    drop(sys(CLOSE, fd_res.value));
+    pass(0i64);
+};
