@@ -6,8 +6,11 @@ pub fixed int64:PAGE_HEADER_SIZE    = 32i64;       // Page header bytes
 pub fixed int64:SLOT_SIZE           = 16i64;       // Bytes per slot entry (offset + length)
 
 // WAL
-pub fixed int64:WAL_RECORD_HEADER   = 16i64;       // CRC32(4) + Length(4) + Type(4) + Reserved(4)
-pub fixed int64:WAL_SYNC_INTERVAL   = 1i64;        // Default: fsync every record (overridden by group commit)
+pub fixed int64:WAL_RECORD_HEADER      = 16i64;       // CRC32(4) + Length(4) + Type(4) + Reserved(4)
+pub fixed int32:WAL_RECORD_PUT         = 1i32;
+pub fixed int32:WAL_RECORD_DELETE      = 2i32;
+pub fixed int32:WAL_RECORD_CHECKPOINT  = 3i32;
+pub fixed int64:WAL_SYNC_INTERVAL      = 1i64;        // Default: fsync every record (overridden by group commit)
 
 // Memtable
 pub fixed int64:MEMTABLE_SIZE_LIMIT = 4194304i64;  // 4MB default threshold for flush

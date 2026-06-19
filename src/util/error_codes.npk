@@ -8,6 +8,7 @@ pub fixed int32:ERR_WAL_WRITE_FAILED     = 1i32;
 pub fixed int32:ERR_WAL_FSYNC_FAILED     = 2i32;
 pub fixed int32:ERR_WAL_CORRUPT_RECORD   = 3i32;
 pub fixed int32:ERR_WAL_REPLAY_FAILED    = 4i32;
+pub fixed int32:ERR_WAL_OPEN_FAILED      = 5i32;
 pub fixed int32:ERR_PAGE_FULL            = 10i32;
 pub fixed int32:ERR_PAGE_CORRUPT         = 11i32;
 pub fixed int32:ERR_PAGE_INVALID_SLOT    = 12i32;

@@ -1,0 +1,48 @@
+// src/util/crc32.npk — CRC32 computation
+use "mem_primitives.npk".*;
+
+int64:crc_table_ptr = 0i64;
+
+pub func:crc32_init = int64() {
+    if (crc_table_ptr != 0i64) {
+        pass(1i64);
+    }
+    crc_table_ptr = nitpick_libc_mem_malloc(2048i64);
+    
+    int64:i = 0i64;
+    while (i < 256i64) {
+        int64:c = i;
+        int64:j = 0i64;
+        while (j < 8i64) {
+            if ((c & 1i64) != 0i64) {
+                c = 3988292384i64 ^ (c >> 1i64); // 0xEDB88320
+            } else {
+                c = c >> 1i64;
+            }
+            j = j + 1i64;
+        }
+        drop(npk_mem_write_int64(crc_table_ptr, i * 8i64, c));
+        i = i + 1i64;
+    }
+    pass(1i64);
+};
+
+// Compute CRC32 checksum over a buffer.
+// buf: pointer to data
+// len: number of bytes
+// Returns: 32-bit CRC value as int64 (upper 32 bits zero)
+pub func:crc32_compute = int64(int64:buf, int64:len) {
+    drop(crc32_init());
+    int64:crc = 4294967295i64; // 0xFFFFFFFF
+    
+    int64:i = 0i64;
+    while (i < len) {
+        int64:byte_val = npk_mem_read_byte(buf, i);
+        int64:idx = (crc ^ byte_val) & 255i64;
+        int64:table_val = npk_mem_read_int64(crc_table_ptr, idx * 8i64);
+        crc = table_val ^ (crc >> 8i64);
+        i = i + 1i64;
+    }
+    
+    pass(crc ^ 4294967295i64);
+};

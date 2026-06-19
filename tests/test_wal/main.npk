@@ -1,0 +1,110 @@
+// tests/test_wal/main.npk — WAL tests
+use "../../src/storage/wal.npk".*;
+use "../../src/util/crc32.npk".*;
+use "../../src/util/constants.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+
+int64:pass_count = 0i64;
+int64:fail_count = 0i64;
+
+func:check = NIL(bool:cond, string:msg) {
+    if (cond) {
+        pass_count = pass_count + 1i64;
+        println("  ✓ " + msg);
+    } else {
+        fail_count = fail_count + 1i64;
+        println("  ✗ " + msg);
+    }
+    pass(NIL);
+};
+
+func:failsafe = int32(tbb32:err) { exit(1); };
+
+func:main = int32() {
+    println("╔══════════════════════════════════════╗");
+    println("║  WAL — Write-Ahead Log Tests         ║");
+    println("╚══════════════════════════════════════╝");
+
+    // T01: CRC32 of known string
+    string:str1 = "123456789";
+    int64:ptr1 = nitpick_libc_mem_malloc(10i64);
+    drop(npk_mem_write_string(ptr1, str1));
+    int64:crc1 = crc32_compute(ptr1, 9i64) ?! 0i64;
+    // CRC32 of "123456789" is 0xCBF43926 = 3421780262
+    drop(check(crc1 == 3421780262i64, "T01 CRC32 of '123456789' matches 0xCBF43926"));
+    drop(nitpick_libc_mem_free(ptr1));
+
+    // T02: CRC32 of empty buffer
+    int64:crc2 = crc32_compute(0i64, 0i64) ?! 1i64; 
+    drop(check(crc2 == 0i64, "T02 CRC32 of empty buffer = 0"));
+
+    // T03: wal_open creates file
+    string:path = "/tmp/npkdb_test_wal.wal";
+    drop(sys(UNLINK, path)); // Cleanup previous if any
+    int64:wal_fd = wal_open(path) ?! -1i64;
+    drop(check(wal_fd > 0i64, "T03 wal_open creates a new file"));
+
+    // T04: wal_append_put
+    string:k1 = "key1";
+    string:v1 = "value1";
+    int64:v1_ptr = nitpick_libc_mem_malloc(10i64);
+    drop(npk_mem_write_string(v1_ptr, v1));
+    int64:seq1 = wal_next_seq() ?! 0i64;
+    int64:bw1 = wal_append_put(wal_fd, k1, v1_ptr, 6i64, seq1) ?! -1i64;
+    drop(check(bw1 == 34i64, "T04 wal_append_put writes bytes to file (16 + 4+4 + 4+6 = 34)"));
+    // wait payload is 18 bytes. total is 16 + 18 = 34.
+    drop(nitpick_libc_mem_free(v1_ptr));
+
+    // T05: wal_sync
+    int64:sync_res = wal_sync(wal_fd) ?! -1i64;
+    drop(check(sync_res == 0i64, "T05 wal_sync returns 0"));
+
+    // T06: wal_append_delete
+    int64:seq2 = wal_next_seq() ?! 0i64;
+    int64:bw2 = wal_append_delete(wal_fd, k1, seq2) ?! -1i64;
+    drop(check(bw2 == 24i64, "T06 wal_append_delete writes bytes (16 + 4 + 4 = 24)"));
+
+    // T07: wal_append_checkpoint
+    int64:seq3 = wal_next_seq() ?! 0i64;
+    int64:bw3 = wal_append_checkpoint(wal_fd, seq3) ?! -1i64;
+    drop(check(bw3 == 16i64, "T07 wal_append_checkpoint writes 16 bytes"));
+
+    // T08: wal_next_seq increments monotonically
+    drop(check(seq2 > seq1 && seq3 > seq2, "T08 wal_next_seq increments monotonically"));
+
+    // T09: wal_close succeeds
+    int32:close_res = wal_close(wal_fd) ?! -1i32;
+    drop(check(close_res == 0i32, "T09 wal_close succeeds"));
+
+    // T10: Verify WAL file exists and size
+    Result<int64>:r_fd_res = sys(OPEN, path, 0i64, 0i64);
+    int64:r_fd = -1i64;
+    if (!r_fd_res.is_error) {
+        r_fd = r_fd_res.value;
+    }
+    drop(check(r_fd > 0i64, "T10 Verify WAL file exists"));
+
+    // T11: Read back WAL file bytes, verify first record CRC matches
+    int64:buf = nitpick_libc_mem_malloc(34i64);
+    drop(sys(READ, r_fd, buf, 34i64));
+    
+    // npk_mem_read_int32 returns an int32, which might be negative. Let's do bitwise cast.
+    int64:read_crc_signed = npk_mem_read_int32(buf, 0i64) => int64;
+    int64:read_crc = read_crc_signed & 4294967295i64; // mask to unsigned 32-bit
+
+    int64:comp_crc = crc32_compute(buf + 4i64, 30i64) ?! -1i64;
+    drop(check(read_crc == comp_crc, "T11 Read back WAL file bytes, verify first record CRC matches"));
+
+    // T12: Read back first record type
+    int64:read_type = npk_mem_read_int32(buf, 8i64) => int64;
+    drop(check(read_type == WAL_RECORD_PUT => int64, "T12 Read back first record type = WAL_RECORD_PUT"));
+
+    drop(nitpick_libc_mem_free(buf));
+    drop(sys(CLOSE, r_fd));
+    drop(sys(UNLINK, path));
+
+    println("");
+    println("Results: " + string_from_int(pass_count) + " passed, " + string_from_int(fail_count) + " failed");
+    if (fail_count > 0i64) { exit(1); }
+    exit(0);
+};

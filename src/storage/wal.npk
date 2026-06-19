@@ -1,0 +1,122 @@
+// src/storage/wal.npk — Write-Ahead Log implementation
+use "../util/constants.npk".*;
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+use "../util/crc32.npk".*;
+
+// Global sequence counter
+int64:wal_sequence = 0i64;
+
+pub func:wal_next_seq = int64() {
+    wal_sequence = wal_sequence + 1i64;
+    pass(wal_sequence);
+};
+
+pub func:wal_current_seq = int64() {
+    pass(wal_sequence);
+};
+
+pub func:wal_open = int64(string:path) {
+    // O_WRONLY(1) + O_CREAT(64) + O_APPEND(1024) = 1089
+    // MODE_644 = 420
+    Result<int64>:fd_res = sys(OPEN, path, 1089i64, 420i64);
+    if (fd_res.is_error) {
+        pass(0i64 - ERR_WAL_OPEN_FAILED);
+    }
+    pass(fd_res.value);
+};
+
+pub func:wal_close = int32(int64:wal_fd) {
+    drop(sys(CLOSE, wal_fd));
+    pass(0i32);
+};
+
+pub func:wal_sync = int64(int64:wal_fd) {
+    Result<int64>:res = sys(FSYNC, wal_fd);
+    if (res.is_error) {
+        pass(0i64 - ERR_WAL_FSYNC_FAILED);
+    }
+    pass(0i64);
+};
+
+// Generic internal appender
+func:wal_append = int64(int64:wal_fd, int32:rec_type, int64:seq, int64:payload_ptr, int64:payload_len) {
+    int64:total_len = 16i64 + payload_len;
+    int64:buf = nitpick_libc_mem_malloc(total_len);
+    
+    // Offset 4: length (total record length INCLUDING header)
+    drop(npk_mem_write_int32(buf, 4i64, @cast_unchecked<int32>(total_len)));
+    
+    // Offset 8: record_type
+    drop(npk_mem_write_int32(buf, 8i64, rec_type));
+    
+    // Offset 12: sequence
+    drop(npk_mem_write_int32(buf, 12i64, @cast_unchecked<int32>(seq)));
+    
+    // Offset 16: payload
+    if (payload_len > 0i64) {
+        drop(npk_mem_copy(buf + 16i64, payload_ptr, payload_len));
+    }
+    
+    // Offset 0: crc32 over bytes 4..end
+    int64:crc = crc32_compute(buf + 4i64, total_len - 4i64);
+    drop(npk_mem_write_int32(buf, 0i64, @cast_unchecked<int32>(crc)));
+    
+    Result<int64>:w_res = sys(WRITE, wal_fd, buf, total_len);
+    drop(nitpick_libc_mem_free(buf));
+    
+    if (w_res.is_error) {
+        pass(0i64 - ERR_WAL_WRITE_FAILED);
+    }
+    
+    drop(wal_sync(wal_fd));
+    
+    pass(total_len);
+};
+
+pub func:wal_append_put = int64(int64:wal_fd, string:key, int64:value_ptr, int64:value_len, int64:seq) {
+    int64:key_len = string_length(key);
+    int64:payload_len = 4i64 + key_len + 4i64 + value_len;
+    int64:payload = nitpick_libc_mem_malloc(payload_len);
+    
+    // Offset 0: key_len
+    drop(npk_mem_write_int32(payload, 0i64, @cast_unchecked<int32>(key_len)));
+    
+    // Offset 4: key
+    if (key_len > 0i64) {
+        drop(npk_mem_write_string(payload + 4i64, key));
+    }
+    
+    // Offset 4+key_len: value_len
+    drop(npk_mem_write_int32(payload, 4i64 + key_len, @cast_unchecked<int32>(value_len)));
+    
+    // Offset 8+key_len: value
+    if (value_len > 0i64) {
+        drop(npk_mem_copy(payload + 8i64 + key_len, value_ptr, value_len));
+    }
+    
+    int64:res = wal_append(wal_fd, WAL_RECORD_PUT, seq, payload, payload_len) ?! 0i64;
+    drop(nitpick_libc_mem_free(payload));
+    pass(res);
+};
+
+pub func:wal_append_delete = int64(int64:wal_fd, string:key, int64:seq) {
+    int64:key_len = string_length(key);
+    int64:payload_len = 4i64 + key_len;
+    int64:payload = nitpick_libc_mem_malloc(payload_len);
+    
+    drop(npk_mem_write_int32(payload, 0i64, @cast_unchecked<int32>(key_len)));
+    
+    if (key_len > 0i64) {
+        drop(npk_mem_write_string(payload + 4i64, key));
+    }
+    
+    int64:res = wal_append(wal_fd, WAL_RECORD_DELETE, seq, payload, payload_len) ?! 0i64;
+    drop(nitpick_libc_mem_free(payload));
+    pass(res);
+};
+
+pub func:wal_append_checkpoint = int64(int64:wal_fd, int64:seq) {
+    int64:res = wal_append(wal_fd, WAL_RECORD_CHECKPOINT, seq, 0i64, 0i64) ?! 0i64;
+    pass(res);
+};
