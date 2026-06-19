@@ -1,0 +1,40 @@
+// error_codes.npk — NPKDB error codes
+// All error codes are pub fixed int32 constants.
+// Range: 1-99 = storage, 100-199 = index, 200-299 = vector,
+//        300-399 = query, 400-499 = server, 500-599 = concurrency
+
+// Storage errors (1-99)
+pub fixed int32:ERR_WAL_WRITE_FAILED     = 1i32;
+pub fixed int32:ERR_WAL_FSYNC_FAILED     = 2i32;
+pub fixed int32:ERR_WAL_CORRUPT_RECORD   = 3i32;
+pub fixed int32:ERR_WAL_REPLAY_FAILED    = 4i32;
+pub fixed int32:ERR_PAGE_FULL            = 10i32;
+pub fixed int32:ERR_PAGE_CORRUPT         = 11i32;
+pub fixed int32:ERR_PAGE_INVALID_SLOT    = 12i32;
+pub fixed int32:ERR_MEMTABLE_FULL        = 20i32;
+pub fixed int32:ERR_SSTABLE_READ_FAILED  = 30i32;
+pub fixed int32:ERR_SSTABLE_WRITE_FAILED = 31i32;
+pub fixed int32:ERR_COMPACTION_FAILED    = 40i32;
+pub fixed int32:ERR_FLUSH_FAILED         = 50i32;
+
+// Index errors (100-199)
+pub fixed int32:ERR_ART_KEY_NOT_FOUND    = 100i32;
+pub fixed int32:ERR_ART_DUPLICATE_KEY    = 101i32;
+pub fixed int32:ERR_ART_CAS_FAILED       = 102i32;
+
+// Vector errors (200-299)
+pub fixed int32:ERR_HNSW_STALE_HANDLE    = 200i32;
+pub fixed int32:ERR_HNSW_EMPTY_GRAPH     = 201i32;
+pub fixed int32:ERR_VECTOR_DIM_MISMATCH  = 202i32;
+pub fixed int32:ERR_VECTOR_ZERO_MAGNITUDE = 203i32;
+
+// Query errors (300-399)
+pub fixed int32:ERR_QUERY_PARSE_FAILED   = 300i32;
+pub fixed int32:ERR_QUERY_INVALID_FILTER = 301i32;
+
+// Server errors (400-499)
+pub fixed int32:ERR_SERVER_BIND_FAILED   = 400i32;
+pub fixed int32:ERR_SERVER_ACCEPT_FAILED = 401i32;
+
+// Concurrency errors (500-599)
+pub fixed int32:ERR_EBR_LIMBO_OVERFLOW   = 500i32;

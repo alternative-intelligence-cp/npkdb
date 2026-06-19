@@ -1,0 +1,49 @@
+// test_scaffold/main.npk — Scaffold smoke test
+use "../../src/util/error_codes.npk".*;
+use "../../src/util/constants.npk".*;
+
+int64:pass_count = 0i64;
+int64:fail_count = 0i64;
+
+func:check = NIL(bool:cond, string:msg) {
+    if (cond) {
+        pass_count = pass_count + 1i64;
+        println("  ✓ " + msg);
+    } else {
+        fail_count = fail_count + 1i64;
+        println("  ✗ " + msg);
+    }
+    pass(NIL);
+};
+
+func:failsafe = int32(tbb32:err) {
+    exit(1);
+};
+
+func:main = int32() {
+    println("╔══════════════════════════════════════╗");
+    println("║  NPKDB Scaffold Test                 ║");
+    println("╚══════════════════════════════════════╝");
+
+    // Verify constants loaded correctly
+    drop(check(PAGE_SIZE == 8192i64, "PAGE_SIZE = 8192"));
+    drop(check(PAGE_HEADER_SIZE == 32i64, "PAGE_HEADER_SIZE = 32"));
+    drop(check(SLOT_SIZE == 16i64, "SLOT_SIZE = 16"));
+    drop(check(MEMTABLE_SIZE_LIMIT == 4194304i64, "MEMTABLE_SIZE_LIMIT = 4MB"));
+    drop(check(SSTABLE_MAX_LEVELS == 7i64, "SSTABLE_MAX_LEVELS = 7"));
+    drop(check(DEFAULT_PORT == 7373i64, "DEFAULT_PORT = 7373"));
+
+    // Verify error codes loaded correctly
+    drop(check(ERR_WAL_WRITE_FAILED == 1i32, "ERR_WAL_WRITE_FAILED = 1"));
+    drop(check(ERR_PAGE_FULL == 10i32, "ERR_PAGE_FULL = 10"));
+    drop(check(ERR_ART_KEY_NOT_FOUND == 100i32, "ERR_ART_KEY_NOT_FOUND = 100"));
+    drop(check(ERR_HNSW_STALE_HANDLE == 200i32, "ERR_HNSW_STALE_HANDLE = 200"));
+
+    println("");
+    println("Results: " + string_from_int(pass_count) + " passed, " + string_from_int(fail_count) + " failed");
+
+    if (fail_count > 0i64) {
+        exit(1);
+    }
+    exit(0);
+};

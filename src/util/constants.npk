@@ -1,0 +1,33 @@
+// constants.npk — NPKDB configuration constants
+
+// Page layout
+pub fixed int64:PAGE_SIZE           = 8192i64;     // 8KB pages
+pub fixed int64:PAGE_HEADER_SIZE    = 32i64;       // Page header bytes
+pub fixed int64:SLOT_SIZE           = 16i64;       // Bytes per slot entry (offset + length)
+
+// WAL
+pub fixed int64:WAL_RECORD_HEADER   = 16i64;       // CRC32(4) + Length(4) + Type(4) + Reserved(4)
+pub fixed int64:WAL_SYNC_INTERVAL   = 1i64;        // Default: fsync every record (overridden by group commit)
+
+// Memtable
+pub fixed int64:MEMTABLE_SIZE_LIMIT = 4194304i64;  // 4MB default threshold for flush
+
+// SSTable
+pub fixed int64:SSTABLE_LEVEL_FANOUT = 10i64;      // Each level is 10x the size of the previous
+pub fixed int64:SSTABLE_MAX_LEVELS   = 7i64;       // L0 through L6
+
+// Bloom Filter
+pub fixed int64:BLOOM_BITS_PER_KEY   = 10i64;      // ~1% false positive rate
+
+// HNSW
+pub fixed int64:HNSW_M              = 16i64;       // Max edges per node per layer
+pub fixed int64:HNSW_EF_CONSTRUCTION = 200i64;     // Build-time search depth
+pub fixed int64:HNSW_EF_SEARCH      = 50i64;       // Query-time search depth
+pub fixed int64:HNSW_ML             = 1i64;        // Level multiplier (1/ln(M))
+
+// EBR
+pub fixed int64:EBR_LIMBO_MAX_DEPTH = 10000i64;    // Max limbo list entries before stall
+
+// Server
+pub fixed int64:DEFAULT_PORT        = 7373i64;
+pub fixed int64:DEFAULT_BACKLOG     = 128i64;

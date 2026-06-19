@@ -1,0 +1,12 @@
+// main.npk — NPKDB server entry point
+// v0.0.0: Scaffold only, prints version and exits.
+
+func:failsafe = int32(tbb32:err) {
+    println("NPKDB: fatal error, shutting down");
+    exit(1);
+};
+
+func:main = int32() {
+    println("npkdb v0.0.0");
+    exit(0);
+};
