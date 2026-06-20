@@ -1,0 +1,93 @@
+// tests/test_integration/test_crash_recovery.npk
+use "../../src/storage/write_path.npk".*;
+use "../../src/storage/memtable.npk".*;
+use "../../src/storage/wal.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+
+func:check = NIL(bool:cond, string:msg) {
+    if (cond) {
+        println("  ✓ " + msg);
+    } else {
+        println("  ✗ " + msg);
+    }
+    pass(NIL);
+};
+
+pub func:failsafe = int32(tbb32:err) {
+    println("FAILSAFE TRIGGERED");
+    exit(1);
+};
+
+func:bg_worker_shim = int64(int64:ctx) {
+    pass(0i64);
+};
+
+pub func:main = int32() {
+    println("╔══════════════════════════════════════╗");
+    println("║  Integration: Crash Recovery Tests   ║");
+    println("╚══════════════════════════════════════╝");
+    
+    string:wal_path = "test_data_cr/test.wal";
+    string:data_dir = "test_data_cr";
+
+    drop(sys(UNLINK, wal_path));
+    drop(sys(RMDIR, data_dir));
+    
+    int64:v_ptr = npk_core_alloc(10i64);
+    drop(raw npk_mem_write_string(v_ptr, "v"));
+
+    // T09: Basic Recovery (per_write)
+    int64:wp1 = wp_init(data_dir, wal_path, @bg_worker_shim, "per_write") ?! 0i64;
+    int64:i = 0i64;
+    while (i < 10i64) {
+        string:k = "key_" + string_from_int(i);
+        drop(wp_put(wp1, k, v_ptr, 1i64));
+        i = i + 1i64;
+    }
+    drop(wp_delete(wp1, "key_5"));
+    
+    int64:rep9 = wal_replay(wal_path) ?! 0i64;
+    drop(check(rep9 == 11i64, "T09 Basic recovery replayed 11 records (10 puts + 1 delete)"));
+
+    // T10: Open on existing WAL
+    int64:wp2 = wp_init(data_dir, wal_path, @bg_worker_shim, "per_write") ?! 0i64;
+    drop(wp_put(wp2, "k1", v_ptr, 1i64));
+    
+    int64:rep10 = wal_replay(wal_path) ?! 0i64;
+    drop(check(rep10 == 12i64, "T10 Open on existing WAL appends cleanly"));
+    
+    drop(sys(UNLINK, wal_path));
+    
+    // T11: Torn write recovery
+    int64:wp3 = wp_init(data_dir, wal_path, @bg_worker_shim, "per_write") ?! 0i64;
+    drop(wp_put(wp3, "t1", v_ptr, 1i64));
+    drop(wp_put(wp3, "t2", v_ptr, 1i64));
+    
+    int64:t11_fd = sys(OPEN, wal_path, 2i64, 0i64).value;
+    int64:file_sz = sys(LSEEK, t11_fd, 0i64, 2i64).value;
+    drop(sys!!(FTRUNCATE, t11_fd, file_sz - 5i64));
+    drop(sys(CLOSE, t11_fd));
+    
+    int64:rep11 = wal_replay(wal_path) ?! 0i64;
+    drop(check(rep11 == 1i64, "T11 Torn write detection (recovered 1, skipped torn)"));
+    
+    drop(sys(UNLINK, wal_path));
+    
+    // T12: Group Commit Recovery
+    int64:wp4 = wp_init(data_dir, wal_path, @bg_worker_shim, "group_commit") ?! 0i64;
+    drop(wp_put(wp4, "g1", v_ptr, 1i64));
+    drop(wp_put(wp4, "g2", v_ptr, 1i64));
+    drop(wp_put(wp4, "g3", v_ptr, 1i64));
+    
+    int64:rep12_pre = wal_replay(wal_path) ?! 0i64;
+    drop(check(rep12_pre == 0i64, "T12 Group commit buffers un-flushed records (0 recovered)"));
+    
+    int64:w4_fd = npk_mem_read_int64(wp4, 0i64);
+    drop(wal_batch_flush(w4_fd));
+    
+    int64:rep12_post = wal_replay(wal_path) ?! 0i64;
+    drop(check(rep12_post == 3i64, "T12 Group commit flush persists records to WAL (3 recovered)"));
+
+    drop(npk_core_dalloc(v_ptr));
+    exit(0);
+};

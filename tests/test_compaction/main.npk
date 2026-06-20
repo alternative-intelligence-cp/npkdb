@@ -37,8 +37,8 @@ pub func:main = int32() {
     drop(flush_ensure_dirs("test_comp_data"));
     
     // Create 4 L0 files
-    int64:v_ptr = nitpick_libc_mem_malloc(100i64);
-    drop(npk_mem_write_string(v_ptr, "testval"));
+    int64:v_ptr = npk_core_alloc(100i64);
+    drop(raw npk_mem_write_string(v_ptr, "testval"));
     
     int64:mt1 = mt_create(1i64) ?! 0i64;
     drop(mt_put(mt1, "a", v_ptr, 100i64));
@@ -64,7 +64,7 @@ pub func:main = int32() {
     drop(mt_freeze(mt4));
     drop(flush_memtable(mt4, lm));
     
-    drop(nitpick_libc_mem_free(v_ptr));
+    drop(npk_core_dalloc(v_ptr));
     
     int64:needs = lm_l0_needs_compaction(lm) ?! 0i64;
     drop(check(needs == 1i64, "T15 maybe_compact with L0 >= threshold = compaction runs"));
@@ -81,7 +81,7 @@ pub func:main = int32() {
     // Let's read L1 file and check keys
     int64:l1_fids = lm_get_sstables(lm, 1i64) ?! 0i64;
     int64:fid = npk_mem_read_int64(l1_fids, 0i64);
-    drop(nitpick_libc_mem_free(l1_fids));
+    drop(npk_core_dalloc(l1_fids));
     
     string:fid_str = string_from_int(fid);
     while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }

@@ -1,0 +1,28 @@
+use "../../src/storage/sstable.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+
+pub func:failsafe = int32(tbb32:err) { exit(1); };
+
+pub func:main = int32() {
+    string:spath = "test_stress/L0/sst_000000.npkdb";
+    int64:reader = sstable_open_read(spath) ?! 0i64;
+    if (reader == 0i64) {
+        println("Could not open " + spath);
+        exit(1);
+    }
+    
+    int64:rec = sstable_get(reader, "stress_key_000463") ?! 0i64;
+    if (rec != 0i64) {
+        string:k = sst_rec_key(rec) ?! "";
+        int64:vlen = sst_rec_val_len(rec) ?! 0i64;
+        int64:vptr = sst_rec_val_ptr(rec) ?! 0i64;
+        string:v = raw npk_mem_read_string(vptr, vlen);
+        println("FOUND! Key: " + k + ", Value: " + v);
+        drop(sst_rec_free(rec));
+    } else {
+        println("NOT FOUND!");
+    }
+    
+    drop(sstable_close_read(reader));
+    exit(0);
+};

@@ -8,8 +8,8 @@ pub fixed int64:HEAP_STRUCT_SIZE = 24i64;
 pub fixed int64:HEAP_ELEM_SIZE = 16i64;
 
 pub func:heap_create = int64(int64:capacity) {
-    int64:heap = nitpick_libc_mem_malloc(HEAP_STRUCT_SIZE);
-    int64:array_ptr = nitpick_libc_mem_malloc(capacity * HEAP_ELEM_SIZE);
+    int64:heap = npk_core_alloc(HEAP_STRUCT_SIZE);
+    int64:array_ptr = npk_core_alloc(capacity * HEAP_ELEM_SIZE);
     drop(npk_mem_write_int64(heap, 0i64, array_ptr));
     drop(npk_mem_write_int64(heap, 8i64, 0i64)); // size
     drop(npk_mem_write_int64(heap, 16i64, capacity));
@@ -18,8 +18,8 @@ pub func:heap_create = int64(int64:capacity) {
 
 pub func:heap_destroy = NIL(int64:heap) {
     int64:array_ptr = npk_mem_read_int64(heap, 0i64);
-    drop(nitpick_libc_mem_free(array_ptr));
-    drop(nitpick_libc_mem_free(heap));
+    drop(npk_core_dalloc(array_ptr));
+    drop(npk_core_dalloc(heap));
     pass(NIL);
 };
 

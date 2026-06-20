@@ -1,0 +1,247 @@
+// tests/test_integration/test_roundtrip.npk
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/storage/write_path.npk".*;
+use "../../src/storage/wal.npk".*;
+use "../../src/storage/memtable.npk".*;
+use "../../src/storage/skiplist.npk".*;
+use "../../src/storage/sstable.npk".*;
+use "../../src/storage/level_manager.npk".*;
+use "../../src/storage/compaction_worker.npk".*;
+use "../../src/storage/flush.npk".*;
+
+int64:pass_count = 0i64;
+int64:fail_count = 0i64;
+
+func:check = NIL(bool:cond, string:msg) {
+    if (cond) {
+        pass_count = pass_count + 1i64;
+        println("  ✓ " + msg);
+    } else {
+        fail_count = fail_count + 1i64;
+        println("  ✗ " + msg);
+    }
+    pass(NIL);
+};
+
+func:failsafe = int32(tbb32:err) { exit(1); };
+
+func:bg_worker_shim = NIL(int64:ctx) {
+    pass(NIL);
+};
+
+// Test helper to read raw node from memtable
+func:test_mt_get_node = int64(int64:mt, string:key) {
+    if (mt == 0i64) { pass(0i64); }
+    int64:sl = npk_mem_read_int64(mt, MT_OFF_HEAD);
+    int64:curr = npk_mem_read_int64(sl, 0i64); // SL_OFF_HEAD
+    int64:lvl = SKIPLIST_MAX_LEVEL - 1i64;
+    
+    while (lvl >= 0i64) {
+        while (1i64 == 1i64) {
+            int64:fwd = raw sl_node_forward(curr, lvl);
+            if (fwd == 0i64) { break; }
+            string:fwd_key = raw sl_node_key(fwd);
+            if (fwd_key >= key) { break; }
+            curr = fwd;
+        }
+        lvl = lvl - 1i64;
+    }
+    
+    int64:cand = raw sl_node_forward(curr, 0i64);
+    if (cand != 0i64) {
+        string:cand_key = raw sl_node_key(cand);
+        if (cand_key == key) {
+            pass(cand);
+        }
+    }
+    pass(0i64);
+};
+
+func:db_get = string(int64:wp, string:key) {
+    // 1. Active Memtable
+    int64:active_mt = raw wp_active_memtable(wp);
+    if (active_mt != 0i64) {
+        int64:node = raw test_mt_get_node(active_mt, key);
+        if (node != 0i64) {
+            int64:is_del1 = raw sl_node_is_deleted(node);
+            if (is_del1 == 1i64) { pass(""); }
+            int64:val_len1 = raw sl_node_val_len(node);
+            int64:vptr1 = raw sl_node_val_ptr(node);
+            pass(raw npk_mem_read_string(vptr1, val_len1));
+        }
+    }
+    
+    // 2. Frozen Memtable
+    int64:frozen_mt = raw wp_frozen_memtable(wp);
+    if (frozen_mt != 0i64) {
+        int64:node = raw test_mt_get_node(frozen_mt, key);
+        if (node != 0i64) {
+            int64:is_del2 = raw sl_node_is_deleted(node);
+            if (is_del2 == 1i64) { pass(""); }
+            int64:val_len2 = raw sl_node_val_len(node);
+            int64:vptr2 = raw sl_node_val_ptr(node);
+            pass(raw npk_mem_read_string(vptr2, val_len2));
+        }
+    }
+    
+    // 3. SSTables
+    int64:lm = raw wp_level_manager(wp);
+    if (lm != 0i64) {
+        int64:lvl = 0i64;
+        while (lvl < 5i64) {
+            int64:sstables = raw lm_get_sstables(lm, lvl);
+            if (sstables != 0i64) {
+                int64:count = raw lm_count_at_level(lm, lvl);
+                int64:i = 0i64;
+                while (i < count) {
+                    int64:idx = i;
+                    if (lvl == 0i64) { idx = count - 1i64 - i; }
+                    int64:fid = npk_mem_read_int64(sstables, idx * 8i64);
+                    
+                    string:fid_str = string_from_int(fid);
+                    while (string_length(fid_str) < 6i64) {
+                        fid_str = "0" + fid_str;
+                    }
+                    string:spath1 = "test_data_rt/L" + string_from_int(lvl);
+                    string:spath2 = spath1 + "/sst_";
+                    string:spath3 = spath2 + fid_str;
+                    string:spath = spath3 + ".npkdb";
+                    
+                    Result<int64>:reader_res = sstable_open_read(spath);
+                    int64:reader = raw reader_res;
+                    if (reader != 0i64) {
+                        Result<int64>:rec_res = sstable_get(reader, key);
+                        int64:rec = raw rec_res;
+                        drop(sstable_close_read(reader));
+                        if (rec != 0i64) {
+                            int64:is_ts = raw sst_rec_is_tombstone(rec);
+                            if (is_ts == 1i64) {
+                                drop(sst_rec_free(rec));
+                            if (sstables != 0i64) { drop(npk_core_dalloc(sstables)); }
+                            pass("");
+                        }
+                        int64:val_len_r = raw sst_rec_val_len(rec);
+                        int64:vptr3 = raw sst_rec_val_ptr(rec);
+                        string:val_str = raw npk_mem_read_string(vptr3, val_len_r);
+                        drop(sst_rec_free(rec));
+                        if (sstables != 0i64) { drop(npk_core_dalloc(sstables)); }
+                        pass(val_str);
+                    }
+                }
+                i = i + 1i64;
+            }
+            if (sstables != 0i64) { drop(npk_core_dalloc(sstables)); }
+            }
+            lvl = lvl + 1i64;
+        }
+    }
+    pass("");
+};
+
+pub func:main = int32() {
+    println("╔══════════════════════════════════════╗");
+    println("║  Integration: Roundtrip Tests        ║");
+    println("╚══════════════════════════════════════╝");
+    
+    string:data_dir = "test_data_rt";
+    string:wal_path = "test_data_rt/wal.log";
+    drop(sys(MKDIR, data_dir, 493i64)); // 0755
+    
+    int64:v1_ptr = npk_core_alloc(10i64);
+    drop(raw npk_mem_write_string(v1_ptr, "v1"));
+    int64:v2_ptr = npk_core_alloc(10i64);
+    drop(raw npk_mem_write_string(v2_ptr, "v2"));
+    
+    // T01
+    Result<int64>:wp_res = wp_init(data_dir, wal_path, @bg_worker_shim, "per_write");
+    int64:wp = raw wp_res;
+    if (wp == 0i64) {
+        println("FAILED to initialize wp!");
+        exit(1);
+    }
+    
+    drop(wp_put(wp, "k1", v1_ptr, 2i64));
+    string:r1 = raw db_get(wp, "k1");
+    drop(check(r1 == "v1", "Read k1 from active memtable (returns v1)"));
+    
+    // T02
+    int64:j = 0i64;
+    while (j < 100i64) {
+        string:k = "key_" + string_from_int(j);
+        drop(wp_put(wp, k, v1_ptr, 2i64));
+        j = j + 1i64;
+    }
+    
+    int64:found = 0i64;
+    j = 0i64;
+    while (j < 100i64) {
+        string:k = "key_" + string_from_int(j);
+        string:v = raw db_get(wp, k);
+        if (v == "v1") {
+            found = found + 1i64;
+        }
+        j = j + 1i64;
+    }
+    drop(check(found == 100i64, "T02 wp_put 100 records -> read all 100 from Memtable"));
+    
+    // T03
+    int64:v_large_ptr = npk_core_alloc(1000000i64); // 1MB
+    drop(raw npk_mem_write_string(v_large_ptr, "large_val"));
+    
+    j = 0i64;
+    while (j < 5i64) {
+        string:k = "large_" + string_from_int(j);
+        drop(wp_put(wp, k, v_large_ptr, 1000000i64));
+        j = j + 1i64;
+    }
+    
+    // Manual flush!
+    int64:frozen_mt = raw wp_frozen_memtable(wp);
+    if (frozen_mt != 0i64) {
+        int64:lm = raw wp_level_manager(wp);
+        drop(flush_memtable(frozen_mt, lm));
+        drop(wp_clear_frozen(wp));
+    }
+    
+    string:r_large = raw db_get(wp, "large_0");
+    drop(check(r_large != "", "T03 wp_put enough to trigger flush -> read from SSTable"));
+    
+    // T04
+    drop(wp_put(wp, "k_new", v1_ptr, 2i64));
+    string:r_new = raw db_get(wp, "k_new");
+    drop(check(r_new == "v1", "T04 After flush, new puts go to new Memtable"));
+    
+    // T05
+    string:r_old = raw db_get(wp, "key_50");
+    println("r_old: " + r_old); drop(check(r_old == "v1", "T05 Read key that's in SSTable (not Memtable)"));
+    
+    // T06
+    string:r_missing = raw db_get(wp, "k_doesnt_exist");
+    drop(check(r_missing == "", "T06 Read key that doesn't exist anywhere"));
+    
+    // T07
+    drop(wp_put(wp, "k_temp", v1_ptr, 2i64));
+    drop(wp_delete(wp, "k_temp"));
+    string:r_deleted = raw db_get(wp, "k_temp");
+    drop(check(r_deleted == "", "T07 wp_put -> wp_delete -> read returns not found"));
+    
+    // T08
+    drop(wp_put(wp, "k_over", v1_ptr, 2i64));
+    drop(wp_put(wp, "k_over", v2_ptr, 2i64));
+    string:r_over = raw db_get(wp, "k_over");
+    drop(check(r_over == "v2", "T08 wp_put key_a with value_1, then value_2 -> read returns value_2"));
+    
+    // Cleanup
+    drop(wp_shutdown(wp));
+    drop(npk_core_dalloc(v1_ptr));
+    drop(npk_core_dalloc(v2_ptr));
+    drop(npk_core_dalloc(v_large_ptr));
+    
+    string:m1 = "Results: " + string_from_int(pass_count);
+    string:m2 = m1 + " passed, ";
+    string:m3 = m2 + string_from_int(fail_count);
+    string:m4 = m3 + " failed";
+    println(m4);
+    if (fail_count > 0i64) { exit(1); }
+    exit(0);
+};

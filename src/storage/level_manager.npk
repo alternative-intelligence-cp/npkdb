@@ -24,22 +24,22 @@ pub fixed int64:LM_MAX_SSTABLES_PER_LEVEL = 1024i64; // Max SSTables tracked per
 // 24: levels_array (int64 ptr) - array of LM_MAX_LEVELS pointers
 // 32: count_array (int64 ptr) - array of LM_MAX_LEVELS counts
 pub func:lm_create = int64(string:data_dir) {
-    int64:lm = nitpick_libc_mem_malloc(40i64);
+    int64:lm = npk_core_alloc(64i64);
     
     int64:d_len = string_length(data_dir);
-    int64:d_ptr = nitpick_libc_mem_malloc(d_len);
+    int64:d_ptr = npk_core_alloc(d_len);
     drop(npk_mem_write_string(d_ptr, data_dir));
     
     drop(npk_mem_write_int64(lm, 0i64, d_ptr));
     drop(npk_mem_write_int64(lm, 8i64, d_len));
     drop(npk_mem_write_int64(lm, 16i64, 1i64)); // file ID starts at 1
     
-    int64:levels_array = nitpick_libc_mem_malloc(LM_MAX_LEVELS * 8i64);
-    int64:count_array = nitpick_libc_mem_malloc(LM_MAX_LEVELS * 8i64);
+    int64:levels_array = npk_core_alloc(LM_MAX_LEVELS * 8i64);
+    int64:count_array = npk_core_alloc(LM_MAX_LEVELS * 8i64);
     
     int64:i = 0i64;
     while (i < LM_MAX_LEVELS) {
-        int64:lvl_mem = nitpick_libc_mem_malloc(LM_MAX_SSTABLES_PER_LEVEL * LM_ENTRY_SIZE);
+        int64:lvl_mem = npk_core_alloc(LM_MAX_SSTABLES_PER_LEVEL * LM_ENTRY_SIZE);
         drop(npk_mem_write_int64(levels_array, i * 8i64, lvl_mem));
         drop(npk_mem_write_int64(count_array, i * 8i64, 0i64));
         i = i + 1i64;
@@ -55,7 +55,7 @@ pub func:lm_create = int64(string:data_dir) {
 pub func:lm_destroy = NIL(int64:lm) {
     if (lm != 0i64) {
         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
-        drop(nitpick_libc_mem_free(d_ptr));
+        drop(npk_core_dalloc(d_ptr));
         
         int64:levels_array = npk_mem_read_int64(lm, 24i64);
         int64:count_array = npk_mem_read_int64(lm, 32i64);
@@ -70,18 +70,18 @@ pub func:lm_destroy = NIL(int64:lm) {
                 int64:ent_ptr = lvl_mem + (j * LM_ENTRY_SIZE);
                 int64:min_k = npk_mem_read_int64(ent_ptr, 8i64);
                 int64:max_k = npk_mem_read_int64(ent_ptr, 16i64);
-                if (min_k != 0i64) { drop(nitpick_libc_mem_free(min_k)); }
-                if (max_k != 0i64) { drop(nitpick_libc_mem_free(max_k)); }
+                if (min_k != 0i64) { drop(npk_core_dalloc(min_k)); }
+                if (max_k != 0i64) { drop(npk_core_dalloc(max_k)); }
                 j = j + 1i64;
             }
             
-            drop(nitpick_libc_mem_free(lvl_mem));
+            drop(npk_core_dalloc(lvl_mem));
             i = i + 1i64;
         }
         
-        drop(nitpick_libc_mem_free(levels_array));
-        drop(nitpick_libc_mem_free(count_array));
-        drop(nitpick_libc_mem_free(lm));
+        drop(npk_core_dalloc(levels_array));
+        drop(npk_core_dalloc(count_array));
+        drop(npk_core_dalloc(lm));
     }
     pass(NIL);
 };
@@ -102,14 +102,14 @@ pub func:lm_add_sstable = NIL(int64:lm, int64:level, int64:file_id, string:min_k
         int64:min_len = string_length(min_key);
         int64:max_len = string_length(max_key);
         
-        int64:min_ptr = nitpick_libc_mem_malloc(8i64 + min_len);
-        int64:max_ptr = nitpick_libc_mem_malloc(8i64 + max_len);
+        int64:min_ptr = npk_core_alloc(8i64 + min_len);
+        int64:max_ptr = npk_core_alloc(8i64 + max_len);
         
         drop(npk_mem_write_int64(min_ptr, 0i64, min_len));
-        drop(npk_mem_write_string(min_ptr + 8i64, min_key));
+        drop(raw npk_mem_write_string(min_ptr + 8i64, min_key));
         
         drop(npk_mem_write_int64(max_ptr, 0i64, max_len));
-        drop(npk_mem_write_string(max_ptr + 8i64, max_key));
+        drop(raw npk_mem_write_string(max_ptr + 8i64, max_key));
         
         drop(npk_mem_write_int64(ent_ptr, 0i64, file_id));
         drop(npk_mem_write_int64(ent_ptr, 8i64, min_ptr));
@@ -139,8 +139,8 @@ pub func:lm_remove_sstable = NIL(int64:lm, int64:level, int64:file_id) {
         if (fid == file_id) {
             int64:min_k = npk_mem_read_int64(ent_ptr, 8i64);
             int64:max_k = npk_mem_read_int64(ent_ptr, 16i64);
-            if (min_k != 0i64) { drop(nitpick_libc_mem_free(min_k)); }
-            if (max_k != 0i64) { drop(nitpick_libc_mem_free(max_k)); }
+            if (min_k != 0i64) { drop(npk_core_dalloc(min_k)); }
+            if (max_k != 0i64) { drop(npk_core_dalloc(max_k)); }
             
             int64:j = i;
             while (j < count - 1i64) {
@@ -180,7 +180,7 @@ pub func:lm_next_sstable_path = string(int64:lm, int64:level) {
     
     int64:d_ptr = npk_mem_read_int64(lm, 0i64);
     int64:d_len = npk_mem_read_int64(lm, 8i64);
-    string:dir = npk_mem_read_string(d_ptr, d_len);
+    string:dir = raw npk_mem_read_string(d_ptr, d_len);
     
     string:fid_str = string_from_int(fid);
     while (string_length(fid_str) < 6i64) {
@@ -204,7 +204,7 @@ pub func:lm_get_sstables = int64(int64:lm, int64:level) {
     int64:levels_array = npk_mem_read_int64(lm, 24i64);
     int64:lvl_mem = npk_mem_read_int64(levels_array, level * 8i64);
     
-    int64:res = nitpick_libc_mem_malloc(count * 8i64);
+    int64:res = npk_core_alloc(count * 8i64);
     int64:i = 0i64;
     while (i < count) {
         int64:ent_ptr = lvl_mem + (i * LM_ENTRY_SIZE);
@@ -237,7 +237,7 @@ pub func:lm_get_sstable_min_key = string(int64:lm, int64:level, int64:file_id) {
         if (npk_mem_read_int64(ent, 0i64) == file_id) {
             int64:m_ptr = npk_mem_read_int64(ent, 8i64);
             int64:m_len = npk_mem_read_int64(m_ptr, 0i64);
-            pass(npk_mem_read_string(m_ptr + 8i64, m_len));
+            pass(raw npk_mem_read_string(m_ptr + 8i64, m_len));
         }
         i = i + 1i64;
     }
@@ -253,7 +253,7 @@ pub func:lm_get_sstable_max_key = string(int64:lm, int64:level, int64:file_id) {
         if (npk_mem_read_int64(ent, 0i64) == file_id) {
             int64:m_ptr = npk_mem_read_int64(ent, 16i64);
             int64:m_len = npk_mem_read_int64(m_ptr, 0i64);
-            pass(npk_mem_read_string(m_ptr + 8i64, m_len));
+            pass(raw npk_mem_read_string(m_ptr + 8i64, m_len));
         }
         i = i + 1i64;
     }

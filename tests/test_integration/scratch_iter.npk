@@ -1,0 +1,61 @@
+use "../../src/storage/sstable.npk".*;
+use "../../src/storage/compaction.npk".*;
+
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/storage/level_manager.npk".*;
+use "../../src/storage/write_path.npk".*;
+
+pub func:failsafe = int32(tbb32:err) { exit(1); };
+
+pub func:main = int32() {
+    int64:lm = lm_create("test_stress") ?! 0i64;
+    
+    // First, scan L0 to see total
+    int64:count_l0 = lm_count_at_level(lm, 0i64) ?! 0i64;
+    println("L0 file count before compaction: " + string_from_int(count_l0));
+    
+    // Now compact!
+    int64:recs_merged = compact_level(lm, 0i64) ?! -1i64;
+    println("compact_level returned: " + string_from_int(recs_merged) + " records merged.");
+    
+    // Now verify L1
+    int64:count_l1 = lm_count_at_level(lm, 1i64) ?! 0i64;
+    println("L1 file count after compaction: " + string_from_int(count_l1));
+    
+    int64:sstables = lm_get_sstables(lm, 1i64) ?! 0i64;
+    if (sstables != 0i64) {
+        int64:i = 0i64;
+        while (i < count_l1) {
+            int64:fid = npk_mem_read_int64(sstables, i * 8i64);
+            string:fid_str = string_from_int(fid);
+            while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
+            string:spath = "test_stress/L1/sst_" + fid_str + ".npkdb";
+            
+            int64:found_count = 0i64;
+            int64:reader = sstable_open_read(spath) ?! 0i64;
+            if (reader != 0i64) {
+                int64:iter = sstable_iter_create(reader) ?! 0i64;
+                while (1i64 == 1i64) {
+                    int64:rec = sstable_iter_next(iter) ?! 0i64;
+                    if (rec == 0i64) { break; }
+                    found_count = found_count + 1i64;
+                    
+                    // Verify if 463 is here
+                    string:k = sst_rec_key(rec) ?! "";
+                    if (k == "stress_key_000463") {
+                        println("FOUND 463 in L1!");
+                    }
+                    
+                    drop(sst_rec_free(rec));
+                }
+                println("L1 File " + fid_str + " had " + string_from_int(found_count) + " records.");
+                drop(sstable_iter_destroy(iter));
+                drop(sstable_close_read(reader));
+            }
+            i = i + 1i64;
+        }
+    }
+    
+    drop(lm_destroy(lm));
+    exit(0);
+};

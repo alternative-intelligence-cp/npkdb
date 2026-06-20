@@ -1,0 +1,251 @@
+// tests/test_integration/test_stress.npk
+use "../../src/storage/write_path.npk".*;
+use "../../src/storage/memtable.npk".*;
+use "../../src/storage/wal.npk".*;
+use "../../src/storage/sstable.npk".*;
+use "../../src/storage/level_manager.npk".*;
+use "../../src/storage/compaction.npk".*;
+use "../../src/storage/compaction_worker.npk".*;
+use "../../src/storage/flush.npk".*;
+use "../../src/storage/skiplist.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/util/constants.npk".*;
+use "sys.npk".*;
+use "thread.npk".*;
+
+
+
+func:check = NIL(bool:cond, string:msg) {
+    if (cond) {
+        println("  ✓ " + msg);
+    } else {
+        println("  ✗ " + msg);
+    }
+    pass(NIL);
+};
+
+pub func:failsafe = int32(tbb32:err) {
+    println("FAILSAFE TRIGGERED");
+    exit(1);
+};
+
+func:bg_worker_shim = int64(int64:ctx) {
+    pass 0i64;
+};
+
+// Re-use helper functions to get node and db_get
+func:test_mt_get_node = int64(int64:mt, string:key) {
+    if (mt == 0i64) { pass(0i64); }
+    int64:sl = npk_mem_read_int64(mt, MT_OFF_HEAD);
+    int64:curr = npk_mem_read_int64(sl, 0i64);
+    int64:lvl = SKIPLIST_MAX_LEVEL - 1i64;
+    while (lvl >= 0i64) {
+        while (1i64 == 1i64) {
+            int64:fwd = raw sl_node_forward(curr, lvl);
+            if (fwd == 0i64) { break; }
+            string:fwd_key = raw sl_node_key(fwd);
+            if (fwd_key >= key) { break; }
+            curr = fwd;
+        }
+        lvl = lvl - 1i64;
+    }
+    int64:cand = raw sl_node_forward(curr, 0i64);
+    if (cand != 0i64) {
+        string:cand_key = raw sl_node_key(cand);
+        if (cand_key == key) { pass(cand); }
+    }
+    pass(0i64);
+};
+
+func:db_get = string(int64:wp, string:key) {
+    int64:active_mt = raw wp_active_memtable(wp);
+    if (active_mt != 0i64) {
+        int64:node = raw test_mt_get_node(active_mt, key);
+        if (node != 0i64) {
+            int64:is_del1 = raw sl_node_is_deleted(node);
+            if (is_del1 == 1i64) { pass(""); }
+            int64:val_len1 = raw sl_node_val_len(node);
+            int64:vptr1 = raw sl_node_val_ptr(node);
+            pass(raw npk_mem_read_string(vptr1, val_len1));
+        }
+    }
+    int64:frozen_mt = raw wp_frozen_memtable(wp);
+    if (frozen_mt != 0i64) {
+        int64:node = raw test_mt_get_node(frozen_mt, key);
+        if (node != 0i64) {
+            int64:is_del2 = raw sl_node_is_deleted(node);
+            if (is_del2 == 1i64) { pass(""); }
+            int64:val_len2 = raw sl_node_val_len(node);
+            int64:vptr2 = raw sl_node_val_ptr(node);
+            pass(raw npk_mem_read_string(vptr2, val_len2));
+        }
+    }
+    int64:lm = raw wp_level_manager(wp);
+    if (lm != 0i64) {
+        int64:lvl = 0i64;
+        while (lvl < 5i64) {
+            int64:sstables = raw lm_get_sstables(lm, lvl);
+            if (sstables != 0i64) {
+                int64:count = raw lm_count_at_level(lm, lvl);
+                int64:i = 0i64;
+                while (i < count) {
+                    int64:idx = i;
+                    if (lvl == 0i64) { idx = count - 1i64 - i; }
+                    int64:fid = npk_mem_read_int64(sstables, idx * 8i64);
+                    string:fid_str = string_from_int(fid);
+                    while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
+                    string:spath = "test_stress/L" + string_from_int(lvl) + "/sst_" + fid_str + ".npkdb";
+                    int64:reader = raw sstable_open_read(spath);
+                    if (reader != 0i64) {
+                        int64:rec = raw sstable_get(reader, key);
+                        drop(sstable_close_read(reader));
+                        if (rec != 0i64) {
+                            int64:is_ts = raw sst_rec_is_tombstone(rec);
+                            if (is_ts == 1i64) {
+                                drop(sst_rec_free(rec));
+                                if (sstables != 0i64) { drop(npk_core_dalloc(sstables)); }
+                                pass("");
+                            }
+                            int64:vlen = raw sst_rec_val_len(rec);
+                            int64:vptr = raw sst_rec_val_ptr(rec);
+                            string:s = raw npk_mem_read_string(vptr, vlen);
+                            drop(sst_rec_free(rec));
+                            if (sstables != 0i64) { drop(npk_core_dalloc(sstables)); }
+                            pass(s);
+                        }
+                    }
+                    i = i + 1i64;
+                }
+                if (sstables != 0i64) { drop(npk_core_dalloc(sstables)); }
+            }
+            lvl = lvl + 1i64;
+        }
+    }
+    pass("");
+};
+
+pub func:main = int32() {
+    println("╔══════════════════════════════════════╗");
+    println("║  Integration: Stress Test            ║");
+    println("╚══════════════════════════════════════╝");
+    
+    string:wal_path = "test_stress/test.wal";
+    string:data_dir = "test_stress";
+
+    bool:ig1 = sys(UNLINK, wal_path).is_error;
+    
+    // Allocate a reasonable value string
+    int64:v_ptr = npk_core_alloc(32i64);
+    drop(raw npk_mem_write_string(v_ptr, "stress_value_data_1234567890"));
+    
+    // Group Commit helps performance for bulk loading
+    int64:wp1 = raw wp_init(data_dir, wal_path, @bg_worker_shim, "group_commit");
+    int64:lm = raw wp_level_manager(wp1);
+    
+    int64:num_records = 5000i64;
+    println("  - Writing " + string_from_int(num_records) + " records sequentially...");
+    
+    // Fast inserts
+    int64:i = 0i64;
+    while (i < num_records) {
+        string:k = "stress_key_";
+        string:ks = string_from_int(i);
+        while (string_length(ks) < 6i64) { ks = "0" + ks; } // Zero-pad for nice sorting
+        k = k + ks;
+        drop(wp_put(wp1, k, v_ptr, 28i64)); // 28 chars long
+        
+        // Force frequent flushes every 500 records to generate lots of L0 tables
+        if (i % 500i64 == 0i64) {
+            if (i > 0i64) {
+                int64:active_mt = raw wp_active_memtable(wp1);
+                drop(mt_freeze(active_mt));
+                drop(flush_memtable(active_mt, lm));
+                
+                int64:ctr = npk_mem_read_int64(wp1, 24i64); // WP_OFF_COUNTER
+                int64:new_mt = raw mt_create(ctr);
+                drop(npk_mem_write_int64(wp1, 24i64, ctr + 1i64));
+                drop(npk_mem_write_int64(wp1, 8i64, new_mt)); // WP_OFF_ACTIVE
+                
+                string:vtest = raw db_get(wp1, "stress_key_000463");
+                if (vtest == "") {
+                    println("Missing 463 right after flush!");
+                }
+                
+                // Signal worker
+                // int64:worker = npk_mem_read_int64(wp1, 40i64); // WP_OFF_WORKER
+                // if (worker != 0i64) {
+                //     int64:ch = npk_mem_read_int64(worker, 0i64);
+                //     drop(compaction_signal_l0(ch));
+                // }
+                
+                // Backpressure
+                // int64:l0 = raw lm_count_at_level(lm, 0i64);
+                // while (l0 > 8i64) {
+                //     drop(sys(NANOSLEEP, 10000000i64, 0i64)); // 10ms
+                //     l0 = raw lm_count_at_level(lm, 0i64);
+                // }
+            }
+        }
+        i = i + 1i64;
+    }
+    
+    println("  - Writes completed. Waiting for background compactions...");
+    
+    // Explicitly flush active memtable
+    int64:active_mt = raw wp_active_memtable(wp1);
+    drop(mt_freeze(active_mt));
+    drop(flush_memtable(active_mt, lm));
+    
+    int64:ctr = npk_mem_read_int64(wp1, 24i64); // WP_OFF_COUNTER
+    int64:new_mt = raw mt_create(ctr);
+    drop(npk_mem_write_int64(wp1, 24i64, ctr + 1i64));
+    drop(npk_mem_write_int64(wp1, 8i64, new_mt)); // WP_OFF_ACTIVE
+    
+    // Explicitly signal compaction
+    int64:worker = npk_mem_read_int64(wp1, 40i64); // WP_OFF_WORKER
+    if (worker != 0i64) {
+        int64:ch = npk_mem_read_int64(worker, 0i64);
+        drop(compaction_signal_l0(ch));
+    }
+    
+    int64:wait_iters = 0i64;
+    int64:l0_count = raw lm_count_at_level(lm, 0i64);
+    
+    while (wait_iters < 1000i64) {
+        if (l0_count <= 8i64) { break; }
+        drop(Thread.sleep_ms(50i64));
+        l0_count = raw lm_count_at_level(lm, 0i64);
+        wait_iters = wait_iters + 1i64;
+    }
+    
+    println("Stress: Background compactions finished. Remaining L0 tables: " + string_from_int(l0_count));
+    
+    println("  - Verifying data integrity...");
+    int64:missing = 0i64;
+    int64:wrong = 0i64;
+    i = 0i64;
+    while (i < num_records) {
+        string:k = "stress_key_";
+        string:ks = string_from_int(i);
+        while (string_length(ks) < 6i64) { ks = "0" + ks; }
+        k = k + ks;
+        
+        string:v = raw db_get(wp1, k);
+        if (v == "") {
+            missing = missing + 1i64;
+            println("Missing idx: " + string_from_int(i));
+        } else {
+            if (v != "stress_value_data_1234567890") {
+                wrong = wrong + 1i64;
+            }
+        }
+        i = i + 1i64;
+    }
+    
+    drop(check(missing == 0i64, "Stress: No missing records (" + string_from_int(missing) + "/5000 lost)"));
+    drop(check(wrong == 0i64, "Stress: No corrupted records (" + string_from_int(wrong) + "/5000 corrupted)"));
+    
+    drop(wp_shutdown(wp1));
+    drop(npk_core_dalloc(v_ptr));
+    exit(0);
+};

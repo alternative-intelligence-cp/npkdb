@@ -7,7 +7,7 @@ pub func:crc32_init = int64() {
     if (crc_table_ptr != 0i64) {
         pass(1i64);
     }
-    crc_table_ptr = nitpick_libc_mem_malloc(2048i64);
+    crc_table_ptr = npk_core_alloc(2048i64);
     
     int64:i = 0i64;
     while (i < 256i64) {

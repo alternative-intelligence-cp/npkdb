@@ -32,8 +32,8 @@ pub func:main = int32() {
     int64:mt1 = mt_create(1i64) ?! 0i64;
     
     // Allocate a value
-    int64:v1 = nitpick_libc_mem_malloc(12i64);
-    drop(npk_mem_write_string(v1, "hello_world1")); // 12 bytes
+    int64:v1 = npk_core_alloc(12i64);
+    drop(raw npk_mem_write_string(v1, "hello_world1")); // 12 bytes
     
     drop(mt_put(mt1, "key_a", v1, 12i64));
     drop(mt_put(mt1, "key_b", v1, 12i64));
@@ -67,7 +67,7 @@ pub func:main = int32() {
             int64:r_vlen = sst_rec_val_len(rec_a) ?! 0i64;
             int64:r_vptr = sst_rec_val_ptr(rec_a) ?! 0i64;
             if (r_vlen == 12i64 && r_vptr != 0i64) {
-                string:rv = npk_mem_read_string(r_vptr, r_vlen);
+                string:rv = raw npk_mem_read_string(r_vptr, r_vlen);
                 drop(check(rv == "hello_world1", "T06 Record value matches what was written"));
             } else {
                 drop(check(false, "T06 Record value matches what was written"));
@@ -104,7 +104,7 @@ pub func:main = int32() {
     
     // Large write
     int64:mt2 = mt_create(2i64) ?! 0i64;
-    int64:big_v_ptr = nitpick_libc_mem_malloc(500i64);
+    int64:big_v_ptr = npk_core_alloc(500i64);
     int64:i = 0i64;
     while (i < 100i64) {
         string:k = "key_" + string_pad_left(string_from_int(i), 3i64, 48i64);

@@ -26,8 +26,8 @@ func:main = int32() {
     println("║  SSTable Write Tests                 ║");
     println("╚══════════════════════════════════════╝");
 
-    int64:v_ptr = nitpick_libc_mem_malloc(10i64);
-    drop(npk_mem_write_string(v_ptr, "v"));
+    int64:v_ptr = npk_core_alloc(10i64);
+    drop(raw npk_mem_write_string(v_ptr, "v"));
 
     // T01, T02, T03
     int64:sz1 = sstable_record_size("key1", 1i64, 0i64) ?! 0i64;
@@ -47,8 +47,8 @@ func:main = int32() {
     int32:vl2 = npk_mem_read_int32(rec2, 9i64);
     drop(check(f2 == 1i64 && kl2 == 4i32 && vl2 == 0i32, "T02 Serialize tombstone record, verify format"));
 
-    drop(nitpick_libc_mem_free(rec1));
-    drop(nitpick_libc_mem_free(rec2));
+    drop(npk_core_dalloc(rec1));
+    drop(npk_core_dalloc(rec2));
 
     // Write SSTable tests
     string:sst_path = "/tmp/npkdb_test.sst";
@@ -70,7 +70,7 @@ func:main = int32() {
 
     // T06, T07, T08, T09
     int64:fd = sys(OPEN, sst_path, 0i64, 0i64) ?! -1i64;
-    int64:footer = nitpick_libc_mem_malloc(48i64);
+    int64:footer = npk_core_alloc(48i64);
     drop(sys(LSEEK, fd, 0i64 - 48i64, 2i64)); // SEEK_END
     drop(sys(READ, fd, footer, 48i64));
     
@@ -87,7 +87,7 @@ func:main = int32() {
     int64:crc_calc = crc32_compute(footer, 44i64) ?! 0i64;
     drop(check(chk == @cast_unchecked<int32>(crc_calc), "T09 Footer checksum validates"));
     
-    drop(nitpick_libc_mem_free(footer));
+    drop(npk_core_dalloc(footer));
     drop(sys(CLOSE, fd));
     drop(mt_destroy(mt));
 
@@ -95,7 +95,7 @@ func:main = int32() {
     drop(sys(UNLINK, sst_path));
     int64:mt2 = mt_create(2i64) ?! 0i64;
     
-    int64:big_v_ptr = nitpick_libc_mem_malloc(500i64); // large enough to span blocks
+    int64:big_v_ptr = npk_core_alloc(500i64); // large enough to span blocks
     int64:i = 0i64;
     while (i < 100i64) {
         string:k = "key_" + string_pad_left(string_from_int(i), 3i64, 48i64);
@@ -110,7 +110,7 @@ func:main = int32() {
     drop(check(written2 > 0i64, "T10 Write 100 records, flush to SSTable"));
     
     int64:fd2 = sys(OPEN, sst_path, 0i64, 0i64) ?! -1i64;
-    int64:footer2 = nitpick_libc_mem_malloc(48i64);
+    int64:footer2 = npk_core_alloc(48i64);
     drop(sys(LSEEK, fd2, 0i64 - 48i64, 2i64));
     drop(sys(READ, fd2, footer2, 48i64));
     
@@ -120,13 +120,13 @@ func:main = int32() {
     drop(check(db_cnt2 > 1i64, "T11 Write records that span multiple pages"));
     drop(check(t_keys2 == 100i64, "T12 Write with tombstones mixed in"));
 
-    drop(nitpick_libc_mem_free(footer2));
+    drop(npk_core_dalloc(footer2));
     drop(sys(CLOSE, fd2));
     drop(mt_destroy(mt2));
     
     drop(sys(UNLINK, sst_path));
-    drop(nitpick_libc_mem_free(v_ptr));
-    drop(nitpick_libc_mem_free(big_v_ptr));
+    drop(npk_core_dalloc(v_ptr));
+    drop(npk_core_dalloc(big_v_ptr));
 
     println("");
     println("Results: " + string_from_int(pass_count) + " passed, " + string_from_int(fail_count) + " failed");

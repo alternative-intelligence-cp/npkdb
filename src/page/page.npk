@@ -40,7 +40,7 @@ pub func:page_init = int64(int64:buf, int64:page_id) {
 // Free a page buffer
 pub func:page_free = NIL(int64:buf) {
     if (buf != 0i64) {
-        drop(nitpick_libc_mem_free(buf));
+        drop(npk_core_dalloc(buf));
     }
     pass(NIL);
 };
@@ -116,7 +116,7 @@ pub func:page_read_tuple = int64(int64:buf, int64:slot_index) {
         fail(ERR_PAGE_CORRUPT => tbb8);
     }
 
-    int64:out = nitpick_libc_mem_malloc(tup_len);
+    int64:out = npk_core_alloc(tup_len);
     drop(npk_mem_copy(out, buf + tup_off, tup_len));
     pass(out);
 };
@@ -126,7 +126,7 @@ pub func:page_read_tuple_string = string(int64:buf, int64:slot_index) {
     int64:tup_off = slot_get_tuple_offset(buf, slot_index) ?! 0i64;
     int64:tup_len = slot_get_tuple_length(buf, slot_index) ?! 0i64;
     int64:str_ptr = npk_mem_offset(buf, tup_off);
-    pass(npk_mem_read_string(str_ptr, tup_len));
+    pass(raw npk_mem_read_string(str_ptr, tup_len));
 };
 
 // Returns 1 if the page cannot fit a record of the given size, 0 otherwise.

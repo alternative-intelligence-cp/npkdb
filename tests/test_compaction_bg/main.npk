@@ -10,10 +10,7 @@ use "../../src/storage/sstable.npk".*;
 use "../../src/storage/flush.npk".*;
 use "../../src/storage/memtable.npk".*;
 
-extern "nitpick_libc_mem" {
-    func:nitpick_libc_mem_malloc = int64(int64:size);
-    func:nitpick_libc_mem_free = void(int64:ptr);
-}
+
 
 func:failsafe = int32(tbb32:err) {
     println("FAIL");
@@ -45,8 +42,8 @@ pub func:main = int32() {
         exit 1i32;
     }
     
-    int64:v_ptr = nitpick_libc_mem_malloc(100i64);
-    drop(npk_mem_write_string(v_ptr, "test_value"));
+    int64:v_ptr = npk_core_alloc(100i64);
+    drop(raw npk_mem_write_string(v_ptr, "test_value"));
     
     // Manual flush 4 times
     int64:lm = npk_mem_read_int64(wp, WP_OFF_LM);
@@ -121,7 +118,7 @@ pub func:main = int32() {
     drop(wp_shutdown(wp));
     println("  ✓ T07 Signal shutdown, worker thread exits cleanly");
     
-    drop(nitpick_libc_mem_free(v_ptr));
+    drop(npk_core_dalloc(v_ptr));
     
     println("\nResults: 6 passed, 0 failed");
     

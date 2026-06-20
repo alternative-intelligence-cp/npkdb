@@ -32,8 +32,8 @@ func:main = int32() {
     string:wal_path = "/tmp/npkdb_test_write_path.wal";
     drop(sys(UNLINK, wal_path));
 
-    int64:v_ptr = nitpick_libc_mem_malloc(10i64);
-    drop(npk_mem_write_string(v_ptr, "v"));
+    int64:v_ptr = npk_core_alloc(10i64);
+    drop(raw npk_mem_write_string(v_ptr, "v"));
 
     // T01
     int64:wp = wp_init("test_data", wal_path, @bg_worker_shim, "per_write") ?! 0i64;
@@ -58,10 +58,10 @@ func:main = int32() {
 
     // T05
     int64:fd = sys(OPEN, wal_path, 0i64, 0i64) ?! -1i64;
-    int64:buf = nitpick_libc_mem_malloc(1000i64);
+    int64:buf = npk_core_alloc(1000i64);
     int64:bw = sys(READ, fd, buf, 1000i64) ?! 0i64;
     drop(sys(CLOSE, fd));
-    drop(nitpick_libc_mem_free(buf));
+    drop(npk_core_dalloc(buf));
     drop(check(bw > 0i64, "T05 WAL file has grown (bytes > 0) after puts"));
 
     // T07 (We do it before T06 so it flushes/syncs WAL)
@@ -74,7 +74,7 @@ func:main = int32() {
     drop(check(rep == 3i64, "T06 Replay WAL after shutdown, verify records match"));
 
     drop(sys(UNLINK, wal_path));
-    drop(nitpick_libc_mem_free(v_ptr));
+    drop(npk_core_dalloc(v_ptr));
 
     println("");
     println("Results: " + string_from_int(pass_count) + " passed, " + string_from_int(fail_count) + " failed");

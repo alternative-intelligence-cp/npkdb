@@ -102,7 +102,7 @@ pub func:main = int32() {
     
     drop(bloom_destroy(bloom1));
     drop(bloom_destroy(bloom2));
-    drop(nitpick_libc_mem_free(buf));
+    drop(npk_core_dalloc(buf));
     
     println("");
     println("Results: " + string_from_int(pass_count) + " passed, " + string_from_int(fail_count) + " failed");

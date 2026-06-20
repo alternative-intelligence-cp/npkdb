@@ -4,8 +4,8 @@ use "mem_primitives.npk".*;
 pub func:bloom_hash1 = int64(string:key) {
     int64:h = 0i64;
     int64:len = string_length(key);
-    int64:buf = nitpick_libc_mem_malloc(len);
-    drop(npk_mem_write_string(buf, key));
+    int64:buf = npk_core_alloc(len);
+    drop(raw npk_mem_write_string(buf, key));
     
     int64:i = 0i64;
     while (i < len && i < 8i64) {
@@ -13,7 +13,7 @@ pub func:bloom_hash1 = int64(string:key) {
         h = h | (b << (i * 8i64));
         i = i + 1i64;
     }
-    drop(nitpick_libc_mem_free(buf));
+    drop(npk_core_dalloc(buf));
     
     // MurmurHash3 mix finalizer
     h = h ^ (h >> 33i64);
@@ -30,8 +30,8 @@ pub func:bloom_hash1 = int64(string:key) {
 pub func:bloom_hash2 = int64(string:key) {
     int64:h = -3750763034362895579i64; // 0xcbf29ce484222325
     int64:len = string_length(key);
-    int64:buf = nitpick_libc_mem_malloc(len);
-    drop(npk_mem_write_string(buf, key));
+    int64:buf = npk_core_alloc(len);
+    drop(raw npk_mem_write_string(buf, key));
     
     int64:i = 0i64;
     while (i < len) {
@@ -40,7 +40,7 @@ pub func:bloom_hash2 = int64(string:key) {
         h = h * 1099511628211i64; // 0x100000001b3
         i = i + 1i64;
     }
-    drop(nitpick_libc_mem_free(buf));
+    drop(npk_core_dalloc(buf));
     
     // Ensure positive for modulo
     if (h < 0i64) { h = h * -1i64; }
@@ -55,7 +55,7 @@ pub func:bloom_create = int64(int64:num_keys) {
     int64:num_hashes = 7i64;
     int64:byte_size = (num_bits + 7i64) / 8i64;
     
-    int64:bit_array = nitpick_libc_mem_malloc(byte_size);
+    int64:bit_array = npk_core_alloc(byte_size);
     // Zero out
     int64:i = 0i64;
     while (i < byte_size) {
@@ -63,7 +63,7 @@ pub func:bloom_create = int64(int64:num_keys) {
         i = i + 1i64;
     }
     
-    int64:bloom = nitpick_libc_mem_malloc(32i64);
+    int64:bloom = npk_core_alloc(32i64);
     drop(npk_mem_write_int64(bloom, 0i64, bit_array));
     drop(npk_mem_write_int64(bloom, 8i64, num_bits));
     drop(npk_mem_write_int64(bloom, 16i64, num_hashes));
@@ -75,8 +75,8 @@ pub func:bloom_create = int64(int64:num_keys) {
 pub func:bloom_destroy = NIL(int64:bloom) {
     if (bloom != 0i64) {
         int64:bit_array = npk_mem_read_int64(bloom, 0i64);
-        drop(nitpick_libc_mem_free(bit_array));
-        drop(nitpick_libc_mem_free(bloom));
+        drop(npk_core_dalloc(bit_array));
+        drop(npk_core_dalloc(bloom));
     }
     pass(NIL);
 };
@@ -147,7 +147,7 @@ pub func:bloom_serialize = int64(int64:bloom) {
     int64:byte_size = (num_bits + 7i64) / 8i64;
     
     int64:buf_size = 16i64 + byte_size;
-    int64:buf = nitpick_libc_mem_malloc(buf_size);
+    int64:buf = npk_core_alloc(buf_size);
     
     drop(npk_mem_write_int64(buf, 0i64, num_bits));
     drop(npk_mem_write_int64(buf, 8i64, num_hashes));
@@ -165,10 +165,10 @@ pub func:bloom_deserialize = int64(int64:data_ptr, int64:data_len) {
     
     if (data_len < (16i64 + byte_size)) { pass(0i64); }
     
-    int64:bit_array = nitpick_libc_mem_malloc(byte_size);
+    int64:bit_array = npk_core_alloc(byte_size);
     drop(npk_mem_copy(bit_array, data_ptr + 16i64, byte_size));
     
-    int64:bloom = nitpick_libc_mem_malloc(32i64);
+    int64:bloom = npk_core_alloc(32i64);
     drop(npk_mem_write_int64(bloom, 0i64, bit_array));
     drop(npk_mem_write_int64(bloom, 8i64, num_bits));
     drop(npk_mem_write_int64(bloom, 16i64, num_hashes));

@@ -48,13 +48,13 @@ pub func:sl_node_alloc = int64(string:key, int64:val_ptr, int64:val_len, int64:l
     // Add key string data size right after the pointers to keep it flat
     int64:total_size = size + key_len;
     
-    int64:node = nitpick_libc_mem_malloc(total_size);
+    int64:node = npk_core_alloc(total_size);
     
     // Write key data to the end of the node if not empty
     int64:key_data_ptr = 0i64;
     if (key_len > 0i64) {
         key_data_ptr = node + size;
-        drop(npk_mem_write_string(key_data_ptr, key));
+        drop(raw npk_mem_write_string(key_data_ptr, key));
     }
     
     drop(npk_mem_write_int64(node, 0i64, key_data_ptr));
@@ -76,7 +76,7 @@ pub func:sl_node_alloc = int64(string:key, int64:val_ptr, int64:val_len, int64:l
 
 pub func:sl_node_free = NIL(int64:node) {
     if (node != 0i64) {
-        drop(nitpick_libc_mem_free(node));
+        drop(npk_core_dalloc(node));
     }
     pass(NIL);
 };
@@ -85,7 +85,7 @@ pub func:sl_node_key = string(int64:node) {
     int64:key_ptr = npk_mem_read_int64(node, 0i64);
     int64:key_len = npk_mem_read_int64(node, 8i64);
     if (key_ptr == 0i64 || key_len == 0i64) { pass(""); }
-    pass(npk_mem_read_string(key_ptr, key_len));
+    pass(raw npk_mem_read_string(key_ptr, key_len));
 };
 
 pub func:sl_node_val_ptr = int64(int64:node) {
@@ -128,7 +128,7 @@ pub fixed int64:SL_OFF_MEMORY = 16i64;
 pub fixed int64:SL_STRUCT_SIZE = 24i64;
 
 pub func:sl_create = int64() {
-    int64:sl = nitpick_libc_mem_malloc(SL_STRUCT_SIZE);
+    int64:sl = npk_core_alloc(SL_STRUCT_SIZE);
     int64:head = sl_node_alloc("", 0i64, 0i64, SKIPLIST_MAX_LEVEL) ?! 0i64;
     drop(npk_mem_write_int64(sl, SL_OFF_HEAD, head));
     drop(npk_mem_write_int64(sl, SL_OFF_COUNT, 0i64));
@@ -143,7 +143,7 @@ pub func:sl_destroy = NIL(int64:sl) {
         drop(sl_node_free(curr));
         curr = nxt;
     }
-    drop(nitpick_libc_mem_free(sl));
+    drop(npk_core_dalloc(sl));
     pass(NIL);
 };
 
@@ -161,7 +161,7 @@ pub func:sl_memory_usage = int64(int64:sl) {
 
 pub func:sl_insert = int64(int64:sl, string:key, int64:val_ptr, int64:val_len) {
     int64:head = npk_mem_read_int64(sl, SL_OFF_HEAD);
-    int64:upd_buf = nitpick_libc_mem_malloc(SKIPLIST_MAX_LEVEL * 8i64);
+    int64:upd_buf = npk_core_alloc(SKIPLIST_MAX_LEVEL * 8i64);
     
     int64:curr = head;
     int64:lvl = SKIPLIST_MAX_LEVEL - 1i64;
@@ -190,7 +190,7 @@ pub func:sl_insert = int64(int64:sl, string:key, int64:val_ptr, int64:val_len) {
             int64:cur_mem = npk_mem_read_int64(sl, SL_OFF_MEMORY);
             drop(npk_mem_write_int64(sl, SL_OFF_MEMORY, cur_mem - old_val_len + val_len));
             
-            drop(nitpick_libc_mem_free(upd_buf));
+            drop(npk_core_dalloc(upd_buf));
             pass(1i64); // Updated
         }
     }
@@ -215,7 +215,7 @@ pub func:sl_insert = int64(int64:sl, string:key, int64:val_ptr, int64:val_len) {
     int64:cur_mem = npk_mem_read_int64(sl, SL_OFF_MEMORY);
     drop(npk_mem_write_int64(sl, SL_OFF_MEMORY, cur_mem + SKIPLIST_NODE_HEADER_SIZE + (new_lvl * 8i64) + key_len + val_len));
     
-    drop(nitpick_libc_mem_free(upd_buf));
+    drop(npk_core_dalloc(upd_buf));
     pass(0i64); // Inserted new
 };
 

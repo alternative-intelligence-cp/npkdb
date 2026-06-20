@@ -1,0 +1,39 @@
+use "../../src/storage/skiplist.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+
+pub func:failsafe = int32(tbb32:err) { exit(1); };
+
+pub func:main = int32() {
+    int64:sl = sl_create() ?! 0i64;
+    int64:i = 0i64;
+    while (i <= 500i64) {
+        string:k = "stress_key_";
+        string:ks = string_from_int(i);
+        while (string_length(ks) < 6i64) { ks = "0" + ks; }
+        k = k + ks;
+        
+        int64:vptr = npk_core_alloc(10i64);
+        drop(sl_insert(sl, k, vptr, 10i64));
+        i = i + 1i64;
+    }
+    
+    i = 0i64;
+    int64:missing = 0i64;
+    while (i <= 500i64) {
+        string:k = "stress_key_";
+        string:ks = string_from_int(i);
+        while (string_length(ks) < 6i64) { ks = "0" + ks; }
+        k = k + ks;
+        
+        int64:node = sl_search(sl, k) ?! 0i64;
+        if (node == 0i64) {
+            println("Missing from Skiplist: " + string_from_int(i));
+            missing = missing + 1i64;
+        }
+        i = i + 1i64;
+    }
+    
+    println("Missing total: " + string_from_int(missing));
+    drop(sl_destroy(sl));
+    exit(0);
+};

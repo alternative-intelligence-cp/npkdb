@@ -28,8 +28,8 @@ func:main = int32() {
     string:path = "/tmp/npkdb_test_wal_recovery.wal";
 
     // Setup helper
-    int64:v_ptr = nitpick_libc_mem_malloc(10i64);
-    drop(npk_mem_write_string(v_ptr, "value"));
+    int64:v_ptr = npk_core_alloc(10i64);
+    drop(raw npk_mem_write_string(v_ptr, "value"));
 
     // T01
     drop(sys(UNLINK, path));
@@ -81,7 +81,7 @@ func:main = int32() {
     drop(check(rk1 == "k1" && rk3 == "k2", "T05 Replay record keys match"));
 
     int64:vp = wal_record_value_ptr(rec1) ?! 0i64;
-    string:rv1 = npk_mem_read_string(vp, 5i64);
+    string:rv1 = raw npk_mem_read_string(vp, 5i64);
     drop(check(rv1 == "value", "T06 Replay record values match"));
 
     int32:s1 = wal_record_seq(rec1) ?! -1i32;
@@ -89,9 +89,9 @@ func:main = int32() {
     int32:s3 = wal_record_seq(rec3) ?! -1i32;
     drop(check(s2 > s1 && s3 > s2, "T07 Replay sequence numbers are monotonically increasing"));
 
-    drop(nitpick_libc_mem_free(rec1));
-    drop(nitpick_libc_mem_free(rec2));
-    drop(nitpick_libc_mem_free(rec3));
+    drop(npk_core_dalloc(rec1));
+    drop(npk_core_dalloc(rec2));
+    drop(npk_core_dalloc(rec3));
     drop(sys(CLOSE, rfd));
 
     // T08
@@ -115,7 +115,7 @@ func:main = int32() {
     // Size should be bw1+bw2+bw3. To truncate last 5 bytes, open read, get size, open write truncate to size-5.
     // Nitpick sys(TRUNCATE) ? No sys truncate. Wait, we can just read all bytes except last 5, and write them back.
     int64:t10_fd = sys(OPEN, path, 0i64, 0i64) ?! -1i64;
-    int64:t10_buf = nitpick_libc_mem_malloc(1000i64);
+    int64:t10_buf = npk_core_alloc(1000i64);
     int64:t10_len = sys(READ, t10_fd, t10_buf, 1000i64) ?! 0i64;
     drop(sys(CLOSE, t10_fd));
     
@@ -148,23 +148,23 @@ func:main = int32() {
     int64:rep11 = wal_replay(path) ?! -1i64;
     drop(check(rep11 == 0i64, "T11 Corrupt WAL (flip CRC) -> replay detects and stops"));
 
-    drop(nitpick_libc_mem_free(t10_buf));
+    drop(npk_core_dalloc(t10_buf));
 
     // T12
     drop(wal_truncate(path));
     int64:t12_fd = sys(OPEN, path, 0i64, 0i64) ?! -1i64;
-    int64:t12_buf = nitpick_libc_mem_malloc(10i64);
+    int64:t12_buf = npk_core_alloc(10i64);
     int64:t12_read = sys(READ, t12_fd, t12_buf, 10i64) ?! -1i64;
     drop(sys(CLOSE, t12_fd));
     drop(check(t12_read == 0i64, "T12 wal_truncate clears the file"));
-    drop(nitpick_libc_mem_free(t12_buf));
+    drop(npk_core_dalloc(t12_buf));
 
     // T13
     int64:rep13 = wal_replay(path) ?! -1i64;
     drop(check(rep13 == 0i64, "T13 Replay after truncate -> 0 records"));
     
     drop(sys(UNLINK, path));
-    drop(nitpick_libc_mem_free(v_ptr));
+    drop(npk_core_dalloc(v_ptr));
 
     println("");
     println("Results: " + string_from_int(pass_count) + " passed, " + string_from_int(fail_count) + " failed");

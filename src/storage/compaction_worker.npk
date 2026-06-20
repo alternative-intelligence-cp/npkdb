@@ -7,8 +7,8 @@ use "compaction.npk".*;
 use "level_manager.npk".*;
 
 extern "nitpick_libc_mem" {
-    func:nitpick_libc_mem_malloc = int64(int64:size);
-    func:nitpick_libc_mem_free = void(int64:ptr);
+    func:npk_core_alloc = int64(int64:size);
+    func:npk_core_dalloc = void(int64:ptr);
     func:npk_mem_read_int64 = int64(int64:ptr, int64:offset);
     func:npk_mem_write_int64 = void(int64:ptr, int64:offset, int64:val);
 }
@@ -66,18 +66,18 @@ pub func:compaction_worker_start = int64(int64:lm, ?->:worker_fn) {
     int64:ch = Channel.create(16i32) ?! 0i64;
     if (ch <= 0i64) { pass(0i64); }
     
-    int64:ctx = nitpick_libc_mem_malloc(CTX_SIZE);
+    int64:ctx = npk_core_alloc(CTX_SIZE);
     drop(npk_mem_write_int64(ctx, CTX_OFF_LM, lm));
     drop(npk_mem_write_int64(ctx, CTX_OFF_CH, ch));
     
     int64:tid = nitpick_libc_thread_spawn(worker_fn, ctx);
     if (tid < 0i64) {
         drop(Channel.destroy(ch));
-        drop(nitpick_libc_mem_free(ctx));
+        drop(npk_core_dalloc(ctx));
         pass(0i64);
     }
     
-    int64:ret = nitpick_libc_mem_malloc(24i64);
+    int64:ret = npk_core_alloc(24i64);
     drop(npk_mem_write_int64(ret, 0i64, ch));
     drop(npk_mem_write_int64(ret, 8i64, tid));
     drop(npk_mem_write_int64(ret, 16i64, ctx));

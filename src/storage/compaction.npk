@@ -1,13 +1,14 @@
 use "sstable.npk".*;
 use "level_manager.npk".*;
 use "memtable.npk".*;
+use "skiplist.npk".*;
 use "../util/constants.npk".*;
 use "../util/error_codes.npk".*;
 
 use "../util/min_heap.npk".*;
 
 pub func:merge_iter_create = int64(int64:iters, int64:readers, int64:count) {
-    int64:merge_iter = nitpick_libc_mem_malloc(32i64);
+    int64:merge_iter = npk_core_alloc(32i64);
     drop(npk_mem_write_int64(merge_iter, 0i64, iters));
     drop(npk_mem_write_int64(merge_iter, 8i64, count));
     drop(npk_mem_write_int64(merge_iter, 24i64, readers));
@@ -106,12 +107,12 @@ pub func:merge_iter_destroy = NIL(int64:merge_iter) {
     
     drop(heap_destroy(heap));
     
-    drop(nitpick_libc_mem_free(iters));
+    drop(npk_core_dalloc(iters));
     if (readers != 0i64) {
-        drop(nitpick_libc_mem_free(readers));
+        drop(npk_core_dalloc(readers));
     }
     
-    drop(nitpick_libc_mem_free(merge_iter));
+    drop(npk_core_dalloc(merge_iter));
     pass(NIL);
 };
 
@@ -169,7 +170,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         to_files_all = lm_get_sstables(lm, to_level) ?! 0i64;
     }
     
-    int64:overlap_files = nitpick_libc_mem_malloc(LM_MAX_SSTABLES_PER_LEVEL * 8i64);
+    int64:overlap_files = npk_core_alloc(LM_MAX_SSTABLES_PER_LEVEL * 8i64);
     int64:overlap_count = 0i64;
     
     i = 0i64;
@@ -190,11 +191,11 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         i = i + 1i64;
     }
     
-    if (to_files_all != 0i64) { drop(nitpick_libc_mem_free(to_files_all)); }
+    if (to_files_all != 0i64) { drop(npk_core_dalloc(to_files_all)); }
     
     int64:total_iters = from_count + overlap_count;
-    int64:all_fids = nitpick_libc_mem_malloc(total_iters * 8i64);
-    int64:all_levels = nitpick_libc_mem_malloc(total_iters * 8i64);
+    int64:all_fids = npk_core_alloc(total_iters * 8i64);
+    int64:all_levels = npk_core_alloc(total_iters * 8i64);
     
     i = 0i64;
     while (i < from_count) {
@@ -234,8 +235,8 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         i = i + 1i64;
     }
     
-    int64:readers = nitpick_libc_mem_malloc(total_iters * 8i64);
-    int64:iters = nitpick_libc_mem_malloc(total_iters * 8i64);
+    int64:readers = npk_core_alloc(total_iters * 8i64);
+    int64:iters = npk_core_alloc(total_iters * 8i64);
     
     i = 0i64;
     while (i < total_iters) {
@@ -247,7 +248,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         // Actually, we can just manually build it.
         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
         int64:d_len = npk_mem_read_int64(lm, 8i64);
-        string:dir = npk_mem_read_string(d_ptr, d_len);
+        string:dir = raw npk_mem_read_string(d_ptr, d_len);
         
         string:fid_str = string_from_int(fid);
         while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
@@ -333,7 +334,9 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
             if (is_tomb == 1i64) {
                 drop(mt_delete(out_mt, k));
             } else {
-                drop(mt_put(out_mt, k, v_ptr, v_len));
+                int64:v_copy = npk_core_alloc(v_len);
+                drop(npk_mem_copy(v_copy, v_ptr, v_len));
+                drop(mt_put(out_mt, k, v_copy, v_len));
             }
             
             if (rec_count == 0i64) {
@@ -355,6 +358,22 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
     if (rec_count > 0i64) {
         drop(mt_freeze(out_mt));
         int64:s_res = sstable_write(new_path, out_mt) ?! -1i64;
+        
+        // Free copied value pointers
+        // println("DEBUG: Freeing copied values...");
+        int64:c_node = mt_first(out_mt) ?! 0i64;
+        while (c_node != 0i64) {
+            int64:c_is_tomb = raw sl_node_is_deleted(c_node);
+            if (c_is_tomb == 0i64) {
+                int64:c_v_ptr = raw sl_node_val_ptr(c_node);
+                if (c_v_ptr != 0i64) {
+                    drop(npk_core_dalloc(c_v_ptr));
+                }
+            }
+            c_node = raw sl_next(c_node);
+        }
+        // println("DEBUG: Freed copied values!");
+        
         drop(mt_destroy(out_mt));
         
         if (s_res > 0i64) {
@@ -376,7 +395,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         
         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
         int64:d_len = npk_mem_read_int64(lm, 8i64);
-        string:dir = npk_mem_read_string(d_ptr, d_len);
+        string:dir = raw npk_mem_read_string(d_ptr, d_len);
         string:fid_str = string_from_int(fid);
         while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
         string:p1 = dir + "/L";
@@ -396,7 +415,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         
         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
         int64:d_len = npk_mem_read_int64(lm, 8i64);
-        string:dir = npk_mem_read_string(d_ptr, d_len);
+        string:dir = raw npk_mem_read_string(d_ptr, d_len);
         string:fid_str = string_from_int(fid);
         while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
         string:p1 = dir + "/L";
@@ -409,10 +428,10 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         j = j + 1i64;
     }
     
-    drop(nitpick_libc_mem_free(from_files));
-    drop(nitpick_libc_mem_free(overlap_files));
-    drop(nitpick_libc_mem_free(all_fids));
-    drop(nitpick_libc_mem_free(all_levels));
+    drop(npk_core_dalloc(from_files));
+    drop(npk_core_dalloc(overlap_files));
+    drop(npk_core_dalloc(all_fids));
+    drop(npk_core_dalloc(all_levels));
     
     pass(rec_count);
 };

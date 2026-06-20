@@ -1,0 +1,7 @@
+pub func:failsafe = int32(tbb32:err) { exit(1); };
+func:test = int64() { pass(42i64); };
+pub func:main = int32() {
+    int64:x = test() ?! 0i64;
+    println("x: " + string_from_int(x));
+    exit(0);
+};

@@ -16,7 +16,7 @@ pub fixed int64:MT_OFF_ID     = 16i64;
 pub fixed int64:MT_STATE_SIZE = 24i64;
 
 pub func:mt_create = int64(int64:id) {
-    int64:mt = nitpick_libc_mem_malloc(MT_STATE_SIZE);
+    int64:mt = npk_core_alloc(MT_STATE_SIZE);
     int64:sl_head = sl_create() ?! 0i64;
     
     drop(npk_mem_write_int64(mt, MT_OFF_HEAD, sl_head));
@@ -30,7 +30,7 @@ pub func:mt_destroy = NIL(int64:mt) {
     if (mt != 0i64) {
         int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
         drop(sl_destroy(sl_head));
-        drop(nitpick_libc_mem_free(mt));
+        drop(npk_core_dalloc(mt));
     }
     pass(NIL);
 };
