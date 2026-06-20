@@ -23,6 +23,7 @@ func:check = NIL(bool:cond, string:msg) {
 };
 
 func:failsafe = int32(tbb32:err) { exit(1); };
+func:bg_worker_shim = int64(int64:ctx) { pass(0i64); };
 
 func:main = int32() {
     println("╔══════════════════════════════════════╗");
@@ -97,7 +98,7 @@ func:main = int32() {
     drop(check(n2 == 1i64, "T10 Flush 4 Memtables -> lm_l0_needs_compaction = 1"));
     
     // WP Tests
-    int64:wp = wp_init("test_data", "test_wal.log") ?! 0i64;
+    int64:wp = wp_init("test_data", "test_wal.log", @bg_worker_shim, "per_write") ?! 0i64;
     
     int64:v_ptr_large = npk_core_alloc(1000000i64);
     drop(wp_put(wp, "trigger_flush_1", v_ptr_large, 1000000i64));
