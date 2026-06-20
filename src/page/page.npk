@@ -169,7 +169,9 @@ pub func:page_used_bytes = int64(int64:buf) {
 };
 
 // Insert a variable-length record into the page.
-pub func:page_insert = int64(int64:buf, int64:data_ptr, int64:data_len) {
+pub func:page_insert = int64(int64:buf, int64:data_ptr, int64:data_len)
+    requires buf != 0i64, data_ptr != 0i64, data_len > 0i64, data_len < PAGE_SIZE
+    ensures (result >= 0i64 || result == ERR_PAGE_FULL) {
     if (data_len <= 0i64) {
         fail(ERR_PAGE_CORRUPT => tbb8);
     }

@@ -91,7 +91,8 @@ func:wal_append = int64(int64:wal_fd, int32:rec_type, int64:seq, int64:payload_p
     pass(total_len);
 };
 
-pub func:wal_append_put = int64(int64:wal_fd, string:key, int64:value_ptr, int64:value_len, int64:seq) {
+pub func:wal_append_put = int64(int64:wal_fd, string:key, int64:value_ptr, int64:value_len, int64:seq)
+    requires wal_fd > 0i64, value_len >= 0i64, seq > 0i64 {
     int64:key_len = string_length(key);
     int64:payload_len = 4i64 + key_len + 4i64 + value_len;
     int64:payload = npk_core_alloc(payload_len);
@@ -117,7 +118,8 @@ pub func:wal_append_put = int64(int64:wal_fd, string:key, int64:value_ptr, int64
     pass(res);
 };
 
-pub func:wal_append_delete = int64(int64:wal_fd, string:key, int64:seq) {
+pub func:wal_append_delete = int64(int64:wal_fd, string:key, int64:seq)
+    requires wal_fd > 0i64, seq > 0i64 {
     int64:key_len = string_length(key);
     int64:payload_len = 4i64 + key_len;
     int64:payload = npk_core_alloc(payload_len);
