@@ -1,0 +1,131 @@
+// nfa_compiler.npk — Iterative Thompson NFA Compilation
+
+use "regex_types.npk".*;
+use "ast_types.npk".*;
+use "regex_arena.npk".*;
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+
+// A fragment represents a partially built NFA
+// start: Handle<NfaState>
+// e: Handle<NfaState>
+
+func:frag_create = int64(int64:start, int64:e) {
+    // Pack two 32-bit offset/indices, or just use astack/heap?
+    // We'll use astack to hold fragments. Since astack holds int64, we can pack two 32-bit arena offsets into an int64!
+    // But pointers are 64-bit. We can just push twice!
+    pass(0i64);
+};
+
+pub func:compile_nfa = int64(int64:arena_ptr, int64:ast_root) {
+    if (ast_root == 0i64) {
+        pass(0i64);
+    }
+    
+    astack(4096i64);
+    int32:frag_stack_size = 0i32;
+    
+    // Post-order traversal using an explicit stack
+    // stack format: apush(node), apush(state)
+    // state: 0 = unvisited, 1 = left processed, 2 = right processed
+    
+    int32:trav_stack_size = 0i32;
+    apush(ast_root);
+    apush(0i64);
+    trav_stack_size = trav_stack_size + 1i32;
+    
+    when (trav_stack_size > 0i32) {
+        int64:state = apop();
+        int64:node = apop();
+        trav_stack_size = trav_stack_size - 1i32;
+        
+        int32:type = npk_mem_read_int32(node, 0i64);
+        int32:val  = npk_mem_read_int32(node, 4i64);
+        int64:left = npk_mem_read_int64(node, 8i64);
+        int64:right = npk_mem_read_int64(node, 16i64);
+        
+        if (state == 0i64) {
+            apush(node);
+            apush(1i64);
+            trav_stack_size = trav_stack_size + 1i32;
+            if (left != 0i64) {
+                apush(left);
+                apush(0i64);
+                trav_stack_size = trav_stack_size + 1i32;
+            }
+        } else if (state == 1i64) {
+            apush(node);
+            apush(2i64);
+            trav_stack_size = trav_stack_size + 1i32;
+            if (right != 0i64) {
+                apush(right);
+                apush(0i64);
+                trav_stack_size = trav_stack_size + 1i32;
+            }
+        } else {
+            // Process node
+            if (type == AST_LITERAL) {
+                int64:s = raw regex_arena_alloc(arena_ptr, OP_CHAR, val);
+                int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
+                drop(npk_mem_write_int64(s, 8i64, e)); // out1 = e
+                
+                // push fragment
+                apush(s);
+                apush(e);
+                frag_stack_size = frag_stack_size + 1i32;
+            } else if (type == AST_ANY) {
+                int64:s = raw regex_arena_alloc(arena_ptr, OP_ANY, 0i32);
+                int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
+                drop(npk_mem_write_int64(s, 8i64, e)); // out1 = e
+                
+                apush(s);
+                apush(e);
+                frag_stack_size = frag_stack_size + 1i32;
+            } else if (type == AST_CONCAT) {
+                if (frag_stack_size < 2i32) { fail(ERR_REGEX_PARSE => tbb32); }
+                int64:f2_e = apop();
+                int64:f2_s = apop();
+                int64:f1_e = apop();
+                int64:f1_s = apop();
+                frag_stack_size = frag_stack_size - 2i32;
+                
+                // Patch f1_e to JMP to f2_s
+                drop(npk_mem_write_int32(f1_e, 0i64, OP_JMP));
+                drop(npk_mem_write_int64(f1_e, 8i64, f2_s));
+                
+                apush(f1_s);
+                apush(f2_e);
+                frag_stack_size = frag_stack_size + 1i32;
+            } else if (type == AST_STAR) {
+                if (frag_stack_size < 1i32) { fail(ERR_REGEX_PARSE => tbb32); }
+                int64:f1_e = apop();
+                int64:f1_s = apop();
+                frag_stack_size = frag_stack_size - 1i32;
+                
+                int64:s = raw regex_arena_alloc(arena_ptr, OP_SPLIT, 0i32);
+                int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
+                
+                // Split goes to f1_s or e
+                drop(npk_mem_write_int64(s, 8i64, f1_s));
+                drop(npk_mem_write_int64(s, 16i64, e));
+                
+                // f1_e goes to s (loop)
+                drop(npk_mem_write_int32(f1_e, 0i64, OP_JMP));
+                drop(npk_mem_write_int64(f1_e, 8i64, s));
+                
+                apush(s);
+                apush(e);
+                frag_stack_size = frag_stack_size + 1i32;
+            }
+        }
+    }
+    
+    if (frag_stack_size != 1i32) {
+        fail(ERR_REGEX_PARSE => tbb32);
+    }
+    
+    int64:final_e = apop();
+    int64:final_s = apop();
+    
+    pass(final_s);
+};
