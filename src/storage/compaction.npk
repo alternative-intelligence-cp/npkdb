@@ -116,24 +116,6 @@ pub func:merge_iter_destroy = NIL(int64:merge_iter) {
     pass(NIL);
 };
 
-// Helper: sort an array of int64s (file_ids)
-func:sort_int64_array = NIL(int64:arr, int64:count) {
-    int64:i = 0i64;
-    while (i < count) {
-        int64:j = i + 1i64;
-        while (j < count) {
-            int64:a = npk_mem_read_int64(arr, i * 8i64);
-            int64:b = npk_mem_read_int64(arr, j * 8i64);
-            if (a > b) {
-                drop(npk_mem_write_int64(arr, i * 8i64, b));
-                drop(npk_mem_write_int64(arr, j * 8i64, a));
-            }
-            j = j + 1i64;
-        }
-        i = i + 1i64;
-    }
-    pass(NIL);
-};
 
 // Internal function to do the compaction.
 // Collects all files from from_level, computes overlap, collects overlapping files from to_level.
@@ -212,28 +194,51 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         j = j + 1i64;
     }
     
-    // Sort all_fids (and keep all_levels synced, wait, do we need all_levels? Yes, to get the file path!)
-    // Let's sort both together based on fid
+    int64:heap = heap_create(total_iters) ? 0i64;
     i = 0i64;
     while (i < total_iters) {
-        j = i + 1i64;
-        while (j < total_iters) {
-            int64:fid_a = npk_mem_read_int64(all_fids, i * 8i64);
-            int64:fid_b = npk_mem_read_int64(all_fids, j * 8i64);
-            if (fid_a > fid_b) {
-                int64:lvl_a = npk_mem_read_int64(all_levels, i * 8i64);
-                int64:lvl_b = npk_mem_read_int64(all_levels, j * 8i64);
-                
-                drop(npk_mem_write_int64(all_fids, i * 8i64, fid_b));
-                drop(npk_mem_write_int64(all_fids, j * 8i64, fid_a));
-                
-                drop(npk_mem_write_int64(all_levels, i * 8i64, lvl_b));
-                drop(npk_mem_write_int64(all_levels, j * 8i64, lvl_a));
-            }
-            j = j + 1i64;
-        }
+        int64:fid = npk_mem_read_int64(all_fids, i * 8i64);
+        int64:lvl = npk_mem_read_int64(all_levels, i * 8i64);
+        
+        string:fid_str = string_from_int(fid);
+        while (string_length(fid_str) < 10i64) { fid_str = "0" + fid_str; }
+        
+        // Allocate dummy sst_rec to safely use min_heap for ints
+        int64:rec = npk_core_alloc(40i64);
+        int64:k_len = string_length(fid_str);
+        int64:k_ptr = npk_core_alloc(k_len);
+        _?!npk_mem_write_string(k_ptr, fid_str);
+        drop(npk_mem_write_int64(rec, 0i64, k_ptr));
+        drop(npk_mem_write_int64(rec, 8i64, k_len));
+        
+        // Stash fid in val_ptr offset, set tombstone to 1 so sst_rec_free cleanly skips freeing our integer as a pointer
+        drop(npk_mem_write_int64(rec, 16i64, fid)); 
+        drop(npk_mem_write_int64(rec, 32i64, 1i64)); 
+        
+        drop(heap_push(heap, fid_str, lvl, rec));
+        
         i = i + 1i64;
     }
+    
+    // Pop them sequentially to sort all_fids and all_levels
+    i = 0i64;
+    while (1i64 == 1i64) {
+        int64:sz = heap_size(heap) ? 0i64;
+        if (sz == 0i64) { break; }
+        
+        int64:rec = heap_pop_record(heap) ? 0i64;
+        int64:lvl = heap_pop_iter_idx(heap) ? 0i64;
+        drop(heap_pop(heap)); 
+        
+        int64:fid = npk_mem_read_int64(rec, 16i64); 
+        
+        drop(npk_mem_write_int64(all_fids, i * 8i64, fid));
+        drop(npk_mem_write_int64(all_levels, i * 8i64, lvl));
+        
+        drop(sst_rec_free(rec));
+        i = i + 1i64;
+    }
+    drop(heap_destroy(heap));
     
     int64:readers = npk_core_alloc(total_iters * 8i64);
     int64:iters = npk_core_alloc(total_iters * 8i64);

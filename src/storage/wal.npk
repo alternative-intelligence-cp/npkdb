@@ -188,7 +188,7 @@ pub func:wal_batch_should_flush = int64(int64:wal_fd) {
     
     int64:last_sync = npk_mem_read_int64(wal_state_ptr, 32i64);
     int64:timespec = npk_mem_read_int64(wal_state_ptr, 40i64);
-    drop(sys!!(228i64, 0i64, timespec));
+    drop(sys!!(228i64, 1i64, timespec));
     int64:sec = npk_mem_read_int64(timespec, 0i64);
     int64:nsec = npk_mem_read_int64(timespec, 8i64);
     int64:now = (sec * 1000000i64) + (nsec / 1000i64);
