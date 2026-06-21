@@ -5,11 +5,63 @@ use "../util/mem_primitives.npk".*;
 use "json_types.npk".*;
 
 // Tracks the current position in the buffer.
+
+pub struct:JsonArena = {
+    int64:data;     // Address of memory block
+    int64:capacity; // Total capacity
+    int64:cursor;   // Current allocation offset
+};
+
+pub func:json_arena_init = int64(int64:capacity) {
+    int64:arena_ptr = json_arena_alloc(state->arena_ptr, 24i64);
+    if (arena_ptr == 0i64) { pass(0i64); }
+    
+    int64:data = json_arena_alloc(state->arena_ptr, capacity);
+    if (data == 0i64) {
+        drop(npk_core_dalloc(arena_ptr));
+        pass(0i64);
+    }
+    
+    drop(npk_mem_write_int64(arena_ptr, 0i64, data));
+    drop(npk_mem_write_int64(arena_ptr, 8i64, capacity));
+    drop(npk_mem_write_int64(arena_ptr, 16i64, 0i64));
+    
+    pass(arena_ptr);
+};
+
+pub func:json_arena_alloc = int64(int64:arena_ptr, int64:size) {
+    int64:capacity = npk_mem_read_int64(arena_ptr, 8i64);
+    int64:cursor   = npk_mem_read_int64(arena_ptr, 16i64);
+    
+    int64:aligned_size = size;
+    int64:rem = size % 8i64;
+    if (rem != 0i64) {
+        aligned_size = size + (8i64 - rem);
+    }
+    
+    if (cursor + aligned_size > capacity) { pass(0i64); }
+    
+    int64:data = npk_mem_read_int64(arena_ptr, 0i64);
+    int64:alloc_ptr = data + cursor;
+    drop(npk_mem_write_int64(arena_ptr, 16i64, cursor + aligned_size));
+    
+    drop(npk_mem_set(alloc_ptr, 0i64, aligned_size));
+    pass(alloc_ptr);
+};
+
+pub func:json_arena_destroy = NIL(int64:arena_ptr) {
+    int64:data = npk_mem_read_int64(arena_ptr, 0i64);
+    if (data != 0i64) { drop(npk_core_dalloc(data)); }
+    drop(npk_core_dalloc(arena_ptr));
+    pass(NIL);
+};
+
 pub struct:ParserState = {
     int64:buf;
     int64:length;
     int64:pos;
     int64:depth;
+    int64:arena_ptr;
 };
 
 pub func:skip_whitespace = NIL(ParserState->:state) {
@@ -117,7 +169,7 @@ pub func:parse_f64 = flt64(ParserState->:state) {
 pub func:parse_array = NpkJsonVal(ParserState->:state) {
     state->pos = state->pos + 1i64; // skip '['
     int64:max_cap = 4096i64;
-    int64:handles_ptr = npk_core_alloc(max_cap * 8i64);
+    int64:handles_ptr = json_arena_alloc(state->arena_ptr, max_cap * 8i64);
     int64:count = 0i64;
     
     drop(skip_whitespace(state));
@@ -126,8 +178,10 @@ pub func:parse_array = NpkJsonVal(ParserState->:state) {
         state->pos = state->pos + 1i64;
     } else {
         while (count < max_cap) {
-            NpkJsonVal:v = _!parse_value(state);
-            int64:v_ptr = npk_core_alloc(16i64);
+            Result<NpkJsonVal>:v_res = parse_value(state);
+            if (v_res.is_error) { fail(v_res.err); }
+            NpkJsonVal:v = _!v_res;
+            int64:v_ptr = json_arena_alloc(state->arena_ptr, 16i64);
             drop(npk_mem_write_byte(v_ptr, 0i64, v.type => int64));
             drop(npk_mem_write_int64(v_ptr, 8i64, v.payload));
             
@@ -147,7 +201,7 @@ pub func:parse_array = NpkJsonVal(ParserState->:state) {
         }
     }
     
-    int64:arr_ptr = npk_core_alloc(16i64);
+    int64:arr_ptr = json_arena_alloc(state->arena_ptr, 16i64);
     drop(npk_mem_write_int32(arr_ptr, 0i64, count => int32));
     drop(npk_mem_write_int64(arr_ptr, 8i64, handles_ptr));
     
@@ -157,8 +211,8 @@ pub func:parse_array = NpkJsonVal(ParserState->:state) {
 pub func:parse_object = NpkJsonVal(ParserState->:state) {
     state->pos = state->pos + 1i64; // skip '{'
     int64:max_cap = 1024i64;
-    int64:keys_ptr = npk_core_alloc(max_cap * 8i64);
-    int64:values_ptr = npk_core_alloc(max_cap * 8i64);
+    int64:keys_ptr = json_arena_alloc(state->arena_ptr, max_cap * 8i64);
+    int64:values_ptr = json_arena_alloc(state->arena_ptr, max_cap * 8i64);
     int64:count = 0i64;
     
     drop(skip_whitespace(state));
@@ -168,8 +222,10 @@ pub func:parse_object = NpkJsonVal(ParserState->:state) {
     } else {
         while (count < max_cap) {
             drop(skip_whitespace(state));
-            NpkJsonStr:k = _!parse_string(state);
-            int64:k_ptr = npk_core_alloc(16i64);
+            Result<NpkJsonStr>:k_res = parse_string(state);
+            if (k_res.is_error) { fail(k_res.err); }
+            NpkJsonStr:k = _!k_res;
+            int64:k_ptr = json_arena_alloc(state->arena_ptr, 16i64);
             drop(npk_mem_write_int32(k_ptr, 0i64, k.length => int32));
             drop(npk_mem_write_int64(k_ptr, 8i64, k.data));
             drop(npk_mem_write_int64(keys_ptr, count * 8i64, k_ptr));
@@ -179,8 +235,10 @@ pub func:parse_object = NpkJsonVal(ParserState->:state) {
             if (c != 58i8) { fail(ERR_JSON_PARSE_FAIL); } // ':'
             state->pos = state->pos + 1i64; // skip ':'
             
-            NpkJsonVal:v = _!parse_value(state);
-            int64:v_ptr = npk_core_alloc(16i64);
+            Result<NpkJsonVal>:v_res = parse_value(state);
+            if (v_res.is_error) { fail(v_res.err); }
+            NpkJsonVal:v = _!v_res;
+            int64:v_ptr = json_arena_alloc(state->arena_ptr, 16i64);
             drop(npk_mem_write_byte(v_ptr, 0i64, v.type => int64));
             drop(npk_mem_write_int64(v_ptr, 8i64, v.payload));
             drop(npk_mem_write_int64(values_ptr, count * 8i64, v_ptr));
@@ -200,7 +258,7 @@ pub func:parse_object = NpkJsonVal(ParserState->:state) {
         }
     }
     
-    int64:obj_ptr = npk_core_alloc(24i64);
+    int64:obj_ptr = json_arena_alloc(state->arena_ptr, 24i64);
     drop(npk_mem_write_int32(obj_ptr, 0i64, count => int32));
     drop(npk_mem_write_int64(obj_ptr, 8i64, keys_ptr));
     drop(npk_mem_write_int64(obj_ptr, 16i64, values_ptr));
@@ -218,16 +276,22 @@ pub func:parse_value = NpkJsonVal(ParserState->:state) {
     int8:c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
     
     if (c == 123i8) { // '{'
-        NpkJsonVal:obj = _!parse_object(state);
+        Result<NpkJsonVal>:obj_res = parse_object(state);
+        if (obj_res.is_error) { fail(obj_res.err); }
+        NpkJsonVal:obj = _!obj_res;
         state->depth = state->depth - 1i64;
         pass(obj);
     } else if (c == 91i8) { // '['
-        NpkJsonVal:arr = _!parse_array(state);
+        Result<NpkJsonVal>:arr_res = parse_array(state);
+        if (arr_res.is_error) { fail(arr_res.err); }
+        NpkJsonVal:arr = _!arr_res;
         state->depth = state->depth - 1i64;
         pass(arr);
     } else if (c == 34i8) { // '"'
-        NpkJsonStr:s = _!parse_string(state);
-        int64:s_ptr = npk_core_alloc(16i64);
+        Result<NpkJsonStr>:s_res = parse_string(state);
+            if (s_res.is_error) { fail(s_res.err); }
+            NpkJsonStr:s = _!s_res;
+        int64:s_ptr = json_arena_alloc(state->arena_ptr, 16i64);
         drop(npk_mem_write_int32(s_ptr, 0i64, s.length => int32));
         drop(npk_mem_write_int64(s_ptr, 8i64, s.data));
         state->depth = state->depth - 1i64;
@@ -256,30 +320,35 @@ pub func:parse_value = NpkJsonVal(ParserState->:state) {
         }
         
         if (has_dot == 1i64) {
-            flt64:fv = _!parse_f64(state);
+            Result<flt64>:fv_res = parse_f64(state);
+            if (fv_res.is_error) { fail(fv_res.err); }
+            flt64:fv = _!fv_res;
             int64:fv_bits = <-(@fv => int64->);
             state->depth = state->depth - 1i64;
             pass(NpkJsonVal{ type: JSON_NUM_F64, payload: fv_bits });
         } else {
-            int64:iv = _!parse_i64(state);
+            Result<int64>:iv_res = parse_i64(state);
+            if (iv_res.is_error) { fail(iv_res.err); }
+            int64:iv = _!iv_res;
             state->depth = state->depth - 1i64;
             pass(NpkJsonVal{ type: JSON_NUM_I64, payload: iv });
         }
     }
 };
 
-pub func:parse_json = NpkJsonVal(string:json_str) {
+pub func:parse_json = NpkJsonVal(int64:arena_ptr, string:json_str) {
     int64:len = string_length(json_str);
     int64:ptr = string_to_cstr(json_str);
-    pass(parse_json_raw(ptr, len));
+    pass(parse_json_raw(arena_ptr, ptr, len));
 };
 
-pub func:parse_json_raw = NpkJsonVal(int64:ptr, int64:len) {
+pub func:parse_json_raw = NpkJsonVal(int64:arena_ptr, int64:ptr, int64:len) {
     ParserState:state = ParserState{
         buf: ptr,
         length: len,
         pos: 0i64,
-        depth: 0i64
+        depth: 0i64,
+        arena_ptr: arena_ptr
     };
     
     pass(parse_value(@state));

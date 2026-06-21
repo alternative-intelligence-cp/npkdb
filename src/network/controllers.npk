@@ -29,8 +29,12 @@ pub int64:global_catalog_lock = 0i64;
 pub int64:global_insert_counter = 0i64;
 
 pub func:controller_insert = int32(int64:client_fd, Request:req, string:collection_name) {
+    int64:arena = json_arena_init(1048576i64); // 1 MB limit
+    if (arena == 0i64) { pass(ERR_JSON_PARSE_FAIL); }
+    defer _?json_arena_destroy(arena);
+
     // Parse json payload
-    Result<NpkJsonVal>:v_res = parse_json_raw(req.body_ptr, req.body_len);
+    Result<NpkJsonVal>:v_res = parse_json_raw(arena, req.body_ptr, req.body_len);
     if (v_res.is_error) {
         int64:status = raw format_error_status(ERR_JSON_PARSE_FAIL);
         string:err_json = raw format_error_json(ERR_JSON_PARSE_FAIL);
@@ -121,8 +125,12 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
 };
 
 pub func:controller_search = int32(int64:client_fd, Request:req) {
+    int64:arena = json_arena_init(1048576i64); // 1 MB limit
+    if (arena == 0i64) { pass(ERR_JSON_PARSE_FAIL); }
+    defer _?json_arena_destroy(arena);
+
     // Parse json payload
-    Result<NpkJsonVal>:v_res = parse_json_raw(req.body_ptr, req.body_len);
+    Result<NpkJsonVal>:v_res = parse_json_raw(arena, req.body_ptr, req.body_len);
     if (v_res.is_error) {
         int64:status = raw format_error_status(ERR_JSON_PARSE_FAIL);
         string:err_json = raw format_error_json(ERR_JSON_PARSE_FAIL);
