@@ -1,0 +1,75 @@
+// tests/test_config/main.npk
+use "sys.npk".*;
+use "../../src/util/config.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+
+extern "C" {
+    func:_exit = void(int32:code);
+}
+
+pub func:proc_exit = NIL(int32:code) {
+    _exit(code);
+    pass(NIL);
+};
+
+pub func:failsafe = int32(tbb32:code) {
+    println("Failsafe triggered!");
+    exit(@cast_unchecked<int32>(code));
+};
+
+pub func:main = int32() {
+    println("Testing Config Init...");
+    int32:init_res = raw config_init("tests/test_config/npkdb.toml");
+    if (init_res != 0i32) {
+        println("FAILED to initialize config");
+        exit 1i32;
+    }
+    
+    int64:cfg_ptr = raw config_get();
+    if (cfg_ptr == 0i64) {
+        println("FAILED: config struct is null");
+        exit 2i32;
+    }
+    
+    int32:port = npk_mem_read_int32(cfg_ptr, CFG_HTTP_PORT);
+    if (port != 8081i32) {
+        println("FAILED: incorrect http_port");
+        exit 3i32;
+    }
+    
+    int64:threads = npk_mem_read_int64(cfg_ptr, CFG_MAX_THREADS);
+    if (threads != 32i64) {
+        println("FAILED: incorrect max_threads");
+        exit 4i32;
+    }
+    
+    int64:flush = npk_mem_read_int64(cfg_ptr, CFG_MEMTABLE_FLUSH_BYTES);
+    if (flush != 4096000i64) {
+        println("FAILED: incorrect flush bytes");
+        exit 5i32;
+    }
+    
+    int64:hm = npk_mem_read_int64(cfg_ptr, CFG_HNSW_M);
+    if (hm != 32i64) {
+        println("FAILED: incorrect hnsw_m");
+        exit 6i32;
+    }
+    
+    int64:efc = npk_mem_read_int64(cfg_ptr, CFG_HNSW_EF_CONSTRUCTION);
+    if (efc != 400i64) {
+        println("FAILED: incorrect hnsw_ef_construction");
+        exit 7i32;
+    }
+    
+    // Test defaults with missing file
+    drop(raw config_shutdown());
+    
+    int32:init_res_2 = raw config_init("nonexistent.toml");
+    if (init_res_2 == 0i32) {
+        println("FAILED: should return error for missing file");
+        exit 8i32;
+    }
+    
+    println("Config tests PASSED!");
+    exit 0i32;
+};
