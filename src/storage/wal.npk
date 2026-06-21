@@ -389,7 +389,11 @@ pub func:wal_replay = int64(string:wal_path, int64:active_mt) {
         
         if (active_mt != 0i64) {
             if (r_type == 1i32) { // WAL_RECORD_PUT
-                drop(raw mt_put(active_mt, r_key, r_val, r_vlen));
+                int64:new_val = npk_core_alloc(r_vlen);
+                if (r_vlen > 0i64) {
+                    drop(npk_mem_copy(new_val, r_val, r_vlen));
+                }
+                drop(raw mt_put(active_mt, r_key, new_val, r_vlen));
             } else if (r_type == 2i32) { // WAL_RECORD_DELETE
                 drop(raw mt_delete(active_mt, r_key));
             }
