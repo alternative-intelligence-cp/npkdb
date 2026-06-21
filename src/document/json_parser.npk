@@ -1,0 +1,76 @@
+// json_parser.npk — Zero-copy recursive descent JSON parser.
+
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+use "json_types.npk".*;
+
+// Tracks the current position in the buffer.
+pub struct:ParserState = {
+    int64:buf;
+    int64:length;
+    int64:pos;
+    int64:depth;
+};
+
+pub func:skip_whitespace = NIL(ParserState->:state) {
+    int8:c = 0i8;
+    when (state->pos < state->length) {
+        c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+        if (c == 32i8 || c == 10i8 || c == 13i8 || c == 9i8) {
+            state->pos = state->pos + 1i64;
+        } else {
+            break;
+        }
+    }
+    pass(NIL);
+};
+
+pub func:parse_i64 = int64(ParserState->:state) {
+    int64:acc = 0i64;
+    int64:sign = 1i64;
+    int8:c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+    
+    if (c == 45i8) { // '-'
+        sign = -1i64;
+        state->pos = state->pos + 1i64;
+    }
+    
+    when (state->pos < state->length) {
+        c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+        if (c >= 48i8 && c <= 57i8) {
+            int64:digit = (c - 48i8) => int64;
+            acc = (acc * 10i64) + digit;
+            state->pos = state->pos + 1i64;
+        } else {
+            break;
+        }
+    }
+    pass(acc * sign);
+};
+
+pub func:parse_string = NpkJsonStr(ParserState->:state) {
+    // Must start with '"'
+    if (@cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8) != 34i8) {
+        fail(ERR_JSON_PARSE_FAIL);
+    }
+    state->pos = state->pos + 1i64;
+    
+    int64:start = state->pos;
+    int8:c = 0i8;
+    when (state->pos < state->length) {
+        c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+        if (c == 34i8) { break; } // end quote
+        state->pos = state->pos + 1i64;
+    }
+    
+    if (c != 34i8) { fail(ERR_JSON_PARSE_FAIL); }
+    
+    int64:len = state->pos - start;
+    state->pos = state->pos + 1i64; // Consume closing quote
+    
+    NpkJsonStr:res = NpkJsonStr {
+        length: @cast_unchecked<uint32>(len),
+        data: state->buf + start
+    };
+    pass(res);
+};

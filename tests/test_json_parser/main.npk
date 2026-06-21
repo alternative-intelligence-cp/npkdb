@@ -1,0 +1,61 @@
+use "../../src/util/error_codes.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/document/json_types.npk".*;
+use "../../src/document/json_parser.npk".*;
+
+extern "C" {
+    func:_exit = void(int32:code);
+}
+
+pub func:proc_exit = NIL(int32:code) {
+    _exit(code);
+    pass(NIL);
+};
+
+func:main = int32(int32:argc, wild any->:argv) {
+    // 1. Test parse_i64
+    int64:buf1 = npk_core_alloc(32i64);
+    drop(npk_mem_write_string(buf1, "   -12345  "));
+    
+    ParserState:state1 = ParserState {
+        buf: buf1,
+        length: 11i64,
+        pos: 0i64,
+        depth: 0i64
+    };
+    
+    drop(skip_whitespace(@state1));
+    int64:num = _!parse_i64(@state1);
+    
+    if (num != -12345i64) { exit(11i32); }
+    if (state1.pos != 9i64) { exit(12i32); }
+    
+    // 2. Test parse_string
+    int64:buf2 = npk_core_alloc(32i64);
+    drop(npk_mem_write_string(buf2, "  \"hello world\"  "));
+    
+    ParserState:state2 = ParserState {
+        buf: buf2,
+        length: 17i64,
+        pos: 0i64,
+        depth: 0i64
+    };
+    
+    drop(skip_whitespace(@state2));
+    NpkJsonStr:s = _!parse_string(@state2);
+    
+    if (s.length != 11u32) { exit(21i32); }
+    if (state2.pos != 15i64) { exit(22i32); }
+    
+    // Verify first char 'h'
+    int64:first_char = npk_mem_read_byte(s.data, 0i64);
+    if (first_char != 104i64) {
+        exit((first_char & 255i64) => int32);
+    } // 'h' is 104
+    
+    exit(0i32);
+};
+
+func:failsafe = int32(tbb32:err) {
+    exit(1i32);
+};

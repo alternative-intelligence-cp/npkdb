@@ -38,7 +38,7 @@ pub func:json_make_f64 = NpkJsonVal(flt64:val) {
 
 pub struct:NpkJsonStr = {
     uint32:length;
-    int8->:data;
+    int64:data;
 };
 
 pub struct:NpkJsonArr = {

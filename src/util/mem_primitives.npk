@@ -59,3 +59,9 @@ pub func:npk_mem_read_string = string(int64:ptr, int64:max_len) {
     pass(s);
 };
 
+pub func:npk_mem_read_int8 = int8(int8->:buf_arg, int64:pos) {
+    int8->:local_buf = buf_arg;
+    int64:ptr = <-(@local_buf => int64->);
+    int64:val = npk_mem_read_byte(ptr, pos);
+    pass(val => int8);
+};

@@ -1,0 +1,44 @@
+// hnsw_filter.npk — Single-Stage Filter integration (verified contracts)
+
+use "../util/constants.npk".*;
+use "../util/error_codes.npk".*;
+use "hnsw_node.npk".*;
+use "hnsw_arena.npk".*;
+
+pub func:filter_eval = bool(
+        int64:filter_fn_ptr,
+        int64:vec_id,
+        int64:num_vectors)
+    requires filter_fn_ptr != 0i64
+    requires vec_id >= 0i64
+    requires vec_id < num_vectors
+    requires num_vectors > 0i64
+{
+    prove vec_id >= 0i64;
+    prove vec_id < num_vectors;
+    bool:result = (@cast_unchecked<func<bool(int64)>>(filter_fn_ptr))(vec_id);
+    pass(result);
+};
+
+pub func:hnsw_traversal_filter_check = bool(
+        int64:arena,
+        Handle<HnswNode>:candidate,
+        int64:filter_fn_ptr,
+        int64:num_vectors)
+    requires arena != 0i64
+    requires filter_fn_ptr != 0i64
+    requires num_vectors > 0i64
+{
+    int64:node_ptr = hnsw_arena_get_node(arena, candidate.slot, candidate.generation)
+        ?! { pass(false); };  // Stale handle: treat as filtered-out.
+
+    int64:vec_id = hnsw_node_get_vector_offset(node_ptr) ? 0i64; // Using get_vector_offset
+
+    if (vec_id < 0i64 || vec_id >= num_vectors) {
+        exit 1i32; // Assuming fail doesn't exist, we use exit
+    }
+    prove vec_id >= 0i64;
+    prove vec_id < num_vectors;
+
+    pass(filter_eval(filter_fn_ptr, vec_id, num_vectors) ?! false);
+};

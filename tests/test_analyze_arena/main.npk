@@ -1,0 +1,9 @@
+include "src/vector/hnsw_arena.npk"
+
+endpoint main {
+    exit 0;
+}
+
+endpoint failsafe {
+    exit 1;
+}
