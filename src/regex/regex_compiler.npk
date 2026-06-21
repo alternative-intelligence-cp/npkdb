@@ -1,0 +1,118 @@
+// regex_compiler.npk — Iterative AST Compilation for niregx
+
+use "ast_types.npk".*;
+use "regex_types.npk".*;
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+
+// Thread-Local Cache allocations for ephemeral AST Nodes
+extern "nitpick_libc_sys" {
+    func:npk_tlc_batch_alloc = int64(int64:size);
+    func:npk_tlc_batch_flush = void();
+}
+
+// Memory-safe AST Node allocator using the thread-local batch
+func:alloc_ast_node = int64(int32:type, int32:val) {
+    int64:node = npk_tlc_batch_alloc(32i64);
+    drop(npk_mem_write_int32(node, 0i64, type));
+    drop(npk_mem_write_int32(node, 4i64, val));
+    drop(npk_mem_write_int64(node, 8i64, 0i64));
+    drop(npk_mem_write_int64(node, 16i64, 0i64));
+    pass(node);
+};
+
+// ── LEXER ────────────────────────────────────────────────────────────────
+
+pub func:lex_pattern = int32(int64:pattern, limit<r_valid_regex_len> int64:len, int64:out_tokens) {
+    int64:i = 0i64;
+    int32:token_count = 0i32;
+
+    when (i < len) {
+        int64:c = npk_mem_read_byte(pattern, i);
+        int64:tok_ptr = out_tokens + ((token_count => int64) * 8i64);
+        
+        if (c == 42i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_STAR));
+        } else if (c == 43i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_PLUS));
+        } else if (c == 63i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_QMARK));
+        } else if (c == 124i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_PIPE));
+        } else if (c == 40i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_LPAREN));
+        } else if (c == 41i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_RPAREN));
+        } else if (c == 46i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_DOT));
+        } else { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_LITERAL));
+            drop(npk_mem_write_int32(tok_ptr, 4i64, c => int32));
+        }
+        
+        token_count = token_count + 1i32;
+        i = i + 1i64;
+    }
+    
+    pass(token_count);
+};
+
+// ── ITERATIVE PARSER ───────────────────────────────────────────────────────
+
+pub func:parse_regex_ast = int64(int64:tokens, int32:count) {
+    defer { npk_tlc_batch_flush(); }
+    
+    if (count == 0i32) {
+        fail(ERR_REGEX_PARSE => tbb32);
+    }
+    
+    int32:max_depth = 128i32;
+    astack(1024i64);
+    int32:stack_size = 0i32;
+    
+    int32:i = 0i32;
+    when (i < count) {
+        int64:tok_ptr = tokens + ((i => int64) * 8i64);
+        int32:tok_type = npk_mem_read_int32(tok_ptr, 0i64);
+        int32:tok_val = npk_mem_read_int32(tok_ptr, 4i64);
+        
+        if (tok_type == TOKEN_LITERAL) {
+            if (stack_size >= max_depth) { fail(ERR_REGEX_COMPLEXITY_EXCEEDED => tbb32); }
+            int64:leaf = raw alloc_ast_node(AST_LITERAL, tok_val);
+            apush(leaf);
+            stack_size = stack_size + 1i32;
+        } else if (tok_type == TOKEN_STAR) {
+            if (stack_size == 0i32) { fail(ERR_REGEX_PARSE => tbb32); }
+            stack_size = stack_size - 1i32;
+            int64:operand = apop();
+            int64:star_node = raw alloc_ast_node(AST_STAR, 0i32);
+            drop(npk_mem_write_int64(star_node, 8i64, operand));
+            apush(star_node);
+            stack_size = stack_size + 1i32;
+        } else if (tok_type == TOKEN_DOT) {
+            if (stack_size >= max_depth) { fail(ERR_REGEX_COMPLEXITY_EXCEEDED => tbb32); }
+            int64:leaf = raw alloc_ast_node(AST_ANY, 0i32);
+            apush(leaf);
+            stack_size = stack_size + 1i32;
+        }
+        
+        i = i + 1i32;
+    }
+    
+    int64:root = 0i64;
+    int32:k = 0i32;
+    when (k < stack_size) {
+        int64:node = apop();
+        if (root == 0i64) {
+            root = node;
+        } else {
+            int64:concat_node = raw alloc_ast_node(AST_CONCAT, 0i32);
+            drop(npk_mem_write_int64(concat_node, 8i64, node));
+            drop(npk_mem_write_int64(concat_node, 16i64, root));
+            root = concat_node;
+        }
+        k = k + 1i32;
+    }
+    
+    pass(root);
+};
