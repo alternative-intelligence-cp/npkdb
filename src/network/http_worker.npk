@@ -1,0 +1,47 @@
+// src/network/http_worker.npk
+use "channel.npk".*;
+use "thread.npk".*;
+use "router.npk".*;
+use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
+
+extern "nitpick_libc_mem" {
+    func:npk_core_alloc = int64(int64:size);
+    func:npk_core_dalloc = void(int64:ptr);
+}
+
+use "string_convert.npk".*;
+
+extern func:nitpick_libc_thread_spawn = int64(wild ?*:func, int64:arg);
+
+
+pub func:http_worker_loop = int64(int64:arg_handle) {
+    int64:thread_id = raw Thread.current_id();
+    println(string_concat(string_concat("HTTP Worker started (ID: ", string_from_int(thread_id)), ")"));
+    
+    int64:ch = arg_handle;
+    
+    till(1000000000, 1) { // practically infinite
+        int64:client_fd = raw Channel.recv(ch);
+        if (client_fd < 0i64) {
+            break;
+        }
+        
+        // Set socket receive timeout (SO_RCVTIMEO) to prevent Slowloris attacks
+        int64->:tv = @cast_unchecked<int64->>(npk_core_alloc(16i64));
+        tv[0] = 3i64; // 3 seconds timeout
+        tv[1] = 0i64; // 0 microseconds
+        int64:tv_ptr = asm!!!<int64>("x86_64", "movq $1, $0", "=r,r", tv);
+        // SYS_SETSOCKOPT=54, SOL_SOCKET=1, SO_RCVTIMEO=20
+        drop(sys!!(54i64, client_fd, 1i64, 20i64, tv_ptr, 16i64));
+        
+        Request:req = raw Server.read_req(client_fd);
+        drop(route_request(client_fd, req));
+        drop(raw Server.close_cli(client_fd));
+    }
+    
+    pass 0i64;
+};
+
+pub func:http_worker_start = int64(int64:ch, ?->:worker_fn) {
+    pass nitpick_libc_thread_spawn(worker_fn, ch);
+};

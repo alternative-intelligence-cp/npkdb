@@ -12,6 +12,11 @@ pub func:controller_create_collection = int32(int64:client_fd, Request:req) {
     pass(0i32);
 };
 
+use "../storage/write_path.npk".*;
+use "../document/json_serializer.npk".*;
+
+int64:insert_counter = 0i64;
+
 pub func:controller_insert = int32(int64:client_fd, Request:req, string:collection_name) {
     // Parse json payload
     Result<NpkJsonVal>:v_res = parse_json(req.body);
@@ -22,8 +27,18 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
         pass(ERR_JSON_PARSE_FAIL);
     }
     
-    // In future releases, this will translate JSON to npk_record and insert into WAL
-    string:res = "{\"status\": \"ok\", \"message\": \"inserted into " + collection_name + "\"}";
+    insert_counter = insert_counter + 1i64;
+    string:key = string_concat(string_concat(collection_name, "_"), string_from_int(insert_counter));
+    
+    int64:doc_len = string_length(req.body);
+    int64:doc_buf = npk_core_alloc(doc_len);
+    drop(npk_mem_write_string(doc_buf, req.body));
+    
+    drop(raw wp_put(global_wp, key, doc_buf, doc_len));
+    
+    drop(npk_core_dalloc(doc_buf));
+    
+    string:res = string_concat(string_concat("{\"status\": \"ok\", \"message\": \"inserted into ", collection_name), "\"}");
     drop(raw Server.send_typed(client_fd, 200i64, "application/json", res));
     pass(0i32);
 };

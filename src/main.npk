@@ -3,6 +3,12 @@
 use "util/failsafe.npk".*;
 use "util/config.npk".*;
 use "network/server.npk".*;
+use "storage/compaction_worker.npk".*;
+use "storage/write_path.npk".*;
+
+func:compaction_worker_shim = int64(int64:ctx) {
+    pass compaction_worker_loop(ctx);
+};
 
 func:main = int32(int32:argc, wild any->:argv) {
     println("NPKDB v0.3.11 starting...");
@@ -11,6 +17,13 @@ func:main = int32(int32:argc, wild any->:argv) {
     int32:res = raw config_init(cfg_path);
     if (res != 0i32) {
         println("Failed to load config from " + cfg_path);
+        exit(1i32);
+    }
+    
+    // Initialize storage engine
+    global_wp = raw wp_init("data/", "wal.log", @compaction_worker_shim, "per_write");
+    if (global_wp == 0i64) {
+        println("Failed to initialize storage engine!");
         exit(1i32);
     }
     

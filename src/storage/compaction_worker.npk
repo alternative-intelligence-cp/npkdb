@@ -32,9 +32,10 @@ pub func:compaction_worker_loop = int64(int64:ctx) {
     if (ctx == 0i64) { pass(0i64); }
     
     int64:lm = npk_mem_read_int64(ctx, CTX_OFF_LM);
-    int64:ch = npk_mem_read_int64(ctx, CTX_OFF_CH);
+    int64:ch = npk_mem_read_int64(ctx, 8i64);
+    int64:running = 1i64;
     
-    while (1i64 == 1i64) {
+    while (running == 1i64) {
         int64:msg = Channel.recv(ch) ?! -1i64;
         
         if (msg == COMPACT_SHUTDOWN) {
@@ -72,8 +73,12 @@ pub func:compaction_worker_start = int64(int64:lm, ?->:worker_fn) {
     
     int64:tid = nitpick_libc_thread_spawn(worker_fn, ctx);
     if (tid < 0i64) {
-        drop(Channel.destroy(ch));
-        drop(npk_core_dalloc(ctx));
+        if (ctx != 0i64) {
+            drop(npk_core_dalloc(ctx));
+        }
+        if (ch != 0i64) {
+            drop(Channel.destroy(ch));
+        }
         pass(0i64);
     }
     
@@ -87,17 +92,17 @@ pub func:compaction_worker_start = int64(int64:lm, ?->:worker_fn) {
 
 // Signal the compaction worker to compact L0.
 // non-blocking
-pub func:compaction_signal_l0 = NIL(int64:channel) {
+pub func:compaction_signal_l0 = int64(int64:channel) {
     if (channel != 0i64) {
         drop(Channel.try_send(channel, COMPACT_L0));
     }
-    pass(NIL);
+    pass(1i64);
 };
 
 // Signal the compaction worker to shut down.
-pub func:compaction_signal_shutdown = NIL(int64:channel) {
+pub func:compaction_signal_shutdown = int64(int64:channel) {
     if (channel != 0i64) {
         drop(Channel.send(channel, COMPACT_SHUTDOWN));
     }
-    pass(NIL);
+    pass(1i64);
 };

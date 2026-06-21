@@ -25,6 +25,8 @@ pub fixed int64:WP_OFF_WORKER   = 40i64; // Contains {channel, thread, ctx} poin
 pub fixed int64:WP_OFF_SYNC_MODE= 48i64; // 0 = per_write, 1 = group_commit
 pub fixed int64:WP_STATE_SIZE   = 56i64;
 
+pub int64:global_wp = 0i64;
+
 pub func:wp_init = int64(string:data_dir, string:wal_path, ?->:worker_fn, string:sync_mode) {
     int64:wp = npk_core_alloc(WP_STATE_SIZE);
     
@@ -38,6 +40,9 @@ pub func:wp_init = int64(string:data_dir, string:wal_path, ?->:worker_fn, string
     int64:lm = lm_create(data_dir) ?! 0i64;
     
     int64:active_mt = mt_create(1i64) ?! 0i64;
+    
+    int64:replayed_count = wal_replay(wal_path, active_mt) ?! 0i64;
+    println("Replayed " + string_from_int(replayed_count) + " records from WAL.");
     
     drop(npk_mem_write_int64(wp, WP_OFF_WAL_FD, wal_fd));
     drop(npk_mem_write_int64(wp, WP_OFF_ACTIVE, active_mt));
@@ -194,7 +199,6 @@ pub func:wp_shutdown = NIL(int64:wp) {
             int64:ch = npk_mem_read_int64(worker, 0i64);
             int64:tid = npk_mem_read_int64(worker, 8i64);
             int64:ctx = npk_mem_read_int64(worker, 16i64);
-            
             drop(compaction_signal_shutdown(ch));
             drop(Thread.sleep_ms(20i64)); // Brief yield for thread to exit
             drop(Thread.join(tid)); // Important to join to ensure clean shutdown

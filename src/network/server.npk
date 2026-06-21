@@ -1,7 +1,7 @@
 // src/network/server.npk
 use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
-use "../../nitpick-packages/packages/nitpick-thread/src/nitpick_thread.npk".*;
-use "../../nitpick-packages/packages/nitpick-thread/src/nitpick_channel.npk".*;
+use "channel.npk".*;
+use "thread.npk".*;
 use "../util/config.npk".*;
 use "../util/error_codes.npk".*;
 use "../util/mem_primitives.npk".*;
@@ -10,36 +10,10 @@ use "router.npk".*;
 
 use "../../libn/src/syscall/syscall_numbers.npk".*;
 
+use "http_worker.npk".*;
 pub int64:global_http_channel = 0i64; // Handle to the buffered channel for sockets
 
 pub func:server_start = int32() {
-    (int64)(int64):http_worker = int64(int64:arg_handle) {
-        int64:thread_id = raw thread_current_id();
-        println("HTTP Worker started (ID: " + string_from_int(thread_id) + ")");
-        
-        Channel:ch = Channel{handle: arg_handle};
-        
-        till(1000000000, 1) { // practically infinite
-            int64:client_fd = raw ch.recv();
-            if (client_fd < 0i64) {
-                break;
-            }
-            
-            // Set socket receive timeout (SO_RCVTIMEO) to prevent Slowloris attacks
-            int64->:tv = npk_core_alloc(16i64) => int64->;
-            tv[0] = 3i64; // 3 seconds timeout
-            tv[1] = 0i64; // 0 microseconds
-            int64:tv_ptr = asm!!!<int64>("x86_64", "movq $1, $0", "=r,r", tv);
-            // SYS_SETSOCKOPT=54, SOL_SOCKET=1, SO_RCVTIMEO=20
-            drop(sys!!(54i64, client_fd, 1i64, 20i64, tv_ptr, 16i64));
-            
-            Request:req = raw Server.read_req(client_fd);
-            drop(route_request(client_fd, req));
-            drop(raw Server.close_cli(client_fd));
-        }
-        
-        pass 0i64;
-    };
     int64:cfg_ptr = raw config_get();
     if (cfg_ptr == 0i64) {
         println("server_start: global config is null!");
@@ -48,23 +22,49 @@ pub func:server_start = int32() {
     
     int64:workers = npk_mem_read_int64(cfg_ptr, CFG_MAX_THREADS);
     if (workers <= 0i64) {
-        workers = @cast_unchecked<int64>(raw thread_hardware_concurrency());
+        workers = @cast_unchecked<int64>((raw Thread.hardware_concurrency()) * 2i32);
         if (workers <= 0i64) { workers = 4i64; }
     }
     
-    println("Initializing HTTP server with " + string_from_int(workers) + " workers...");
+    println(string_concat(string_concat("Initializing HTTP server with ", string_from_int(workers)), " workers..."));
     
     // Create a buffered channel for incoming client sockets
     // Capacity 4096 (can buffer 4096 simultaneous connections waiting to be serviced)
-    Channel:ch = raw channel_create(4096i32);
-    global_http_channel = ch.handle;
+    int64:ch = raw Channel.create(4096i32);
+    global_http_channel = ch;
+    
+pub func:http_worker_shim = int64(int64:arg_handle) {
+    int64:thread_id = raw Thread.current_id();
+    println(string_concat(string_concat("HTTP Worker started (ID: ", string_from_int(thread_id)), ")"));
+    
+    int64:w_ch = arg_handle;
+    
+    till(1000000000, 1) { // practically infinite
+        int64:client_fd = raw Channel.recv(w_ch);
+        if (client_fd < 0i64) {
+            break;
+        }
+        
+        // Set socket receive timeout (SO_RCVTIMEO) to prevent Slowloris attacks
+        int64->:tv = @cast_unchecked<int64->>(npk_core_alloc(16i64));
+        tv[0] = 3i64; // 3 seconds timeout
+        tv[1] = 0i64; // 0 microseconds
+        int64:tv_ptr = asm!!!<int64>("x86_64", "movq $1, $0", "=r,r", tv);
+        // SYS_SETSOCKOPT=54, SOL_SOCKET=1, SO_RCVTIMEO=20
+        drop(sys!!(54i64, client_fd, 1i64, 20i64, tv_ptr, 16i64));
+        
+        Request:req = raw Server.read_req(client_fd);
+        drop(route_request(client_fd, req));
+        drop(raw Server.close_cli(client_fd));
+    }
+    
+    pass 0i64;
+};
     
     // Spawn worker pool
     int64:i = 0i64;
     while (i < workers) {
-        int64:t_handle = npk_shim_thread_spawn(http_worker, global_http_channel);
-        Thread:t = Thread{handle: t_handle};
-        drop(raw t.detach());
+        int64:t_handle = nitpick_libc_thread_spawn(@http_worker_shim, global_http_channel);
         i = i + 1i64;
     }
     
@@ -72,18 +72,18 @@ pub func:server_start = int32() {
     int32:port = npk_mem_read_int32(cfg_ptr, CFG_HTTP_PORT);
     int64:server_fd = raw Server.bind_and_listen("0.0.0.0", @cast_unchecked<int64>(port), 1024i64);
     if (server_fd < 0i64) {
-        println("Failed to bind and listen on port " + string_from_int(@cast_unchecked<int64>(port)));
+        println(string_concat("Failed to bind and listen on port ", string_from_int(@cast_unchecked<int64>(port))));
         pass(ERR_SERVER_BIND_FAILED);
     }
     
-    println("Server listening on port " + string_from_int(@cast_unchecked<int64>(port)));
+    println(string_concat("Server listening on port ", string_from_int(@cast_unchecked<int64>(port))));
     
     // Accept loop (runs on main thread)
     till(1000000000, 1) {
         int64:client_fd = raw Server.accept_client(server_fd);
         if (client_fd >= 0i64) {
             // Push to channel
-            drop(raw ch.send(client_fd));
+            drop(raw Channel.send(ch, client_fd));
         } else {
             // Accept failed or server closed
             break;

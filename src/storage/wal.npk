@@ -4,6 +4,7 @@ use "../util/error_codes.npk".*;
 use "../util/mem_primitives.npk".*;
 use "../util/crc32.npk".*;
 use "../document/json_serializer.npk".*;
+use "memtable.npk".*;
 use "sys.npk".*;
 
 pub fixed int64:WAL_GROUP_MAX_RECORDS = 32i64;
@@ -141,37 +142,7 @@ pub func:wal_append_checkpoint = int64(int64:wal_fd, int64:seq) {
     pass(res);
 };
 
-pub func:wal_append_document = int64(int64:wal_fd, string:key, int64:val_ptr, int64:seq) {
-    int64:key_len = string_length(key);
-    int64:doc_len_ptr = npk_core_alloc(8i64);
-    int64:doc_buf = raw serialize_document(@cast_unchecked<NpkJsonVal->>(val_ptr), doc_len_ptr);
-    int64:doc_len = npk_mem_read_int64(doc_len_ptr, 0i64);
-    
-    int64:payload_len = 4i64 + key_len + 4i64 + doc_len;
-    int64:payload = npk_core_alloc(payload_len);
-    
-    // Offset 0: key_len
-    drop(npk_mem_write_int32(payload, 0i64, @cast_unchecked<int32>(key_len)));
-    if (key_len > 0i64) {
-        drop(raw npk_mem_write_string(payload + 4i64, key));
-    }
-    
-    // Offset 4+key_len: doc_len
-    drop(npk_mem_write_int32(payload, 4i64 + key_len, @cast_unchecked<int32>(doc_len)));
-    
-    // Offset 8+key_len: doc
-    if (doc_len > 0i64) {
-        drop(npk_mem_copy(payload + 8i64 + key_len, doc_buf, doc_len));
-    }
-    
-    int64:res = wal_append(wal_fd, WAL_RECORD_PUT, seq, payload, payload_len) ?! 0i64;
-    
-    drop(npk_core_dalloc(payload));
-    drop(npk_core_dalloc(doc_buf));
-    drop(npk_core_dalloc(doc_len_ptr));
-    
-    pass(res);
-};
+
 
 // -----------------------------------------------------------------------------
 // WAL Group Commit
@@ -297,7 +268,7 @@ pub func:wal_batch_append_delete = int64(int64:wal_fd, string:key, int64:seq) {
 // -----------------------------------------------------------------------------
 
 pub func:wal_open_read = int64(string:path) {
-    Result<int64>:fd_res = sys(OPEN, path, 0i64, 0i64);
+    Result<int64>:fd_res = sys(OPEN, path, 2i64, 0i64); // O_RDWR = 2
     if (fd_res.is_error) {
         pass(0i64);
     }
@@ -381,20 +352,41 @@ pub func:wal_record_value_len = int64(int64:record_buf) {
     pass(npk_mem_read_int32(record_buf, 20i64 + key_len) => int64);
 };
 
-pub func:wal_replay = int64(string:wal_path) {
+pub func:wal_replay = int64(string:wal_path, int64:active_mt) {
     int64:fd = wal_open_read(wal_path) ?! 0i64;
     if (fd <= 0i64) { pass(0i64); }
     
     int64:count = 0i64;
+    int64:valid_offset = 0i64;
+    
     while (1i64 == 1i64) {
         int64:rec = wal_read_next(fd) ?! -1i64;
         if (rec == 0i64) { break; }
         if (rec == -1i64) {
-            println("WARNING: WAL torn/corrupt record detected. Halting replay.");
+            println("WARNING: WAL torn/corrupt record detected. Halting replay and truncating at " + string_from_int(valid_offset));
+            drop(sys!!(77i64, fd, valid_offset)); // SYS_FTRUNCATE = 77
             break;
         }
+        
+        int64:rec_len = npk_mem_read_int32(rec, 4i64) => int64;
+        
+        int32:r_type = raw wal_record_type(rec);
+        int64:r_seq = (raw wal_record_seq(rec)) => int64;
+        string:r_key = raw wal_record_key(rec);
+        int64:r_val = raw wal_record_value_ptr(rec);
+        int64:r_vlen = raw wal_record_value_len(rec);
+        
+        if (active_mt != 0i64) {
+            if (r_type == 1i32) { // WAL_RECORD_PUT
+                drop(raw mt_put(active_mt, r_key, r_val, r_vlen));
+            } else if (r_type == 2i32) { // WAL_RECORD_DELETE
+                drop(raw mt_delete(active_mt, r_key));
+            }
+        }
+        
         drop(npk_core_dalloc(rec));
         count = count + 1i64;
+        valid_offset = valid_offset + rec_len;
     }
     drop(sys(CLOSE, fd));
     pass(count);
