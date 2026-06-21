@@ -2,9 +2,12 @@
 
 use "util/failsafe.npk".*;
 use "util/config.npk".*;
+use "rwlock.npk".*;
+use "atomic.npk".*;
 use "network/server.npk".*;
 use "storage/compaction_worker.npk".*;
 use "storage/write_path.npk".*;
+use "network/controllers.npk".*;
 
 func:compaction_worker_shim = int64(int64:ctx) {
     pass compaction_worker_loop(ctx);
@@ -19,6 +22,10 @@ func:main = int32(int32:argc, wild any->:argv) {
         println("Failed to load config from " + cfg_path);
         exit(1i32);
     }
+    
+    // Initialize locks
+    global_catalog_lock = nitpick_libc_rwlock_create();
+    global_insert_counter = npk_shim_atomic_int64_create(0i64);
     
     // Initialize storage engine
     global_wp = raw wp_init("data/", "wal.log", @compaction_worker_shim, "per_write");

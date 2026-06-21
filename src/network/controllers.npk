@@ -4,6 +4,10 @@ use "../document/json_parser.npk".*;
 use "../document/json_types.npk".*;
 use "../util/error_codes.npk".*;
 use "errors.npk".*;
+use "../storage/write_path.npk".*;
+use "../document/json_serializer.npk".*;
+use "rwlock.npk".*;
+use "atomic.npk".*;
 
 pub func:controller_create_collection = int32(int64:client_fd, Request:req) {
     // Dummy implementation for 0.3.9
@@ -12,10 +16,16 @@ pub func:controller_create_collection = int32(int64:client_fd, Request:req) {
     pass(0i32);
 };
 
-use "../storage/write_path.npk".*;
-use "../document/json_serializer.npk".*;
+extern "nitpick_libc_thread" {
+    func:nitpick_libc_rwlock_create    = int64();
+    func:nitpick_libc_rwlock_wrlock    = int32(int64:handle);
+    func:nitpick_libc_rwlock_unlock    = int32(int64:handle);
+    func:npk_shim_atomic_int64_create  = int64(int64:initial);
+    func:npk_shim_atomic_int64_fetch_add = int64(int64:handle, int64:value, int32:order);
+}
 
-int64:insert_counter = 0i64;
+pub int64:global_catalog_lock = 0i64;
+pub int64:global_insert_counter = 0i64;
 
 pub func:controller_insert = int32(int64:client_fd, Request:req, string:collection_name) {
     // Parse json payload
@@ -27,16 +37,26 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
         pass(ERR_JSON_PARSE_FAIL);
     }
     
-    insert_counter = insert_counter + 1i64;
-    string:key = string_concat(string_concat(collection_name, "_"), string_from_int(insert_counter));
+    // Atomically increment counter
+    int64:ctr = npk_shim_atomic_int64_fetch_add(global_insert_counter, 1i64, 5i32); // MEMORY_ORDER_SEQ_CST is 5
+    string:tmp1 = string_concat(collection_name, "_");
+    string:tmp2 = string_from_int(ctr);
+    string:key = string_concat(tmp1, tmp2);
     
     int64:doc_len = string_length(req.body);
+    if (doc_len > 4096i64) {
+        drop(raw Server.send_typed(client_fd, 413i64, "application/json", "{\"error\":\"Payload Too Large\"}"));
+        pass(NIL);
+    }
+    
     int64:doc_buf = npk_core_alloc(doc_len);
     drop(npk_mem_write_string(doc_buf, req.body));
     
+    drop(nitpick_libc_rwlock_wrlock(global_catalog_lock));
     drop(raw wp_put(global_wp, key, doc_buf, doc_len));
+    drop(nitpick_libc_rwlock_unlock(global_catalog_lock));
     
-    drop(npk_core_dalloc(doc_buf));
+    // Note: doc_buf is now owned by the MemTable, do NOT free it here.
     
     string:res = string_concat(string_concat("{\"status\": \"ok\", \"message\": \"inserted into ", collection_name), "\"}");
     drop(raw Server.send_typed(client_fd, 200i64, "application/json", res));

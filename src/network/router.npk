@@ -19,7 +19,8 @@ pub func:route_request = int32(int64:client_fd, Request:req) {
             int64:d_idx = string_index_of(suffix, "/docs");
             if (d_idx > 0i64) {
                 string:col_name = string_substring(suffix, 0i64, d_idx);
-                pass(controller_insert(client_fd, req, col_name));
+                int32:res = raw controller_insert(client_fd, req, col_name);
+                pass(res);
             }
         }
     }

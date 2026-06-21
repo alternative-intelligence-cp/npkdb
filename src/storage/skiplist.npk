@@ -76,6 +76,10 @@ pub func:sl_node_alloc = int64(string:key, int64:val_ptr, int64:val_len, int64:l
 
 pub func:sl_node_free = NIL(int64:node) {
     if (node != 0i64) {
+        int64:val_ptr = npk_mem_read_int64(node, 16i64);
+        if (val_ptr != 0i64) {
+            drop(npk_core_dalloc(val_ptr));
+        }
         drop(npk_core_dalloc(node));
     }
     pass(NIL);
@@ -183,6 +187,10 @@ pub func:sl_insert = int64(int64:sl, string:key, int64:val_ptr, int64:val_len) {
         string:cand_key = sl_node_key(cand) ?! "";
         if (cand_key == key) {
             int64:old_val_len = sl_node_val_len(cand) ?! 0i64;
+            int64:old_val_ptr = sl_node_val_ptr(cand) ?! 0i64;
+            if (old_val_ptr != 0i64) {
+                drop(npk_core_dalloc(old_val_ptr));
+            }
             drop(npk_mem_write_int64(cand, 16i64, val_ptr));
             drop(npk_mem_write_int64(cand, 24i64, val_len));
             drop(npk_mem_write_int64(cand, 40i64, 0i64)); // revive

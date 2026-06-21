@@ -33,6 +33,7 @@ pub func:http_worker_loop = int64(int64:arg_handle) {
         int64:tv_ptr = asm!!!<int64>("x86_64", "movq $1, $0", "=r,r", tv);
         // SYS_SETSOCKOPT=54, SOL_SOCKET=1, SO_RCVTIMEO=20
         drop(sys!!(54i64, client_fd, 1i64, 20i64, tv_ptr, 16i64));
+        drop(npk_core_dalloc(@cast_unchecked<int64>(tv)));
         
         Request:req = raw Server.read_req(client_fd);
         drop(route_request(client_fd, req));
