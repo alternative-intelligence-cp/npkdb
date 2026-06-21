@@ -1,0 +1,25 @@
+use "../../src/util/failsafe.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/document/json_types.npk".*;
+use "../../src/document/json_parser.npk".*;
+
+use "io.npk".*;
+
+use "io.npk".*;
+
+pub func:main = int32() {
+    FileStream:fuzz_in = raw FileStream.open("fuzz_payload.json", "r");
+    if (fuzz_in.handle == 0i64) {
+        drop(stdout_write("Failed to open fuzz_payload.json\n"));
+        exit(1);
+    }
+    
+    string:line = raw FileStream.readLine(fuzz_in);
+    if (string_length(line) > 0i64) {
+        drop(parse_json(line));
+        drop(stdout_write("ok\n"));
+    }
+    
+    drop(FileStream.close(fuzz_in));
+    exit(0);
+};

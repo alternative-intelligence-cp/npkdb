@@ -209,35 +209,43 @@ pub func:parse_object = NpkJsonVal(ParserState->:state) {
 };
 
 pub func:parse_value = NpkJsonVal(ParserState->:state) {
+    if (state->depth > 128i64) { fail(ERR_JSON_PARSE_FAIL); }
+    state->depth = state->depth + 1i64;
+    
     drop(skip_whitespace(state));
     if (state->pos >= state->length) { fail(ERR_JSON_PARSE_FAIL); }
     
     int8:c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
     
     if (c == 123i8) { // '{'
-        pass(parse_object(state));
+        NpkJsonVal:obj = _!parse_object(state);
+        state->depth = state->depth - 1i64;
+        pass(obj);
     } else if (c == 91i8) { // '['
-        pass(parse_array(state));
+        NpkJsonVal:arr = _!parse_array(state);
+        state->depth = state->depth - 1i64;
+        pass(arr);
     } else if (c == 34i8) { // '"'
         NpkJsonStr:s = _!parse_string(state);
         int64:s_ptr = npk_core_alloc(16i64);
         drop(npk_mem_write_int32(s_ptr, 0i64, s.length => int32));
         drop(npk_mem_write_int64(s_ptr, 8i64, s.data));
+        state->depth = state->depth - 1i64;
         pass(NpkJsonVal{ type: JSON_STR, payload: s_ptr });
     } else if (c == 116i8) { // 't' (true)
         state->pos = state->pos + 4i64;
+        state->depth = state->depth - 1i64;
         pass(NpkJsonVal{ type: JSON_BOOL, payload: 1i64 });
     } else if (c == 102i8) { // 'f' (false)
         state->pos = state->pos + 5i64;
+        state->depth = state->depth - 1i64;
         pass(NpkJsonVal{ type: JSON_BOOL, payload: 0i64 });
     } else if (c == 110i8) { // 'n' (null)
         state->pos = state->pos + 4i64;
+        state->depth = state->depth - 1i64;
         pass(NpkJsonVal{ type: JSON_NULL, payload: 0i64 });
     } else {
         // Assume number. Check if it contains '.' to decide flt64 or int64.
-        // For simplicity we just use parse_f64 for all numbers right now.
-        // Wait, npk_record requires strict type matching!
-        // We'll scan ahead to see if there is a dot.
         int64:scan_pos = state->pos;
         int64:has_dot = 0i64;
         while (scan_pos < state->length) {
@@ -250,9 +258,11 @@ pub func:parse_value = NpkJsonVal(ParserState->:state) {
         if (has_dot == 1i64) {
             flt64:fv = _!parse_f64(state);
             int64:fv_bits = <-(@fv => int64->);
+            state->depth = state->depth - 1i64;
             pass(NpkJsonVal{ type: JSON_NUM_F64, payload: fv_bits });
         } else {
             int64:iv = _!parse_i64(state);
+            state->depth = state->depth - 1i64;
             pass(NpkJsonVal{ type: JSON_NUM_I64, payload: iv });
         }
     }
