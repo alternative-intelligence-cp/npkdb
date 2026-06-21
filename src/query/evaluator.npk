@@ -1,0 +1,179 @@
+// evaluator.npk — Evaluates an AST filter against a specific document
+
+use "ast_types.npk".*;
+use "path_eval.npk".*;
+use "../document/json_types.npk".*;
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+
+// Returns true if the record satisfies the AST filter
+// Iterative AST evaluator using astack (transient call stack simulation)
+pub func:evaluate_filter = bool(int64:ast_root, int64:doc_ptr) {
+    if (ast_root == 0i64) {
+        pass(true); // Empty filter matches everything
+    }
+    
+    astack(2048i64); // Allocate a 2048-slot stack array on the C stack (8 bytes each, 16KB)
+    
+    // Push the root task
+    // Frame layout (pushed top-to-bottom):
+    // apush(node_ptr)
+    // apush(child_idx)
+    // apush(accumulated_result)
+    
+    apush(ast_root);
+    apush(0i64);
+    apush(-1i64); // -1 = uninitialized
+    
+    int64:stack_size = 1i64;
+    int64:last_result = 1i64; // Initialize with true
+    
+    while (stack_size > 0i64) {
+        int64:acc = apop();
+        int64:c_idx = apop();
+        int64:node = apop();
+        stack_size = stack_size - 1i64;
+        
+        int64:op = npk_mem_read_byte(node, 0i64) => int64;
+        
+        if (op == (AST_OP_AND => int64)) {
+            int64:count = npk_mem_read_int32(node, 32i64) => int64;
+            
+            if (c_idx == 0i64) { 
+                acc = 1i64; 
+            } else {
+                if (last_result == 0i64) { acc = 0i64; } // Short-circuit: one child failed
+            }
+            
+            if (acc == 0i64) {
+                last_result = 0i64;
+                continue;
+            }
+            
+            if (c_idx < count) {
+                // Suspend parent and push back
+                apush(node);
+                apush(c_idx + 1i64);
+                apush(acc);
+                stack_size = stack_size + 1i64;
+                
+                // Push child
+                int64:children = npk_mem_read_int64(node, 40i64);
+                int64:child_node = npk_mem_read_int64(children, c_idx * 8i64);
+                apush(child_node);
+                apush(0i64);
+                apush(-1i64);
+                stack_size = stack_size + 1i64;
+                continue;
+            } else {
+                last_result = acc;
+                continue;
+            }
+        }
+        
+        if (op == (AST_OP_OR => int64)) {
+            int64:count = npk_mem_read_int32(node, 32i64) => int64;
+            
+            if (c_idx == 0i64) { 
+                acc = 0i64; 
+            } else {
+                if (last_result == 1i64) { acc = 1i64; } // Short-circuit: one child succeeded
+            }
+            
+            if (acc == 1i64) {
+                last_result = 1i64;
+                continue;
+            }
+            
+            if (c_idx < count) {
+                // Suspend parent and push back
+                apush(node);
+                apush(c_idx + 1i64);
+                apush(acc);
+                stack_size = stack_size + 1i64;
+                
+                // Push child
+                int64:children = npk_mem_read_int64(node, 40i64);
+                int64:child_node = npk_mem_read_int64(children, c_idx * 8i64);
+                apush(child_node);
+                apush(0i64);
+                apush(-1i64);
+                stack_size = stack_size + 1i64;
+                continue;
+            } else {
+                last_result = acc;
+                continue;
+            }
+        }
+        
+        // Leaf Nodes
+        int64:path = npk_mem_read_int64(node, 8i64);
+        NpkJsonVal:actual = raw eval_path(path, doc_ptr);
+        
+        NpkJsonVal:target = NpkJsonVal {
+            type: npk_mem_read_byte(node, 16i64) => int8,
+            payload: npk_mem_read_int64(node, 24i64)
+        };
+        
+        if (actual.type == JSON_NULL) {
+            last_result = 0i64;
+            continue;
+        }
+        
+        if (op == (AST_OP_EQ => int64)) {
+            if (actual.type != target.type) {
+                last_result = 0i64;
+                continue;
+            }
+            if (actual.type == JSON_NUM_I64) {
+                if (actual.payload == target.payload) { last_result = 1i64; } else { last_result = 0i64; }
+                continue;
+            }
+            if (actual.type == JSON_STR) {
+                int64:a_len = npk_mem_read_int32(actual.payload, 0i64) => int64;
+                int64:t_len = npk_mem_read_int32(target.payload, 0i64) => int64;
+                if (a_len != t_len) {
+                    last_result = 0i64;
+                    continue;
+                }
+                int64:a_data = npk_mem_read_int64(actual.payload, 8i64);
+                int64:t_data = npk_mem_read_int64(target.payload, 8i64);
+                int64:res = npk_mem_compare(a_data, t_data, a_len);
+                if (res == 0i64) { last_result = 1i64; } else { last_result = 0i64; }
+                continue;
+            }
+            last_result = 0i64;
+            continue;
+        }
+        
+        if (op == (AST_OP_GT => int64)) {
+            if (actual.type != target.type) {
+                last_result = 0i64;
+                continue;
+            }
+            if (actual.type == JSON_NUM_I64) {
+                if (actual.payload > target.payload) { last_result = 1i64; } else { last_result = 0i64; }
+                continue;
+            }
+            last_result = 0i64;
+            continue;
+        }
+        
+        if (op == (AST_OP_LT => int64)) {
+            if (actual.type != target.type) {
+                last_result = 0i64;
+                continue;
+            }
+            if (actual.type == JSON_NUM_I64) {
+                if (actual.payload < target.payload) { last_result = 1i64; } else { last_result = 0i64; }
+                continue;
+            }
+            last_result = 0i64;
+            continue;
+        }
+        
+        last_result = 0i64;
+    }
+    
+    pass(last_result == 1i64);
+};

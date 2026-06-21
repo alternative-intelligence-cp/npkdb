@@ -28,6 +28,8 @@ pub fixed int32:ERR_HNSW_STALE_HANDLE    = 200i32;
 pub fixed int32:ERR_HNSW_EMPTY_GRAPH     = 201i32;
 pub fixed int32:ERR_VECTOR_DIM_MISMATCH  = 202i32;
 pub fixed int32:ERR_VECTOR_ZERO_MAGNITUDE = 203i32;
+pub fixed int32:ERR_HNSW_OOM             = 204i32;
+pub fixed int32:ERR_SIMD_DIM_MISMATCH    = 205i32;
 
 // Query errors (300-399)
 pub fixed int32:ERR_QUERY_PARSE_FAILED   = 300i32;

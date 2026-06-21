@@ -53,6 +53,36 @@ func:main = int32(int32:argc, wild any->:argv) {
         exit((first_char & 255i64) => int32);
     } // 'h' is 104
     
+    // 3. Test parse_array with floats
+    string:json_str = "[12.34, -5.6, 7.8]";
+    NpkJsonVal:v = _!parse_json(json_str);
+    if (v.type != JSON_ARR) { exit(31i32); }
+    
+    int64:arr_ptr = v.payload;
+    int32:arr_count = npk_mem_read_int32(arr_ptr, 0i64);
+    if (arr_count != 3i32) { exit(32i32); } // count == 3
+    
+    int64:handles_ptr = npk_mem_read_int64(arr_ptr, 8i64);
+    
+    // Check first value (12.34)
+    int64:v1_ptr = npk_mem_read_int64(handles_ptr, 0i64);
+    int8:v1_type = (npk_mem_read_byte(v1_ptr, 0i64)) => int8;
+    
+    if (v1_type != JSON_NUM_F64) { exit(33i32); }
+    int64:v1_bits = npk_mem_read_int64(v1_ptr, 8i64);
+    flt64:v1_f = <-(@v1_bits => flt64->);
+    // 12.34
+    
+    // 4. Test parse_object
+    string:obj_str = "{\"status\": \"active\"}";
+    NpkJsonVal:obj_v = _!parse_json(obj_str);
+    if (obj_v.type != JSON_OBJ) { exit(41i32); }
+    
+    int64:obj_ptr = obj_v.payload;
+    int32:obj_count = npk_mem_read_int32(obj_ptr, 0i64);
+    if (obj_count != 1i32) { exit(42i32); }
+
+    println("JSON parser tests passed!");
     exit(0i32);
 };
 

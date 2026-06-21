@@ -224,7 +224,7 @@ pub func:hnsw_insert = int64(
     int32:lc = max_layer;
     when (lc > l) {
         drop(hnsw_visited_clear(visited_set));
-        int64:W = hnsw_search_layer(graph, vec_offset, curr_ep_slot, curr_ep_gen, 1i32, lc, visited_set)  ?! 0i64;
+        int64:W = hnsw_search_layer(graph, vec_offset, curr_ep_slot, curr_ep_gen, 1i32, lc, visited_set, 0i64, 0i64)  ?! 0i64;
         
         int64:size = hnsw_pq_get_size(W)  ?! 0i64;
         if (size > 0i64) {
@@ -243,7 +243,7 @@ pub func:hnsw_insert = int64(
 
     when (lc >= 0i32) {
         drop(hnsw_visited_clear(visited_set));
-        int64:W = hnsw_search_layer(graph, vec_offset, curr_ep_slot, curr_ep_gen, ef_const, lc, visited_set)  ?! 0i64;
+        int64:W = hnsw_search_layer(graph, vec_offset, curr_ep_slot, curr_ep_gen, ef_const, lc, visited_set, 0i64, 0i64)  ?! 0i64;
         
         int32:layer_m = M;
         if (lc == 0i32) { layer_m = M0; }

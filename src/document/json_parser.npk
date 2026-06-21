@@ -74,3 +74,200 @@ pub func:parse_string = NpkJsonStr(ParserState->:state) {
     };
     pass(res);
 };
+
+pub func:parse_f64 = flt64(ParserState->:state) {
+    int64:sign = 1i64;
+    int8:c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+    if (c == 45i8) { sign = -1i64; state->pos = state->pos + 1i64; }
+    
+    int64:acc = 0i64;
+    while (state->pos < state->length) {
+        c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+        if (c >= 48i8 && c <= 57i8) {
+            acc = (acc * 10i64) + ((c - 48i8) => int64);
+            state->pos = state->pos + 1i64;
+        } else { break; }
+    }
+    
+    flt64:f = acc => flt64;
+    if (state->pos < state->length) {
+        c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+        if (c == 46i8) { // '.'
+            state->pos = state->pos + 1i64;
+            flt64:frac = 0.0f64;
+            flt64:div = 10.0f64;
+            while (state->pos < state->length) {
+                c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+                if (c >= 48i8 && c <= 57i8) {
+                    frac = frac + (((c - 48i8) => flt64) / div);
+                    div = div * 10.0f64;
+                    state->pos = state->pos + 1i64;
+                } else { break; }
+            }
+            f = f + frac;
+        }
+    }
+    
+    if (sign < 0i64) { f = 0.0f64 - f; }
+    pass(f);
+};
+
+// No forward declarations
+
+pub func:parse_array = NpkJsonVal(ParserState->:state) {
+    state->pos = state->pos + 1i64; // skip '['
+    int64:max_cap = 4096i64;
+    int64:handles_ptr = npk_core_alloc(max_cap * 8i64);
+    int64:count = 0i64;
+    
+    drop(skip_whitespace(state));
+    int8:c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+    if (c == 93i8) { // ']'
+        state->pos = state->pos + 1i64;
+    } else {
+        while (count < max_cap) {
+            NpkJsonVal:v = _!parse_value(state);
+            int64:v_ptr = npk_core_alloc(16i64);
+            drop(npk_mem_write_byte(v_ptr, 0i64, v.type => int64));
+            drop(npk_mem_write_int64(v_ptr, 8i64, v.payload));
+            
+            drop(npk_mem_write_int64(handles_ptr, count * 8i64, v_ptr));
+            count = count + 1i64;
+            
+            drop(skip_whitespace(state));
+            c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+            if (c == 93i8) { // ']'
+                state->pos = state->pos + 1i64;
+                break;
+            } else if (c == 44i8) { // ','
+                state->pos = state->pos + 1i64;
+            } else {
+                fail(ERR_JSON_PARSE_FAIL);
+            }
+        }
+    }
+    
+    int64:arr_ptr = npk_core_alloc(16i64);
+    drop(npk_mem_write_int32(arr_ptr, 0i64, count => int32));
+    drop(npk_mem_write_int64(arr_ptr, 8i64, handles_ptr));
+    
+    pass(NpkJsonVal{ type: JSON_ARR, payload: arr_ptr });
+};
+
+pub func:parse_object = NpkJsonVal(ParserState->:state) {
+    state->pos = state->pos + 1i64; // skip '{'
+    int64:max_cap = 1024i64;
+    int64:keys_ptr = npk_core_alloc(max_cap * 8i64);
+    int64:values_ptr = npk_core_alloc(max_cap * 8i64);
+    int64:count = 0i64;
+    
+    drop(skip_whitespace(state));
+    int8:c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+    if (c == 125i8) { // '}'
+        state->pos = state->pos + 1i64;
+    } else {
+        while (count < max_cap) {
+            drop(skip_whitespace(state));
+            NpkJsonStr:k = _!parse_string(state);
+            int64:k_ptr = npk_core_alloc(16i64);
+            drop(npk_mem_write_int32(k_ptr, 0i64, k.length => int32));
+            drop(npk_mem_write_int64(k_ptr, 8i64, k.data));
+            drop(npk_mem_write_int64(keys_ptr, count * 8i64, k_ptr));
+            
+            drop(skip_whitespace(state));
+            c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+            if (c != 58i8) { fail(ERR_JSON_PARSE_FAIL); } // ':'
+            state->pos = state->pos + 1i64; // skip ':'
+            
+            NpkJsonVal:v = _!parse_value(state);
+            int64:v_ptr = npk_core_alloc(16i64);
+            drop(npk_mem_write_byte(v_ptr, 0i64, v.type => int64));
+            drop(npk_mem_write_int64(v_ptr, 8i64, v.payload));
+            drop(npk_mem_write_int64(values_ptr, count * 8i64, v_ptr));
+            
+            count = count + 1i64;
+            
+            drop(skip_whitespace(state));
+            c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+            if (c == 125i8) { // '}'
+                state->pos = state->pos + 1i64;
+                break;
+            } else if (c == 44i8) { // ','
+                state->pos = state->pos + 1i64;
+            } else {
+                fail(ERR_JSON_PARSE_FAIL);
+            }
+        }
+    }
+    
+    int64:obj_ptr = npk_core_alloc(24i64);
+    drop(npk_mem_write_int32(obj_ptr, 0i64, count => int32));
+    drop(npk_mem_write_int64(obj_ptr, 8i64, keys_ptr));
+    drop(npk_mem_write_int64(obj_ptr, 16i64, values_ptr));
+    
+    pass(NpkJsonVal{ type: JSON_OBJ, payload: obj_ptr });
+};
+
+pub func:parse_value = NpkJsonVal(ParserState->:state) {
+    drop(skip_whitespace(state));
+    if (state->pos >= state->length) { fail(ERR_JSON_PARSE_FAIL); }
+    
+    int8:c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+    
+    if (c == 123i8) { // '{'
+        pass(parse_object(state));
+    } else if (c == 91i8) { // '['
+        pass(parse_array(state));
+    } else if (c == 34i8) { // '"'
+        NpkJsonStr:s = _!parse_string(state);
+        int64:s_ptr = npk_core_alloc(16i64);
+        drop(npk_mem_write_int32(s_ptr, 0i64, s.length => int32));
+        drop(npk_mem_write_int64(s_ptr, 8i64, s.data));
+        pass(NpkJsonVal{ type: JSON_STR, payload: s_ptr });
+    } else if (c == 116i8) { // 't' (true)
+        state->pos = state->pos + 4i64;
+        pass(NpkJsonVal{ type: JSON_BOOL, payload: 1i64 });
+    } else if (c == 102i8) { // 'f' (false)
+        state->pos = state->pos + 5i64;
+        pass(NpkJsonVal{ type: JSON_BOOL, payload: 0i64 });
+    } else if (c == 110i8) { // 'n' (null)
+        state->pos = state->pos + 4i64;
+        pass(NpkJsonVal{ type: JSON_NULL, payload: 0i64 });
+    } else {
+        // Assume number. Check if it contains '.' to decide flt64 or int64.
+        // For simplicity we just use parse_f64 for all numbers right now.
+        // Wait, npk_record requires strict type matching!
+        // We'll scan ahead to see if there is a dot.
+        int64:scan_pos = state->pos;
+        int64:has_dot = 0i64;
+        while (scan_pos < state->length) {
+            int8:sc = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, scan_pos)) => int8);
+            if (sc == 46i8) { has_dot = 1i64; break; }
+            if (sc < 48i8 || sc > 57i8) { if (sc != 45i8) { break; } }
+            scan_pos = scan_pos + 1i64;
+        }
+        
+        if (has_dot == 1i64) {
+            flt64:fv = _!parse_f64(state);
+            int64:fv_bits = <-(@fv => int64->);
+            pass(NpkJsonVal{ type: JSON_NUM_F64, payload: fv_bits });
+        } else {
+            int64:iv = _!parse_i64(state);
+            pass(NpkJsonVal{ type: JSON_NUM_I64, payload: iv });
+        }
+    }
+};
+
+pub func:parse_json = NpkJsonVal(string:json_str) {
+    int64:len = string_length(json_str);
+    int64:ptr = string_to_cstr(json_str);
+    
+    ParserState:state = ParserState{
+        buf: ptr,
+        length: len,
+        pos: 0i64,
+        depth: 0i64
+    };
+    
+    pass(_!parse_value(@state));
+};

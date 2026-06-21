@@ -1,0 +1,31 @@
+pub func:send_typed = int64(int64:fd, int64:code, string:ct, string:body);
+// router.npk — HTTP API Router
+use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
+use "controllers_mock.npk".*;
+use "../../src/util/error_codes.npk".*;
+
+pub func:route_request = int32(int64:client_fd, Request:req) {
+    string:method = req.method;
+    string:path = req.path;
+    
+    if (method == "POST" && path == "/collections") {
+        pass(controller_create_collection(client_fd, req));
+    } else if (method == "POST" && path == "/search") {
+        pass(controller_search(client_fd, req));
+    } else if (method == "PUT") {
+        // Match /collections/:name/docs
+        int64:c_idx = string_index_of(path, "/collections/");
+        if (c_idx == 0i64) {
+            string:suffix = string_substring(path, 13i64, string_length(path));
+            int64:d_idx = string_index_of(suffix, "/docs");
+            if (d_idx > 0i64) {
+                string:col_name = string_substring(suffix, 0i64, d_idx);
+                pass(controller_insert(client_fd, req, col_name));
+            }
+        }
+    }
+    
+    // Not found
+    drop(send_typed(client_fd, 404i64, "application/json", "{\"error\": \"not found\"}"));
+    pass(0i32);
+};

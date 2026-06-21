@@ -1,0 +1,176 @@
+// main.npk - Test Single-Stage Filtering during HNSW Search
+
+use "sys.npk".*;
+use "../../src/util/error_codes.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/document/json_types.npk".*;
+use "../../src/query/ast_types.npk".*;
+use "../../src/query/path_eval.npk".*;
+use "../../src/query/evaluator.npk".*;
+use "../../src/vector/hnsw_pq.npk".*;
+use "../../src/vector/hnsw_node.npk".*;
+use "../../src/vector/hnsw_arena.npk".*;
+use "../../src/vector/hnsw_graph.npk".*;
+use "../../src/vector/hnsw_visited.npk".*;
+use "../../src/vector/hnsw_search.npk".*;
+use "../../src/vector/hnsw_insert.npk".*;
+
+extern "C" {
+    func:_exit = void(int32:code);
+    func:printf = int32(int64:fmt, int32:v);
+}
+
+pub func:proc_exit = NIL(int32:code) {
+    _exit(code);
+    pass(NIL);
+};
+
+pub func:failsafe = int32(tbb32:code) {
+    println("Failsafe triggered!");
+    exit(@cast_unchecked<int32>(code));
+};
+
+pub func:main = int32() {
+    // 1. Create vector buffer
+    int64:vec_dim = 2i64;
+    int64:vec_buf_size = 10i64 * vec_dim * 4i64; // 10 vectors
+    int64:vec_buf = npk_core_alloc(vec_buf_size);
+
+    // Write vectors (all zeroes for simplicity)
+    int64:i = 0i64;
+    while (i < 10i64) {
+        drop(npk_mem_write_int32(vec_buf, i * vec_dim * 4i64, i => int32));
+        drop(npk_mem_write_int32(vec_buf, i * vec_dim * 4i64 + 4i64, 0i32));
+        i = i + 1i64;
+    }
+
+    // 2. Create Arena
+    int64:arena = raw hnsw_arena_create(10i64, 1i16);
+
+    // 3. Create Graph
+    int64:graph = raw hnsw_graph_create(arena, vec_buf, vec_dim, 16i32, 32i32, 100i32, 0.5f64);
+
+    // 4. Insert vectors
+    int64:doc_store = npk_core_alloc(10i64 * 8i64); // array of pointers to NpkJsonVal
+    
+    // Create categories
+    NpkJsonStr:str_a = NpkJsonStr { length: 1u32, data: npk_core_alloc(1i64) };
+    drop(npk_mem_write_byte(str_a.data, 0i64, 65i64)); // "A"
+    
+    NpkJsonStr:str_b = NpkJsonStr { length: 1u32, data: npk_core_alloc(1i64) };
+    drop(npk_mem_write_byte(str_b.data, 0i64, 66i64)); // "B"
+    
+    // Keys
+    NpkJsonStr:k_cat = NpkJsonStr { length: 8u32, data: npk_core_alloc(8i64) };
+    drop(npk_mem_write_byte(k_cat.data, 0i64, 99i64));
+    drop(npk_mem_write_byte(k_cat.data, 1i64, 97i64));
+    drop(npk_mem_write_byte(k_cat.data, 2i64, 116i64));
+    drop(npk_mem_write_byte(k_cat.data, 3i64, 101i64));
+    drop(npk_mem_write_byte(k_cat.data, 4i64, 103i64));
+    drop(npk_mem_write_byte(k_cat.data, 5i64, 111i64));
+    drop(npk_mem_write_byte(k_cat.data, 6i64, 114i64));
+    drop(npk_mem_write_byte(k_cat.data, 7i64, 121i64));
+    
+    int64:rand_state = npk_core_alloc(8i64);
+    drop(npk_mem_write_int64(rand_state, 0i64, 12345i64));
+    
+    int64:insert_visited_set = npk_core_alloc(128i64);
+    drop(npk_mem_write_int64(insert_visited_set, 0i64, 16i64));
+    int64:insert_vdata = npk_core_alloc(128i64);
+    drop(npk_mem_write_int64(insert_visited_set, 8i64, insert_vdata));
+
+    i = 0i64;
+    while (i < 10i64) {
+        // Create doc
+        int64:obj_ptr = npk_core_alloc(24i64);
+        drop(npk_mem_write_int32(obj_ptr, 0i64, 1i32)); // count
+        
+        int64:keys = npk_core_alloc(8i64);
+        int64:vals = npk_core_alloc(8i64);
+        
+        int64:k_val = npk_core_alloc(16i64);
+        drop(npk_mem_write_byte(k_val, 0i64, JSON_STR));
+        drop(npk_mem_write_int64(k_val, 8i64, @cast_unchecked<int64>(@k_cat)));
+        drop(npk_mem_write_int64(keys, 0i64, k_val));
+        
+        int64:v_val = npk_core_alloc(16i64);
+        drop(npk_mem_write_byte(v_val, 0i64, JSON_STR));
+        if (i < 5i64) {
+            drop(npk_mem_write_int64(v_val, 8i64, @cast_unchecked<int64>(@str_a)));
+        } else {
+            drop(npk_mem_write_int64(v_val, 8i64, @cast_unchecked<int64>(@str_b)));
+        }
+        drop(npk_mem_write_int64(vals, 0i64, v_val));
+        
+        drop(npk_mem_write_int64(obj_ptr, 8i64, keys));
+        drop(npk_mem_write_int64(obj_ptr, 16i64, vals));
+        
+        int64:doc_ptr = npk_core_alloc(16i64);
+        drop(npk_mem_write_byte(doc_ptr, 0i64, JSON_OBJ));
+        drop(npk_mem_write_int64(doc_ptr, 8i64, obj_ptr));
+        
+        drop(npk_mem_write_int64(doc_store, i * 8i64, doc_ptr));
+        
+        // hnsw_insert(graph, vec_offset, rand_state, visited_set)
+        int64:node_ptr = raw hnsw_insert(graph, i * vec_dim * 4i64, rand_state, insert_visited_set);
+        
+        i = i + 1i64;
+    }
+
+    // 5. Create AST Filter for "category == B"
+    int64:ast_node = npk_core_alloc(48i64);
+    drop(npk_mem_write_byte(ast_node, 0i64, AST_OP_EQ => int64));
+    
+    // Write path string "category"
+    int64:path_str = npk_core_alloc(9i64); // null terminated
+    drop(npk_mem_write_byte(path_str, 0i64, 99i64));
+    drop(npk_mem_write_byte(path_str, 1i64, 97i64));
+    drop(npk_mem_write_byte(path_str, 2i64, 116i64));
+    drop(npk_mem_write_byte(path_str, 3i64, 101i64));
+    drop(npk_mem_write_byte(path_str, 4i64, 103i64));
+    drop(npk_mem_write_byte(path_str, 5i64, 111i64));
+    drop(npk_mem_write_byte(path_str, 6i64, 114i64));
+    drop(npk_mem_write_byte(path_str, 7i64, 121i64));
+    drop(npk_mem_write_byte(path_str, 8i64, 0i64));
+    drop(npk_mem_write_int64(ast_node, 8i64, path_str));
+    
+    // Target value
+    drop(npk_mem_write_byte(ast_node, 16i64, JSON_STR));
+    drop(npk_mem_write_int64(ast_node, 24i64, @cast_unchecked<int64>(@str_b)));
+
+    // 6. Search
+    int64:visited_set = npk_core_alloc(128i64); // Bitset, 1024 bits
+    drop(npk_mem_write_int64(visited_set, 0i64, 16i64)); // size
+    int64:vdata = npk_core_alloc(128i64);
+    drop(npk_mem_write_int64(visited_set, 8i64, vdata));
+    
+    // We get entry point
+    int32:ep_slot = 0i32;
+    int32:ep_gen = 0i32;
+    int64:ep_slot_ptr = @cast_unchecked<int64>(@ep_slot);
+    int64:ep_gen_ptr = @cast_unchecked<int64>(@ep_gen);
+    drop(hnsw_graph_get_ep(graph, ep_slot_ptr, ep_gen_ptr));
+    
+    int64:results_pq = raw hnsw_search_layer(graph, 0i64, ep_slot, ep_gen, 10i32, 0i32, visited_set, ast_node, doc_store);
+    
+    // Verify results
+    int64:pq_size = raw hnsw_pq_get_size(results_pq);
+    if (pq_size == 0i64) {
+        println("TEST FAILED: pq_size == 0");
+        exit 1i32;
+    }
+    
+    i = 0i64;
+    while (i < pq_size) {
+        int64:item = raw hnsw_pq_get_candidate_ptr(results_pq, i);
+        int32:slot = raw hnsw_pq_get_slot(item);
+        if (slot < 5i32) {
+            println("TEST FAILED: invalid slot matched");
+            exit 2i32;
+        }
+        i = i + 1i64;
+    }
+    
+    println("TEST PASSED!");
+    exit 0i32;
+};

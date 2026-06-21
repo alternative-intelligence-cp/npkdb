@@ -1,0 +1,48 @@
+// errors.npk — HTTP Error Handling and Responses
+use "../util/error_codes.npk".*;
+
+pub func:format_error_json = string(int32:err_code) {
+    string:msg = "UNKNOWN_ERROR";
+    
+    // Query/JSON errors
+    if (err_code == ERR_JSON_PARSE_FAIL) { msg = "ERR_JSON_PARSE_FAIL"; }
+    else if (err_code == ERR_JSON_DEPTH_EXCEEDED) { msg = "ERR_JSON_DEPTH_EXCEEDED"; }
+    else if (err_code == ERR_QUERY_PARSE_FAILED) { msg = "ERR_QUERY_PARSE_FAILED"; }
+    else if (err_code == ERR_QUERY_INVALID_FILTER) { msg = "ERR_QUERY_INVALID_FILTER"; }
+    
+    // Index errors
+    else if (err_code == ERR_ART_KEY_NOT_FOUND) { msg = "ERR_ART_KEY_NOT_FOUND"; }
+    else if (err_code == ERR_ART_DUPLICATE_KEY) { msg = "ERR_ART_DUPLICATE_KEY"; }
+    else if (err_code == ERR_ART_CAS_FAILED) { msg = "ERR_ART_CAS_FAILED"; }
+    
+    // Vector errors
+    else if (err_code == ERR_VECTOR_DIM_MISMATCH) { msg = "ERR_VECTOR_DIM_MISMATCH"; }
+    else if (err_code == ERR_VECTOR_ZERO_MAGNITUDE) { msg = "ERR_VECTOR_ZERO_MAGNITUDE"; }
+    else if (err_code == ERR_HNSW_EMPTY_GRAPH) { msg = "ERR_HNSW_EMPTY_GRAPH"; }
+    
+    // Storage errors
+    else if (err_code == ERR_WAL_WRITE_FAILED) { msg = "ERR_WAL_WRITE_FAILED"; }
+    else if (err_code == ERR_WAL_FSYNC_FAILED) { msg = "ERR_WAL_FSYNC_FAILED"; }
+    
+    // Format JSON
+    string:res = "{\"error\": {\"code\": " + string_from_int(err_code => int64) + ", \"message\": \"" + msg + "\"}}";
+    pass(res);
+};
+
+pub func:format_error_status = int64(int32:err_code) {
+    // 400 Bad Request
+    if (err_code >= 300i32 && err_code < 400i32) { pass(400i64); }
+    if (err_code == ERR_VECTOR_DIM_MISMATCH) { pass(400i64); }
+    if (err_code == ERR_VECTOR_ZERO_MAGNITUDE) { pass(400i64); }
+    
+    // 404 Not Found
+    if (err_code == ERR_ART_KEY_NOT_FOUND) { pass(404i64); }
+    if (err_code == ERR_HNSW_EMPTY_GRAPH) { pass(404i64); }
+    
+    // 409 Conflict
+    if (err_code == ERR_ART_DUPLICATE_KEY) { pass(409i64); }
+    if (err_code == ERR_ART_CAS_FAILED) { pass(409i64); }
+    
+    // Default 500 Internal Server Error
+    pass(500i64);
+};

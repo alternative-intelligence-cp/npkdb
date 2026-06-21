@@ -1,0 +1,7 @@
+use "../../src/document/json_types.npk".*;
+use "../../src/document/json_serializer.npk".*;
+use "sys.npk".*;
+
+pub func:main = int32() {
+    pass(0i32);
+};

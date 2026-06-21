@@ -1,0 +1,99 @@
+// path_eval.npk — Evaluates dot-notation paths against a JSON document
+
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+use "../document/json_types.npk".*;
+
+func:streq_len = bool(int64:a_ptr, int64:b_ptr, int64:len) {
+    int64:i = 0i64;
+    while (i < len) {
+        int8:ca = npk_mem_read_byte(a_ptr, i) => int8;
+        int8:cb = npk_mem_read_byte(b_ptr, i) => int8;
+        if (ca != cb) { pass(false); }
+        i = i + 1i64;
+    }
+    // Also check that `a` ends there
+    int8:ca_end = npk_mem_read_byte(a_ptr, len) => int8;
+    pass(ca_end == 0i8);
+};
+
+// Gets the length of the string until a null terminator or a '.'
+func:path_segment_len = int64(int64:path_ptr) {
+    int64:len = 0i64;
+    while (true) {
+        int8:c = npk_mem_read_byte(path_ptr, len) => int8;
+        if (c == 0i8) { break; }
+        if (c == 46i8) { break; } // '.' is 46
+        len = len + 1i64;
+    }
+    pass(len);
+};
+
+pub func:eval_path = NpkJsonVal(int64:path_ptr, int64:doc_raw_ptr) {
+    NpkJsonVal->:doc = @cast_unchecked<NpkJsonVal->>(doc_raw_ptr);
+    if (path_ptr == 0i64) {
+        pass(raw json_make_null());
+    }
+    
+    int64:seg_len = raw path_segment_len(path_ptr);
+    if (seg_len == 0i64) {
+        pass(raw json_make_null());
+    }
+    
+    if (doc->type != JSON_OBJ) {
+        pass(raw json_make_null());
+    }
+    
+    int64:obj_ptr = doc->payload;
+    int64:count = npk_mem_read_int32(obj_ptr, 0i64) => int64;
+    int64:keys_ptr = npk_mem_read_int64(obj_ptr, 8i64);
+    int64:vals_ptr = npk_mem_read_int64(obj_ptr, 16i64);
+    
+    int64:i = 0i64;
+    while (i < count) {
+        int64:k_ptr = npk_mem_read_int64(keys_ptr, i * 8i64);
+        int64:v_ptr = npk_mem_read_int64(vals_ptr, i * 8i64);
+        
+        int8:k_type = npk_mem_read_byte(k_ptr, 0i64) => int8;
+        int64:k_payload = npk_mem_read_int64(k_ptr, 8i64);
+        
+        if (k_type == JSON_STR) {
+            int64:k_len = npk_mem_read_int32(k_payload, 0i64) => int64;
+            if (k_len == seg_len) {
+                int64:k_str_data = npk_mem_read_int64(k_payload, 8i64);
+                
+                // Compare characters
+                int64:j = 0i64;
+                bool:match = true;
+                while (j < seg_len) {
+                    int8:c_path = npk_mem_read_byte(path_ptr, j) => int8;
+                    int8:c_key  = npk_mem_read_byte(k_str_data, j) => int8;
+                    if (c_path != c_key) { match = false; break; }
+                    j = j + 1i64;
+                }
+                
+                if (match == true) {
+                    NpkJsonVal:v_elem = NpkJsonVal {
+                        type: npk_mem_read_byte(v_ptr, 0i64) => int8,
+                        payload: npk_mem_read_int64(v_ptr, 8i64)
+                    };
+                    
+                    int8:nxt = npk_mem_read_byte(path_ptr, seg_len) => int8;
+                    if (nxt == 0i8) {
+                        // End of path, found target
+                        pass(v_elem);
+                    } else {
+                        if (nxt == 46i8) {
+                            // Dot, recurse
+                            pass(raw eval_path(path_ptr + seg_len + 1i64, @cast_unchecked<int64>(@v_elem)));
+                        }
+                    }
+                }
+            }
+        }
+        
+        i = i + 1i64;
+    }
+    
+    pass(raw json_make_null());
+};

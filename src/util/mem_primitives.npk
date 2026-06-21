@@ -27,6 +27,19 @@ pub func:npk_mem_write_int32 = int64(int64:ptr, int64:offset, int32:val) {
     pass(0i64);
 };
 
+pub func:npk_mem_read_int16 = int16(int64:ptr, int64:offset) {
+    int64:b0 = npk_mem_read_byte(ptr, offset);
+    int64:b1 = npk_mem_read_byte(ptr, offset + 1i64);
+    pass(((b1 << 8i64) | b0) => int16);
+};
+
+pub func:npk_mem_write_int16 = int64(int64:ptr, int64:offset, int16:val) {
+    int64:v = val => int64;
+    drop(npk_mem_write_byte(ptr, offset, v & 255i64));
+    drop(npk_mem_write_byte(ptr, offset + 1i64, (v >> 8i64) & 255i64));
+    pass(0i64);
+};
+
 pub func:npk_mem_write_string = int64(int64:ptr, string:s) {
     int64:len = string_length(s);
     if (len > 0i64) {

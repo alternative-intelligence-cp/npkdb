@@ -1,12 +1,24 @@
 // main.npk — NPKDB server entry point
-// v0.0.0: Scaffold only, prints version and exits.
 
-func:failsafe = int32(tbb32:err) {
-    println("NPKDB: fatal error, shutting down");
-    exit(1);
-};
+use "util/failsafe.npk".*;
+use "util/config.npk".*;
+use "network/server.npk".*;
 
-func:main = int32() {
-    println("npkdb v0.0.0");
+func:main = int32(int32:argc, wild any->:argv) {
+    println("NPKDB v0.3.11 starting...");
+    
+    string:cfg_path = "npkdb.toml";
+    int32:res = raw config_init(cfg_path);
+    if (res != 0i32) {
+        println("Failed to load config from " + cfg_path);
+        exit(1i32);
+    }
+    
+    int32:server_res = raw server_start();
+    if (server_res != 0i32) {
+        println("Server exited with error.");
+        exit(1i32);
+    }
+    
     exit(0);
 };

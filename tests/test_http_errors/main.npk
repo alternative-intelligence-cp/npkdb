@@ -1,0 +1,53 @@
+use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
+use "router_mock.npk".*;
+
+extern "C" {
+    func:_exit = void(int32:code);
+}
+pub func:proc_exit = NIL(int32:code) {
+    _exit(code);
+    pass(NIL);
+};
+
+pub func:send_typed = int64(int64:fd, int64:code, string:ct, string:body) {
+    println("Mock Send - FD: " + string_from_int(fd) + " Code: " + string_from_int(code) + " Body: " + body);
+    if (fd == 1i64) {
+        if (code != 400i64) { fail(11i32); }
+    } else if (fd == 2i64) {
+        if (code != 400i64) { fail(21i32); }
+    }
+    pass(1i64);
+};
+
+func:main = int32(int32:argc, wild any->:argv) {
+    // 1. Test POST /collections with malformed JSON
+    Request:r1 = Request{
+        method: "POST",
+        path: "/collections",
+        query: "",
+        version: "HTTP/1.1",
+        body: "{ malformed }",
+        raw_req: "",
+        headers_raw: ""
+    };
+    drop(route_request(1i64, r1));
+    
+    // 2. Test POST /search with malformed JSON
+    Request:r2 = Request{
+        method: "POST",
+        path: "/search",
+        query: "",
+        version: "HTTP/1.1",
+        body: "[1, 2, 3",
+        raw_req: "",
+        headers_raw: ""
+    };
+    drop(route_request(2i64, r2));
+    
+    println("HTTP Errors test passed!");
+    exit(0i32);
+};
+
+func:failsafe = int32(tbb32:err) {
+    exit(1i32);
+};

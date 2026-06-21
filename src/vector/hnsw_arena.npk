@@ -137,7 +137,7 @@ pub func:hnsw_arena_alloc_node = int64(int64:arena, int64:out_slot_idx_ptr, int6
     int64:node_base = node_buf + slot_idx * HNSW_NODE_SIZE;
     int64:k = 0i64;
     when (k < HNSW_NODE_SIZE) {
-        drop(npk_mem_write_int8(node_base, k, 0i8));
+        drop(npk_mem_write_byte(node_base, k, 0i64));
         k = k + 1i64;
     }
 

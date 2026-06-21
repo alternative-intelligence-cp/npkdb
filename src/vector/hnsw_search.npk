@@ -6,6 +6,7 @@
 // Note: The caller is responsible for destroying the returned priority queue!
 
 use "../util/error_codes.npk".*;
+use "../query/evaluator.npk".*;
 
 pub func:hnsw_search_layer = int64(
     int64:graph, 
@@ -14,7 +15,9 @@ pub func:hnsw_search_layer = int64(
     int32:ep_gen, 
     int32:ef, 
     int32:layer, 
-    int64:visited_set
+    int64:visited_set,
+    int64:filter_ast,
+    int64:doc_store
 ) requires (graph != 0i64), (visited_set != 0i64), (ef > 0i32) {
     
     int64:arena = hnsw_graph_get_arena(graph)  ?! 0i64;
@@ -33,7 +36,18 @@ pub func:hnsw_search_layer = int64(
     int64:W = hnsw_pq_create(ef_64, 1i64)  ?! 0i64;
 
     drop(hnsw_pq_push(candidates, ep_dist, ep_slot, ep_gen));
-    drop(hnsw_pq_push(W, ep_dist, ep_slot, ep_gen));
+    bool:ep_match = true;
+    if (filter_ast != 0i64) {
+        if (doc_store != 0i64) {
+            int64:ep_doc_ptr = npk_mem_read_int64(doc_store, @cast_unchecked<int64>(ep_slot) * 8i64);
+            if (ep_doc_ptr != 0i64) {
+                ep_match = raw evaluate_filter(filter_ast, ep_doc_ptr);
+            }
+        }
+    }
+    if (ep_match == true) {
+        drop(hnsw_pq_push(W, ep_dist, ep_slot, ep_gen));
+    }
 
     drop(hnsw_visited_mark(visited_set, ep_slot));
 
@@ -46,11 +60,17 @@ pub func:hnsw_search_layer = int64(
         int32:c_slot = hnsw_pq_get_slot(C)  ?! 0i32;
         int32:c_gen = hnsw_pq_get_gen(C)   ?! 0i32;
 
-        drop(hnsw_pq_peek(W, furthest));
-        float32:f_dist = hnsw_pq_get_dist(furthest)  ?! 0.0f32;
+        float32:f_dist = 3.402823466e+38f32; // ~Infinity
+        int64:w_size = hnsw_pq_get_size(W) ?! 0i64;
+        if (w_size > 0i64) {
+            drop(hnsw_pq_peek(W, furthest));
+            f_dist = hnsw_pq_get_dist(furthest)  ?! 0.0f32;
+        }
 
         if (c_dist > f_dist) {
-            break; 
+            if (w_size >= ef_64) {
+                break;
+            }
         }
 
         int64:c_node_ptr = hnsw_arena_get_node(arena, c_slot, c_gen)  ?! 0i64;
@@ -70,14 +90,30 @@ pub func:hnsw_search_layer = int64(
 
                 int64:n_node_ptr = hnsw_arena_get_node(arena, n_slot, n_gen)  ?! 0i64;
                 if (n_node_ptr != 0i64) {
+                    if (filter_ast != 0i64) {
+                        if (doc_store != 0i64) {
+                            int64:doc_ptr = npk_mem_read_int64(doc_store, @cast_unchecked<int64>(n_slot) * 8i64);
+                            if (doc_ptr != 0i64) {
+                                bool:match = raw evaluate_filter(filter_ast, doc_ptr);
+                                if (match == false) {
+                                    i = i + 1i64;
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+
                     int64:n_vec_offset = hnsw_node_get_vector_offset(n_node_ptr)  ?! 0i64;
                     float32:n_dist = hnsw_graph_distance(graph, query_offset, n_vec_offset)  ?! 0.0f32;
 
-                    drop(hnsw_pq_peek(W, furthest));
-                    float32:f_dist2 = hnsw_pq_get_dist(furthest)  ?! 0.0f32;
-                    int64:w_size = hnsw_pq_get_size(W)  ?! 0i64;
+                    float32:f_dist2 = 3.402823466e+38f32;
+                    int64:w_size2 = hnsw_pq_get_size(W)  ?! 0i64;
+                    if (w_size2 > 0i64) {
+                        drop(hnsw_pq_peek(W, furthest));
+                        f_dist2 = hnsw_pq_get_dist(furthest)  ?! 0.0f32;
+                    }
 
-                    if (w_size < ef_64) {
+                    if (w_size2 < ef_64) {
                         drop(hnsw_pq_push(candidates, n_dist, n_slot, n_gen));
                         drop(hnsw_pq_push(W, n_dist, n_slot, n_gen));
                     } else {

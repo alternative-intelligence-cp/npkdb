@@ -1,0 +1,27 @@
+// ast_types.npk — Internal query filter representations
+
+use "../document/json_types.npk".*;
+
+pub fixed int8:AST_OP_AND = 0i8;
+pub fixed int8:AST_OP_OR  = 1i8;
+pub fixed int8:AST_OP_EQ  = 2i8;
+pub fixed int8:AST_OP_GT  = 3i8;
+pub fixed int8:AST_OP_LT  = 4i8;
+pub fixed int8:AST_OP_IN  = 5i8;
+
+pub fixed int64:AST_NODE_SIZE = 48i64; // size in bytes for the bump allocator
+
+// Polymorphic AST Node
+pub struct:npk_ast_node = {
+    int8:op;                // offset 0
+    int64:path;             // offset 8, int8->:path
+    NpkJsonVal:target;      // offset 16 (16 bytes)
+    uint32:child_count;     // offset 32
+    int64:children;         // offset 36/40? Nitpick aligns fields. Target is at 16, child_count at 32, children at 40 if size is 48, or children at 36 if packed. Wait, let's use getters/setters instead of raw struct if we use Bump Allocator. Let's just use the struct definition and `@cast_unchecked`!
+};
+
+pub func:ast_node_make = int64(int64:arena_ptr) {
+    // In filter_parser, we will have a bump allocator
+    // This is just a placeholder type. 
+    pass(0i64);
+};

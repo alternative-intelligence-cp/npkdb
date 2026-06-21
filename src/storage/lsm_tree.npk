@@ -1,0 +1,5 @@
+// lsm_tree.npk - High level LSM Tree interfaces
+
+extern "C" {
+    opaque struct:LsmTree;
+}

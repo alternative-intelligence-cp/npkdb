@@ -1,0 +1,90 @@
+// main.npk - Test Collections and Catalog
+
+use "sys.npk".*;
+use "../../src/util/error_codes.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/storage/lsm_tree.npk".*;
+use "../../src/index/hnsw.npk".*;
+use "../../src/engine/collection.npk".*;
+use "../../src/engine/catalog.npk".*;
+
+extern "C" {
+    func:_exit = void(int32:code);
+}
+
+pub func:proc_exit = NIL(int32:code) {
+    _exit(code);
+    pass(NIL);
+};
+
+pub func:failsafe = int32(tbb32:code) {
+    println("Failsafe triggered!");
+    exit(@cast_unchecked<int32>(code));
+};
+
+pub func:main = int32() {
+    println("Testing Catalog Init...");
+    int32:init_res = raw catalog_init();
+    if (init_res != 0i32) {
+        println("FAILED to initialize catalog");
+        exit 1i32;
+    }
+    
+    println("Testing Collection Creation...");
+    int64:c1 = raw catalog_create_collection("users");
+    if (c1 == 0i64) {
+        println("FAILED to create 'users' collection");
+        exit 2i32;
+    }
+    
+    int64:c2 = raw catalog_create_collection("documents");
+    if (c2 == 0i64) {
+        println("FAILED to create 'documents' collection");
+        exit 3i32;
+    }
+    
+    println("Testing Collection Lookup...");
+    int64:c1_lookup = raw catalog_get_collection("users");
+    if (c1_lookup != c1) {
+        println("FAILED to retrieve 'users' collection");
+        exit 4i32;
+    }
+    
+    int64:c2_lookup = raw catalog_get_collection("documents");
+    if (c2_lookup != c2) {
+        println("FAILED to retrieve 'documents' collection");
+        exit 5i32;
+    }
+    
+    int64:c3_lookup = raw catalog_get_collection("nonexistent");
+    if (c3_lookup != 0i64) {
+        println("FAILED: nonexistent collection returned non-null");
+        exit 6i32;
+    }
+    
+    // Test recreating existing
+    int64:c1_dup = raw catalog_create_collection("users");
+    if (c1_dup != 0i64) {
+        println("FAILED: duplicate creation did not return 0");
+        exit 7i32;
+    }
+    
+    println("Verifying Directory Layout...");
+    // Check if data/collections/users exists
+    int64:fd1 = raw sys(OPEN, "data/collections/users", 0i64, 0i64); // O_RDONLY
+    if (fd1 < 0i64) {
+        println("FAILED: 'users' directory not found");
+        exit 8i32;
+    }
+    drop(raw sys(CLOSE, fd1));
+    
+    int64:fd2 = raw sys(OPEN, "data/collections/documents", 0i64, 0i64); // O_RDONLY
+    if (fd2 < 0i64) {
+        println("FAILED: 'documents' directory not found");
+        exit 9i32;
+    }
+    drop(raw sys(CLOSE, fd2));
+    
+    println("Collections and Catalog tests PASSED!");
+    exit 0i32;
+};

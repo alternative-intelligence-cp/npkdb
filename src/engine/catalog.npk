@@ -1,0 +1,62 @@
+// catalog.npk - Global Registry of Collections
+
+use "sys.npk".*;
+use "../util/mem_primitives.npk".*;
+use "collection.npk".*;
+
+extern "nitpick_libc_thread" {
+    func:nitpick_libc_rwlock_create    = int64();
+    func:nitpick_libc_rwlock_rdlock    = int32(int64:handle);
+    func:nitpick_libc_rwlock_wrlock    = int32(int64:handle);
+    func:nitpick_libc_rwlock_unlock    = int32(int64:handle);
+}
+
+pub int64:g_catalog_hash = 0i64;
+pub int64:g_catalog_rwlock = 0i64;
+
+pub func:catalog_init = int32() {
+    g_catalog_hash = ahash(1024i64);
+    g_catalog_rwlock = nitpick_libc_rwlock_create();
+    
+    // Create base data directories
+    drop(raw sys(MKDIR, "data", 511i64));             // 0777
+    drop(raw sys(MKDIR, "data/collections", 511i64)); // 0777
+    
+    pass(0i32);
+};
+
+pub func:catalog_create_collection = int64(string:name) {
+    drop(nitpick_libc_rwlock_wrlock(g_catalog_rwlock));
+    
+    // Check if exists
+    int64:existing = ahget(g_catalog_hash, name);
+    if (existing != 0i64) {
+        drop(nitpick_libc_rwlock_unlock(g_catalog_rwlock));
+        pass(0i64); // Already exists
+    }
+    
+
+    string:base_dir = "data/collections/";
+    string:full_path = string_concat(base_dir, name);
+    
+    drop(raw sys(MKDIR, full_path, 511i64));
+    
+    int64:coll_ptr = npk_core_alloc(24i64);
+    Collection->:coll = @cast_unchecked<Collection->>(coll_ptr);
+    coll->name = name;
+    coll->storage = @cast_unchecked<Handle<LsmTree> >(0i64);
+    coll->vector_index = @cast_unchecked<Handle<HnswGraph> >(0i64);
+    
+    ahset(g_catalog_hash, name, coll_ptr);
+    
+    drop(nitpick_libc_rwlock_unlock(g_catalog_rwlock));
+    
+    pass(coll_ptr);
+};
+
+pub func:catalog_get_collection = int64(string:name) {
+    drop(nitpick_libc_rwlock_rdlock(g_catalog_rwlock));
+    int64:coll = ahget(g_catalog_hash, name);
+    drop(nitpick_libc_rwlock_unlock(g_catalog_rwlock));
+    pass(coll);
+};

@@ -1,0 +1,10 @@
+[server]
+http_port = 8081
+max_threads = 2
+
+[storage]
+memtable_flush_bytes = 4096000
+
+[vector]
+hnsw_m = 32
+hnsw_ef_construction = 400

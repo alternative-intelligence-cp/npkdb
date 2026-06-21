@@ -1,0 +1,12 @@
+use "sys.npk".*;
+
+pub func:main = int32() {
+    int8->:ptr = alloc(16i64);
+    
+    // Cast ptr to int64 via inline asm
+    int64:addr_ptr = asm!!!<int64>("x86_64", "mov %1, %0", "=r,r", ptr);
+    
+    exit 0i32;
+};
+
+pub func:failsafe = int32(tbb32:err) { exit 1i32; };
