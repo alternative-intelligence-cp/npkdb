@@ -181,7 +181,10 @@ pub func:page_insert = int64(int64:buf, int64:data_ptr, int64:data_len)
     }
 
     int64:tend = (page_get_tuple_end(buf) ?! 0i32) => int64;
-    int64:new_toff = tend - data_len + 1i64;
+    limit<valid_page_offset> int64:new_toff = tend - data_len + 1i64;
+    if (new_toff < PAGE_HEADER_SIZE) {
+        fail(ERR_PAGE_FULL => tbb8);
+    }
 
     drop(npk_mem_copy(buf + new_toff, data_ptr, data_len));
 

@@ -2,11 +2,14 @@
 
 use "../document/json_types.npk".*;
 
+Rules<int64>:valid_vector_dim = { $ > 0i64, $ <= 65536i64 };
+Rules<uint32>:valid_json_len = { $ > 0u32, $ <= 1048576u32 };
+
 // A unified database record
 pub struct:npk_record = {
-    int64:vector_dim;
+    limit<valid_vector_dim> int64:vector_dim;
     wild tfp64->:vector_data;
     
-    uint32:json_len;
+    limit<valid_json_len> uint32:json_len;
     wild int8->:json_data;
 };
