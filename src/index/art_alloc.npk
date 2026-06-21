@@ -1,0 +1,85 @@
+use "../util/constants.npk".*;
+use "../util/error_codes.npk".*;
+use "art_node.npk".*;
+use "../util/mem_primitives.npk".*;
+
+pub func:art_alloc_node4 = int64()
+    ensures result != 0i64 {
+    int64:ptr = npk_core_alloc(NODE4_SIZE);
+    if (ptr == 0i64) { fail(ERR_ART_CAS_FAILED => tbb8); }
+    drop(npk_mem_set(ptr, 0i64, NODE4_SIZE));
+    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (ART_NODE4 => int64)));
+    drop(npk_mem_write_byte(ptr, ART_HDR_NUM_CHILDREN, 0i64));
+    pass(ptr);
+};
+
+pub func:art_alloc_node16 = int64()
+    ensures result != 0i64 {
+    int64:ptr = npk_core_alloc(NODE16_SIZE);
+    if (ptr == 0i64) { fail(ERR_ART_CAS_FAILED => tbb8); }
+    drop(npk_mem_set(ptr, 0i64, NODE16_SIZE));
+    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (ART_NODE16 => int64)));
+    drop(npk_mem_write_byte(ptr, ART_HDR_NUM_CHILDREN, 0i64));
+    pass(ptr);
+};
+
+pub func:art_alloc_node48 = int64()
+    ensures result != 0i64 {
+    int64:ptr = npk_core_alloc(NODE48_SIZE);
+    if (ptr == 0i64) { fail(ERR_ART_CAS_FAILED => tbb8); }
+    drop(npk_mem_set(ptr, 0i64, NODE48_SIZE));
+    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (ART_NODE48 => int64)));
+    drop(npk_mem_write_byte(ptr, ART_HDR_NUM_CHILDREN, 0i64));
+    pass(ptr);
+};
+
+pub func:art_alloc_node256 = int64()
+    ensures result != 0i64 {
+    int64:ptr = npk_core_alloc(NODE256_SIZE);
+    if (ptr == 0i64) { fail(ERR_ART_CAS_FAILED => tbb8); }
+    drop(npk_mem_set(ptr, 0i64, NODE256_SIZE));
+    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (ART_NODE256 => int64)));
+    drop(npk_mem_write_byte(ptr, ART_HDR_NUM_CHILDREN, 0i64));
+    pass(ptr);
+};
+
+pub func:art_alloc_leaf = int64(int64:key_ptr, int64:key_len, int64:val_ptr, int64:val_len)
+    ensures result != 0i64 {
+    int64:leaf_size = LEAF_DATA_OFFSET + key_len + val_len;
+    int64:ptr = npk_core_alloc(leaf_size);
+    if (ptr == 0i64) { fail(ERR_ART_CAS_FAILED => tbb8); }
+    drop(npk_mem_set(ptr, 0i64, leaf_size));
+    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (ART_LEAF => int64)));
+    drop(npk_mem_write_int64(ptr, LEAF_KEY_LEN_OFFSET, key_len));
+    drop(npk_mem_write_int64(ptr, LEAF_VAL_LEN_OFFSET, val_len));
+    drop(npk_mem_copy(ptr + LEAF_DATA_OFFSET, key_ptr, key_len));
+    drop(npk_mem_copy(ptr + LEAF_DATA_OFFSET + key_len, val_ptr, val_len));
+    pass(ptr);
+};
+
+pub func:art_free_node = NIL(int64:node) {
+    if (node != 0i64) {
+        drop(npk_core_dalloc(node));
+    }
+    pass(NIL);
+};
+
+pub func:art_leaf_key = int64(int64:leaf) {
+    int64:klen = npk_mem_read_int64(leaf, LEAF_KEY_LEN_OFFSET);
+    int64:out  = npk_core_alloc(klen);
+    drop(npk_mem_copy(out, leaf + LEAF_DATA_OFFSET, klen));
+    pass(out);
+};
+
+pub func:art_leaf_key_len = int64(int64:leaf) {
+    pass(npk_mem_read_int64(leaf, LEAF_KEY_LEN_OFFSET));
+};
+
+pub func:art_leaf_val_len = int64(int64:leaf) {
+    pass(npk_mem_read_int64(leaf, LEAF_VAL_LEN_OFFSET));
+};
+
+pub func:art_leaf_val_ptr = int64(int64:leaf) {
+    int64:klen = npk_mem_read_int64(leaf, LEAF_KEY_LEN_OFFSET);
+    pass(leaf + LEAF_DATA_OFFSET + klen);
+};

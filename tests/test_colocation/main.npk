@@ -1,0 +1,125 @@
+use "sys.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/document/json_types.npk".*;
+use "../../src/document/json_serializer.npk".*;
+use "../../src/concurrency/ebr.npk".*;
+use "../../src/index/art.npk".*;
+use "../../src/index/art_alloc.npk".*;
+
+extern "C" {
+    func:_exit = void(int32:code);
+}
+
+pub func:proc_exit = NIL(int32:code) {
+    _exit(code);
+    pass(NIL);
+};
+
+pub func:failsafe = int32(tbb32:err) {
+    println("Failsafe triggered");
+    exit(1i32);
+};
+
+func:main = int32(int32:argc, wild any->:argv) {
+    println("Starting Vector + Document Co-location test...");
+
+    // 1. Create a dummy tfp64 array
+    int64:vec_dim = 1536i64;
+    int64:vec_ptr = npk_core_alloc(vec_dim * 8i64);
+    
+    // Fill it with some distinct values
+    int64:i = 0i64;
+    while (i < vec_dim) {
+        drop(npk_mem_write_int64(vec_ptr, i * 8i64, i * 1000i64));
+        i = i + 1i64;
+    }
+
+    // 2. Create a dummy JSON document
+    int64:str_len = 12i64;
+    int64:str_data = npk_core_alloc(str_len);
+    drop(raw npk_mem_write_string(str_data, "hello vector"));
+    
+    int64:str_obj = npk_core_alloc(16i64);
+    drop(npk_mem_write_int32(str_obj, 0i64, @cast_unchecked<int32>(str_len)));
+    drop(npk_mem_write_int64(str_obj, 8i64, str_data));
+    
+    int64:val_ptr = npk_core_alloc(16i64);
+    drop(npk_mem_write_byte(val_ptr, 0i64, 4i64)); // JSON_STR is 4
+    drop(npk_mem_write_int64(val_ptr, 8i64, str_obj));
+    
+    // 3. Serialize co-located record
+    int64:out_len = 0i64;
+    int64:record_buf = raw serialize_colocated_record(vec_ptr, vec_dim, @cast_unchecked<NpkJsonVal->>(val_ptr), out_len);
+    
+    // 4. Assert layout
+    // Format: [Vector Length (u32)][Vector Data (tfp64...)][JSON Length (u32)][JSON Data (int8...)]
+    int64:read_dim = npk_mem_read_int32(record_buf, 0i64) => int64;
+    if (read_dim != vec_dim) {
+        println("Dim mismatch!");
+        exit(1i32);
+    }
+    
+    int64:first_val = npk_mem_read_int64(record_buf, 4i64);
+    if (first_val != 0i64) {
+        println("Vec first val mismatch!");
+        exit(2i32);
+    }
+    
+    int64:last_val = npk_mem_read_int64(record_buf, 4i64 + ((vec_dim - 1i64) * 8i64));
+    if (last_val != (vec_dim - 1i64) * 1000i64) {
+        println("Vec last val mismatch!");
+        exit(3i32);
+    }
+    
+    int64:json_len_off = 4i64 + (vec_dim * 8i64);
+    int64:read_json_len = npk_mem_read_int32(record_buf, json_len_off) => int64;
+    if (read_json_len <= 0i64) {
+        println("JSON len invalid!");
+        exit(4i32);
+    }
+    
+    int64:json_data_off = json_len_off + 4i64;
+    int64:read_type = npk_mem_read_byte(record_buf, json_data_off);
+    if (read_type != 4i64) {
+        println("JSON type mismatch!");
+        exit(5i32);
+    }
+    
+    println("Serialization verified.");
+
+    // 5. Indexing via ART
+    int64:slot_id = 123456789i64;
+    int64:slot_id_ptr = npk_core_alloc(8i64);
+    drop(npk_mem_write_int64(slot_id_ptr, 0i64, slot_id));
+    
+    drop(raw ebr_init());
+    int64:tid = raw ebr_register_thread();
+    
+    drop(raw art_init());
+    
+    int64:key_data = npk_core_alloc(8i64);
+    drop(raw npk_mem_write_string(key_data, "my_doc_1"));
+    
+    int64:insert_res = raw art_insert(tid, key_data, 8i64, slot_id_ptr, 8i64);
+    if (insert_res != 0i64) {
+        println("ART insert failed!");
+        exit(6i32);
+    }
+    
+    int64:found_leaf = raw art_search(tid, key_data, 8i64);
+    if (found_leaf == 0i64) {
+        println("ART search failed!");
+        exit(7i32);
+    }
+    
+    int64:found_val_ptr = raw art_leaf_val_ptr(found_leaf);
+    int64:found_slot = npk_mem_read_int64(found_val_ptr, 0i64);
+    
+    if (found_slot != slot_id) {
+        println("Slot ID mismatch!");
+        exit(8i32);
+    }
+    
+    println("Vector + Document Colocation and ART retrieval succeeded.");
+    exit(0i32);
+};

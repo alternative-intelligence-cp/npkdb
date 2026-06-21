@@ -1,0 +1,68 @@
+// hnsw_visited.npk
+// O(1) visited set tracking for HNSW graph traversal.
+// Uses a contiguous flat array of int32 tracking the latest search ID.
+
+use "../util/error_codes.npk".*;
+
+pub fixed int64:HNSW_VISITED_OFF_CAPACITY = 0i64;
+pub fixed int64:HNSW_VISITED_OFF_CURRENT = 8i64;
+pub fixed int64:HNSW_VISITED_HEADER_SIZE = 16i64;
+
+// Capacity must match the arena node capacity.
+pub func:hnsw_visited_create = int64(int64:capacity) requires (capacity > 0i64) {
+    int64:total_size = HNSW_VISITED_HEADER_SIZE + (capacity * 4i64);
+    int64:visited = npk_core_alloc(total_size);
+    if (visited == 0i64) { fail@cast_unchecked<tbb8>(ERR_HNSW_OOM); }
+
+    drop(npk_mem_write_int64(visited, HNSW_VISITED_OFF_CAPACITY, capacity));
+    drop(npk_mem_write_int64(visited, HNSW_VISITED_OFF_CURRENT, 0i64));
+    drop(npk_mem_set(visited + HNSW_VISITED_HEADER_SIZE, 0i64, capacity * 4i64));
+
+    pass(visited);
+};
+
+pub func:hnsw_visited_destroy = int64(int64:visited) requires (visited != 0i64) {
+    drop(npk_core_dalloc(visited));
+    pass(0i64);
+};
+
+// Increments search ID. If int32 wraps, zeroes the array to prevent collisions.
+pub func:hnsw_visited_clear = int64(int64:visited) requires (visited != 0i64) {
+    int64:curr = npk_mem_read_int64(visited, HNSW_VISITED_OFF_CURRENT) ;
+    int32:curr32 = @cast_unchecked<int32>(curr);
+
+    if (curr32 == 2147483647i32) {
+        int64:capacity = npk_mem_read_int64(visited, HNSW_VISITED_OFF_CAPACITY) ;
+        drop(npk_mem_set(visited + HNSW_VISITED_HEADER_SIZE, 0i64, capacity * 4i64));
+        drop(npk_mem_write_int64(visited, HNSW_VISITED_OFF_CURRENT, 1i64));
+    } else {
+        drop(npk_mem_write_int64(visited, HNSW_VISITED_OFF_CURRENT, curr + 1i64));
+    }
+    pass(0i64);
+};
+
+pub func:hnsw_visited_mark = int64(int64:visited, int32:slot_idx) 
+    requires (visited != 0i64), (slot_idx >= 0i32) {
+    int64:curr = npk_mem_read_int64(visited, HNSW_VISITED_OFF_CURRENT) ;
+    int32:curr32 = @cast_unchecked<int32>(curr);
+    
+    int64:slot64 = @cast_unchecked<int64>(slot_idx);
+    int64:offset = HNSW_VISITED_HEADER_SIZE + (slot64 * 4i64);
+    
+    drop(npk_mem_write_int32(visited, offset, curr32));
+    pass(0i64);
+};
+
+// Returns 1 if visited, 0 if not
+pub func:hnsw_visited_check = int64(int64:visited, int32:slot_idx) 
+    requires (visited != 0i64), (slot_idx >= 0i32) {
+    int64:curr = npk_mem_read_int64(visited, HNSW_VISITED_OFF_CURRENT) ;
+    int32:curr32 = @cast_unchecked<int32>(curr);
+    
+    int64:slot64 = @cast_unchecked<int64>(slot_idx);
+    int64:offset = HNSW_VISITED_HEADER_SIZE + (slot64 * 4i64);
+    
+    int32:val = npk_mem_read_int32(visited, offset) ;
+    if (val == curr32) { pass(1i64); }
+    pass(0i64);
+};

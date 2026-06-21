@@ -1,0 +1,13 @@
+struct:NpkJsonVal = {
+    int8:kind;
+    int64:payload;
+};
+
+func:main = int32(int32:argc, wild any->:argv) {
+    NpkJsonVal:v = NpkJsonVal{ kind: 0i8, payload: 0i64 };
+    exit(0i32);
+};
+
+func:failsafe = int32(tbb32:err) {
+    exit(1i32);
+};

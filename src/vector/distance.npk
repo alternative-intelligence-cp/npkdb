@@ -1,0 +1,252 @@
+use "unsafe.npk".*;
+Rules<int64>:valid_dim = { $ > 0i64, $ % 8i64 == 0i64 };
+// distance.npk — SIMD and scalar vector distance kernels for NPKDB.
+//
+// All kernels accept two tfp64 slices of equal length `dim` and return a
+// tfp64 distance (or similarity) value.  Callers are responsible for ensuring
+// that both slices have at least `dim` elements allocated.
+//
+// SIMD strategy: process 8 × f64 per iteration (AVX-512 width).
+// Tail: if dim % 8 != 0, the remaining 1-7 elements are handled by a scalar
+// cleanup loop after the main SIMD loop.
+//
+// Error handling: only cosine can fail (zero magnitude). L2 and IP always pass.
+
+use "../util/error_codes.npk".*;
+use "distance_types.npk".*;
+
+use "../util/mem_primitives.npk".*;
+
+// ── l2sq_scalar ──────────────────────────────────────────────────────────────
+// Scalar reference implementation. Not pub — accessed by tests via shim.
+// Returns: sum((a[i] - b[i])^2) for i in [0, dim).
+func:l2sq_scalar = tfp64(wild tfp64->:a, wild tfp64->:b,
+                          limit<valid_dim> int64:dim)
+{
+    tfp64:acc = 0.0tf;
+    int64:i   = 0i64;
+    while (i < dim) {
+        tfp64:ai   = a[i];
+        tfp64:bi   = b[i];
+        tfp64:diff = ai - bi;
+        acc = acc + (diff * diff);
+        i = i + 1i64;
+    }
+    pass(acc);
+};
+
+// ── l2sq_simd ────────────────────────────────────────────────────────────────
+// SIMD L2 squared distance using simd<tfp64, 8> (8-wide = 512-bit).
+//
+// Algorithm:
+//   1. Compute simd_iters = dim / SIMD_F64_WIDTH (integer division, rounds down).
+//   2. For each SIMD block of 8 elements:
+//        va  = load 8 × tfp64 from a[i..i+8]
+//        vb  = load 8 × tfp64 from b[i..i+8]
+//        vd  = va - vb
+//        acc_vec += vd * vd          (element-wise fused multiply-add)
+//   3. Horizontal reduce acc_vec: sum all 8 lanes into a scalar.
+//   4. Scalar tail loop for remaining (dim % 8) elements.
+//   5. Return acc_scalar + tail_acc.
+pub func:l2sq_simd = tfp64(wild tfp64->:a, wild tfp64->:b,
+                            limit<valid_dim> int64:dim)
+{
+    int64:simd_iters = dim / SIMD_F64_WIDTH;
+    int64:tail_start = simd_iters * SIMD_F64_WIDTH;
+
+    // SIMD accumulator — 8 lanes of tfp64, all zeroed.
+    simd<tfp64, 8>:acc_vec = simd_splat(0.0tf, 8i64);
+
+    int64:iter = 0i64;
+    while (iter < simd_iters) {
+        int64:idx = iter * SIMD_F64_WIDTH;
+        simd<tfp64, 8>:va = simd_load(@ptr_add<tfp64>(a, idx), 8i64);
+        simd<tfp64, 8>:vb = simd_load(@ptr_add<tfp64>(b, idx), 8i64);
+        simd<tfp64, 8>:vd = va - vb;
+        acc_vec = acc_vec + vd * vd;
+        iter = iter + 1i64;
+    }
+
+    // Horizontal reduce: sum all 8 lanes.
+    tfp64:acc = simd_sum(acc_vec);
+
+    // Scalar tail for dim % 8 remaining elements.
+    int64:i = tail_start;
+    while (i < dim) {
+        tfp64:ai   = a[i];
+        tfp64:bi   = b[i];
+        tfp64:diff = ai - bi;
+        acc = acc + (diff * diff);
+        i = i + 1i64;
+    }
+
+    pass(acc);
+};
+
+// ── ip_scalar ────────────────────────────────────────────────────────────────
+// Scalar reference implementation of dot product.
+// Returns: sum(a[i] * b[i]) for i in [0, dim).
+func:ip_scalar = tfp64(wild tfp64->:a, wild tfp64->:b,
+                        limit<valid_dim> int64:dim)
+{
+    tfp64:acc = 0.0tf;
+    int64:i   = 0i64;
+    while (i < dim) {
+        tfp64:ai = a[i];
+        tfp64:bi = b[i];
+        acc = acc + (ai * bi);
+        i = i + 1i64;
+    }
+    pass(acc);
+};
+
+// ── ip_simd ──────────────────────────────────────────────────────────────────
+// SIMD inner product (dot product) using simd<tfp64, 8>.
+//
+// Algorithm:
+//   1. simd_iters = dim / 8; tail_start = simd_iters * 8.
+//   2. For each SIMD block: acc_vec += va * vb (element-wise multiply-accumulate).
+//   3. Horizontal reduce acc_vec → scalar.
+//   4. Scalar tail loop.
+//   5. Return total.
+pub func:ip_simd = tfp64(wild tfp64->:a, wild tfp64->:b,
+                          limit<valid_dim> int64:dim)
+{
+    int64:simd_iters = dim / SIMD_F64_WIDTH;
+    int64:tail_start = simd_iters * SIMD_F64_WIDTH;
+
+    simd<tfp64, 8>:acc_vec = simd_splat(0.0tf, 8i64);
+
+    int64:iter = 0i64;
+    while (iter < simd_iters) {
+        int64:idx = iter * SIMD_F64_WIDTH;
+        simd<tfp64, 8>:va = simd_load(@ptr_add<tfp64>(a, idx), 8i64);
+        simd<tfp64, 8>:vb = simd_load(@ptr_add<tfp64>(b, idx), 8i64);
+        acc_vec = acc_vec + va * vb;
+        iter = iter + 1i64;
+    }
+
+    tfp64:acc = simd_sum(acc_vec);
+
+    int64:i = tail_start;
+    while (i < dim) {
+        tfp64:ai = a[i];
+        tfp64:bi = b[i];
+        acc = acc + (ai * bi);
+        i = i + 1i64;
+    }
+
+    pass(acc);
+};
+
+// ── cosine_scalar ─────────────────────────────────────────────────────────────
+// Scalar reference implementation of cosine similarity.
+//
+// Computes: dot(a, b) / (sqrt(dot(a,a)) * sqrt(dot(b,b)))
+//
+// Fails with ERR_SIMD_DIM_MISMATCH if either magnitude is exactly 0.0tf.
+// The failure is surfaced as: fail@cast_unchecked<tbb8>(ERR_SIMD_DIM_MISMATCH)
+func:cosine_scalar = tfp64(wild tfp64->:a, wild tfp64->:b,
+                            limit<valid_dim> int64:dim)
+{
+    tfp64:dot  = 0.0tf;
+    tfp64:mag_a = 0.0tf;
+    tfp64:mag_b = 0.0tf;
+    int64:i    = 0i64;
+    while (i < dim) {
+        tfp64:ai = a[i];
+        tfp64:bi = b[i];
+        dot   = dot   + (ai * bi);
+        mag_a = mag_a + (ai * ai);
+        mag_b = mag_b + (bi * bi);
+        i = i + 1i64;
+    }
+    if (mag_a == 0.0tf) { fail@cast_unchecked<tbb8>(ERR_SIMD_DIM_MISMATCH); }
+    if (mag_b == 0.0tf) { fail@cast_unchecked<tbb8>(ERR_SIMD_DIM_MISMATCH); }
+    tfp64:denom = tfp64_sqrt(mag_a) * tfp64_sqrt(mag_b);
+    pass(dot / denom);
+};
+
+// ── cosine_simd ───────────────────────────────────────────────────────────────
+// SIMD cosine similarity using simd<tfp64, 8>.
+//
+// Three accumulators run in parallel: dot, mag_a, mag_b.
+// All three SIMD loops share the same iteration structure, merged into a single
+// loop body to minimise load traffic (each pair of elements loaded once).
+//
+// Fails with ERR_SIMD_DIM_MISMATCH if either reduced magnitude == 0.0tf.
+pub func:cosine_simd = tfp64(wild tfp64->:a, wild tfp64->:b,
+                              limit<valid_dim> int64:dim)
+{
+    int64:simd_iters = dim / SIMD_F64_WIDTH;
+    int64:tail_start = simd_iters * SIMD_F64_WIDTH;
+
+    simd<tfp64, 8>:dot_vec   = simd_splat(0.0tf, 8i64);
+    simd<tfp64, 8>:mag_a_vec = simd_splat(0.0tf, 8i64);
+    simd<tfp64, 8>:mag_b_vec = simd_splat(0.0tf, 8i64);
+
+    int64:iter = 0i64;
+    while (iter < simd_iters) {
+        int64:idx = iter * SIMD_F64_WIDTH;
+        simd<tfp64, 8>:va = simd_load(@ptr_add<tfp64>(a, idx), 8i64);
+        simd<tfp64, 8>:vb = simd_load(@ptr_add<tfp64>(b, idx), 8i64);
+        dot_vec   = dot_vec +   va * vb;
+        mag_a_vec = mag_a_vec + va * va;
+        mag_b_vec = mag_b_vec + vb * vb;
+        iter = iter + 1i64;
+    }
+
+    tfp64:dot   = simd_sum(dot_vec);
+    tfp64:mag_a = simd_sum(mag_a_vec);
+    tfp64:mag_b = simd_sum(mag_b_vec);
+
+    // Scalar tail for dim % 8 remaining elements.
+    int64:i = tail_start;
+    while (i < dim) {
+        tfp64:ai = a[i];
+        tfp64:bi = b[i];
+        dot   = dot   + (ai * bi);
+        mag_a = mag_a + (ai * ai);
+        mag_b = mag_b + (bi * bi);
+        i = i + 1i64;
+    }
+
+    if (mag_a == 0.0tf) { fail@cast_unchecked<tbb8>(ERR_SIMD_DIM_MISMATCH); }
+    if (mag_b == 0.0tf) { fail@cast_unchecked<tbb8>(ERR_SIMD_DIM_MISMATCH); }
+
+    tfp64:denom = tfp64_sqrt(mag_a) * tfp64_sqrt(mag_b);
+    pass(dot / denom);
+};
+
+// ── TEST EXPORTS — do not call from production code ──────────────────────────
+// The scalar functions are module-private by default (no `pub`).
+// These thin wrappers expose them to the test suite only.
+pub func:l2sq_scalar_pub = tfp64(wild tfp64->:a, wild tfp64->:b,
+                                  limit<valid_dim> int64:dim)
+{
+    pass(l2sq_scalar(a, b, dim));
+};
+
+pub func:ip_scalar_pub = tfp64(wild tfp64->:a, wild tfp64->:b,
+                                limit<valid_dim> int64:dim)
+{
+    pass(ip_scalar(a, b, dim));
+};
+
+pub func:cosine_scalar_pub = tfp64(wild tfp64->:a, wild tfp64->:b,
+                                    limit<valid_dim> int64:dim)
+{
+    pass(cosine_scalar(a, b, dim));
+};
+
+pub func:l2sq_simd_pub = tfp64(wild tfp64->:a, wild tfp64->:b, limit<valid_dim> int64:dim) {
+    pass(l2sq_simd(a, b, dim));
+};
+
+pub func:ip_simd_pub = tfp64(wild tfp64->:a, wild tfp64->:b, limit<valid_dim> int64:dim) {
+    pass(ip_simd(a, b, dim));
+};
+
+pub func:cosine_simd_pub = tfp64(wild tfp64->:a, wild tfp64->:b, limit<valid_dim> int64:dim) {
+    pass(cosine_simd(a, b, dim));
+};

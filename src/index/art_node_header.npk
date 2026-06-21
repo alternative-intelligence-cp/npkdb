@@ -1,0 +1,50 @@
+use "../util/error_codes.npk".*;
+use "art_node.npk".*;
+use "../util/mem_primitives.npk".*;
+
+pub func:art_node_type = int64(int64:node) {
+    pass(npk_mem_read_byte(node, ART_HDR_TYPE));
+};
+
+pub func:art_node_num_children = int64(int64:node) {
+    pass(npk_mem_read_byte(node, ART_HDR_NUM_CHILDREN));
+};
+
+pub func:art_node_set_num_children = NIL(int64:node, int64:count) {
+    drop(npk_mem_write_byte(node, ART_HDR_NUM_CHILDREN, (count => int64)));
+    pass(NIL);
+};
+
+pub func:art_node_parent = int64(int64:node) {
+    pass(npk_mem_read_int64(node, ART_HDR_PARENT));
+};
+
+pub func:art_node_set_parent = NIL(int64:node, int64:parent) {
+    drop(npk_mem_write_int64(node, ART_HDR_PARENT, parent));
+    pass(NIL);
+};
+
+pub func:art_node_prefix_len = int64(int64:node) {
+    pass(npk_mem_read_int64(node, ART_HDR_PREFIX_LEN));
+};
+
+pub func:art_node_set_prefix_len = NIL(int64:node, int64:len) {
+    drop(npk_mem_write_int64(node, ART_HDR_PREFIX_LEN, len));
+    pass(NIL);
+};
+
+pub func:art_node_prefix_byte = int8(int64:node, int64:i) {
+    pass(npk_mem_read_byte(node, ART_HDR_PREFIX + i) => int8);
+};
+
+pub func:art_node_set_prefix_byte = NIL(int64:node, int64:i, int64:b) {
+    drop(npk_mem_write_byte(node, ART_HDR_PREFIX + i, (b => int64)));
+    pass(NIL);
+};
+
+pub func:art_is_leaf = bool(int64:node) {
+    if (node == 0i64) {
+        pass(false);
+    }
+    pass((npk_mem_read_byte(node, ART_HDR_TYPE) => int8) == ART_LEAF);
+};

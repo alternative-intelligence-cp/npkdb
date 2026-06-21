@@ -1,0 +1,42 @@
+use "unsafe.npk".*;
+use "src/util/error_codes.npk".*;
+use "src/util/constants.npk".*;
+use "src/util/mem_primitives.npk".*;
+use "src/vector/distance_types.npk".*;
+
+pub fixed tfp64:TFP64_ERROR_SENTINEL = -999.0tf;
+
+pub func:l2sq_simd = tfp64(wild tfp64->:a, wild tfp64->:b, int64:dim)
+    requires @cast_unchecked<int64>(a) != 0i64, @cast_unchecked<int64>(b) != 0i64, dim > 0i64, dim <= HNSW_DIM
+    ensures result >= 0.0tf
+{
+    int64:simd_iters = dim / SIMD_F64_WIDTH;
+    int64:tail_start = simd_iters * SIMD_F64_WIDTH;
+    simd<tfp64, 8>:acc_vec = simd_splat(0.0tf, 8i64);
+    int64:iter = 0i64;
+    while (iter < simd_iters)
+        invariant iter >= 0i64, iter <= simd_iters
+    {
+        int64:idx = iter * SIMD_F64_WIDTH;
+        simd<tfp64, 8>:va = simd_load(@ptr_add<tfp64>(a, idx), 8i64);
+        simd<tfp64, 8>:vb = simd_load(@ptr_add<tfp64>(b, idx), 8i64);
+        simd<tfp64, 8>:vd = va - vb;
+        acc_vec = acc_vec + vd * vd;
+        iter = iter + 1i64;
+    }
+    tfp64:acc = simd_sum(acc_vec);
+    int64:i = tail_start;
+    while (i < dim)
+        invariant i >= tail_start, i <= dim
+    {
+        tfp64:ai = a[i];
+        tfp64:bi = b[i];
+        tfp64:diff = ai - bi;
+        acc = acc + (diff * diff);
+        i = i + 1i64;
+    }
+    prove acc != TFP64_ERROR_SENTINEL;
+    pass(acc);
+};
+
+func:failsafe = int32(tbb32:err) { drop(err); exit 1i32; };

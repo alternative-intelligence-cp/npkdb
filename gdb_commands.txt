@@ -1,0 +1,9 @@
+break distance.npk:222
+commands
+    print mag_a
+    print mag_b
+    print denom
+    continue
+end
+run
+quit

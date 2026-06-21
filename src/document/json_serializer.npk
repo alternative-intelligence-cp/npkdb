@@ -136,3 +136,43 @@ pub func:serialize_document = int64(NpkJsonVal->:val, int64:out_len_ptr) {
     drop(npk_mem_write_int64(out_len_ptr, 0i64, buf.cursor));
     pass(buf.data);
 };
+
+// Serializes a co-located vector array and JSON document.
+// Format: [Vector Length (u32)][Vector Data (tfp64...)][JSON Length (u32)][JSON Data (int8...)]
+pub func:serialize_colocated_record = int64(int64:vec_ptr, int64:vec_dim, NpkJsonVal->:val, int64:out_len_ptr) {
+    int64:initial_cap = 256i64;
+    SerialBuffer:buf = SerialBuffer {
+        data: npk_core_alloc(initial_cap),
+        capacity: initial_cap,
+        cursor: 0i64
+    };
+    
+    // 1. Vector Length (u32)
+    drop(serial_buffer_ensure(@buf, 4i64));
+    drop(npk_mem_write_int32(buf.data, buf.cursor, @cast_unchecked<int32>(vec_dim)));
+    buf.cursor = buf.cursor + 4i64;
+    
+    // 2. Vector Data (tfp64 array)
+    int64:vec_byte_len = vec_dim * 8i64;
+    if (vec_byte_len > 0i64) {
+        drop(serial_buffer_ensure(@buf, vec_byte_len));
+        drop(npk_mem_copy(buf.data + buf.cursor, vec_ptr, vec_byte_len));
+        buf.cursor = buf.cursor + vec_byte_len;
+    }
+    
+    // 3. JSON Length placeholder (u32)
+    drop(serial_buffer_ensure(@buf, 4i64));
+    int64:json_len_offset = buf.cursor;
+    buf.cursor = buf.cursor + 4i64;
+    
+    // 4. JSON Data
+    int64:json_start = buf.cursor;
+    drop(serialize_value(@buf, val));
+    int64:json_len = buf.cursor - json_start;
+    
+    // Write back JSON length
+    drop(npk_mem_write_int32(buf.data, json_len_offset, @cast_unchecked<int32>(json_len)));
+    
+    drop(npk_mem_write_int64(out_len_ptr, 0i64, buf.cursor));
+    pass(buf.data);
+};

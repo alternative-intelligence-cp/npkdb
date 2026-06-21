@@ -1,0 +1,5 @@
+func:main = int32(int32:argc, wild any->:argv) {
+    flt64:f = 3.14f64;
+    exit(0i32);
+};
+func:failsafe = int32(tbb32:err) { exit(1i32); };

@@ -1,0 +1,285 @@
+// distance_bench.npk — Timing infrastructure and scalar reference kernels
+// for benchmarking the v0.2.0 SIMD distance functions.
+//
+// NEVER import this module from production code. It is test-only.
+
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+use "distance.npk".*;           // l2sq_simd_pub, cosine_simd_pub, ip_simd_pub
+
+// ──────────────────────────────────────────────────────────────────────────
+// Benchmark constants (pub so CI scripts can read them)
+// ──────────────────────────────────────────────────────────────────────────
+pub fixed int64:BENCH_WARMUP_ITERS  = 100i64;
+pub fixed int64:BENCH_MEASURE_ITERS = 10000i64;
+pub fixed int64:BENCH_DIM           = 1536i64;  // OpenAI embedding dimensionality
+
+// CLOCK_MONOTONIC id, matching Linux kernel ABI
+pub fixed int64:CLOCK_MONOTONIC     = 1i64;
+
+// Layout of struct timespec (two int64 fields: tv_sec, tv_nsec)
+pub fixed int64:TIMESPEC_SIZE       = 16i64;
+pub fixed int64:TIMESPEC_SEC_OFF    = 0i64;
+pub fixed int64:TIMESPEC_NSEC_OFF   = 8i64;
+
+// ──────────────────────────────────────────────────────────────────────────
+// bench_now — read CLOCK_MONOTONIC into a caller-supplied timespec buffer.
+//
+// ts_buf: pointer to a zeroed 16-byte buffer allocated by the caller.
+//         After return, tv_sec is at offset 0 and tv_nsec at offset 8.
+//
+// Returns NIL or fails with a raw syscall error code cast to tbb8.
+// ──────────────────────────────────────────────────────────────────────────
+pub func:bench_now = NIL(int64:ts_buf)
+{
+    int64:ret = sys!!(228i64, CLOCK_MONOTONIC, ts_buf) ;
+    if (ret != 0i64) {
+        fail@cast_unchecked<tbb8>(ret);
+    }
+    pass(NIL);
+};
+
+// ──────────────────────────────────────────────────────────────────────────
+// bench_elapsed_ns — compute elapsed nanoseconds between two timespec buffers.
+//
+// ts_start: pointer to the start timespec (16 bytes)
+// ts_end:   pointer to the end   timespec (16 bytes)
+// Returns:  elapsed time as int64 nanoseconds (always non-negative if used
+//           correctly with CLOCK_MONOTONIC).
+// ──────────────────────────────────────────────────────────────────────────
+pub func:bench_elapsed_ns = int64(int64:ts_start, int64:ts_end)
+{
+    int64:sec_start  = npk_mem_read_int64(ts_start, TIMESPEC_SEC_OFF);
+    int64:nsec_start = npk_mem_read_int64(ts_start, TIMESPEC_NSEC_OFF);
+    int64:sec_end    = npk_mem_read_int64(ts_end,   TIMESPEC_SEC_OFF);
+    int64:nsec_end   = npk_mem_read_int64(ts_end,   TIMESPEC_NSEC_OFF);
+    int64:delta_sec  = sec_end  - sec_start;
+    int64:delta_ns   = nsec_end - nsec_start;
+    pass((delta_sec * 1000000000i64) + delta_ns);
+};
+
+// ──────────────────────────────────────────────────────────────────────────
+// Scalar reference kernels — correct-by-inspection, non-SIMD implementations.
+// Used only for the SIMD-vs-scalar agreement tests and speedup assertions.
+// ──────────────────────────────────────────────────────────────────────────
+
+// l2sq_scalar_pub — squared Euclidean distance over a plain loop.
+// a_ptr, b_ptr: pointers to dim × tfp64 buffers.
+// dim:          number of f64 elements (must be > 0).
+pub func:dist_l2_scalar = tfp64(int64:a_ptr, int64:b_ptr, int64:dim)
+{
+    tfp64:acc  = 0.0tf;
+    int64:i    = 0i64;
+    int64:step = 8i64;  // sizeof(tfp64)
+    when (i < dim) {
+        tfp64:a = (@cast_unchecked<tfp64->>(a_ptr))[i];
+        tfp64:b = (@cast_unchecked<tfp64->>(b_ptr))[i];
+        tfp64:d = a - b;
+        acc     = acc + (d * d);
+        i       = i + 1i64;
+    }
+    pass(acc);
+};
+
+// cosine_scalar_pub — cosine similarity (dot / |a| / |b|) over a plain loop.
+// Returns ERR_VECTOR_ZERO_MAGNITUDE (via fail) if either vector has zero magnitude.
+pub func:dist_cosine_scalar = tfp64(int64:a_ptr, int64:b_ptr, int64:dim)
+{
+    tfp64:dot  = 0.0tf;
+    tfp64:mag_a = 0.0tf;
+    tfp64:mag_b = 0.0tf;
+    int64:i    = 0i64;
+    int64:step = 8i64;
+    when (i < dim) {
+        tfp64:a = (@cast_unchecked<tfp64->>(a_ptr))[i];
+        tfp64:b = (@cast_unchecked<tfp64->>(b_ptr))[i];
+        dot     = dot   + (a * b);
+        mag_a   = mag_a + (a * a);
+        mag_b   = mag_b + (b * b);
+        i       = i + 1i64;
+    }
+    if (mag_a == 0.0tf) { fail@cast_unchecked<tbb8>(ERR_VECTOR_ZERO_MAGNITUDE); }
+    if (mag_b == 0.0tf) { fail@cast_unchecked<tbb8>(ERR_VECTOR_ZERO_MAGNITUDE); }
+    tfp64:result = dot / (tfp64_sqrt(mag_a) * tfp64_sqrt(mag_b));
+    pass(result);
+};
+
+// ip_scalar_pub — inner product (dot product) over a plain loop.
+pub func:dist_ip_scalar = tfp64(int64:a_ptr, int64:b_ptr, int64:dim)
+{
+    tfp64:dot  = 0.0tf;
+    int64:i    = 0i64;
+    int64:step = 8i64;
+    when (i < dim) {
+        tfp64:a = (@cast_unchecked<tfp64->>(a_ptr))[i];
+        tfp64:b = (@cast_unchecked<tfp64->>(b_ptr))[i];
+        dot     = dot + (a * b);
+        i       = i + 1i64;
+    }
+    pass(dot);
+};
+
+// ──────────────────────────────────────────────────────────────────────────
+// bench_run_l2 — benchmark l2sq_simd_pub vs l2sq_scalar_pub at BENCH_DIM.
+//
+// a_ptr, b_ptr: pre-allocated, pre-populated BENCH_DIM × tfp64 buffers.
+//
+// Writes results (in ns/op as int64) to the two output pointers:
+//   *simd_nsop_out   — nanoseconds per SIMD operation
+//   *scalar_nsop_out — nanoseconds per scalar operation
+//
+// Prints each result to stdout using npk_print_int64.
+// Fails with ERR_SIMD_DIM_MISMATCH (propagated as TBB) if the speedup
+// assertion is not met (SIMD ns/op * 3 > scalar ns/op).
+// ──────────────────────────────────────────────────────────────────────────
+pub func:bench_run_l2 = NIL(int64:a_ptr, int64:b_ptr,
+                             int64:simd_nsop_out, int64:scalar_nsop_out)
+{
+    // Allocate two timespec structs on the heap (16 bytes each, zeroed)
+    int64:ts0 = npk_core_alloc(1i64 * TIMESPEC_SIZE);
+    int64:ts1 = npk_core_alloc(1i64 * TIMESPEC_SIZE);
+    defer { drop(npk_core_dalloc(ts0)); }
+    defer { drop(npk_core_dalloc(ts1)); }
+
+    // ── Warmup: SIMD ──
+    int64:w = 0i64;
+    when (w < BENCH_WARMUP_ITERS) {
+        tfp64:dummy_simd_w = l2sq_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ?! 0.0tf;
+        w = w + 1i64;
+    }
+
+    // ── Measure: SIMD ──
+    drop(bench_now(ts0));
+    int64:m = 0i64;
+    when (m < BENCH_MEASURE_ITERS) {
+        tfp64:dummy_simd_w = l2sq_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ?! 0.0tf;
+        m = m + 1i64;
+    }
+    drop(bench_now(ts1));
+    int64:simd_total_ns = bench_elapsed_ns(ts0, ts1) ;
+    int64:simd_nsop     = simd_total_ns / BENCH_MEASURE_ITERS;
+    npk_mem_write_int64(simd_nsop_out, 0i64, simd_nsop);
+
+    // ── Warmup: Scalar ──
+    int64:ws = 0i64;
+    when (ws < BENCH_WARMUP_ITERS) {
+        tfp64:dummy_scalar = dist_l2_scalar(a_ptr, b_ptr, BENCH_DIM) ?! 0.0tf;
+        ws = ws + 1i64;
+    }
+
+    // ── Measure: Scalar ──
+    drop(bench_now(ts0));
+    int64:ms = 0i64;
+    when (ms < BENCH_MEASURE_ITERS) {
+        tfp64:dummy_scalar = dist_l2_scalar(a_ptr, b_ptr, BENCH_DIM) ?! 0.0tf;
+        ms = ms + 1i64;
+    }
+    drop(bench_now(ts1));
+    int64:scalar_total_ns = bench_elapsed_ns(ts0, ts1) ;
+    int64:scalar_nsop     = scalar_total_ns / BENCH_MEASURE_ITERS;
+    npk_mem_write_int64(scalar_nsop_out, 0i64, scalar_nsop);
+
+    // ── Speedup assertion: scalar_nsop >= 3 * simd_nsop ──
+    if ((simd_nsop * 3i64) > scalar_nsop) {
+        fail@cast_unchecked<tbb8>(ERR_SIMD_DIM_MISMATCH);  // re-uses error slot; bench failure
+    }
+    pass(NIL);
+};
+
+// bench_run_cosine — same structure as bench_run_l2 for cosine_simd_pub.
+pub func:bench_run_cosine = NIL(int64:a_ptr, int64:b_ptr,
+                                 int64:simd_nsop_out, int64:scalar_nsop_out)
+{
+    int64:ts0 = npk_core_alloc(1i64 * TIMESPEC_SIZE);
+    int64:ts1 = npk_core_alloc(1i64 * TIMESPEC_SIZE);
+    defer { drop(npk_core_dalloc(ts0)); }
+    defer { drop(npk_core_dalloc(ts1)); }
+
+    int64:w = 0i64;
+    when (w < BENCH_WARMUP_ITERS) {
+        tfp64:dummy_simd_w = cosine_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ?! 0.0tf;
+        w = w + 1i64;
+    }
+
+    drop(bench_now(ts0));
+    int64:m = 0i64;
+    when (m < BENCH_MEASURE_ITERS) {
+        tfp64:dummy_simd_w = cosine_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ?! 0.0tf;
+        m = m + 1i64;
+    }
+    drop(bench_now(ts1));
+    int64:simd_total_ns = bench_elapsed_ns(ts0, ts1) ;
+    int64:simd_nsop     = simd_total_ns / BENCH_MEASURE_ITERS;
+    npk_mem_write_int64(simd_nsop_out, 0i64, simd_nsop);
+
+    int64:ws = 0i64;
+    when (ws < BENCH_WARMUP_ITERS) {
+        tfp64:dummy_scalar = dist_cosine_scalar(a_ptr, b_ptr, BENCH_DIM) ?! 0.0tf;
+        ws = ws + 1i64;
+    }
+
+    drop(bench_now(ts0));
+    int64:ms = 0i64;
+    when (ms < BENCH_MEASURE_ITERS) {
+        tfp64:dummy_scalar = dist_cosine_scalar(a_ptr, b_ptr, BENCH_DIM) ?! 0.0tf;
+        ms = ms + 1i64;
+    }
+    drop(bench_now(ts1));
+    int64:scalar_total_ns = bench_elapsed_ns(ts0, ts1) ;
+    int64:scalar_nsop     = scalar_total_ns / BENCH_MEASURE_ITERS;
+    npk_mem_write_int64(scalar_nsop_out, 0i64, scalar_nsop);
+
+    if ((simd_nsop * 3i64) > scalar_nsop) {
+        fail@cast_unchecked<tbb8>(ERR_SIMD_DIM_MISMATCH);
+    }
+    pass(NIL);
+};
+
+// bench_run_ip — same structure as bench_run_l2 for ip_simd_pub.
+pub func:bench_run_ip = NIL(int64:a_ptr, int64:b_ptr,
+                             int64:simd_nsop_out, int64:scalar_nsop_out)
+{
+    int64:ts0 = npk_core_alloc(1i64 * TIMESPEC_SIZE);
+    int64:ts1 = npk_core_alloc(1i64 * TIMESPEC_SIZE);
+    defer { drop(npk_core_dalloc(ts0)); }
+    defer { drop(npk_core_dalloc(ts1)); }
+
+    int64:w = 0i64;
+    when (w < BENCH_WARMUP_ITERS) {
+        tfp64:dummy_simd_w = ip_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ?! 0.0tf;
+        w = w + 1i64;
+    }
+
+    drop(bench_now(ts0));
+    int64:m = 0i64;
+    when (m < BENCH_MEASURE_ITERS) {
+        tfp64:dummy_simd_w = ip_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ?! 0.0tf;
+        m = m + 1i64;
+    }
+    drop(bench_now(ts1));
+    int64:simd_total_ns = bench_elapsed_ns(ts0, ts1) ;
+    int64:simd_nsop     = simd_total_ns / BENCH_MEASURE_ITERS;
+    npk_mem_write_int64(simd_nsop_out, 0i64, simd_nsop);
+
+    int64:ws = 0i64;
+    when (ws < BENCH_WARMUP_ITERS) {
+        tfp64:dummy_scalar = dist_ip_scalar(a_ptr, b_ptr, BENCH_DIM) ?! 0.0tf;
+        ws = ws + 1i64;
+    }
+
+    drop(bench_now(ts0));
+    int64:ms = 0i64;
+    when (ms < BENCH_MEASURE_ITERS) {
+        tfp64:dummy_scalar = dist_ip_scalar(a_ptr, b_ptr, BENCH_DIM) ?! 0.0tf;
+        ms = ms + 1i64;
+    }
+    drop(bench_now(ts1));
+    int64:scalar_total_ns = bench_elapsed_ns(ts0, ts1) ;
+    int64:scalar_nsop     = scalar_total_ns / BENCH_MEASURE_ITERS;
+    npk_mem_write_int64(scalar_nsop_out, 0i64, scalar_nsop);
+
+    if ((simd_nsop * 3i64) > scalar_nsop) {
+        fail@cast_unchecked<tbb8>(ERR_SIMD_DIM_MISMATCH);
+    }
+    pass(NIL);
+};

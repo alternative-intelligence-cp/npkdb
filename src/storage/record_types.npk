@@ -1,0 +1,12 @@
+// record_types.npk — Defines the disk and memory layout of a co-located Vector+JSON record.
+
+use "../document/json_types.npk".*;
+
+// A unified database record
+pub struct:npk_record = {
+    int64:vector_dim;
+    wild tfp64->:vector_data;
+    
+    uint32:json_len;
+    wild int8->:json_data;
+};

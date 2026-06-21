@@ -1,0 +1,79 @@
+// art_location.npk — ART leaf value encoding for physical record locations
+//
+// A record location is 24 bytes:
+//   Bytes  0-7:  sstable_file_number (int64)
+//   Bytes  8-15: page_id             (int64)
+//   Bytes 16-23: slot_id             (int64)
+
+use "../util/error_codes.npk".*;
+
+pub fixed int64:LOCATION_SIZE          = 24i64;
+pub fixed int64:LOCATION_OFF_FILE_NUM  = 0i64;
+pub fixed int64:LOCATION_OFF_PAGE_ID   = 8i64;
+pub fixed int64:LOCATION_OFF_SLOT_ID   = 16i64;
+
+// Allocate a location buffer and encode the three fields.
+pub func:location_encode = int64(int64:file_num, int64:page_id, int64:slot_id)
+{
+    int64:buf = npk_core_alloc(LOCATION_SIZE) => int64;
+    drop(npk_mem_write_int64(buf, LOCATION_OFF_FILE_NUM, file_num));
+    drop(npk_mem_write_int64(buf, LOCATION_OFF_PAGE_ID,  page_id));
+    drop(npk_mem_write_int64(buf, LOCATION_OFF_SLOT_ID,  slot_id));
+    pass(buf);
+};
+
+// Read file number from a location buffer.
+pub func:location_file_num = int64(int64:loc_buf) {
+    pass(npk_mem_read_int64(loc_buf, LOCATION_OFF_FILE_NUM));
+};
+
+// Read page_id from a location buffer.
+pub func:location_page_id = int64(int64:loc_buf) {
+    pass(npk_mem_read_int64(loc_buf, LOCATION_OFF_PAGE_ID));
+};
+
+// Read slot_id from a location buffer.
+pub func:location_slot_id = int64(int64:loc_buf) {
+    pass(npk_mem_read_int64(loc_buf, LOCATION_OFF_SLOT_ID));
+};
+
+// Sentinel location: record is in the Memtable (not yet flushed to SSTable)
+pub fixed int64:LOCATION_IN_MEMTABLE = -1i64;
+
+pub func:location_is_in_memtable = int64(int64:loc_buf)
+    requires loc_buf != 0i64
+{
+    int64:fn = location_file_num(loc_buf) ?! 0i64;
+    if (fn == LOCATION_IN_MEMTABLE) {
+        pass(1i64);
+    }
+    pass(0i64);
+};
+
+// Encode a tombstone location: marks a key as deleted
+pub fixed int64:LOCATION_TOMBSTONE = -2i64;
+
+pub func:location_is_tombstone = int64(int64:loc_buf)
+    requires loc_buf != 0i64
+{
+    int64:fn = location_file_num(loc_buf) ?! 0i64;
+    if (fn == LOCATION_TOMBSTONE) {
+        pass(1i64);
+    }
+    pass(0i64);
+};
+
+pub func:location_encode_tombstone = int64() {
+    pass(location_encode(LOCATION_TOMBSTONE, 0i64, 0i64));
+};
+
+pub func:location_encode_in_memtable = int64() {
+    pass(location_encode(LOCATION_IN_MEMTABLE, 0i64, 0i64));
+};
+
+pub func:location_verify_parity = NIL(int64:loc_buf)
+    requires loc_buf != 0i64
+{
+    prove raw location_is_tombstone(loc_buf) == 0i64 || raw location_is_in_memtable(loc_buf) == 0i64;
+    pass(NIL);
+};

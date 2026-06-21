@@ -1,0 +1,475 @@
+[DEBUG parseFuncDecl] nameToken=lcg_next, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=lcg_next_f64, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=fill_rand_vec, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=fill_unit_vec, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=alloc_vec, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=run_test, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=t01_l2_symmetry, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t02_l2_nonneg, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t03_l2_identity, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t04_l2_symmetry_dim1, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t05_l2_identity_dim8, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t06_l2_nonneg_dim16, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t07_l2_identity_dim512, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t08_l2_zero_b, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t09_l2_dim_mismatch_tbb, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=t10_cosine_self_sim, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t11_cosine_range, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t12_cosine_symmetry, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t13_cosine_self_dim8, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t14_cosine_range_dim16, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t15_cosine_range_dim512, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t16_cosine_zero_b, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=t17_cosine_zero_a, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=t18_cosine_self_dim1, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t19_cosine_dim_mismatch_tbb, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=t20_ip_linearity, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t21_ip_symmetry, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t22_ip_self_eq_magsq, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t23_ip_linearity_dim8, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t24_ip_symmetry_dim1, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t25_ip_zero_b, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t26_ip_linearity_dim512, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t27_ip_dim_mismatch_tbb, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=t28_ip_self_dim16, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t29_l2_agreement_dim1, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t30_l2_agreement_dim8, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t31_l2_agreement_dim16, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t32_l2_agreement_dim512, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t33_l2_agreement_dim1536, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t34_cosine_agreement_dim1, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t35_cosine_agreement_dim8, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t36_cosine_agreement_dim16, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t37_ip_agreement_dim512, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t38_ip_agreement_dim1536, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t39_l2_constant_identity, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=t40_cosine_opposite_vectors, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=main, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=failsafe, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=npk_mem_write_int32, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=npk_mem_write_string, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=npk_mem_read_string, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=npk_cas_i64, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=atomic_load_seqcst, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=atomic_store_seqcst, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=atomic_compare_exchange_seqcst, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=thread_yield, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=l2sq_scalar, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=l2sq_simd, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=ip_scalar, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=ip_simd, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=cosine_scalar, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=cosine_simd, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=l2sq_scalar_pub, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=ip_scalar_pub, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=cosine_scalar_pub, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=l2sq_simd_pub, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=ip_simd_pub, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=cosine_simd_pub, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=bench_now, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=bench_elapsed_ns, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=dist_l2_scalar, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=dist_cosine_scalar, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=dist_ip_scalar, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=bench_run_l2, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=bench_run_cosine, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=bench_run_ip, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+CHECK! isUnchecked: 1 src: int64 target: tfp64@
+[DEBUG-XXX] op: 189, left: 1, right: 0
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG-XXX] op: 189, left: 2, right: 0
+[DEBUG-XXX] op: 194, left: 1, right: 0
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG-XXX] op: 189, left: 2, right: 0
+[DEBUG-XXX] op: 194, left: 1, right: 0
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG-XXX] op: 189, left: 2, right: 0
+[DEBUG-XXX] op: 194, left: 1, right: 0
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 1
+[DEBUG-XXX] op: 163, left: 1, right: 1
+[DEBUG-XXX] op: 163, left: 1, right: 1
+[DEBUG-XXX] op: 163, left: 1, right: 1
+[DEBUG-XXX] op: 163, left: 1, right: 1
+[DEBUG-XXX] op: 163, left: 1, right: 1
+[DEBUG-XXX] op: 163, left: 0, right: 1
+[DEBUG-XXX] op: 163, left: 0, right: 1
+[DEBUG-XXX] op: 163, left: 0, right: 1
+[DEBUG-XXX] op: 163, left: 0, right: 1
+[DEBUG-XXX] op: 163, left: 0, right: 1
+[DEBUG-XXX] op: 163, left: 0, right: 1
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG-XXX] op: 163, left: 1, right: 0

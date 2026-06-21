@@ -1,0 +1,7 @@
+func:main = int32(int32:argc, wild int8->:argv) {
+    int8->:buffer = NULL;
+    int64:ptr_val = <-(@buffer => int64->);
+    exit(0i32);
+};
+
+func:failsafe = int32(tbb32:err) { exit(1i32); };

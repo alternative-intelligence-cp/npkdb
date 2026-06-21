@@ -1,0 +1,183 @@
+// art_node.npk — ART node type tags and layout constants
+//
+// ART maintains space efficiency by adapting node types:
+//   Node4   — 1 to 4 children    (smallest)
+//   Node16  — 5 to 16 children
+//   Node48  — 17 to 48 children
+//   Node256 — 49 to 256 children (largest; direct-indexed)
+//
+// Layout convention: the first byte of EVERY node is the node_type tag.
+// The second byte holds the current child count (num_children).
+// Byte 2-3 are reserved (padding for alignment).
+// Bytes 4-11 hold a pointer to the parent node (int64, for upward traversal during splits).
+// Bytes 12-19 hold the compressed path length (int64) for path compression.
+// Bytes 20-83 hold the compressed path bytes (up to 64 bytes of inlined prefix).
+
+use "../util/constants.npk".*;
+use "../util/error_codes.npk".*;
+
+// Node type tags (stored in byte 0 of every node)
+pub fixed int64:ART_NODE4   = 0i8;
+pub fixed int64:ART_NODE16  = 1i8;
+pub fixed int64:ART_NODE48  = 2i8;
+pub fixed int64:ART_NODE256 = 3i8;
+pub fixed int64:ART_LEAF    = 4i8;  // Leaf: stores actual key+value
+
+// Capacity constants
+pub fixed int64:NODE4_MAX_KEYS   = 4i64;
+pub fixed int64:NODE16_MAX_KEYS  = 16i64;
+pub fixed int64:NODE48_MAX_KEYS  = 48i64;
+pub fixed int64:NODE256_MAX_KEYS = 256i64;
+
+// Common header layout (first 84 bytes of every node)
+pub fixed int64:ART_HDR_TYPE         = 0i64;   // int8 — node type tag
+pub fixed int64:ART_HDR_NUM_CHILDREN = 1i64;   // int8 — current child count
+pub fixed int64:ART_HDR_RESERVED     = 2i64;   // int16 — padding
+pub fixed int64:ART_HDR_PARENT       = 4i64;   // int64 — parent pointer
+pub fixed int64:ART_HDR_PREFIX_LEN   = 12i64;  // int64 — compressed prefix length
+pub fixed int64:ART_HDR_PREFIX       = 20i64;  // 64 bytes — inlined prefix bytes
+pub fixed int64:ART_HDR_SIZE         = 84i64;  // Total header size
+
+// Maximum inline prefix length (beyond this, prefix is stored externally)
+pub func:art_node_type = int64(int64:node) {
+    if (node == 49i64) { print("ERROR: node is 49 in art_node_type"); }
+    int64:t = npk_mem_read_byte(node, 0i64);
+    pass(t & 127i64);
+};
+
+pub func:art_node_set_type = NIL(int64:node, int64:val) {
+    drop(npk_mem_write_byte(node, 0i64, val));
+    pass(NIL);
+};
+
+pub func:art_node_num_children = int64(int64:node) {
+    pass(npk_mem_read_byte(node, ART_HDR_NUM_CHILDREN));
+};
+
+pub func:art_node_set_num_children = NIL(int64:node, int64:val) {
+    drop(npk_mem_write_byte(node, ART_HDR_NUM_CHILDREN, val));
+    pass(NIL);
+};
+
+pub func:art_node_prefix_len = int64(int64:node) {
+    int64:b1 = npk_mem_read_byte(node, ART_HDR_PREFIX_LEN);
+    int64:b2 = npk_mem_read_byte(node, ART_HDR_PREFIX_LEN + 1i64);
+    pass(b1 | (b2 << 8i64));
+};
+
+pub func:art_node_set_prefix_len = NIL(int64:node, int64:val) {
+    drop(npk_mem_write_byte(node, ART_HDR_PREFIX_LEN, val & 255i64));
+    drop(npk_mem_write_byte(node, ART_HDR_PREFIX_LEN + 1i64, (val >> 8i64) & 255i64));
+    pass(NIL);
+};
+
+pub func:art_node_prefix_byte = int64(int64:node, int64:i) {
+    pass(npk_mem_read_byte(node, ART_HDR_PREFIX + i));
+};
+
+pub func:art_node_set_prefix_byte = NIL(int64:node, int64:i, int64:val) {
+    drop(npk_mem_write_byte(node, ART_HDR_PREFIX + i, val));
+    pass(NIL);
+};
+
+pub func:art_node_is_locked = bool(int64:node) {
+    int64:t = npk_mem_read_byte(node, 0i64);
+    pass((t & 128i64) != 0i64);
+};
+
+pub func:art_node_lock = NIL(int64:node) {
+    int64:restart = 1i64;
+    while (restart == 1i64) {
+        int64:hdr = npk_mem_read_int64(node, 0i64);
+        int64:t = hdr & 255i64;
+        if ((t & 128i64) == 0i64) {
+            int64:new_hdr = hdr | 128i64;
+            bool:res = raw npk_cas_i64(node, hdr, new_hdr);
+            if (res) { restart = 0i64; }
+        }
+    }
+    pass(NIL);
+};
+
+pub func:art_node_unlock = NIL(int64:node) {
+    int64:restart = 1i64;
+    while (restart == 1i64) {
+        int64:hdr = npk_mem_read_int64(node, 0i64);
+        int64:new_hdr = hdr & (0xFFFFFFFFFFFFFF7Fi64); // clear bit 7
+        bool:res = raw npk_cas_i64(node, hdr, new_hdr);
+        if (res) { restart = 0i64; }
+    }
+    pass(NIL);
+};
+
+pub func:art_node_is_obsolete = bool(int64:node) {
+    int64:hdr = npk_mem_read_int64(node, 0i64);
+    int64:t = hdr & 255i64;
+    pass((t & 64i64) != 0i64);
+};
+
+pub func:art_node_mark_obsolete = NIL(int64:node) {
+    int64:restart = 1i64;
+    while (restart == 1i64) {
+        int64:hdr = npk_mem_read_int64(node, 0i64);
+        int64:new_hdr = hdr | 64i64;
+        bool:res = raw npk_cas_i64(node, hdr, new_hdr);
+        if (res) { restart = 0i64; }
+    }
+    pass(NIL);
+};
+
+// Node body offsets (relative to ART_HDR_SIZE)
+//
+// Node4:
+//   Bytes 84-87:   keys[4]     (int8 x4) — partial key bytes
+//   Bytes 88-119:  children[4] (int64 x4) — child pointers, parallel to keys
+//   Total: 120 bytes
+pub fixed int64:NODE4_KEYS_OFFSET     = 84i64;
+pub fixed int64:NODE4_CHILDREN_OFFSET = 88i64;
+pub fixed int64:NODE4_SIZE            = 120i64;
+
+// Node16:
+//   Bytes 84-99:   keys[16]     (int8 x16) — partial key bytes, sorted (SIMD-searchable)
+//   Bytes 100-103: padding[4]   (alignment to 8 bytes for children array)
+//   Bytes 104-231: children[16] (int64 x16) — child pointers, parallel to keys
+//   Total: 232 bytes
+pub fixed int64:NODE16_KEYS_OFFSET     = 84i64;
+pub fixed int64:NODE16_CHILDREN_OFFSET = 104i64;
+pub fixed int64:NODE16_SIZE            = 232i64;
+
+// Node48:
+//   Bytes 84-339:  index[256]   (int8 x256)
+//   Bytes 340-343: padding[4]   (alignment)
+//   Bytes 344-727: children[48] (int64 x48) — child pointer slots
+//   Total: 728 bytes
+pub fixed int64:NODE48_INDEX_OFFSET    = 84i64;
+pub fixed int64:NODE48_CHILDREN_OFFSET = 344i64;
+pub fixed int64:NODE48_SIZE            = 728i64;
+
+// Node256:
+//   Bytes 84-87: padding[4]
+//   Bytes 88-2135: children[256] (int64 x256) — direct-indexed child pointers.
+//                  children[byte_value] is the child pointer (0 if none).
+//   Total: 2136 bytes
+pub fixed int64:NODE256_CHILDREN_OFFSET = 88i64;
+pub fixed int64:NODE256_SIZE            = 2136i64;
+
+// Leaf node layout:
+//   Bytes  0:      type (ART_LEAF = 4)
+//   Bytes  1-3:    reserved
+//   Bytes  4-11:   key_len (int64) — length of full key
+//   Bytes 12-19:   val_len (int64) — length of stored value
+//   Bytes 20-83:   reserved (padded to common header size)
+//   Bytes 84+:     key_data[key_len] followed immediately by val_data[val_len]
+pub fixed int64:LEAF_KEY_LEN_OFFSET   = 12i64;
+pub fixed int64:LEAF_VAL_LEN_OFFSET   = 20i64;
+pub fixed int64:LEAF_DATA_OFFSET      = 84i64;
+
+// Safety rules for node memory access
+Rules<int64>:valid_node4_offset   = { $ >= 0i64, $ < 124i64 };
+Rules<int64>:valid_node16_offset  = { $ >= 0i64, $ < 232i64 };
+Rules<int64>:valid_node48_offset  = { $ >= 0i64, $ < 732i64 };
+Rules<int64>:valid_node256_offset = { $ >= 0i64, $ < 2132i64 };
+
+pub Rules<int64>:valid_node4_slot = { $ >= 0i64, $ < NODE4_MAX_KEYS };

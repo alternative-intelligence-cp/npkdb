@@ -1,0 +1,68 @@
+use "../util/error_codes.npk".*;
+use "art_node.npk".*;
+use "../util/mem_primitives.npk".*;
+
+pub func:node48_get_slot = int64(int64:node, int64:byte_val) {
+    int64:idx_off = NODE48_INDEX_OFFSET + (byte_val => int64);
+    pass(npk_mem_read_byte(node, idx_off) => int64);
+};
+
+pub func:node48_set_slot = NIL(int64:node, int64:byte_val, int64:slot) {
+    int64:idx_off = NODE48_INDEX_OFFSET + byte_val;
+    drop(npk_mem_write_byte(node, idx_off, slot));
+    pass(NIL);
+};
+
+pub func:node48_get_child = int64(int64:node, int64:slot) {
+    int64:child_off = NODE48_CHILDREN_OFFSET + ((slot - 1i64) * 8i64);
+    int64:addr = node + child_off;
+    pass(npk_mem_read_int64(addr, 0i64));
+};
+
+pub func:node48_set_child = NIL(int64:node, int64:slot, int64:child) {
+    int64:child_off = NODE48_CHILDREN_OFFSET + ((slot - 1i64) * 8i64);
+    drop(npk_mem_write_int64(node, child_off, child));
+    pass(NIL);
+};
+pub func:node48_add_child = NIL(int64:node, int64:key_byte, int64:child) {
+    int64:i = 0i64;
+    int64:empty_slot = 0i64;
+    while (i < 48i64) {
+        int64:c = raw node48_get_child(node, (i + 1i64));
+        if (c == 0i64) {
+            empty_slot = i + 1i64;
+            break;
+        }
+        i = i + 1i64;
+    }
+    
+    if (empty_slot != 0i64) {
+        drop(raw node48_set_slot(node, key_byte, empty_slot));
+        drop(raw node48_set_child(node, empty_slot, child));
+        int64:count = raw art_node_num_children(node);
+        drop(raw art_node_set_num_children(node, count + 1i64));
+    }
+    pass(NIL);
+};
+
+pub func:node48_find_child = int64(int64:node, int64:key_byte) {
+    int64:slot = raw node48_get_slot(node, key_byte);
+    if (slot != 0i64) {
+        pass(raw node48_get_child(node, slot));
+    }
+    pass(0i64);
+};
+
+pub func:node48_remove_child = int64(int64:node, int64:key_byte)
+    requires node != 0i64
+{
+    int64:slot = raw node48_get_slot(node, key_byte);
+    if (slot == 0i64) { pass(0i64); }
+    
+    drop(raw node48_set_child(node, slot, 0i64));
+    drop(raw node48_set_slot(node, key_byte, 0i64));
+    
+    int64:num = raw art_node_num_children(node);
+    drop(raw art_node_set_num_children(node, num - 1i64));
+    pass(0i64);
+};

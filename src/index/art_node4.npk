@@ -1,0 +1,70 @@
+use "../util/error_codes.npk".*;
+use "art_node.npk".*;
+use "../util/mem_primitives.npk".*;
+use "art_node_header.npk".*;
+
+pub func:node4_get_key = int64(int64:node, limit<valid_node4_slot> int64:i) {
+    pass(npk_mem_read_byte(node, NODE4_KEYS_OFFSET + i));
+};
+
+pub func:node4_set_key = NIL(int64:node, limit<valid_node4_slot> int64:i, int64:key_byte) {
+    drop(npk_mem_write_byte(node, NODE4_KEYS_OFFSET + i, key_byte));
+    pass(NIL);
+};
+
+pub func:node4_get_child = int64(int64:node, limit<valid_node4_slot> int64:i) {
+    int64:addr = node + NODE4_CHILDREN_OFFSET + i * 8i64;
+    pass(npk_mem_read_int64(addr, 0i64));
+};
+
+pub func:node4_set_child = NIL(int64:node, limit<valid_node4_slot> int64:i, int64:child) {
+    drop(npk_mem_write_int64(node, NODE4_CHILDREN_OFFSET + i * 8i64, child));
+    pass(NIL);
+};
+
+pub func:node4_find_child = int64(int64:node, int64:key_byte) {
+    int64:count = raw art_node_num_children(node);
+    int64:i = 0i64;
+    while (i < count) {
+        int64:kb = raw node4_get_key(node, i);
+        if (kb == key_byte) {
+            pass(raw node4_get_child(node, i));
+        }
+        i = i + 1i64;
+    }
+    pass(0i64);
+};
+
+pub func:node4_remove_child = int64(int64:node, int64:key_byte) {
+    int64:count = raw art_node_num_children(node);
+    int64:i = 0i64;
+    int64:found = -1i64;
+    while (i < count) {
+        if (raw node4_get_key(node, i) == key_byte) {
+            found = i;
+            break;
+        }
+        i = i + 1i64;
+    }
+    
+    if (found == -1i64) { pass(0i64); }
+    
+    int64:child = raw node4_get_child(node, found);
+    
+    // Shift elements left
+    i = found;
+    while (i < (count - 1i64)) {
+        drop(raw node4_set_key(node, i, raw node4_get_key(node, i + 1i64)));
+        drop(raw node4_set_child(node, i, raw node4_get_child(node, i + 1i64)));
+        i = i + 1i64;
+    }
+    
+    // Zero the last slot
+    drop(raw node4_set_key(node, count - 1i64, 0i64));
+    drop(raw node4_set_child(node, count - 1i64, 0i64));
+    
+    // Decrement count
+    drop(raw art_node_set_num_children(node, count - 1i64));
+    
+    pass(child);
+};

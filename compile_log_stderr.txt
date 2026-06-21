@@ -1,0 +1,2224 @@
+[DEBUG IR_GEN] Initializer generated for 'v', value = 0x59e66e8620e0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for v
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG] getExprNumericTypeName leftType: 1
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG] getExprNumericTypeName leftType: 1
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG] getExprNumericTypeName leftType: 1
+[DEBUG CODEGEN CALL] Generating call to: string_length
+[DEBUG IR_GEN] Initializer generated for 'len', value = 0x59e66e860d80
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for len
+[DEBUG CODEGEN CALL] Generating call to: string_to_cstr
+[DEBUG IR_GEN] Initializer generated for 'cstr', value = 0x59e66e867b00
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for cstr
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_copy
+[DEBUG IR_GEN] Initializer generated for 'len_mem', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for len_mem
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_byte
+[DEBUG IR_GEN] Initializer generated for 'b_mem', value = 0x59e66d72bc50
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b_mem
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'buf_mem', value = 0x59e66e86d9e0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for buf_mem
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_copy
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG CODEGEN CALL] Generating call to: string_from_cstr
+[DEBUG IR_GEN] Initializer generated for 's_mem', value = 0x59e66e86bb00
+[DEBUG IR_GEN] InitVal type: 0x59e66e857cf0
+[DEBUG IR_GEN] Default builder.CreateStore for s_mem
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: asm!!!
+[DEBUG IR_GEN] Initializer generated for 'actual', value = 0x59e66e86c110
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for actual
+[DEBUG CODEGEN CALL] Generating call to: asm!!!
+[DEBUG IR_GEN] Initializer generated for 'val', value = 0x59e66e86b740
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for val
+[DEBUG CODEGEN CALL] Generating call to: asm!!!
+[DEBUG IR_GEN] Initializer generated for 'old', value = 0x59e66e864600
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for old
+[DEBUG CODEGEN CALL] Generating call to: asm!!!
+[DEBUG IR_GEN] Initializer generated for 'actual', value = 0x59e66e86c210
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for actual
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: asm!!!
+[DEBUG IR_GEN] Initializer generated for 'acc', value = 0x59e66e870ef0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for acc
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'ai', value = 0x59e66e878510
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ai
+[DEBUG IR_GEN] Initializer generated for 'bi', value = 0x59e66e8789a0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for bi
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e878f80
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'simd_iters', value = 0x59e66e876f90
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for simd_iters
+[DEBUG IR_GEN] Initializer generated for 'tail_start', value = 0x59e66e87a210
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for tail_start
+[DEBUG CODEGEN CALL] Generating call to: simd_splat
+[DEBUG IR_GEN] Initializer generated for 'acc_vec', value = 0x59e66e872350
+[DEBUG IR_GEN] InitVal type: 0x59e66e8582d0
+[DEBUG IR_GEN] Default builder.CreateStore for acc_vec
+[DEBUG IR_GEN] Initializer generated for 'iter', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for iter
+[DEBUG IR_GEN] Initializer generated for 'idx', value = 0x59e66e87da50
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for idx
+[DEBUG CODEGEN CALL] Generating call to: simd_load
+[DEBUG CODEGEN CALL] Generating call to: @ptr_add
+[DEBUG IR_GEN] Initializer generated for 'va', value = 0x59e66e87e120
+[DEBUG IR_GEN] InitVal type: 0x59e66e858300
+[DEBUG IR_GEN] Default builder.CreateStore for va
+[DEBUG CODEGEN CALL] Generating call to: simd_load
+[DEBUG CODEGEN CALL] Generating call to: @ptr_add
+[DEBUG IR_GEN] Initializer generated for 'vb', value = 0x59e66e87e580
+[DEBUG IR_GEN] InitVal type: 0x59e66e858300
+[DEBUG IR_GEN] Default builder.CreateStore for vb
+[DEBUG IR_GEN] Initializer generated for 'vd', value = 0x59e66e87eff0
+[DEBUG IR_GEN] InitVal type: 0x59e66e8582a0
+[DEBUG IR_GEN] Default builder.CreateStore for vd
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: simd_sum
+[DEBUG IR_GEN] Initializer generated for 'acc', value = 0x59e66e87fc80
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for acc
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e87fe20
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'ai', value = 0x59e66e86f0c0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ai
+[DEBUG IR_GEN] Initializer generated for 'bi', value = 0x59e66e86f500
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for bi
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e86f9e0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'acc', value = 0x59e66e885140
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for acc
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'ai', value = 0x59e66e886040
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ai
+[DEBUG IR_GEN] Initializer generated for 'bi', value = 0x59e66e886410
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for bi
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'simd_iters', value = 0x59e66e8884a0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for simd_iters
+[DEBUG IR_GEN] Initializer generated for 'tail_start', value = 0x59e66e887ca0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for tail_start
+[DEBUG CODEGEN CALL] Generating call to: simd_splat
+[DEBUG IR_GEN] Initializer generated for 'acc_vec', value = 0x59e66e872350
+[DEBUG IR_GEN] InitVal type: 0x59e66e8582d0
+[DEBUG IR_GEN] Default builder.CreateStore for acc_vec
+[DEBUG IR_GEN] Initializer generated for 'iter', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for iter
+[DEBUG IR_GEN] Initializer generated for 'idx', value = 0x59e66e889950
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for idx
+[DEBUG CODEGEN CALL] Generating call to: simd_load
+[DEBUG CODEGEN CALL] Generating call to: @ptr_add
+[DEBUG IR_GEN] Initializer generated for 'va', value = 0x59e66e889d70
+[DEBUG IR_GEN] InitVal type: 0x59e66e858300
+[DEBUG IR_GEN] Default builder.CreateStore for va
+[DEBUG CODEGEN CALL] Generating call to: simd_load
+[DEBUG CODEGEN CALL] Generating call to: @ptr_add
+[DEBUG IR_GEN] Initializer generated for 'vb', value = 0x59e66e88a180
+[DEBUG IR_GEN] InitVal type: 0x59e66e858300
+[DEBUG IR_GEN] Default builder.CreateStore for vb
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: simd_sum
+[DEBUG IR_GEN] Initializer generated for 'acc', value = 0x59e66e88b260
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for acc
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e88b400
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'ai', value = 0x59e66e88bfe0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ai
+[DEBUG IR_GEN] Initializer generated for 'bi', value = 0x59e66e88c470
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for bi
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'dot', value = 0x59e66e87c960
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dot
+[DEBUG IR_GEN] Initializer generated for 'mag_a', value = 0x59e66e8601d0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_a
+[DEBUG IR_GEN] Initializer generated for 'mag_b', value = 0x59e66e871370
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_b
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'ai', value = 0x59e66e88f4e0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ai
+[DEBUG IR_GEN] Initializer generated for 'bi', value = 0x59e66e88f970
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for bi
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: tfp64_sqrt
+[DEBUG CODEGEN CALL] Generating call to: tfp64_sqrt
+[DEBUG IR_GEN] Initializer generated for 'denom', value = 0x59e66e8929f0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for denom
+[DEBUG IR_GEN] Initializer generated for 'simd_iters', value = 0x59e66e890860
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for simd_iters
+[DEBUG IR_GEN] Initializer generated for 'tail_start', value = 0x59e66e88e3f0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for tail_start
+[DEBUG CODEGEN CALL] Generating call to: simd_splat
+[DEBUG IR_GEN] Initializer generated for 'dot_vec', value = 0x59e66e872350
+[DEBUG IR_GEN] InitVal type: 0x59e66e8582d0
+[DEBUG IR_GEN] Default builder.CreateStore for dot_vec
+[DEBUG CODEGEN CALL] Generating call to: simd_splat
+[DEBUG IR_GEN] Initializer generated for 'mag_a_vec', value = 0x59e66e872350
+[DEBUG IR_GEN] InitVal type: 0x59e66e8582d0
+[DEBUG IR_GEN] Default builder.CreateStore for mag_a_vec
+[DEBUG CODEGEN CALL] Generating call to: simd_splat
+[DEBUG IR_GEN] Initializer generated for 'mag_b_vec', value = 0x59e66e872350
+[DEBUG IR_GEN] InitVal type: 0x59e66e8582d0
+[DEBUG IR_GEN] Default builder.CreateStore for mag_b_vec
+[DEBUG IR_GEN] Initializer generated for 'iter', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for iter
+[DEBUG IR_GEN] Initializer generated for 'idx', value = 0x59e66e8972d0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for idx
+[DEBUG CODEGEN CALL] Generating call to: simd_load
+[DEBUG CODEGEN CALL] Generating call to: @ptr_add
+[DEBUG IR_GEN] Initializer generated for 'va', value = 0x59e66e897790
+[DEBUG IR_GEN] InitVal type: 0x59e66e858300
+[DEBUG IR_GEN] Default builder.CreateStore for va
+[DEBUG CODEGEN CALL] Generating call to: simd_load
+[DEBUG CODEGEN CALL] Generating call to: @ptr_add
+[DEBUG IR_GEN] Initializer generated for 'vb', value = 0x59e66e897bf0
+[DEBUG IR_GEN] InitVal type: 0x59e66e858300
+[DEBUG IR_GEN] Default builder.CreateStore for vb
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: simd_sum
+[DEBUG IR_GEN] Initializer generated for 'dot', value = 0x59e66e899360
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dot
+[DEBUG CODEGEN CALL] Generating call to: simd_sum
+[DEBUG IR_GEN] Initializer generated for 'mag_a', value = 0x59e66e8995e0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_a
+[DEBUG CODEGEN CALL] Generating call to: simd_sum
+[DEBUG IR_GEN] Initializer generated for 'mag_b', value = 0x59e66e899860
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_b
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e899a00
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'ai', value = 0x59e66e89a9e0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ai
+[DEBUG IR_GEN] Initializer generated for 'bi', value = 0x59e66e89ae70
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for bi
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: tfp64_sqrt
+[DEBUG CODEGEN CALL] Generating call to: tfp64_sqrt
+[DEBUG IR_GEN] Initializer generated for 'denom', value = 0x59e66e881ba0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for denom
+[DEBUG CODEGEN CALL] Generating call to: l2sq_scalar
+[DEBUG CODEGEN CALL] Generating call to: ip_scalar
+[DEBUG CODEGEN CALL] Generating call to: cosine_scalar
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd
+[DEBUG CODEGEN CALL] Generating call to: ip_simd
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd
+[DEBUG CODEGEN CALL] Generating call to: sys!!
+[DEBUG IR_GEN] Initializer generated for 'ret', value = 0x59e66e8af2d8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ret
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 'sec_start', value = 0x59e66e8b3180
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for sec_start
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 'nsec_start', value = 0x59e66e8b34d0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for nsec_start
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 'sec_end', value = 0x59e66e8b3940
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for sec_end
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 'nsec_end', value = 0x59e66e8b3cf0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for nsec_end
+[DEBUG IR_GEN] Initializer generated for 'delta_sec', value = 0x59e66e8b40a0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for delta_sec
+[DEBUG IR_GEN] Initializer generated for 'delta_ns', value = 0x59e66e8b4630
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for delta_ns
+[DEBUG IR_GEN] Initializer generated for 'acc', value = 0x59e66e8b5520
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for acc
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'step', value = 0x59e66e862750
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for step
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_tfp64
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e8b77f0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_tfp64
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e8b7ea0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'd', value = 0x59e66e8b8300
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for d
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'dot', value = 0x59e66e8b1810
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dot
+[DEBUG IR_GEN] Initializer generated for 'mag_a', value = 0x59e66e8afd40
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_a
+[DEBUG IR_GEN] Initializer generated for 'mag_b', value = 0x59e66e8aff40
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_b
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'step', value = 0x59e66e862750
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for step
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_tfp64
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e8bbe00
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_tfp64
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e8bc320
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: tfp64_sqrt
+[DEBUG CODEGEN CALL] Generating call to: tfp64_sqrt
+[DEBUG IR_GEN] Initializer generated for 'result', value = 0x59e66e8bacd0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for result
+[DEBUG IR_GEN] Initializer generated for 'dot', value = 0x59e66e8b9ac0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dot
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'step', value = 0x59e66e862750
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for step
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_tfp64
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e8c27d0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_tfp64
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e8c2e80
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'ts0', value = 0x59e66e8bd3d0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ts0
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'ts1', value = 0x59e66e8ba1b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ts1
+[DEBUG IR_GEN] Initializer generated for 'w', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for w
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'dummy_simd_w', value = 0x59e66e8c7098
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dummy_simd_w
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: bench_now
+[DEBUG IR_GEN] Initializer generated for 'm', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for m
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'dummy_simd_w', value = 0x59e66e8c9648
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dummy_simd_w
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: bench_now
+[DEBUG CODEGEN CALL] Generating call to: bench_elapsed_ns
+[DEBUG IR_GEN] Initializer generated for 'simd_total_ns', value = 0x59e66e8babd8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for simd_total_ns
+[DEBUG IR_GEN] Initializer generated for 'simd_nsop', value = 0x59e66e8c1d90
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for simd_nsop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG IR_GEN] Initializer generated for 'ws', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ws
+[DEBUG CODEGEN CALL] Generating call to: dist_l2_scalar
+[DEBUG IR_GEN] Initializer generated for 'dummy_scalar', value = 0x59e66e8cd1e8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dummy_scalar
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: bench_now
+[DEBUG IR_GEN] Initializer generated for 'ms', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ms
+[DEBUG CODEGEN CALL] Generating call to: dist_l2_scalar
+[DEBUG IR_GEN] Initializer generated for 'dummy_scalar', value = 0x59e66e8cf308
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dummy_scalar
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: bench_now
+[DEBUG CODEGEN CALL] Generating call to: bench_elapsed_ns
+[DEBUG IR_GEN] Initializer generated for 'scalar_total_ns', value = 0x59e66e895fc8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for scalar_total_ns
+[DEBUG IR_GEN] Initializer generated for 'scalar_nsop', value = 0x59e66e8c4bc0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for scalar_nsop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'ts0', value = 0x59e66e8d3800
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ts0
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'ts1', value = 0x59e66e8d3ce0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ts1
+[DEBUG IR_GEN] Initializer generated for 'w', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for w
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'dummy_simd_w', value = 0x59e66e8d5578
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dummy_simd_w
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: bench_now
+[DEBUG IR_GEN] Initializer generated for 'm', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for m
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'dummy_simd_w', value = 0x59e66e8d7418
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dummy_simd_w
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: bench_now
+[DEBUG CODEGEN CALL] Generating call to: bench_elapsed_ns
+[DEBUG IR_GEN] Initializer generated for 'simd_total_ns', value = 0x59e66e85b2f8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for simd_total_ns
+[DEBUG IR_GEN] Initializer generated for 'simd_nsop', value = 0x59e66e8d4830
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for simd_nsop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG IR_GEN] Initializer generated for 'ws', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ws
+[DEBUG CODEGEN CALL] Generating call to: dist_cosine_scalar
+[DEBUG IR_GEN] Initializer generated for 'dummy_scalar', value = 0x59e66e8a0848
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dummy_scalar
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: bench_now
+[DEBUG IR_GEN] Initializer generated for 'ms', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ms
+[DEBUG CODEGEN CALL] Generating call to: dist_cosine_scalar
+[DEBUG IR_GEN] Initializer generated for 'dummy_scalar', value = 0x59e66e8a2a58
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dummy_scalar
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: bench_now
+[DEBUG CODEGEN CALL] Generating call to: bench_elapsed_ns
+[DEBUG IR_GEN] Initializer generated for 'scalar_total_ns', value = 0x59e66e8a39e8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for scalar_total_ns
+[DEBUG IR_GEN] Initializer generated for 'scalar_nsop', value = 0x59e66e8a3fe0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for scalar_nsop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'ts0', value = 0x59e66e8e9830
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ts0
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'ts1', value = 0x59e66e8e9d10
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ts1
+[DEBUG IR_GEN] Initializer generated for 'w', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for w
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'dummy_simd_w', value = 0x59e66e8eb528
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dummy_simd_w
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: bench_now
+[DEBUG IR_GEN] Initializer generated for 'm', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for m
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'dummy_simd_w', value = 0x59e66e8ed598
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dummy_simd_w
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: bench_now
+[DEBUG CODEGEN CALL] Generating call to: bench_elapsed_ns
+[DEBUG IR_GEN] Initializer generated for 'simd_total_ns', value = 0x59e66e8d5fd8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for simd_total_ns
+[DEBUG IR_GEN] Initializer generated for 'simd_nsop', value = 0x59e66e89f110
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for simd_nsop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG IR_GEN] Initializer generated for 'ws', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ws
+[DEBUG CODEGEN CALL] Generating call to: dist_ip_scalar
+[DEBUG IR_GEN] Initializer generated for 'dummy_scalar', value = 0x59e66e8f12b8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dummy_scalar
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: bench_now
+[DEBUG IR_GEN] Initializer generated for 'ms', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ms
+[DEBUG CODEGEN CALL] Generating call to: dist_ip_scalar
+[DEBUG IR_GEN] Initializer generated for 'dummy_scalar', value = 0x59e66e8f3578
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dummy_scalar
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: bench_now
+[DEBUG CODEGEN CALL] Generating call to: bench_elapsed_ns
+[DEBUG IR_GEN] Initializer generated for 'scalar_total_ns', value = 0x59e66e8f4558
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for scalar_total_ns
+[DEBUG IR_GEN] Initializer generated for 'scalar_nsop', value = 0x59e66e8f4ad0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for scalar_nsop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: lcg_next
+[DEBUG IR_GEN] Initializer generated for 'r', value = 0x59e66e8f21c8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for r
+[DEBUG IR_GEN] Initializer generated for 'hi', value = 0x59e66e8fd3a0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for hi
+[DEBUG IR_GEN] Initializer generated for 'out', value = 0x59e66e8fd960
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for out
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG CODEGEN CALL] Generating call to: lcg_next_f64
+[DEBUG IR_GEN] Initializer generated for 'v', value = 0x59e66e902a40
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for v
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG IR_GEN] Initializer generated for 'mag_sq', value = 0x59e66e903990
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_sq
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'v', value = 0x59e66e903db0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for v
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: tfp64_sqrt
+[DEBUG IR_GEN] Initializer generated for 'inv_mag', value = 0x59e66e9063f0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for inv_mag
+[DEBUG IR_GEN] Initializer generated for 'j', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for j
+[DEBUG IR_GEN] Initializer generated for 'v', value = 0x59e66e908020
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for v
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'ptr', value = 0x59e66e908c50
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ptr
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_string
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e909920
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e909c30
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ab', value = 0x59e66e90c408
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ab
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ba', value = 0x59e66e90d398
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ba
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e90d870
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e90fbe0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e910d10
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'd', value = 0x59e66e910398
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for d
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e918570
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'd', value = 0x59e66e919e18
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for d
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e8622b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e916ab0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9152b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ab', value = 0x59e66e919898
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ab
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ba', value = 0x59e66e916058
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ba
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e91ba80
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e862750
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e91e170
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'd', value = 0x59e66e91ed08
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for d
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e862fb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9206c0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9209d0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'd', value = 0x59e66e9218f8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for d
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e91d420
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9014d0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'd', value = 0x59e66e9068a8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for d
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e881200
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9260a0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9263b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'd', value = 0x59e66e9270e8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for d
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim_a', value = 0x59e66e862750
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim_a
+[DEBUG IR_GEN] Initializer generated for 'dim_b', value = 0x59e66e862fb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim_b
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e924aa0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9280c0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e926fb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e92b7a0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e92d4a8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e92d9b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9339d0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e933ce0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e929438
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e939340
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e939650
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ab', value = 0x59e66e93afc8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ab
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ba', value = 0x59e66e9364d8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ba
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e9362e0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e862750
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e92a940
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e929f78
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e93bbb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e862fb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e940de0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9410f0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e941578
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e91d420
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e8d9ef0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e8da200
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e8db128
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e881200
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e8de3b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e8de6c0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e8ded60
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e881200
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e8e08b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e8e0bc0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e8e1260
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e8622b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e8e2da0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e8e36a8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e8e3a80
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim_a', value = 0x59e66e862fb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim_a
+[DEBUG IR_GEN] Initializer generated for 'dim_b', value = 0x59e66e8dd7c0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim_b
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e8e69c0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e8e6cd0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e8e64d0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e963f40
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e964250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'c', value = 0x59e66e963b30
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for c
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'apb', value = 0x59e66e964930
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for apb
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_unit_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_unit_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_unit_vec
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'av', value = 0x59e66e965430
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for av
+[DEBUG IR_GEN] Initializer generated for 'bv', value = 0x59e66e96b300
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for bv
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'lhs', value = 0x59e66e96c188
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for lhs
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ac', value = 0x59e66e9695e8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ac
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'bc', value = 0x59e66e968128
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for bc
+[DEBUG IR_GEN] Initializer generated for 'rhs', value = 0x59e66e9696e0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rhs
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e969360
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e972570
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e972880
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ab', value = 0x59e66e974408
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ab
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ba', value = 0x59e66e96f248
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ba
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e96da30
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e8dc370
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG IR_GEN] Initializer generated for 'mag_sq', value = 0x59e66e975b80
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_sq
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'v', value = 0x59e66e97b2e0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for v
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ip', value = 0x59e66e9798d8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ip
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e96e3a0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e862750
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e980620
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e980930
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'c', value = 0x59e66e980de0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for c
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'apb', value = 0x59e66e9810f0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for apb
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_unit_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_unit_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_unit_vec
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'av', value = 0x59e66e982560
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for av
+[DEBUG IR_GEN] Initializer generated for 'bv', value = 0x59e66e97c0d0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for bv
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'lhs', value = 0x59e66e97c868
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for lhs
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'rhs', value = 0x59e66e9795b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rhs
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e978490
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e8622b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9868f0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e986c00
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ab', value = 0x59e66e987538
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ab
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ba', value = 0x59e66e988098
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ba
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e988480
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e881200
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e98b210
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e98b520
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'd', value = 0x59e66e98c2b8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for d
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e98c4f0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e91d420
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e98f2c0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e98f5d0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'c', value = 0x59e66e98fa80
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for c
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'apb', value = 0x59e66e98fd90
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for apb
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_unit_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_unit_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_unit_vec
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'lhs', value = 0x59e66e8726d8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for lhs
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'rhs', value = 0x59e66e9929b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rhs
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e992c80
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim_a', value = 0x59e66e862750
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim_a
+[DEBUG IR_GEN] Initializer generated for 'dim_b', value = 0x59e66e91d420
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim_b
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e997fa0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9982b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e9986f0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e862fb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e99a180
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG IR_GEN] Initializer generated for 'mag_sq', value = 0x59e66e99a5e0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_sq
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'v', value = 0x59e66e99a9f0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for v
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'ip', value = 0x59e66e92fc98
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for ip
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e995e10
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e8622b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e99fdc0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9a00d0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'sv', value = 0x59e66e9a1fc8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for sv
+[DEBUG CODEGEN CALL] Generating call to: l2sq_scalar_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e9a2f38
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e9a3430
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e862750
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9a7300
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e99e2a0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'sv', value = 0x59e66e9a8d08
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for sv
+[DEBUG CODEGEN CALL] Generating call to: l2sq_scalar_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e9a9d28
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e9aa220
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e862fb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9ab890
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9ac150
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'sv', value = 0x59e66e9afa78
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for sv
+[DEBUG CODEGEN CALL] Generating call to: l2sq_scalar_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e9b0aa8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e9b0fa0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e91d420
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9b2ed0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9ac2f0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'sv', value = 0x59e66e9b6968
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for sv
+[DEBUG CODEGEN CALL] Generating call to: l2sq_scalar_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e9b79d8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e9b7ed0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9b9e00
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9b2190
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'sv', value = 0x59e66e9bd8b8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for sv
+[DEBUG CODEGEN CALL] Generating call to: l2sq_scalar_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e9be958
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e9bee50
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e8622b0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9c0d80
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9bb140
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'sv', value = 0x59e66e9c49a8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for sv
+[DEBUG CODEGEN CALL] Generating call to: cosine_scalar_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e9be3b8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e9c5d80
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e862750
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9c7cb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9c92c0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'sv', value = 0x59e66e9c7a08
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for sv
+[DEBUG CODEGEN CALL] Generating call to: cosine_scalar_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e9cc7d8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e9ccc90
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e862fb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9cdaf0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9ceb40
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'sv', value = 0x59e66e9d2588
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for sv
+[DEBUG CODEGEN CALL] Generating call to: cosine_scalar_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e9cc368
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e9d3980
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e91d420
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9d5810
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9d6e20
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'sv', value = 0x59e66e9d4cb8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for sv
+[DEBUG CODEGEN CALL] Generating call to: ip_scalar_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e9da318
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e9da7f0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9dc510
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9ddb10
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'trial', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for trial
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: fill_rand_vec
+[DEBUG CODEGEN CALL] Generating call to: ip_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'sv', value = 0x59e66e9e00e8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for sv
+[DEBUG CODEGEN CALL] Generating call to: ip_scalar_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e9e0f78
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e9e1470
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9e49e0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9e2f80
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'd', value = 0x59e66e9e0968
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for d
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x59e66e864eb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x59e66e9e89a0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'b', value = 0x59e66e9e8cb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for b
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=5 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd_pub
+[DEBUG IR_GEN] Initializer generated for 'rv', value = 0x59e66e9ea9e8
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for rv
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x59e66e9eaeb0
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_init
+[DEBUG IR_GEN] Initializer generated for 'pass_count', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for pass_count
+[DEBUG IR_GEN] Initializer generated for 'fail_count', value = 0x59e66e862250
+[DEBUG IR_GEN] InitVal type: 0x59e66d4ecbd8
+[DEBUG IR_GEN] Default builder.CreateStore for fail_count
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t01_l2_symmetry
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t02_l2_nonneg
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t03_l2_identity
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t04_l2_symmetry_dim1
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t05_l2_identity_dim8
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t06_l2_nonneg_dim16
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t07_l2_identity_dim512
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t08_l2_zero_b
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t09_l2_dim_mismatch_tbb
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t10_cosine_self_sim
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t11_cosine_range
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t12_cosine_symmetry
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t13_cosine_self_dim8
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t14_cosine_range_dim16
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t15_cosine_range_dim512
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t16_cosine_zero_b
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t17_cosine_zero_a
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t18_cosine_self_dim1
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t19_cosine_dim_mismatch_tbb
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t20_ip_linearity
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t21_ip_symmetry
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t22_ip_self_eq_magsq
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t23_ip_linearity_dim8
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t24_ip_symmetry_dim1
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t25_ip_zero_b
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t26_ip_linearity_dim512
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t27_ip_dim_mismatch_tbb
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t28_ip_self_dim16
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t29_l2_agreement_dim1
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t30_l2_agreement_dim8
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t31_l2_agreement_dim16
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t32_l2_agreement_dim512
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t33_l2_agreement_dim1536
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t34_cosine_agreement_dim1
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t35_cosine_agreement_dim8
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t36_cosine_agreement_dim16
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t37_ip_agreement_dim512
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t38_ip_agreement_dim1536
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t39_l2_constant_identity
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: t40_cosine_opposite_vectors
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: exit
+[DEBUG CODEGEN CALL] Generating call to: exit
+[DEBUG CODEGEN CALL] Generating call to: exit
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 217, Column 54: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 218, Column 54: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 37, Column 18: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int64' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 101, Column 58: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 102, Column 58: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 184, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 233, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 282, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 21, Column 21: warning: [NITPICK-063] NITPICK-CAST-LOSSY — explicit cast from 'int64' to 'tfp64' is a lossy conversion through double intermediary. Use @cast_unchecked<tfp64>(expr) to silence after auditing.[0m
+
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_read_tfp64' shadows outer declaration (original at line 0, column 0)[0m
+
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_write_tfp64' shadows outer declaration (original at line 0, column 0)[0m
+
+[1m:21:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'out' is declared but never used[0m
+
+[1m:59:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'result' is unused in function 'run_test'[0m
+
+[1m:171:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'b' is declared but never used[0m
+
+[1m:184:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'b' is declared but never used[0m
+
+[1m:183:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'a' is declared but never used[0m
+
+[1m:287:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'b' is declared but never used[0m
+
+[1m:298:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'a' is declared but never used[0m
+
+[1m:323:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'b' is declared but never used[0m
+
+[1m:322:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'a' is declared but never used[0m
+
+[1m:450:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'b' is declared but never used[0m
+
+[1m:487:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'b' is declared but never used[0m
+
+[1m:486:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'a' is declared but never used[0m
+
+[1m:743:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'fail_count' is declared but never used[0m
+
+[1m:59:1: [0m[1;33mwarning[0m: [1m[unused-function] function 'run_test' is defined but never called[0m
+
+[1mSummary: [0m[1;33m25 warnings[0m

@@ -1,0 +1,389 @@
+// art_iter.npk — ART range iterator
+//
+// Iterator layout (flat buffer, dynamically allocated):
+//   Bytes  0-7:   stack_buf_ptr (int64) — pointer to the DFS stack buffer
+//   Bytes  8-15:  stack_cap     (int64) — capacity of stack in frames
+//   Bytes 16-23:  stack_top     (int64) — index of top frame (-1 = empty)
+//   Bytes 24-31:  start_key_ptr (int64) — lower bound key bytes (0 = no lower bound)
+//   Bytes 32-39:  start_key_len (int64)
+//   Bytes 40-47:  end_key_ptr   (int64) — upper bound key bytes (0 = no upper bound)
+//   Bytes 48-55:  end_key_len   (int64)
+//   Bytes 56-63:  done          (int64) — 1 if iteration is complete
+//   Total: 64 bytes
+
+use "../util/error_codes.npk".*;
+use "../util/constants.npk".*;
+use "../util/mem_primitives.npk".*;
+use "art_node.npk".*;
+use "art_node_header.npk".*;
+use "art_alloc.npk".*;
+use "art_node4.npk".*;
+use "art_node16.npk".*;
+use "art_node48.npk".*;
+use "art_node256.npk".*;
+use "art.npk".*;
+
+pub fixed int64:ITER_SIZE          = 64i64;
+pub fixed int64:ITER_STACK_BUF     = 0i64;
+pub fixed int64:ITER_STACK_CAP     = 8i64;
+pub fixed int64:ITER_STACK_TOP     = 16i64;
+pub fixed int64:ITER_START_KEY_PTR = 24i64;
+pub fixed int64:ITER_START_KEY_LEN = 32i64;
+pub fixed int64:ITER_END_KEY_PTR   = 40i64;
+pub fixed int64:ITER_END_KEY_LEN   = 48i64;
+pub fixed int64:ITER_DONE          = 56i64;
+
+// Stack frame layout (16 bytes each):
+//   Bytes 0-7:  node_ptr     (int64) — pointer to the current node
+//   Bytes 8-15: child_index  (int64) — next child index to visit (0..255)
+pub fixed int64:FRAME_SIZE        = 16i64;
+pub fixed int64:FRAME_NODE_PTR   = 0i64;
+pub fixed int64:FRAME_CHILD_IDX  = 8i64;
+
+// Default iterator stack depth (grows if needed)
+pub fixed int64:ITER_DEFAULT_STACK_CAP = 64i64;
+
+func:iter_stack_push = NIL(int64:iter, int64:node_ptr, int64:child_index) {
+    int64:stack_buf = npk_mem_read_int64(iter, ITER_STACK_BUF);
+    int64:stack_cap = npk_mem_read_int64(iter, ITER_STACK_CAP);
+    int64:stack_top = npk_mem_read_int64(iter, ITER_STACK_TOP);
+    
+    int64:next_top = stack_top + 1i64;
+    if (next_top >= stack_cap) {
+        int64:new_cap = stack_cap * 2i64;
+        int64:new_buf = npk_core_alloc(new_cap * FRAME_SIZE);
+        drop(npk_mem_copy(new_buf, stack_buf, stack_cap * FRAME_SIZE));
+        drop(npk_core_dalloc(stack_buf));
+        stack_buf = new_buf;
+        stack_cap = new_cap;
+        drop(npk_mem_write_int64(iter, ITER_STACK_BUF, stack_buf));
+        drop(npk_mem_write_int64(iter, ITER_STACK_CAP, stack_cap));
+    }
+    
+    int64:frame_ptr = stack_buf + (next_top * FRAME_SIZE);
+    drop(npk_mem_write_int64(frame_ptr, FRAME_NODE_PTR, node_ptr));
+    drop(npk_mem_write_int64(frame_ptr, FRAME_CHILD_IDX, child_index));
+    drop(npk_mem_write_int64(iter, ITER_STACK_TOP, next_top));
+    pass(NIL);
+};
+
+func:iter_stack_pop = int64(int64:iter) {
+    int64:stack_top = npk_mem_read_int64(iter, ITER_STACK_TOP);
+    if (stack_top == -1i64) { pass(0i64); }
+    int64:stack_buf = npk_mem_read_int64(iter, ITER_STACK_BUF);
+    int64:frame_ptr = stack_buf + (stack_top * FRAME_SIZE);
+    drop(npk_mem_write_int64(iter, ITER_STACK_TOP, stack_top - 1i64));
+    pass(frame_ptr);
+};
+
+func:iter_stack_peek = int64(int64:iter) {
+    int64:stack_top = npk_mem_read_int64(iter, ITER_STACK_TOP);
+    if (stack_top == -1i64) { pass(0i64); }
+    int64:stack_buf = npk_mem_read_int64(iter, ITER_STACK_BUF);
+    int64:frame_ptr = stack_buf + (stack_top * FRAME_SIZE);
+    pass(frame_ptr);
+};
+
+pub func:art_iter_create_range = int64(int64:start_ptr, int64:start_len, int64:end_ptr, int64:end_len) {
+    int64:iter = npk_core_alloc(ITER_SIZE);
+    if (iter == 0i64) { pass(0i64); }
+
+    int64:stack_buf = npk_core_alloc(ITER_DEFAULT_STACK_CAP * FRAME_SIZE);
+    if (stack_buf == 0i64) {
+        drop(npk_core_dalloc(iter));
+        pass(0i64);
+    }
+    
+    drop(npk_mem_write_int64(iter, ITER_STACK_BUF, stack_buf));
+    drop(npk_mem_write_int64(iter, ITER_STACK_CAP, ITER_DEFAULT_STACK_CAP));
+    drop(npk_mem_write_int64(iter, ITER_STACK_TOP, -1i64));
+
+    drop(npk_mem_write_int64(iter, ITER_START_KEY_PTR, start_ptr));
+    drop(npk_mem_write_int64(iter, ITER_START_KEY_LEN, start_len));
+    drop(npk_mem_write_int64(iter, ITER_END_KEY_PTR,   end_ptr));
+    drop(npk_mem_write_int64(iter, ITER_END_KEY_LEN,   end_len));
+    drop(npk_mem_write_int64(iter, ITER_DONE, 0i64));
+
+    int64:root = raw art_get_root();
+    if (root != 0i64) {
+        drop(iter_stack_push(iter, root, 0i64));
+    } else {
+        drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+    }
+    pass(iter);
+};
+
+pub func:art_iter_create = int64() {
+    pass(raw art_iter_create_range(0i64, 0i64, 0i64, 0i64));
+};
+
+pub func:art_iter_free = NIL(int64:iter) {
+    if (iter == 0i64) { pass(NIL); }
+    int64:stack_buf = npk_mem_read_int64(iter, ITER_STACK_BUF);
+    if (stack_buf != 0i64) {
+        drop(npk_core_dalloc(stack_buf));
+    }
+    drop(npk_core_dalloc(iter));
+    pass(NIL);
+};
+
+pub func:art_node_get_nth_child = int64(int64:node, int64:n) {
+    int64:num = raw art_node_num_children(node);
+    if (n >= num) { pass(0i64); }
+    
+    int64:ntype = raw art_node_type(node);
+    int64:result = npk_core_alloc(16i64);
+    
+    if (ntype == ART_NODE4) {
+        int64:c0 = 256i64; int64:c1 = 256i64; int64:c2 = 256i64; int64:c3 = 256i64;
+        int64:v0 = 0i64;   int64:v1 = 0i64;   int64:v2 = 0i64;   int64:v3 = 0i64;
+        
+        int64:i = 0i64;
+        while (i < num) {
+            int64:kb = raw node4_get_key(node, i);
+            int64:child = raw node4_get_child(node, i);
+            if (kb < c0) { c3 = c2; v3 = v2; c2 = c1; v2 = v1; c1 = c0; v1 = v0; c0 = kb; v0 = child; }
+            else { if (kb < c1) { c3 = c2; v3 = v2; c2 = c1; v2 = v1; c1 = kb; v1 = child; }
+            else { if (kb < c2) { c3 = c2; v3 = v2; c2 = kb; v2 = child; }
+            else { if (kb < c3) { c3 = kb; v3 = child; } } } }
+            i = i + 1i64;
+        }
+        
+        int64:child = 0i64;
+        int64:kb = 0i64;
+        if (n == 0i64) { child = v0; kb = c0; }
+        if (n == 1i64) { child = v1; kb = c1; }
+        if (n == 2i64) { child = v2; kb = c2; }
+        if (n == 3i64) { child = v3; kb = c3; }
+        
+        drop(npk_mem_write_int64(result, 0i64, child));
+        drop(npk_mem_write_int64(result, 8i64, kb));
+        pass(result);
+    }
+    if (ntype == ART_NODE16) {
+        // Find the n-th smallest key. A simple way: find the smallest key greater than the (n-1)-th smallest key.
+        // We can just iterate 0..255 and see which keys are present.
+        int64:count = 0i64;
+        int64:kb_iter = 0i64;
+        while (kb_iter < 256i64) {
+            int64:j = 0i64;
+            while (j < num) {
+                int64:kb = raw node16_get_key(node, j);
+                if (kb == kb_iter) {
+                    if (count == n) {
+                        int64:child = raw node16_get_child(node, j);
+                        drop(npk_mem_write_int64(result, 0i64, child));
+                        drop(npk_mem_write_int64(result, 8i64, kb));
+                        pass(result);
+                    }
+                    count = count + 1i64;
+                }
+                j = j + 1i64;
+            }
+            kb_iter = kb_iter + 1i64;
+        }
+    }
+    if (ntype == ART_NODE48) {
+        int64:count = 0i64;
+        int64:i = 0i64;
+        while (i < 256i64) {
+            int64:slot = raw node48_get_slot(node, i);
+            if (slot != 0i64) {
+                if (count == n) {
+                    int64:child = raw node48_get_child(node, slot);
+                    drop(npk_mem_write_int64(result, 0i64, child));
+                    drop(npk_mem_write_int64(result, 8i64, i));
+                    pass(result);
+                }
+                count = count + 1i64;
+            }
+            i = i + 1i64;
+        }
+    }
+    if (ntype == ART_NODE256) {
+        int64:count = 0i64;
+        int64:i = 0i64;
+        while (i < 256i64) {
+            int64:child = raw node256_get_child(node, i);
+            if (child != 0i64) {
+                if (count == n) {
+                    drop(npk_mem_write_int64(result, 0i64, child));
+                    drop(npk_mem_write_int64(result, 8i64, i));
+                    pass(result);
+                }
+                count = count + 1i64;
+            }
+            i = i + 1i64;
+        }
+    }
+    drop(npk_core_dalloc(result));
+    pass(0i64);
+};
+
+func:compare_keys = int64(int64:k1_ptr, int64:k1_len, int64:k2_ptr, int64:k2_len) {
+    int64:min_len = k1_len;
+    if (k2_len < min_len) { min_len = k2_len; }
+    int64:i = 0i64;
+    while (i < min_len) {
+        int64:b1 = npk_mem_read_byte(k1_ptr, i);
+        int64:b2 = npk_mem_read_byte(k2_ptr, i);
+        if (b1 < b2) { pass(-1i64); }
+        if (b1 > b2) { pass(1i64); }
+        i = i + 1i64;
+    }
+    if (k1_len < k2_len) { pass(-1i64); }
+    if (k1_len > k2_len) { pass(1i64); }
+    pass(0i64);
+};
+
+pub func:art_iter_next = int64(int64:iter) {
+    int64:done = npk_mem_read_int64(iter, ITER_DONE);
+    if (done == 1i64) { pass(0i64); }
+    
+    int64:start_ptr = npk_mem_read_int64(iter, ITER_START_KEY_PTR);
+    int64:start_len = npk_mem_read_int64(iter, ITER_START_KEY_LEN);
+    int64:end_ptr = npk_mem_read_int64(iter, ITER_END_KEY_PTR);
+    int64:end_len = npk_mem_read_int64(iter, ITER_END_KEY_LEN);
+    
+    while (true) {
+        int64:frame_ptr = raw iter_stack_peek(iter);
+        if (frame_ptr == 0i64) {
+            drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+            pass(0i64);
+        }
+        
+        int64:node_ptr = npk_mem_read_int64(frame_ptr, FRAME_NODE_PTR);
+        int64:child_idx = npk_mem_read_int64(frame_ptr, FRAME_CHILD_IDX);
+        
+        if (raw art_is_leaf(node_ptr)) {
+            drop(raw iter_stack_pop(iter));
+            
+            int64:lkptr = node_ptr + LEAF_DATA_OFFSET;
+            int64:lklen = raw art_leaf_key_len(node_ptr);
+            
+            int64:valid = 1i64;
+            if (start_ptr != 0i64) {
+                if (raw compare_keys(lkptr, lklen, start_ptr, start_len) < 0i64) {
+                    valid = 0i64;
+                }
+            }
+            if (end_ptr != 0i64) {
+                if (raw compare_keys(lkptr, lklen, end_ptr, end_len) > 0i64) {
+                    drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+                    pass(0i64);
+                }
+            }
+            if (valid == 1i64) {
+                pass(node_ptr);
+            }
+            // If valid == 0, we skipped this leaf (it's before start_key), continue loop
+        } else {
+            int64:child_res = raw art_node_get_nth_child(node_ptr, child_idx);
+            if (child_res == 0i64) {
+                drop(raw iter_stack_pop(iter));
+            } else {
+                int64:child = npk_mem_read_int64(child_res, 0i64);
+                drop(npk_core_dalloc(child_res));
+                
+                drop(npk_mem_write_int64(frame_ptr, FRAME_CHILD_IDX, child_idx + 1i64));
+                drop(raw iter_stack_push(iter, child, 0i64));
+            }
+        }
+    }
+    pass(0i64);
+};
+
+pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
+    int64:iter = npk_core_alloc(ITER_SIZE);
+    if (iter == 0i64) { pass(0i64); }
+
+    int64:stack_buf = npk_core_alloc(ITER_DEFAULT_STACK_CAP * FRAME_SIZE);
+    if (stack_buf == 0i64) {
+        drop(npk_core_dalloc(iter));
+        pass(0i64);
+    }
+    
+    drop(npk_mem_write_int64(iter, ITER_STACK_BUF, stack_buf));
+    drop(npk_mem_write_int64(iter, ITER_STACK_CAP, ITER_DEFAULT_STACK_CAP));
+    drop(npk_mem_write_int64(iter, ITER_STACK_TOP, -1i64));
+    
+    drop(npk_mem_write_int64(iter, ITER_START_KEY_PTR, 0i64));
+    drop(npk_mem_write_int64(iter, ITER_START_KEY_LEN, 0i64));
+    drop(npk_mem_write_int64(iter, ITER_END_KEY_PTR, 0i64));
+    drop(npk_mem_write_int64(iter, ITER_END_KEY_LEN, 0i64));
+    drop(npk_mem_write_int64(iter, ITER_DONE, 0i64));
+
+    if (prefix_len == 0i64) {
+        int64:root = raw art_get_root();
+        if (root != 0i64) {
+            drop(raw iter_stack_push(iter, root, 0i64));
+        } else {
+            drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+        }
+        pass(iter);
+    }
+
+    int64:node = raw art_get_root();
+    int64:depth = 0i64;
+    
+    while (node != 0i64) {
+        if (raw art_is_leaf(node)) {
+            int64:lkptr = node + LEAF_DATA_OFFSET;
+            int64:lklen = raw art_leaf_key_len(node);
+            
+            int64:valid = 1i64;
+            if (lklen < prefix_len) {
+                valid = 0i64;
+            } else {
+                int64:i = 0i64;
+                while (i < prefix_len) {
+                    if (npk_mem_read_byte(lkptr, i) != npk_mem_read_byte(prefix_ptr, i)) {
+                        valid = 0i64;
+                        i = prefix_len; // break
+                    } else {
+                        i = i + 1i64;
+                    }
+                }
+            }
+            if (valid == 1i64) {
+                drop(raw iter_stack_push(iter, node, 0i64));
+            } else {
+                drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+            }
+            pass(iter);
+        }
+        
+        int64:p2 = raw art_check_prefix(node, prefix_ptr, prefix_len, depth);
+        int64:plen = raw art_node_prefix_len(node);
+        
+        int64:cmp_len = plen;
+        if (prefix_len - depth < cmp_len) {
+            cmp_len = prefix_len - depth;
+        }
+        if (p2 != cmp_len) {
+            drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+            pass(iter);
+        }
+        
+        depth = depth + plen;
+        if (depth >= prefix_len) {
+            drop(raw iter_stack_push(iter, node, 0i64));
+            pass(iter);
+        }
+        
+        int64:key_byte = 0i64;
+        int64:b = npk_mem_read_byte(prefix_ptr, depth);
+        key_byte = @cast_unchecked<int64>(b);
+        
+        int64:next_child = raw art_find_child(node, key_byte);
+        if (next_child == 0i64) {
+            drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+            pass(iter);
+        }
+        node = next_child;
+        depth = depth + 1i64;
+    }
+    
+    drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+    pass(iter);
+};

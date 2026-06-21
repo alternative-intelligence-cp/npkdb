@@ -1,0 +1,322 @@
+// ebr.npk — Epoch-Based Reclamation (EBR) for safe memory reclamation
+//
+// The global epoch advances when all active threads have observed the current
+// epoch. Nodes unlinked in epoch E are safe to free only after the global
+// epoch has advanced to E+2 (all readers from epoch E have retired).
+
+use "../util/error_codes.npk".*;
+use "../util/constants.npk".*;
+use "../util/mem_primitives.npk".*;
+use "../index/art_alloc.npk".*;
+
+// Maximum supported concurrent threads
+pub fixed int64:EBR_MAX_THREADS = 256i64;
+
+// Epoch advancement interval: advance every this many retires.
+pub fixed int64:EBR_ADVANCE_INTERVAL = 100i64;
+
+// Limbo list node layout (flat buffer, singly linked):
+//   Bytes  0-7:  node_ptr (int64) — the reclaimed node pointer
+//   Bytes  8-15: epoch    (int64) — the epoch when this node was unlinked
+//   Bytes 16-23: next     (int64) — next limbo node pointer (0 = end of list)
+pub fixed int64:LIMBO_NODE_SIZE  = 24i64;
+pub fixed int64:LIMBO_OFF_PTR    = 0i64;
+pub fixed int64:LIMBO_OFF_EPOCH  = 8i64;
+pub fixed int64:LIMBO_OFF_NEXT   = 16i64;
+
+// Thread state layout (flat buffer, one per thread slot):
+//   Bytes  0-7:  local_epoch (int64) — last observed global epoch
+//   Bytes  8-15: is_active   (int64) — 1 if thread is in a read-critical section
+//   Bytes 16-23: thread_id   (int64) — the thread ID (index into ebr_threads array)
+//   Bytes 24-31: limbo_head  (int64) — pointer to the head of this thread's limbo list
+//   Bytes 32-39: limbo_count (int64) — number of nodes currently in the limbo list
+//   Bytes 40-47: retire_count (int64) — total retires since last advance attempt
+pub fixed int64:EBR_THREAD_STATE_SIZE  = 48i64;
+pub fixed int64:EBR_TS_LOCAL_EPOCH     = 0i64;
+pub fixed int64:EBR_TS_IS_ACTIVE       = 8i64;
+pub fixed int64:EBR_TS_THREAD_ID       = 16i64;
+pub fixed int64:EBR_TS_LIMBO_HEAD      = 24i64;
+pub fixed int64:EBR_TS_LIMBO_COUNT     = 32i64;
+pub fixed int64:EBR_TS_RETIRE_COUNT    = 40i64;
+
+// Global EBR state
+// In a real multi-threaded environment these would be cache-line padded.
+// For now they are plain int64 (will be atomic<int64> in v0.1.6).
+int64:ebr_global_state = 0i64;          // Pointer to 16 bytes: [epoch, thread_count]
+int64:ebr_thread_states = 0i64;         // Pointer to EBR_MAX_THREADS thread-state buffers
+
+// Initialize the EBR subsystem. Call once before spawning threads.
+// Allocates the thread-state array.
+pub func:ebr_init = NIL() {
+    int64:states_size = EBR_MAX_THREADS * EBR_THREAD_STATE_SIZE;
+    ebr_thread_states = npk_core_alloc(states_size);
+    if (ebr_thread_states == 0i64) {
+        fail(ERR_EBR_LIMBO_OVERFLOW => tbb8);
+    }
+    ebr_global_state = npk_core_alloc(16i64);
+    drop(npk_mem_write_int64(ebr_global_state, 0i64, 0i64)); // epoch
+    drop(npk_mem_write_int64(ebr_global_state, 8i64, 0i64)); // thread_count
+    pass(NIL);
+};
+
+pub func:ebr_thread_state = int64(int64:thread_id) {
+    if (thread_id < 0i64) { pass(0i64); }
+    if (thread_id >= EBR_MAX_THREADS) { pass(0i64); }
+    pass(ebr_thread_states + thread_id * EBR_THREAD_STATE_SIZE);
+};
+
+// Force-free ALL remaining limbo nodes (used during shutdown).
+pub func:ebr_flush_limbo_all = NIL(int64:ts) {
+    int64:curr = npk_mem_read_int64(ts, EBR_TS_LIMBO_HEAD);
+    while (curr != 0i64) {
+        int64:nxt = npk_mem_read_int64(curr, LIMBO_OFF_NEXT);
+        int64:node_ptr = npk_mem_read_int64(curr, LIMBO_OFF_PTR);
+        
+        drop(npk_core_dalloc(node_ptr)); // Free the node payload
+        drop(npk_core_dalloc(curr));     // Free the limbo node itself
+        
+        curr = nxt;
+    }
+    drop(npk_mem_write_int64(ts, EBR_TS_LIMBO_HEAD, 0i64));
+    drop(npk_mem_write_int64(ts, EBR_TS_LIMBO_COUNT, 0i64));
+    pass(NIL);
+};
+
+// Flush eligible limbo nodes for the given thread state pointer.
+// Frees all nodes tagged with epoch <= global_epoch - 2.
+func:ebr_flush_limbo = NIL(int64:ts) {
+    int64:curr = npk_mem_read_int64(ts, EBR_TS_LIMBO_HEAD);
+    int64:prev = 0i64;
+    int64:count = npk_mem_read_int64(ts, EBR_TS_LIMBO_COUNT);
+    int64:safe_epoch = npk_mem_read_int64(ebr_global_state, 0i64) - 2i64;
+    
+    while (curr != 0i64) {
+        int64:nxt = npk_mem_read_int64(curr, LIMBO_OFF_NEXT);
+        int64:epoch = npk_mem_read_int64(curr, LIMBO_OFF_EPOCH);
+        
+        if (epoch <= safe_epoch) {
+            // Inside the loop: epoch tag of freed node is always <= global_epoch - 2
+            prove epoch <= npk_mem_read_int64(ebr_global_state, 0i64) - 2i64;
+            // Safe to free
+            if (prev == 0i64) {
+                drop(npk_mem_write_int64(ts, EBR_TS_LIMBO_HEAD, nxt));
+            } else {
+                drop(npk_mem_write_int64(prev, LIMBO_OFF_NEXT, nxt));
+            }
+            int64:node_ptr = npk_mem_read_int64(curr, LIMBO_OFF_PTR);
+            drop(npk_core_dalloc(node_ptr)); // Free the node payload
+            drop(npk_core_dalloc(curr));     // Free the limbo node itself
+            count = count - 1i64;
+        } else {
+            prev = curr;
+        }
+        
+        curr = nxt;
+    }
+    
+    drop(npk_mem_write_int64(ts, EBR_TS_LIMBO_COUNT, count));
+    pass(NIL);
+};
+
+// Shutdown EBR: flush and free all remaining limbo nodes, free thread-state array.
+pub func:ebr_shutdown = NIL() {
+    // Force-free all remaining limbo nodes across all thread slots
+    int64:i = 0i64;
+    while (i < npk_mem_read_int64(ebr_global_state, 8i64)) {
+        int64:ts = raw ebr_thread_state(i);
+        if (ts != 0i64) {
+            drop(raw ebr_flush_limbo_all(ts));
+        }
+        i = i + 1i64;
+    }
+    if (ebr_thread_states != 0i64) {
+        drop(npk_core_dalloc(ebr_thread_states));
+        ebr_thread_states = 0i64;
+    }
+    pass(NIL);
+};
+
+// Register a new thread with the EBR system. Returns thread_id (0-based).
+// Must be called by each thread before it accesses any shared data structure.
+// Returns: thread_id, or error if EBR_MAX_THREADS is exceeded.
+pub func:ebr_register_thread = int64() {
+    int64:tid = 0i64;
+    int64:success = 0i64;
+    while (success == 0i64) {
+        tid = npk_mem_read_int64(ebr_global_state, 8i64);
+        if (tid >= EBR_MAX_THREADS) {
+            fail(ERR_EBR_LIMBO_OVERFLOW => tbb8);
+        }
+        int64:addr = ebr_global_state + 8i64;
+        bool:res = raw npk_cas_i64(addr, tid, tid + 1i64);
+        if (res) { success = 1i64; }
+    }
+    int64:ts = raw ebr_thread_state(tid);
+    if (ts != 0i64) {
+        drop(npk_mem_write_int64(ts, EBR_TS_LOCAL_EPOCH,  0i64));
+        drop(npk_mem_write_int64(ts, EBR_TS_IS_ACTIVE,    0i64));
+        drop(npk_mem_write_int64(ts, EBR_TS_THREAD_ID,    tid));
+        drop(npk_mem_write_int64(ts, EBR_TS_LIMBO_HEAD,   0i64));
+        drop(npk_mem_write_int64(ts, EBR_TS_LIMBO_COUNT,  0i64));
+        drop(npk_mem_write_int64(ts, EBR_TS_RETIRE_COUNT, 0i64));
+    }
+    pass(tid);
+};
+
+// Enter a read-critical section.
+// Loads the current global epoch into the thread's local_epoch and sets is_active=1.
+// Readers MUST call ebr_pin before dereferencing any shared pointer.
+pub func:ebr_pin = NIL(int64:thread_id)
+    requires thread_id >= 0i64
+{
+    if (thread_id < 0i64) { pass(NIL); }
+    if (thread_id >= EBR_MAX_THREADS) { pass(NIL); }
+    int64:ts = raw ebr_thread_state(thread_id);
+    if (ts != 0i64) {
+        drop(npk_mem_write_int64(ts, EBR_TS_LOCAL_EPOCH, npk_mem_read_int64(ebr_global_state, 0i64)));
+        drop(npk_mem_write_int64(ts, EBR_TS_IS_ACTIVE, 1i64));
+    }
+    pass(NIL);
+};
+
+// Exit a read-critical section.
+// Sets is_active=0, allowing the global epoch to advance past this thread.
+pub func:ebr_unpin = NIL(int64:thread_id)
+    requires thread_id >= 0i64
+{
+    if (thread_id < 0i64) { pass(NIL); }
+    if (thread_id >= EBR_MAX_THREADS) { pass(NIL); }
+    int64:ts = raw ebr_thread_state(thread_id);
+    if (ts != 0i64) {
+        drop(npk_mem_write_int64(ts, EBR_TS_IS_ACTIVE, 0i64));
+    }
+    pass(NIL);
+};
+
+// Attempt to advance the global epoch if all active threads have observed the
+// current epoch. Returns 1 if advanced, 0 if not (some thread is still behind).
+pub func:ebr_try_advance = int64()
+{
+    int64:cur_epoch = npk_mem_read_int64(ebr_global_state, 0i64);
+    // Check all registered threads
+    int64:i = 0i64;
+    int64:tcount = npk_mem_read_int64(ebr_global_state, 8i64);
+    while (i < tcount) {
+        int64:ts = raw ebr_thread_state(i);
+        if (ts != 0i64) {
+            int64:is_active   = npk_mem_read_int64(ts, EBR_TS_IS_ACTIVE);
+            int64:local_epoch = npk_mem_read_int64(ts, EBR_TS_LOCAL_EPOCH);
+            if (is_active == 1i64) {
+                if (local_epoch < cur_epoch) {
+                    pass(0i64);  // Thread is active in an old epoch — cannot advance
+                }
+            }
+        }
+        i = i + 1i64;
+    }
+    // All threads are either inactive or at current epoch — safe to advance
+    drop(npk_mem_write_int64(ebr_global_state, 0i64, cur_epoch + 1i64));
+    pass(1i64);
+};
+
+// Retire (defer freeing) a node that has been unlinked from a shared data structure.
+// The node will be freed when the global epoch has advanced sufficiently.
+pub func:ebr_retire = int32(int64:thread_id, int64:node_ptr)
+    requires (thread_id >= 0i64), (thread_id < EBR_MAX_THREADS)
+{
+    if (thread_id < 0i64) { pass(0i32); }
+    if (thread_id >= EBR_MAX_THREADS) { pass(0i32); }
+    if (node_ptr == 0i64) { pass(0i32); }
+    int64:ts = raw ebr_thread_state(thread_id);
+    if (ts == 0i64) { pass(0i32); }
+    
+    int64:count = npk_mem_read_int64(ts, EBR_TS_LIMBO_COUNT);
+    if (count >= EBR_LIMBO_MAX_DEPTH) {
+        pass(ERR_EBR_LIMBO_OVERFLOW);
+    }
+    
+    int64:l_node = npk_core_alloc(LIMBO_NODE_SIZE);
+    if (l_node == 0i64) {
+        pass(ERR_EBR_LIMBO_OVERFLOW);
+    }
+    
+    int64:head = npk_mem_read_int64(ts, EBR_TS_LIMBO_HEAD);
+    drop(npk_mem_write_int64(l_node, LIMBO_OFF_PTR, node_ptr));
+    drop(npk_mem_write_int64(l_node, LIMBO_OFF_EPOCH, npk_mem_read_int64(ebr_global_state, 0i64)));
+    drop(npk_mem_write_int64(l_node, LIMBO_OFF_NEXT, head));
+    
+    drop(npk_mem_write_int64(ts, EBR_TS_LIMBO_HEAD, l_node));
+    drop(npk_mem_write_int64(ts, EBR_TS_LIMBO_COUNT, count + 1i64));
+    
+    int64:rcount = npk_mem_read_int64(ts, EBR_TS_RETIRE_COUNT) + 1i64;
+    if (rcount >= EBR_ADVANCE_INTERVAL) {
+        drop(ebr_try_advance());
+        drop(raw ebr_flush_limbo(ts));
+        drop(npk_mem_write_int64(ts, EBR_TS_RETIRE_COUNT, 0i64));
+    } else {
+        drop(npk_mem_write_int64(ts, EBR_TS_RETIRE_COUNT, rcount));
+    }
+    
+    pass(0i32);
+};
+
+// Accessor for testing: get global epoch
+pub func:ebr_get_global_epoch = int64() {
+    pass(npk_mem_read_int64(ebr_global_state, 0i64));
+};
+
+// Accessor for testing: get limbo count for thread
+pub func:ebr_get_limbo_count = int64(int64:thread_id) {
+    int64:ts = raw ebr_thread_state(thread_id);
+    pass(npk_mem_read_int64(ts, EBR_TS_LIMBO_COUNT));
+};
+
+// Accessor for testing: get local epoch for thread
+pub func:ebr_get_local_epoch = int64(int64:thread_id) {
+    int64:ts = raw ebr_thread_state(thread_id);
+    pass(npk_mem_read_int64(ts, EBR_TS_LOCAL_EPOCH));
+};
+
+// Accessor for testing: get is_active for thread
+pub func:ebr_get_is_active = int64(int64:thread_id) {
+    int64:ts = raw ebr_thread_state(thread_id);
+    pass(npk_mem_read_int64(ts, EBR_TS_IS_ACTIVE));
+};
+
+// Test helper: manually force advance global epoch
+pub func:ebr_test_force_advance = NIL() {
+    drop(npk_mem_write_int64(ebr_global_state, 0i64, npk_mem_read_int64(ebr_global_state, 0i64) + 1i64));
+    pass(NIL);
+};
+
+// Test helper: manually flush limbo
+pub func:ebr_test_flush_limbo = NIL(int64:thread_id) {
+    int64:ts = raw ebr_thread_state(thread_id);
+    drop(raw ebr_flush_limbo(ts));
+    pass(NIL);
+};
+
+// Flush limbo and retry the retire. Spins until retirement succeeds.
+// ONLY safe to call when is_active=0 (between operations, not mid-traversal).
+pub func:ebr_retire_or_flush = int32(int64:thread_id, int64:node_ptr) {
+    int64:retries = 0i64;
+    while (retries < 10i64) {
+        int32:err = raw ebr_retire(thread_id, node_ptr);
+        
+        if (err == 0i32) {
+            pass(0i32);
+        }
+        
+        if (err == ERR_EBR_LIMBO_OVERFLOW) {
+            drop(ebr_try_advance());
+            int64:ts = raw ebr_thread_state(thread_id);
+            if (ts != 0i64) {
+                drop(raw ebr_flush_limbo(ts));
+            }
+            retries = retries + 1i64;
+        } else {
+            pass(err);
+        }
+    }
+    pass(ERR_EBR_LIMBO_OVERFLOW);
+};

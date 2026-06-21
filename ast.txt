@@ -1,0 +1,10 @@
+[DEBUG parseFuncDecl] nameToken=my_free, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=my_calloc, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=assert, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=failsafe, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=main, peek()==, type=168
+AST:
+Program([Use("../../src/vector/distance.npk".*), Use("../../src/vector/distance_types.npk".*), Use("../../src/util/error_codes.npk".*), Use("../../src/util/mem_primitives.npk".*), Extern("nitpick_libc_mem" { FuncDecl(func:npk_core_alloc = int64(int64:size) { ... }), FuncDecl(func:npk_core_dalloc = void(int64:ptr) { ... }), FuncDecl(func:npk_mem_set = int64(int64:ptr, int64:val, int64:size) { ... }) }), FuncDecl(func:my_free = NIL(tfp64@:ptr) { ... }), FuncDecl(func:my_calloc = tfp64@(int64:count, int64:size) { ... }), FuncDecl(func:assert = NIL(bool:cond) { ... }), FuncDecl(pub func:failsafe = int32(tbb32:err) { ... }), FuncDecl(pub func:main = int32() { ... })])

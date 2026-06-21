@@ -1,0 +1,126 @@
+// hnsw_graph.npk
+// Graph State structure for HNSW.
+
+use "../util/error_codes.npk".*;
+use "distance.npk".*;
+
+pub fixed int64:HNSW_GRAPH_OFF_ARENA = 0i64;
+pub fixed int64:HNSW_GRAPH_OFF_VECTOR_BUF = 8i64;
+pub fixed int64:HNSW_GRAPH_OFF_VECTOR_DIM = 16i64;
+pub fixed int64:HNSW_GRAPH_OFF_EP_SLOT = 24i64;
+pub fixed int64:HNSW_GRAPH_OFF_EP_GEN = 28i64;
+pub fixed int64:HNSW_GRAPH_OFF_MAX_LAYER = 32i64;
+pub fixed int64:HNSW_GRAPH_OFF_M = 36i64;
+pub fixed int64:HNSW_GRAPH_OFF_M0 = 40i64;
+pub fixed int64:HNSW_GRAPH_OFF_EF_CONST = 44i64;
+pub fixed int64:HNSW_GRAPH_OFF_ML = 48i64;
+pub fixed int64:HNSW_GRAPH_STRUCT_SIZE = 56i64;
+
+pub func:hnsw_graph_create = int64(int64:arena_ptr, int64:vector_buf_ptr, int64:vector_dim, int32:M, int32:M0, int32:ef_construction, float64:mL)
+    requires (arena_ptr != 0i64) {
+    
+    int64:graph = npk_core_alloc(HNSW_GRAPH_STRUCT_SIZE);
+    if (graph == 0i64) { fail@cast_unchecked<tbb8>(ERR_HNSW_OOM); }
+    
+    drop(npk_mem_write_int64(graph, HNSW_GRAPH_OFF_ARENA, arena_ptr));
+    drop(npk_mem_write_int64(graph, HNSW_GRAPH_OFF_VECTOR_BUF, vector_buf_ptr));
+    drop(npk_mem_write_int64(graph, HNSW_GRAPH_OFF_VECTOR_DIM, vector_dim));
+    drop(npk_mem_write_int32(graph, HNSW_GRAPH_OFF_EP_SLOT, -1i32));
+    drop(npk_mem_write_int32(graph, HNSW_GRAPH_OFF_EP_GEN, -1i32));
+    drop(npk_mem_write_int32(graph, HNSW_GRAPH_OFF_MAX_LAYER, -1i32));
+    drop(npk_mem_write_int32(graph, HNSW_GRAPH_OFF_M, M));
+    drop(npk_mem_write_int32(graph, HNSW_GRAPH_OFF_M0, M0));
+    drop(npk_mem_write_int32(graph, HNSW_GRAPH_OFF_EF_CONST, ef_construction));
+    drop(npk_mem_write_int64(graph, HNSW_GRAPH_OFF_ML, @cast_unchecked<int64>(mL)));
+    
+    pass(graph);
+};
+
+pub func:hnsw_graph_destroy = int64(int64:graph) requires (graph != 0i64) {
+    drop(npk_core_dalloc(graph));
+    pass(0i64);
+};
+
+// ── Accessors ───────────────────────────────────────────────────────────────
+
+// Copies ep_slot and ep_gen to the provided pointers. Returns 0 on success.
+pub func:hnsw_graph_get_ep = int64(int64:graph, int64:out_slot_ptr, int64:out_gen_ptr)
+    requires (graph != 0i64), (out_slot_ptr != 0i64), (out_gen_ptr != 0i64) {
+    int32:ep_slot = npk_mem_read_int32(graph, HNSW_GRAPH_OFF_EP_SLOT) ;
+    int32:ep_gen  = npk_mem_read_int32(graph, HNSW_GRAPH_OFF_EP_GEN) ;
+    
+    drop(npk_mem_write_int32(out_slot_ptr, 0i64, ep_slot));
+    drop(npk_mem_write_int32(out_gen_ptr, 0i64, ep_gen));
+    pass(0i64);
+};
+
+pub func:hnsw_graph_set_ep = int64(int64:graph, int32:ep_slot, int32:ep_gen)
+    requires (graph != 0i64) {
+    drop(npk_mem_write_int32(graph, HNSW_GRAPH_OFF_EP_SLOT, ep_slot));
+    drop(npk_mem_write_int32(graph, HNSW_GRAPH_OFF_EP_GEN, ep_gen));
+    pass(0i64);
+};
+
+pub func:hnsw_graph_get_max_layer = int32(int64:graph) requires (graph != 0i64) {
+    pass(npk_mem_read_int32(graph, HNSW_GRAPH_OFF_MAX_LAYER));
+};
+
+pub func:hnsw_graph_set_max_layer = int64(int64:graph, int32:layer) requires (graph != 0i64) {
+    drop(npk_mem_write_int32(graph, HNSW_GRAPH_OFF_MAX_LAYER, layer));
+    pass(0i64);
+};
+
+pub func:hnsw_graph_get_arena = int64(int64:graph) requires (graph != 0i64) {
+    pass(npk_mem_read_int64(graph, HNSW_GRAPH_OFF_ARENA));
+};
+
+pub func:hnsw_graph_get_vector_buf = int64(int64:graph) requires (graph != 0i64) {
+    pass(npk_mem_read_int64(graph, HNSW_GRAPH_OFF_VECTOR_BUF));
+};
+
+pub func:hnsw_graph_get_vector_dim = int64(int64:graph) requires (graph != 0i64) {
+    pass(npk_mem_read_int64(graph, HNSW_GRAPH_OFF_VECTOR_DIM));
+};
+
+pub func:hnsw_graph_get_M = int32(int64:graph) requires (graph != 0i64) {
+    pass(npk_mem_read_int32(graph, HNSW_GRAPH_OFF_M));
+};
+
+pub func:hnsw_graph_get_M0 = int32(int64:graph) requires (graph != 0i64) {
+    pass(npk_mem_read_int32(graph, HNSW_GRAPH_OFF_M0));
+};
+
+pub func:hnsw_graph_get_ef_construction = int32(int64:graph) requires (graph != 0i64) {
+    pass(npk_mem_read_int32(graph, HNSW_GRAPH_OFF_EF_CONST));
+};
+
+pub func:hnsw_graph_get_mL = float64(int64:graph) requires (graph != 0i64) {
+    pass(@cast_unchecked<float64>(npk_mem_read_int64(graph, HNSW_GRAPH_OFF_ML)));
+};
+
+// ── Distance Calculation ────────────────────────────────────────────────────
+
+func:simd_l2_f32 = float32(int64:a, int64:b, int64:dim) {
+    int64:i = 0i64;
+    float32:dist = 0.0f32;
+    when (i < dim) {
+        float32:va = @cast_unchecked<float32>(npk_mem_read_int32(a, i * 4i64));
+        float32:vb = @cast_unchecked<float32>(npk_mem_read_int32(b, i * 4i64));
+        float32:diff = va - vb;
+        dist = dist + (diff * diff);
+        i = i + 1i64;
+    }
+    pass(dist);
+};
+
+pub func:hnsw_graph_distance = float32(int64:graph, int64:vec1_offset, int64:vec2_offset)
+    requires (graph != 0i64) {
+    
+    int64:vec_buf = hnsw_graph_get_vector_buf(graph)  ?! 0i64;
+    int64:dim = hnsw_graph_get_vector_dim(graph)  ?! 0i64;
+    
+    int64:ptr1 = vec_buf + vec1_offset;
+    int64:ptr2 = vec_buf + vec2_offset;
+    
+    pass(simd_l2_f32(ptr1, ptr2, dim));
+};

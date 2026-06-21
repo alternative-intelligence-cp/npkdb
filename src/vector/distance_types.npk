@@ -1,0 +1,25 @@
+// distance_types.npk — Distance metric identifiers, dimensionality constants,
+//                       and dimension validity rules for NPKDB vector kernels.
+//
+// Metric tag constants identify which distance function is active at runtime.
+// HNSW_DIM = 1536: matches OpenAI text-embedding-3-large / Ada-002 output size.
+// SIMD_F64_WIDTH = 8: one 512-bit AVX-512 register holds 8 × f64 lanes.
+
+use "../util/error_codes.npk".*;
+
+// ── Metric tags ──────────────────────────────────────────────────────────────
+// Stored in HnswGraph headers to identify which distance function to use.
+pub fixed int8:DIST_L2  = 0i8;   // L2 squared (Euclidean, no sqrt)
+pub fixed int8:DIST_IP  = 1i8;   // Inner product (dot product)
+pub fixed int8:DIST_COS = 2i8;   // Cosine similarity
+
+// ── Dimensionality ────────────────────────────────────────────────────────────
+// Default embedding dimensionality — OpenAI Ada-002 / text-embedding-3-large.
+pub fixed int64:HNSW_DIM        = 1536i64;
+
+// SIMD lane width for tfp64 kernels (8 × f64 = 512-bit).
+pub fixed int64:SIMD_F64_WIDTH  = 8i64;
+
+// ── Validation rules ─────────────────────────────────────────────────────────
+// Valid dimension range: 1 ≤ dim ≤ HNSW_DIM.
+// Used as: limit<valid_dim> int64:dim in kernel signatures.

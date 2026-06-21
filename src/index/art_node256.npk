@@ -1,0 +1,27 @@
+use "../util/error_codes.npk".*;
+use "art_node.npk".*;
+use "../util/mem_primitives.npk".*;
+
+pub func:node256_get_child = int64(int64:node, int64:byte_val) {
+    int64:child_off = NODE256_CHILDREN_OFFSET + byte_val * 8i64;
+    int64:addr = node + child_off;
+    pass(npk_mem_read_int64(addr, 0i64));
+};
+
+pub func:node256_set_child = NIL(int64:node, int64:byte_val, int64:child) {
+    int64:child_off = NODE256_CHILDREN_OFFSET + byte_val * 8i64;
+    drop(npk_mem_write_int64(node, child_off, child));
+    pass(NIL);
+};
+
+pub func:node256_remove_child = int64(int64:node, int64:key_byte) {
+    int64:child = raw node256_get_child(node, key_byte);
+    if (child == 0i64) { pass(0i64); }
+    
+    drop(raw node256_set_child(node, key_byte, 0i64));
+    
+    int64:count = raw art_node_num_children(node);
+    drop(raw art_node_set_num_children(node, count - 1i64));
+    
+    pass(child);
+};

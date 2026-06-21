@@ -65,3 +65,13 @@ pub func:npk_mem_read_int8 = int8(int8->:buf_arg, int64:pos) {
     int64:val = npk_mem_read_byte(ptr, pos);
     pass(val => int8);
 };
+
+pub func:npk_cas_i64 = bool(int64:atomic_ptr, int64:expected, int64:desired) {
+    int64:actual = asm!!!<int64>("x86_64", "lock cmpxchgq $2, ($1)", "={ax},r,r,0,~{dirflag},~{fpsr},~{flags},~{memory}", atomic_ptr, desired, expected);
+    pass(actual == expected);
+};
+
+pub func:atomic_load_seqcst = int64(int64:atomic_ptr) {
+    int64:val = asm!!!<int64>("x86_64", "movq ($1), $0", "=r,r,~{memory}", atomic_ptr);
+    pass(val);
+};

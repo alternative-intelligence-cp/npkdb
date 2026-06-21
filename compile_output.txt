@@ -1,0 +1,2115 @@
+[DEBUG parseFuncDecl] nameToken=failsafe, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=main, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=npk_mem_write_int32, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=npk_mem_write_string, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=npk_mem_read_string, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=npk_cas_i64, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=atomic_load_seqcst, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=atomic_store_seqcst, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=atomic_compare_exchange_seqcst, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=thread_yield, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=npk_mem_write_int16, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=npk_mem_read_int16, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=npk_mem_write_int8, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_node_get_id, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_node_set_id, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_node_get_layer, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_node_set_layer, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_node_get_num_neighbors, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_node_set_num_neighbors, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_node_get_max_neighbors, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_node_set_max_neighbors, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_node_get_vector_offset, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_node_set_vector_offset, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_neighbor_base, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_node_get_neighbor_slot, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_node_get_neighbor_gen, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_node_get_neighbor_arena_id, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_node_set_neighbor, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_node_clear_neighbor, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_neighbor_is_null, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_hnsw_arena_get_node_buf, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_arena_get_gen_buf, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_arena_get_free_buf, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_arena_get_capacity, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_arena_get_used, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_arena_get_free_top, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_arena_get_arena_id, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_arena_create, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_arena_destroy, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_arena_alloc_node, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_arena_free_node, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_arena_get_node, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_hnsw_arena_get_node_unchecked, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=handle_encode, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=handle_decode, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=handle_is_null, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_get_capacity, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_get_size, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_get_is_max, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_get_elements, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_get_candidate_ptr, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_get_dist, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_get_slot, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_get_gen, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_set_candidate, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_copy_candidate, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_compare, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_sift_up, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_sift_down, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_create, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_destroy, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_grow, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_push, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_pop, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_pq_peek, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_visited_create, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_visited_destroy, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_visited_clear, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_visited_mark, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_visited_check, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_create, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_destroy, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_get_ep, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_set_ep, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_get_max_layer, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_set_max_layer, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_get_arena, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_get_vector_buf, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_get_vector_dim, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_get_M, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_get_M0, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_get_ef_construction, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_get_mL, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=simd_l2_f32, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_graph_distance, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=l2sq_scalar, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=l2sq_simd, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=ip_scalar, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=ip_simd, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=cosine_scalar, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=cosine_simd, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=l2sq_scalar_pub, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=ip_scalar_pub, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=cosine_scalar_pub, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=l2sq_simd_pub, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=ip_simd_pub, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=cosine_simd_pub, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_search_layer, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=rand_next, peek()==, type=168
+[DEBUG parseFuncDecl] nameToken=hnsw_random_layer, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_select_neighbors, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_shrink_connections, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG parseFuncDecl] nameToken=hnsw_insert, peek()==, type=168
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+PARSING CAST: token=CAST_UNCHECKED isUnchecked=1
+[DEBUG IR_GEN] Initializer generated for 'v', value = 0x61bea67904a0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for v
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG-XXX] op: 189, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG-XXX] op: 189, left: 2, right: 0
+[DEBUG] getExprNumericTypeName leftType: 1
+[DEBUG-XXX] op: 194, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG-XXX] op: 189, left: 2, right: 0
+[DEBUG] getExprNumericTypeName leftType: 1
+[DEBUG-XXX] op: 194, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG-XXX] op: 189, left: 2, right: 0
+[DEBUG] getExprNumericTypeName leftType: 1
+[DEBUG-XXX] op: 194, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: string_length
+[DEBUG IR_GEN] Initializer generated for 'len', value = 0x61bea679b250
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for len
+[DEBUG CODEGEN CALL] Generating call to: string_to_cstr
+[DEBUG IR_GEN] Initializer generated for 'cstr', value = 0x61bea679ba90
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for cstr
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_copy
+[DEBUG IR_GEN] Initializer generated for 'len_mem', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for len_mem
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_byte
+[DEBUG IR_GEN] Initializer generated for 'b_mem', value = 0x61bea56e5b00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for b_mem
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG IR_GEN] Initializer generated for 'buf_mem', value = 0x61bea67a0670
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for buf_mem
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_copy
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG CODEGEN CALL] Generating call to: string_from_cstr
+[DEBUG IR_GEN] Initializer generated for 's_mem', value = 0x61bea67a17b0
+[DEBUG IR_GEN] InitVal type: 0x61bea6797e10
+[DEBUG IR_GEN] Default builder.CreateStore for s_mem
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: asm!!!
+[DEBUG IR_GEN] Initializer generated for 'actual', value = 0x61bea67a2830
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for actual
+[DEBUG CODEGEN CALL] Generating call to: asm!!!
+[DEBUG IR_GEN] Initializer generated for 'val', value = 0x61bea67a3560
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for val
+[DEBUG CODEGEN CALL] Generating call to: asm!!!
+[DEBUG IR_GEN] Initializer generated for 'old', value = 0x61bea54af350
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for old
+[DEBUG CODEGEN CALL] Generating call to: asm!!!
+[DEBUG IR_GEN] Initializer generated for 'actual', value = 0x61bea67a1d10
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for actual
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: asm!!!
+[DEBUG IR_GEN] Initializer generated for 'v', value = 0x61bea679efd0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for v
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG-XXX] op: 189, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG-XXX] op: 189, left: 2, right: 0
+[DEBUG] getExprNumericTypeName leftType: 1
+[DEBUG-XXX] op: 194, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_byte
+[DEBUG IR_GEN] Initializer generated for 'v0', value = 0x61bea67a8e10
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for v0
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_byte
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG IR_GEN] Initializer generated for 'v1', value = 0x61bea67a9400
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for v1
+[DEBUG IR_GEN] Initializer generated for 'v', value = 0x61bea67a9830
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for v
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_byte
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG IR_GEN] Initializer generated for 'layer64', value = 0x61bea67bc430
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for layer64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG-XXX] op: 161, left: 1, right: 2
+[DEBUG] getExprNumericTypeName leftType: 1
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG IR_GEN] Initializer generated for 'layer64', value = 0x61bea67bf270
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for layer64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG-XXX] op: 161, left: 1, right: 2
+[DEBUG] getExprNumericTypeName leftType: 1
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG IR_GEN] Initializer generated for 'layer64', value = 0x61bea67c0f10
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for layer64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG-XXX] op: 161, left: 1, right: 2
+[DEBUG] getExprNumericTypeName leftType: 1
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG IR_GEN] Initializer generated for 'layer64', value = 0x61bea67c3ab0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for layer64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG-XXX] op: 161, left: 1, right: 2
+[DEBUG] getExprNumericTypeName leftType: 1
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG IR_GEN] Initializer generated for 'layer_start_idx', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for layer_start_idx
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'total_idx', value = 0x61bea6795100
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for total_idx
+[DEBUG CODEGEN CALL] Generating call to: hnsw_neighbor_base
+[DEBUG IR_GEN] Initializer generated for 'base', value = 0x61bea67ca468
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for base
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG CODEGEN CALL] Generating call to: hnsw_neighbor_base
+[DEBUG IR_GEN] Initializer generated for 'base', value = 0x61bea67cfa58
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for base
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG CODEGEN CALL] Generating call to: hnsw_neighbor_base
+[DEBUG IR_GEN] Initializer generated for 'base', value = 0x61bea67d27a8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for base
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int16
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG CODEGEN CALL] Generating call to: hnsw_neighbor_base
+[DEBUG IR_GEN] Initializer generated for 'base', value = 0x61bea67b9ac8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for base
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int16
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int16
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG CODEGEN CALL] Generating call to: hnsw_neighbor_base
+[DEBUG IR_GEN] Initializer generated for 'base', value = 0x61bea67ddfd8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for base
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int16
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int16
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG CODEGEN CALL] Generating call to: hnsw_neighbor_base
+[DEBUG IR_GEN] Initializer generated for 'base', value = 0x61bea67e1848
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for base
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG IR_GEN] Initializer generated for 'gen', value = 0x61bea67e1f30
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for gen
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int16
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'arena', value = 0x61bea67ec3c0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for arena
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_set
+[DEBUG IR_GEN] Initializer generated for 'node_buf_size', value = 0x61bea67f12d0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for node_buf_size
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'node_buf', value = 0x61bea67f1540
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for node_buf
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_set
+[DEBUG IR_GEN] Initializer generated for 'gen_buf_size', value = 0x61bea67f02f0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for gen_buf_size
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'gen_buf', value = 0x61bea67f05a0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for gen_buf
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_set
+[DEBUG IR_GEN] Initializer generated for 'free_buf_size', value = 0x61bea67f4010
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for free_buf_size
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'free_buf', value = 0x61bea67f4240
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for free_buf
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'j', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for j
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int16
+[DEBUG CODEGEN CALL] Generating call to: hnsw_hnsw_arena_get_node_buf
+[DEBUG IR_GEN] Initializer generated for 'node_buf', value = 0x61bea67faad8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for node_buf
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_gen_buf
+[DEBUG IR_GEN] Initializer generated for 'gen_buf', value = 0x61bea67fa848
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for gen_buf
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_free_buf
+[DEBUG IR_GEN] Initializer generated for 'free_buf', value = 0x61bea67fbca8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for free_buf
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_free_top
+[DEBUG IR_GEN] Initializer generated for 'free_top', value = 0x61bea67ff198
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for free_top
+[DEBUG IR_GEN] Initializer generated for 'new_top', value = 0x61bea6800520
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for new_top
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_free_buf
+[DEBUG IR_GEN] Initializer generated for 'free_buf', value = 0x61bea67f1d48
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for free_buf
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG IR_GEN] Initializer generated for 'slot_idx', value = 0x61bea67eca30
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for slot_idx
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_gen_buf
+[DEBUG IR_GEN] Initializer generated for 'gen_buf', value = 0x61bea67b2ef8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for gen_buf
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG IR_GEN] Initializer generated for 'generation', value = 0x61bea67ee110
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for generation
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_used
+[DEBUG IR_GEN] Initializer generated for 'used', value = 0x61bea67ed1e8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for used
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: hnsw_hnsw_arena_get_node_buf
+[DEBUG IR_GEN] Initializer generated for 'node_buf', value = 0x61bea67eebb8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for node_buf
+[DEBUG IR_GEN] Initializer generated for 'node_base', value = 0x61bea67ffd60
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for node_base
+[DEBUG IR_GEN] Initializer generated for 'k', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for k
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int8
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_capacity
+[DEBUG IR_GEN] Initializer generated for 'capacity', value = 0x61bea6808818
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for capacity
+[DEBUG IR_GEN] Initializer generated for 'slot', value = 0x61bea67b8690
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for slot
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_gen_buf
+[DEBUG IR_GEN] Initializer generated for 'gen_buf', value = 0x61bea67f3628
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for gen_buf
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG IR_GEN] Initializer generated for 'live_gen', value = 0x61bea6801f00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for live_gen
+[DEBUG IR_GEN] Initializer generated for 'new_gen', value = 0x61bea680b430
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for new_gen
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_free_top
+[DEBUG IR_GEN] Initializer generated for 'free_top', value = 0x61bea680c388
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for free_top
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_free_buf
+[DEBUG IR_GEN] Initializer generated for 'free_buf', value = 0x61bea67ac938
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for free_buf
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_used
+[DEBUG IR_GEN] Initializer generated for 'used', value = 0x61bea6804cc8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for used
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG-XXX] op: 162, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_capacity
+[DEBUG IR_GEN] Initializer generated for 'capacity', value = 0x61bea67d5448
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for capacity
+[DEBUG IR_GEN] Initializer generated for 'slot', value = 0x61bea6802cc0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for slot
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_gen_buf
+[DEBUG IR_GEN] Initializer generated for 'gen_buf', value = 0x61bea67ee678
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for gen_buf
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG IR_GEN] Initializer generated for 'live_gen', value = 0x61bea680e040
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for live_gen
+[DEBUG CODEGEN CALL] Generating call to: hnsw_hnsw_arena_get_node_buf
+[DEBUG IR_GEN] Initializer generated for 'node_buf', value = 0x61bea67d8918
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for node_buf
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_capacity
+[DEBUG IR_GEN] Initializer generated for 'capacity', value = 0x61bea67da468
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for capacity
+[DEBUG IR_GEN] Initializer generated for 'slot', value = 0x61bea6804fc0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for slot
+[DEBUG CODEGEN CALL] Generating call to: hnsw_hnsw_arena_get_node_buf
+[DEBUG IR_GEN] Initializer generated for 'node_buf', value = 0x61bea67dbd78
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for node_buf
+[DEBUG IR_GEN] Initializer generated for 'word0', value = 0x61bea67d70d0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for word0
+[DEBUG IR_GEN] Initializer generated for 'word1', value = 0x61bea67d7190
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for word1
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 'word0', value = 0x61bea6820670
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for word0
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 'word1', value = 0x61bea6820950
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for word1
+[DEBUG IR_GEN] Initializer generated for 'slot_idx', value = 0x61bea6820be0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for slot_idx
+[DEBUG IR_GEN] Initializer generated for 'generation', value = 0x61bea6820fa0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for generation
+[DEBUG IR_GEN] Initializer generated for 'arena_id', value = 0x61bea6821300
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for arena_id
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_elements
+[DEBUG IR_GEN] Initializer generated for 'elems', value = 0x61bea6829828
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for elems
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG IR_GEN] Initializer generated for 'dist', value = 0x61bea682f850
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for dist
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_slot
+[DEBUG IR_GEN] Initializer generated for 'slot', value = 0x61bea68301c8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for slot
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_gen
+[DEBUG IR_GEN] Initializer generated for 'gen', value = 0x61bea6830b58
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for gen
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_set_candidate
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_dist
+[DEBUG IR_GEN] Initializer generated for 'dist_a', value = 0x61bea68339d8
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for dist_a
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_dist
+[DEBUG IR_GEN] Initializer generated for 'dist_b', value = 0x61bea68343e8
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for dist_b
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_is_max
+[DEBUG IR_GEN] Initializer generated for 'is_max', value = 0x61bea6834df8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for is_max
+[DEBUG IR_GEN] Initializer generated for 'curr', value = 0x61bea6841530
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for curr
+[DEBUG IR_GEN] Initializer generated for 'parent', value = 0x61bea6841970
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for parent
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'temp_ptr', value = 0x61bea6841da0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for temp_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_candidate_ptr
+[DEBUG IR_GEN] Initializer generated for 'curr_ptr', value = 0x61bea6842ca8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for curr_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_candidate_ptr
+[DEBUG IR_GEN] Initializer generated for 'parent_ptr', value = 0x61bea683aec8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for parent_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_compare
+[DEBUG IR_GEN] Initializer generated for 'cmp', value = 0x61bea683c138
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for cmp
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_copy_candidate
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_copy_candidate
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_copy_candidate
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'size', value = 0x61bea67c3018
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for size
+[DEBUG IR_GEN] Initializer generated for 'curr', value = 0x61bea683e300
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for curr
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'temp_ptr', value = 0x61bea6837390
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for temp_ptr
+[DEBUG IR_GEN] Initializer generated for 'left', value = 0x61bea68433e0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for left
+[DEBUG IR_GEN] Initializer generated for 'right', value = 0x61bea6839420
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for right
+[DEBUG IR_GEN] Initializer generated for 'best', value = 0x61bea6839690
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for best
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_candidate_ptr
+[DEBUG IR_GEN] Initializer generated for 'best_ptr', value = 0x61bea68382b8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for best_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_candidate_ptr
+[DEBUG IR_GEN] Initializer generated for 'left_ptr', value = 0x61bea684c408
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for left_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_compare
+[DEBUG IR_GEN] Initializer generated for 'cmp_left', value = 0x61bea684cef8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for cmp_left
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_candidate_ptr
+[DEBUG IR_GEN] Initializer generated for 'right_ptr', value = 0x61bea684b6f8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for right_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_compare
+[DEBUG IR_GEN] Initializer generated for 'cmp_right', value = 0x61bea684df18
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for cmp_right
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_candidate_ptr
+[DEBUG IR_GEN] Initializer generated for 'curr_ptr', value = 0x61bea6855bf8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for curr_ptr
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_copy_candidate
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_copy_candidate
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_copy_candidate
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'pq', value = 0x61bea68570b0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for pq
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG-BINARY] op=163 leftType=1 rightType=1 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 1
+[DEBUG IR_GEN] Initializer generated for 'elems', value = 0x61bea6857300
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for elems
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_elements
+[DEBUG IR_GEN] Initializer generated for 'elems', value = 0x61bea684fcf8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for elems
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_capacity
+[DEBUG IR_GEN] Initializer generated for 'old_capacity', value = 0x61bea6841bc8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for old_capacity
+[DEBUG IR_GEN] Initializer generated for 'new_capacity', value = 0x61bea6854c50
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for new_capacity
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_elements
+[DEBUG IR_GEN] Initializer generated for 'old_elems', value = 0x61bea6852078
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for old_elems
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG-BINARY] op=163 leftType=1 rightType=1 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 1
+[DEBUG IR_GEN] Initializer generated for 'new_elems', value = 0x61bea6847b40
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for new_elems
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'size', value = 0x61bea6839bd8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for size
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_copy
+[DEBUG-BINARY] op=163 leftType=1 rightType=1 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 1
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'size', value = 0x61bea6849af8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for size
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_capacity
+[DEBUG IR_GEN] Initializer generated for 'capacity', value = 0x61bea6853d98
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for capacity
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_grow
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_candidate_ptr
+[DEBUG IR_GEN] Initializer generated for 'ptr', value = 0x61bea68493d8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ptr
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_set_candidate
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_sift_up
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'size', value = 0x61bea683ed28
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for size
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_candidate_ptr
+[DEBUG IR_GEN] Initializer generated for 'root_ptr', value = 0x61bea685cd48
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for root_ptr
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_copy_candidate
+[DEBUG IR_GEN] Initializer generated for 'last_idx', value = 0x61bea685d1c0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for last_idx
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_candidate_ptr
+[DEBUG IR_GEN] Initializer generated for 'last_ptr', value = 0x61bea685ea68
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for last_ptr
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_copy_candidate
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_sift_down
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'size', value = 0x61bea6860988
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for size
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_candidate_ptr
+[DEBUG IR_GEN] Initializer generated for 'root_ptr', value = 0x61bea6861998
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for root_ptr
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_copy_candidate
+[DEBUG IR_GEN] Initializer generated for 'total_size', value = 0x61bea6863200
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for total_size
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'visited', value = 0x61bea68636a0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for visited
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_set
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 'curr', value = 0x61bea6866850
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for curr
+[DEBUG IR_GEN] Initializer generated for 'curr32', value = 0x61bea67a6bb0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for curr32
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 'capacity', value = 0x61bea6867de0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for capacity
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_set
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 161, left: 1, right: 1
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 'curr', value = 0x61bea6869940
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for curr
+[DEBUG IR_GEN] Initializer generated for 'curr32', value = 0x61bea6839900
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for curr32
+[DEBUG IR_GEN] Initializer generated for 'slot64', value = 0x61bea6824530
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for slot64
+[DEBUG IR_GEN] Initializer generated for 'offset', value = 0x61bea686a360
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for offset
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 'curr', value = 0x61bea686b5f0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for curr
+[DEBUG IR_GEN] Initializer generated for 'curr32', value = 0x61bea6868670
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for curr32
+[DEBUG IR_GEN] Initializer generated for 'slot64', value = 0x61bea67e4f30
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for slot64
+[DEBUG IR_GEN] Initializer generated for 'offset', value = 0x61bea686c010
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for offset
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG IR_GEN] Initializer generated for 'val', value = 0x61bea686c3a0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for val
+[DEBUG IR_GEN] Initializer generated for 'acc', value = 0x61bea686ff10
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for acc
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'ai', value = 0x61bea6872220
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ai
+[DEBUG IR_GEN] Initializer generated for 'bi', value = 0x61bea68726b0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for bi
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x61bea6872c90
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'simd_iters', value = 0x61bea685b230
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for simd_iters
+[DEBUG IR_GEN] Initializer generated for 'tail_start', value = 0x61bea686cf60
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for tail_start
+[DEBUG CODEGEN CALL] Generating call to: simd_splat
+[DEBUG IR_GEN] Initializer generated for 'acc_vec', value = 0x61bea6858e20
+[DEBUG IR_GEN] InitVal type: 0x61bea67989a0
+[DEBUG IR_GEN] Default builder.CreateStore for acc_vec
+[DEBUG IR_GEN] Initializer generated for 'iter', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for iter
+[DEBUG IR_GEN] Initializer generated for 'idx', value = 0x61bea6877820
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for idx
+[DEBUG CODEGEN CALL] Generating call to: simd_load
+[DEBUG CODEGEN CALL] Generating call to: @ptr_add
+[DEBUG IR_GEN] Initializer generated for 'va', value = 0x61bea6877ef0
+[DEBUG IR_GEN] InitVal type: 0x61bea67989d0
+[DEBUG IR_GEN] Default builder.CreateStore for va
+[DEBUG CODEGEN CALL] Generating call to: simd_load
+[DEBUG CODEGEN CALL] Generating call to: @ptr_add
+[DEBUG IR_GEN] Initializer generated for 'vb', value = 0x61bea6878350
+[DEBUG IR_GEN] InitVal type: 0x61bea67989d0
+[DEBUG IR_GEN] Default builder.CreateStore for vb
+[DEBUG IR_GEN] Initializer generated for 'vd', value = 0x61bea68707e0
+[DEBUG IR_GEN] InitVal type: 0x61bea6798970
+[DEBUG IR_GEN] Default builder.CreateStore for vd
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: simd_sum
+[DEBUG IR_GEN] Initializer generated for 'acc', value = 0x61bea6875030
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for acc
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea6873ab0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'ai', value = 0x61bea687a750
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ai
+[DEBUG IR_GEN] Initializer generated for 'bi', value = 0x61bea687abe0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for bi
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x61bea687b0c0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'acc', value = 0x61bea687cf60
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for acc
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'ai', value = 0x61bea687dee0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ai
+[DEBUG IR_GEN] Initializer generated for 'bi', value = 0x61bea687e2b0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for bi
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'simd_iters', value = 0x61bea6880310
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for simd_iters
+[DEBUG IR_GEN] Initializer generated for 'tail_start', value = 0x61bea68807e0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for tail_start
+[DEBUG CODEGEN CALL] Generating call to: simd_splat
+[DEBUG IR_GEN] Initializer generated for 'acc_vec', value = 0x61bea6858e20
+[DEBUG IR_GEN] InitVal type: 0x61bea67989a0
+[DEBUG IR_GEN] Default builder.CreateStore for acc_vec
+[DEBUG IR_GEN] Initializer generated for 'iter', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for iter
+[DEBUG IR_GEN] Initializer generated for 'idx', value = 0x61bea68819b0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for idx
+[DEBUG CODEGEN CALL] Generating call to: simd_load
+[DEBUG CODEGEN CALL] Generating call to: @ptr_add
+[DEBUG IR_GEN] Initializer generated for 'va', value = 0x61bea6881dd0
+[DEBUG IR_GEN] InitVal type: 0x61bea67989d0
+[DEBUG IR_GEN] Default builder.CreateStore for va
+[DEBUG CODEGEN CALL] Generating call to: simd_load
+[DEBUG CODEGEN CALL] Generating call to: @ptr_add
+[DEBUG IR_GEN] Initializer generated for 'vb', value = 0x61bea6810350
+[DEBUG IR_GEN] InitVal type: 0x61bea67989d0
+[DEBUG IR_GEN] Default builder.CreateStore for vb
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: simd_sum
+[DEBUG IR_GEN] Initializer generated for 'acc', value = 0x61bea6811170
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for acc
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea6811310
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'ai', value = 0x61bea6811db0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ai
+[DEBUG IR_GEN] Initializer generated for 'bi', value = 0x61bea6812240
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for bi
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'dot', value = 0x61bea6814080
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for dot
+[DEBUG IR_GEN] Initializer generated for 'mag_a', value = 0x61bea6814280
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_a
+[DEBUG IR_GEN] Initializer generated for 'mag_b', value = 0x61bea6814480
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_b
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'ai', value = 0x61bea68154c0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ai
+[DEBUG IR_GEN] Initializer generated for 'bi', value = 0x61bea6815890
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for bi
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: tfp64_sqrt
+[DEBUG CODEGEN CALL] Generating call to: tfp64_sqrt
+[DEBUG IR_GEN] Initializer generated for 'denom', value = 0x61bea68745d0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for denom
+[DEBUG IR_GEN] Initializer generated for 'simd_iters', value = 0x61bea6879710
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for simd_iters
+[DEBUG IR_GEN] Initializer generated for 'tail_start', value = 0x61bea6876e20
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for tail_start
+[DEBUG CODEGEN CALL] Generating call to: simd_splat
+[DEBUG IR_GEN] Initializer generated for 'dot_vec', value = 0x61bea6858e20
+[DEBUG IR_GEN] InitVal type: 0x61bea67989a0
+[DEBUG IR_GEN] Default builder.CreateStore for dot_vec
+[DEBUG CODEGEN CALL] Generating call to: simd_splat
+[DEBUG IR_GEN] Initializer generated for 'mag_a_vec', value = 0x61bea6858e20
+[DEBUG IR_GEN] InitVal type: 0x61bea67989a0
+[DEBUG IR_GEN] Default builder.CreateStore for mag_a_vec
+[DEBUG CODEGEN CALL] Generating call to: simd_splat
+[DEBUG IR_GEN] Initializer generated for 'mag_b_vec', value = 0x61bea6858e20
+[DEBUG IR_GEN] InitVal type: 0x61bea67989a0
+[DEBUG IR_GEN] Default builder.CreateStore for mag_b_vec
+[DEBUG IR_GEN] Initializer generated for 'iter', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for iter
+[DEBUG IR_GEN] Initializer generated for 'idx', value = 0x61bea681d300
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for idx
+[DEBUG CODEGEN CALL] Generating call to: simd_load
+[DEBUG CODEGEN CALL] Generating call to: @ptr_add
+[DEBUG IR_GEN] Initializer generated for 'va', value = 0x61bea681d7c0
+[DEBUG IR_GEN] InitVal type: 0x61bea67989d0
+[DEBUG IR_GEN] Default builder.CreateStore for va
+[DEBUG CODEGEN CALL] Generating call to: simd_load
+[DEBUG CODEGEN CALL] Generating call to: @ptr_add
+[DEBUG IR_GEN] Initializer generated for 'vb', value = 0x61bea68769f0
+[DEBUG IR_GEN] InitVal type: 0x61bea67989d0
+[DEBUG IR_GEN] Default builder.CreateStore for vb
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: simd_sum
+[DEBUG IR_GEN] Initializer generated for 'dot', value = 0x61bea681f310
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for dot
+[DEBUG CODEGEN CALL] Generating call to: simd_sum
+[DEBUG IR_GEN] Initializer generated for 'mag_a', value = 0x61bea681f550
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_a
+[DEBUG CODEGEN CALL] Generating call to: simd_sum
+[DEBUG IR_GEN] Initializer generated for 'mag_b', value = 0x61bea681f790
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for mag_b
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea681f930
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'ai', value = 0x61bea68a2780
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ai
+[DEBUG IR_GEN] Initializer generated for 'bi', value = 0x61bea68a2c10
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for bi
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: tfp64_sqrt
+[DEBUG CODEGEN CALL] Generating call to: tfp64_sqrt
+[DEBUG IR_GEN] Initializer generated for 'denom', value = 0x61bea68a67a0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for denom
+[DEBUG CODEGEN CALL] Generating call to: l2sq_scalar
+[DEBUG CODEGEN CALL] Generating call to: ip_scalar
+[DEBUG CODEGEN CALL] Generating call to: cosine_scalar
+[DEBUG CODEGEN CALL] Generating call to: l2sq_simd
+[DEBUG CODEGEN CALL] Generating call to: ip_simd
+[DEBUG CODEGEN CALL] Generating call to: cosine_simd
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'graph', value = 0x61bea681a000
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for graph
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG IR_GEN] Initializer generated for 'ep_slot', value = 0x61bea68b3660
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for ep_slot
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG IR_GEN] Initializer generated for 'ep_gen', value = 0x61bea68b0b60
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for ep_gen
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'dist', value = 0x61bea6833820
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for dist
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG IR_GEN] Initializer generated for 'va', value = 0x61bea68c6c80
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for va
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG IR_GEN] Initializer generated for 'vb', value = 0x61bea68c73c0
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for vb
+[DEBUG IR_GEN] Initializer generated for 'diff', value = 0x61bea68c7810
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for diff
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_vector_buf
+[DEBUG IR_GEN] Initializer generated for 'vec_buf', value = 0x61bea68c3478
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for vec_buf
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_vector_dim
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x61bea68c0568
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG IR_GEN] Initializer generated for 'ptr1', value = 0x61bea68c0a00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ptr1
+[DEBUG IR_GEN] Initializer generated for 'ptr2', value = 0x61bea68c0e60
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ptr2
+[DEBUG CODEGEN CALL] Generating call to: simd_l2_f32
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_arena
+[DEBUG IR_GEN] Initializer generated for 'arena', value = 0x61bea68c6368
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for arena
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_node
+[DEBUG IR_GEN] Initializer generated for 'ep_node_ptr', value = 0x61bea68c8d58
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ep_node_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_vector_offset
+[DEBUG IR_GEN] Initializer generated for 'ep_vec_offset', value = 0x61bea68d0d48
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ep_vec_offset
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_distance
+[DEBUG IR_GEN] Initializer generated for 'ep_dist', value = 0x61bea68d1428
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for ep_dist
+[DEBUG IR_GEN] Initializer generated for 'ef_64', value = 0x61bea68d0270
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ef_64
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_create
+[DEBUG IR_GEN] Initializer generated for 'candidates', value = 0x61bea68d1d28
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for candidates
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_create
+[DEBUG IR_GEN] Initializer generated for 'W', value = 0x61bea68cdf88
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for W
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_push
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_push
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_visited_mark
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'C', value = 0x61bea68ce880
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for C
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'furthest', value = 0x61bea68cfc60
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for furthest
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_pop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_dist
+[DEBUG IR_GEN] Initializer generated for 'c_dist', value = 0x61bea68d6d18
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for c_dist
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_slot
+[DEBUG IR_GEN] Initializer generated for 'c_slot', value = 0x61bea68d7708
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for c_slot
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_gen
+[DEBUG IR_GEN] Initializer generated for 'c_gen', value = 0x61bea68d8158
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for c_gen
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_peek
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_dist
+[DEBUG IR_GEN] Initializer generated for 'f_dist', value = 0x61bea68d8de8
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for f_dist
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_node
+[DEBUG IR_GEN] Initializer generated for 'c_node_ptr', value = 0x61bea68ddca8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for c_node_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_num_neighbors
+[DEBUG IR_GEN] Initializer generated for 'num_neighbors', value = 0x61bea68e2e58
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for num_neighbors
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'n_64', value = 0x61bea68dd310
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for n_64
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_neighbor_slot
+[DEBUG IR_GEN] Initializer generated for 'n_slot', value = 0x61bea68e4f68
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for n_slot
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_neighbor_gen
+[DEBUG IR_GEN] Initializer generated for 'n_gen', value = 0x61bea68e5a48
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for n_gen
+[DEBUG CODEGEN CALL] Generating call to: hnsw_visited_check
+[DEBUG IR_GEN] Initializer generated for 'is_visited', value = 0x61bea68e6558
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for is_visited
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_visited_mark
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_node
+[DEBUG IR_GEN] Initializer generated for 'n_node_ptr', value = 0x61bea68ef118
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for n_node_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_vector_offset
+[DEBUG IR_GEN] Initializer generated for 'n_vec_offset', value = 0x61bea68f79a8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for n_vec_offset
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_distance
+[DEBUG IR_GEN] Initializer generated for 'n_dist', value = 0x61bea68f8498
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for n_dist
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_peek
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_dist
+[DEBUG IR_GEN] Initializer generated for 'f_dist2', value = 0x61bea68f9138
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for f_dist2
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'w_size', value = 0x61bea68f9b08
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for w_size
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_push
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_push
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_push
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_push
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_pop
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_destroy
+[DEBUG IR_GEN] Initializer generated for 'm', value = 0x61bea68dd070
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for m
+[DEBUG IR_GEN] Initializer generated for 'a', value = 0x61bea68c9810
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for a
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_mL
+[DEBUG IR_GEN] Initializer generated for 'mL', value = 0x61bea68e90b8
+[DEBUG IR_GEN] InitVal type: 0x61bea544fea0
+[DEBUG IR_GEN] Default builder.CreateStore for mL
+[DEBUG IR_GEN] Initializer generated for 'max_layer_limit', value = 0x61bea67aaa10
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for max_layer_limit
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 's', value = 0x61bea6907ee0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for s
+[DEBUG CODEGEN CALL] Generating call to: rand_next
+[DEBUG IR_GEN] Initializer generated for 'next_s', value = 0x61bea69060a8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for next_s
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG IR_GEN] Initializer generated for 'r_int', value = 0x61bea68cccf0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for r_int
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'unif', value = 0x61bea68ff190
+[DEBUG IR_GEN] InitVal type: 0x61bea544fea0
+[DEBUG IR_GEN] Default builder.CreateStore for unif
+[DEBUG CODEGEN CALL] Generating call to: log
+[DEBUG IR_GEN] Initializer generated for 'l_val', value = 0x61bea68ff5c0
+[DEBUG IR_GEN] InitVal type: 0x61bea544fea0
+[DEBUG IR_GEN] Default builder.CreateStore for l_val
+[DEBUG CODEGEN CALL] Generating call to: floor
+[DEBUG IR_GEN] Initializer generated for 'l', value = 0x61bea68fab70
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for l
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'size', value = 0x61bea68da718
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for size
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_create
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_create
+[DEBUG IR_GEN] Initializer generated for 'min_heap', value = 0x61bea68dc4f8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for min_heap
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'C', value = 0x61bea68de990
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for C
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_pop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_dist
+[DEBUG IR_GEN] Initializer generated for 'dist', value = 0x61bea68fcc98
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for dist
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_slot
+[DEBUG IR_GEN] Initializer generated for 'slot', value = 0x61bea68cd088
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for slot
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_gen
+[DEBUG IR_GEN] Initializer generated for 'gen', value = 0x61bea68dff28
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for gen
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_push
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_create
+[DEBUG IR_GEN] Initializer generated for 'R', value = 0x61bea6906cd8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for R
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_arena
+[DEBUG IR_GEN] Initializer generated for 'arena', value = 0x61bea6907398
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for arena
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_pop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_dist
+[DEBUG IR_GEN] Initializer generated for 'c_dist', value = 0x61bea69011a8
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for c_dist
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_slot
+[DEBUG IR_GEN] Initializer generated for 'c_slot', value = 0x61bea68f2518
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for c_slot
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_gen
+[DEBUG IR_GEN] Initializer generated for 'c_gen', value = 0x61bea68f2f48
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for c_gen
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'r_size', value = 0x61bea690a638
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for r_size
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_node
+[DEBUG IR_GEN] Initializer generated for 'c_node', value = 0x61bea6904a08
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for c_node
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_vector_offset
+[DEBUG IR_GEN] Initializer generated for 'c_vec', value = 0x61bea68efa58
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for c_vec
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_elements
+[DEBUG IR_GEN] Initializer generated for 'r_elems', value = 0x61bea68f0118
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for r_elems
+[DEBUG IR_GEN] Initializer generated for 'good', value = 0x61bea67ed080
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff48
+[DEBUG IR_GEN] Default builder.CreateStore for good
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'r_ptr', value = 0x61bea68f1e40
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for r_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_slot
+[DEBUG IR_GEN] Initializer generated for 'r_slot', value = 0x61bea68ec518
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for r_slot
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_gen
+[DEBUG IR_GEN] Initializer generated for 'r_gen', value = 0x61bea68ecf78
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for r_gen
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_node
+[DEBUG IR_GEN] Initializer generated for 'r_node', value = 0x61bea68eda58
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for r_node
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_vector_offset
+[DEBUG IR_GEN] Initializer generated for 'r_vec', value = 0x61bea69117a8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for r_vec
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_distance
+[DEBUG IR_GEN] Initializer generated for 'dist_cr', value = 0x61bea6912378
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for dist_cr
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_push
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_destroy
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_create
+[DEBUG-XXX] op: 161, left: 23, right: 0
+[DEBUG IR_GEN] Initializer generated for 'W', value = 0x61bea691d928
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for W
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_num_neighbors
+[DEBUG IR_GEN] Initializer generated for 'num_n', value = 0x61bea691e0c8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for num_n
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_vector_offset
+[DEBUG IR_GEN] Initializer generated for 'n_vec', value = 0x61bea68c8fb8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for n_vec
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_arena
+[DEBUG IR_GEN] Initializer generated for 'arena', value = 0x61bea68e1138
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for arena
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_neighbor_slot
+[DEBUG IR_GEN] Initializer generated for 'c_slot', value = 0x61bea68e4418
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for c_slot
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_neighbor_gen
+[DEBUG IR_GEN] Initializer generated for 'c_gen', value = 0x61bea68d3228
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for c_gen
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_node
+[DEBUG IR_GEN] Initializer generated for 'c_node', value = 0x61bea68f0fa8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for c_node
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_vector_offset
+[DEBUG IR_GEN] Initializer generated for 'c_vec', value = 0x61bea68f5928
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for c_vec
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_distance
+[DEBUG IR_GEN] Initializer generated for 'dist', value = 0x61bea68f6428
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for dist
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_push
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_node
+[DEBUG IR_GEN] Initializer generated for 'new_node', value = 0x61bea6916ee8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for new_node
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_vector_offset
+[DEBUG IR_GEN] Initializer generated for 'new_vec', value = 0x61bea69178a8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for new_vec
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_distance
+[DEBUG IR_GEN] Initializer generated for 'dist', value = 0x61bea6919178
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for dist
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_push
+[DEBUG CODEGEN CALL] Generating call to: hnsw_select_neighbors
+[DEBUG IR_GEN] Initializer generated for 'neighbors', value = 0x61bea68eb708
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for neighbors
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'n_size', value = 0x61bea68e7018
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for n_size
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_set_num_neighbors
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_candidate_ptr
+[DEBUG IR_GEN] Initializer generated for 'ptr', value = 0x61bea68e8898
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_slot
+[DEBUG IR_GEN] Initializer generated for 's', value = 0x61bea68d5158
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for s
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_gen
+[DEBUG IR_GEN] Initializer generated for 'g', value = 0x61bea68f6bf8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for g
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_set_neighbor
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_destroy
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_destroy
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_arena
+[DEBUG IR_GEN] Initializer generated for 'arena', value = 0x61bea68e38d8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for arena
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'node_buf', value = 0x61bea68e3bb0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for node_buf
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_alloc_node
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG IR_GEN] Initializer generated for 'alloc_res', value = 0x61bea6919758
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for alloc_res
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 'slot', value = 0x61bea68de160
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for slot
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG IR_GEN] Initializer generated for 'gen', value = 0x61bea6912ef0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for gen
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_node
+[DEBUG IR_GEN] Initializer generated for 'node_ptr', value = 0x61bea6913658
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for node_ptr
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_set_vector_offset
+[DEBUG CODEGEN CALL] Generating call to: hnsw_random_layer
+[DEBUG IR_GEN] Initializer generated for 'l', value = 0x61bea6913f38
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for l
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_set_layer
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'ep_slot_ptr', value = 0x61bea6914490
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ep_slot_ptr
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'ep_gen_ptr', value = 0x61bea69146b0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ep_gen_ptr
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_ep
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG IR_GEN] Initializer generated for 'ep_slot', value = 0x61bea68defa0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for ep_slot
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG IR_GEN] Initializer generated for 'ep_gen', value = 0x61bea68e9b00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for ep_gen
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_set_ep
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_set_max_layer
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_max_layer
+[DEBUG IR_GEN] Initializer generated for 'max_layer', value = 0x61bea6920c78
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for max_layer
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_M
+[DEBUG IR_GEN] Initializer generated for 'M', value = 0x61bea69212f8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for M
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_M0
+[DEBUG IR_GEN] Initializer generated for 'M0', value = 0x61bea69219a8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for M0
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_ef_construction
+[DEBUG IR_GEN] Initializer generated for 'ef_const', value = 0x61bea6922208
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for ef_const
+[DEBUG IR_GEN] Initializer generated for 'curr_ep_slot', value = 0x61bea6922460
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for curr_ep_slot
+[DEBUG IR_GEN] Initializer generated for 'curr_ep_gen', value = 0x61bea6922660
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for curr_ep_gen
+[DEBUG IR_GEN] Initializer generated for 'lc', value = 0x61bea6922830
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for lc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_visited_clear
+[DEBUG CODEGEN CALL] Generating call to: hnsw_search_layer
+[DEBUG IR_GEN] Initializer generated for 'W', value = 0x61bea69250f8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for W
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'size', value = 0x61bea69150b8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for size
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'C', value = 0x61bea692ea10
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for C
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_peek
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_slot
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_gen
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_destroy
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_visited_clear
+[DEBUG CODEGEN CALL] Generating call to: hnsw_search_layer
+[DEBUG IR_GEN] Initializer generated for 'W', value = 0x61bea6931fc8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for W
+[DEBUG IR_GEN] Initializer generated for 'layer_m', value = 0x61bea6932230
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for layer_m
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: hnsw_select_neighbors
+[DEBUG IR_GEN] Initializer generated for 'neighbors', value = 0x61bea69339d8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for neighbors
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'n_size', value = 0x61bea6934058
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for n_size
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_set_num_neighbors
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_candidate_ptr
+[DEBUG IR_GEN] Initializer generated for 'ptr', value = 0x61bea6936218
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_slot
+[DEBUG IR_GEN] Initializer generated for 'n_slot', value = 0x61bea6936b88
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for n_slot
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_gen
+[DEBUG IR_GEN] Initializer generated for 'n_gen', value = 0x61bea6937568
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for n_gen
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_set_neighbor
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_node
+[DEBUG IR_GEN] Initializer generated for 'n_node_ptr', value = 0x61bea6938568
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for n_node_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_num_neighbors
+[DEBUG IR_GEN] Initializer generated for 'n_num', value = 0x61bea6925578
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for n_num
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_set_neighbor
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_set_num_neighbors
+[DEBUG-XXX] op: 161, left: 1, right: 0
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_shrink_connections
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'min_idx', value = 0x61bea685c6c0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for min_idx
+[DEBUG IR_GEN] Initializer generated for 'min_dist', value = 0x61bea694cb40
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for min_dist
+[DEBUG IR_GEN] Initializer generated for 'j', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for j
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_elements
+[DEBUG IR_GEN] Initializer generated for 'r_elems', value = 0x61bea694d328
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for r_elems
+[DEBUG IR_GEN] Initializer generated for 'r_ptr', value = 0x61bea694df80
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for r_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_dist
+[DEBUG IR_GEN] Initializer generated for 'd', value = 0x61bea694e788
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for d
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'r_ptr', value = 0x61bea6950e40
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for r_ptr
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_slot
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_gen
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_destroy
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_destroy
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_set_max_layer
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_set_ep
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: proc_exit
+[DEBUG IR_GEN] Initializer generated for 'dim', value = 0x61bea67976d0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for dim
+[DEBUG IR_GEN] Initializer generated for 'capacity', value = 0x61bea693ffe0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for capacity
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_create
+[DEBUG IR_GEN] Initializer generated for 'arena', value = 0x61bea67b17a8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for arena
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG-XXX] op: 163, left: 2, right: 0
+[DEBUG] getExprNumericTypeName leftType: 1
+[DEBUG-BINARY] op=163 leftType=2 rightType=0 leftNumType= rightNumType=
+[DEBUG-BINARY] op=163 leftType=1 rightType=1 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 1
+[DEBUG IR_GEN] Initializer generated for 'vec_buf', value = 0x61bea6903690
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for vec_buf
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_create
+[DEBUG IR_GEN] Initializer generated for 'graph', value = 0x61bea6948c78
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for graph
+[DEBUG CODEGEN CALL] Generating call to: proc_exit
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'rand_state', value = 0x61bea6927d20
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for rand_state
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG CODEGEN CALL] Generating call to: hnsw_visited_create
+[DEBUG IR_GEN] Initializer generated for 'visited', value = 0x61bea6929de8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for visited
+[DEBUG CODEGEN CALL] Generating call to: proc_exit
+[DEBUG IR_GEN] Initializer generated for 'i', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for i
+[DEBUG IR_GEN] Initializer generated for 'vec_offset', value = 0x61bea693a370
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for vec_offset
+[DEBUG IR_GEN] Initializer generated for 'vec_ptr', value = 0x61bea6946490
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for vec_ptr
+[DEBUG IR_GEN] Initializer generated for 'j', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for j
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int64
+[DEBUG IR_GEN] Initializer generated for 's', value = 0x61bea6947770
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for s
+[DEBUG IR_GEN] Initializer generated for 'next_s', value = 0x61bea6947bf0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for next_s
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int64
+[DEBUG IR_GEN] Initializer generated for 'val', value = 0x61bea693bc00
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for val
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_write_int32
+[DEBUG-BINARY] op=163 leftType=1 rightType=0 leftNumType= rightNumType=
+[DEBUG-XXX] op: 163, left: 1, right: 0
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_insert
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'query_offset', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for query_offset
+[DEBUG IR_GEN] Initializer generated for 'ef', value = 0x61bea67aae90
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for ef
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'ep_slot_ptr', value = 0x61bea693ee70
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ep_slot_ptr
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'ep_gen_ptr', value = 0x61bea693f030
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ep_gen_ptr
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_ep
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG IR_GEN] Initializer generated for 'ep_slot', value = 0x61bea693f530
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for ep_slot
+[DEBUG CODEGEN CALL] Generating call to: npk_mem_read_int32
+[DEBUG IR_GEN] Initializer generated for 'ep_gen', value = 0x61bea693f7d0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for ep_gen
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_max_layer
+[DEBUG IR_GEN] Initializer generated for 'max_layer', value = 0x61bea692a648
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for max_layer
+[DEBUG CODEGEN CALL] Generating call to: proc_exit
+[DEBUG IR_GEN] Initializer generated for 'curr_ep_slot', value = 0x61bea693cc20
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for curr_ep_slot
+[DEBUG IR_GEN] Initializer generated for 'curr_ep_gen', value = 0x61bea693ce40
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for curr_ep_gen
+[DEBUG IR_GEN] Initializer generated for 'lc', value = 0x61bea693d060
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for lc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_visited_clear
+[DEBUG CODEGEN CALL] Generating call to: hnsw_search_layer
+[DEBUG IR_GEN] Initializer generated for 'W', value = 0x61bea69288b8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for W
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'size', value = 0x61bea6928c98
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for size
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'C', value = 0x61bea6957890
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for C
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_peek
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_slot
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_gen
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_destroy
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_visited_clear
+[DEBUG CODEGEN CALL] Generating call to: hnsw_search_layer
+[DEBUG IR_GEN] Initializer generated for 'res', value = 0x61bea6959de8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for res
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_create
+[DEBUG IR_GEN] Initializer generated for 'true_pq', value = 0x61bea695a448
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for true_pq
+[DEBUG IR_GEN] Initializer generated for 'v_idx', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for v_idx
+[DEBUG IR_GEN] Initializer generated for 'v_off', value = 0x61bea695b390
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for v_off
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_distance
+[DEBUG IR_GEN] Initializer generated for 'dist', value = 0x61bea695bd38
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for dist
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'pq_size', value = 0x61bea695c5a8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for pq_size
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_push
+[DEBUG CODEGEN CALL] Generating call to: npk_core_alloc
+[DEBUG IR_GEN] Initializer generated for 'C_max', value = 0x61bea695e7b0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for C_max
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_peek
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_dist
+[DEBUG IR_GEN] Initializer generated for 'max_dist', value = 0x61bea695f358
+[DEBUG IR_GEN] InitVal type: 0x61bea544fe88
+[DEBUG IR_GEN] Default builder.CreateStore for max_dist
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_pop
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_push
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: npk_core_dalloc
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG IR_GEN] Initializer generated for 'matches', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for matches
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'res_size', value = 0x61bea6968b88
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for res_size
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_get_arena
+[DEBUG IR_GEN] Initializer generated for 'arena_ptr', value = 0x61bea6969288
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for arena_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_elements
+[DEBUG IR_GEN] Initializer generated for 'elems', value = 0x61bea6900668
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for elems
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_size
+[DEBUG IR_GEN] Initializer generated for 'true_size', value = 0x61bea692a208
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for true_size
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_elements
+[DEBUG IR_GEN] Initializer generated for 'true_elems', value = 0x61bea6832698
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for true_elems
+[DEBUG IR_GEN] Initializer generated for 'k', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for k
+[DEBUG IR_GEN] Initializer generated for 'ptr', value = 0x61bea692abe0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_slot
+[DEBUG IR_GEN] Initializer generated for 'slot', value = 0x61bea695dfa8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for slot
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_gen
+[DEBUG IR_GEN] Initializer generated for 'gen', value = 0x61bea69283d8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for gen
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_get_node
+[DEBUG IR_GEN] Initializer generated for 'node_ptr', value = 0x61bea695d998
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for node_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_node_get_vector_offset
+[DEBUG IR_GEN] Initializer generated for 'n_v_off', value = 0x61bea69674c8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for n_v_off
+[DEBUG IR_GEN] Initializer generated for 't', value = 0x61bea6796e00
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for t
+[DEBUG IR_GEN] Initializer generated for 't_ptr', value = 0x61bea6888bc0
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for t_ptr
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_get_slot
+[DEBUG IR_GEN] Initializer generated for 't_v_idx', value = 0x61bea68895c8
+[DEBUG IR_GEN] InitVal type: 0x61bea544ff90
+[DEBUG IR_GEN] Default builder.CreateStore for t_v_idx
+[DEBUG IR_GEN] Initializer generated for 't_v_off', value = 0x61bea6889c20
+[DEBUG IR_GEN] InitVal type: 0x61bea544ffa8
+[DEBUG IR_GEN] Default builder.CreateStore for t_v_off
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG ASSIGNMENT] op=168, leftType=1 (POINTER_MEMBER=7)
+[DEBUG CODEGEN CALL] Generating call to: proc_exit
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_destroy
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_pq_destroy
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_visited_destroy
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_graph_destroy
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: hnsw_arena_destroy
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: drop
+[DEBUG CODEGEN CALL] Generating call to: proc_exit

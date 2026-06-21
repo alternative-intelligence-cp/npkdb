@@ -1,0 +1,220 @@
+// hnsw_node.npk — HnswNode flat buffer layout constants and field accessors
+//
+// HnswNode is a fixed-size 216-byte struct stored in a flat wild int8-> arena buffer.
+// Every field is accessed via npk_mem_read_* / npk_mem_write_* with limit<Rules> bounds.
+//
+// Layout (all offsets in bytes, zero-indexed):
+//
+//   Bytes   0-3:   id             (int32)  — vector ID in the collection
+//   Bytes   4-7:   layer          (int32)  — layer this node lives in (0 = base layer)
+//   Bytes   8-23:  num_neighbors[4] (int32)  — current neighbor count per layer (max 4 layers)
+//   Bytes  24-39:  max_neighbors[4] (int32)  — neighbor capacity per layer
+//   Bytes  40-999: neighbor_handles[80]    — 80 × Handle<HnswNode> (12 bytes each = 960 bytes)
+//                  Layer 0 uses slots 0..31. Layer 1 uses slots 32..47.
+//                  Layer 2 uses slots 48..63. Layer 3 uses slots 64..79.
+//   Bytes 1000-1007: vector_offset  (int64)  — byte offset into the vector data arena
+//                                            for this node's raw embedding bytes
+//   Total: 1008 bytes = HNSW_NODE_SIZE
+//
+// Handle<HnswNode> layout (12 bytes):
+//   Bytes 0-3:  slot_idx   (int32)
+//   Bytes 4-7:  generation (int32)
+//   Bytes 8-9:  arena_id   (int16)
+//   Bytes 10-11: _pad      (int16)
+//
+// HNSW_HANDLE_NULL: all 12 bytes zero — slot_idx=0, generation=0, arena_id=0.
+// Generation counters in the arena begin at 1, so generation=0 is always stale.
+
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+
+// -------------------------------------------------------------------------
+// Node size and field offsets
+// -------------------------------------------------------------------------
+
+pub fixed int64:HNSW_NODE_SIZE              = 1008i64;
+
+pub fixed int64:HNSW_NODE_OFF_ID            = 0i64;    // int32
+pub fixed int64:HNSW_NODE_OFF_LAYER         = 4i64;    // int32
+pub fixed int64:HNSW_NODE_OFF_NUM_NEIGHBORS = 8i64;    // 16 bytes: 4 × int32
+pub fixed int64:HNSW_NODE_OFF_MAX_NEIGHBORS = 24i64;   // 16 bytes: 4 × int32
+pub fixed int64:HNSW_NODE_OFF_NEIGHBORS     = 40i64;   // 960 bytes: 80 × Handle (12 bytes each)
+pub fixed int64:HNSW_NODE_OFF_VECTOR_OFFSET = 1000i64; // int64
+
+// HNSW graph parameters
+pub fixed int64:HNSW_MAX_LAYERS             = 4i64;
+pub fixed int64:HNSW_M                      = 16i64;   // Max connections per layer (non-base)
+pub fixed int64:HNSW_M0                     = 32i64;   // Max connections for layer 0
+pub fixed int64:HNSW_NEIGHBOR_SLOTS         = 80i64;   // 32 + 16*3
+pub fixed int64:HNSW_HANDLE_SIZE            = 12i64;   // Bytes per Handle<HnswNode>
+
+// Handle sub-field offsets (relative to the start of a handle slot)
+pub fixed int64:HNSW_HDL_OFF_SLOT_IDX      = 0i64;    // int32
+pub fixed int64:HNSW_HDL_OFF_GENERATION    = 4i64;    // int32
+pub fixed int64:HNSW_HDL_OFF_ARENA_ID      = 8i64;    // int16
+pub fixed int64:HNSW_HDL_OFF_PAD           = 10i64;   // int16 (reserved, always 0)
+
+// -------------------------------------------------------------------------
+// limit<Rules> refinements for bounds checking
+// -------------------------------------------------------------------------
+
+Rules<int64>:valid_node_offset   = { $ >= 0i64, $ < HNSW_NODE_SIZE };
+Rules<int64>:valid_neighbor_slot = { $ >= 0i64, $ < HNSW_NEIGHBOR_SLOTS };
+
+// -------------------------------------------------------------------------
+// Node field: id
+// -------------------------------------------------------------------------
+
+// Read the vector ID of this node.
+pub func:hnsw_node_get_id = int32(int64:node_ptr)
+    requires (node_ptr != 0i64) {
+    pass(npk_mem_read_int32(node_ptr, HNSW_NODE_OFF_ID));
+};
+
+// Write the vector ID of this node.
+pub func:hnsw_node_set_id = NIL(int64:node_ptr, int32:id)
+    requires (node_ptr != 0i64) {
+    drop(npk_mem_write_int32(node_ptr, HNSW_NODE_OFF_ID, id));
+    pass(NIL);
+};
+
+// -------------------------------------------------------------------------
+// Node field: layer
+// -------------------------------------------------------------------------
+
+// Read the layer this node inhabits (0 = base layer).
+pub func:hnsw_node_get_layer = int32(int64:node_ptr)
+    requires (node_ptr != 0i64) {
+    pass(npk_mem_read_int32(node_ptr, HNSW_NODE_OFF_LAYER));
+};
+
+// Write the layer.
+pub func:hnsw_node_set_layer = NIL(int64:node_ptr, int32:layer)
+    requires (node_ptr != 0i64), (layer >= 0i32) {
+    drop(npk_mem_write_int32(node_ptr, HNSW_NODE_OFF_LAYER, layer));
+    pass(NIL);
+};
+
+// -------------------------------------------------------------------------
+// Node field: num_neighbors
+// -------------------------------------------------------------------------
+
+// Read the current neighbor count for a layer.
+pub func:hnsw_node_get_num_neighbors = int32(int64:node_ptr, int32:layer)
+    requires (node_ptr != 0i64), (layer >= 0i32), (@cast_unchecked<int64>(layer) < HNSW_MAX_LAYERS) {
+    int64:layer64 = @cast_unchecked<int64>(layer);
+    pass(npk_mem_read_int32(node_ptr, HNSW_NODE_OFF_NUM_NEIGHBORS + (layer64 * 4i64)));
+};
+
+// Write the current neighbor count for a layer.
+pub func:hnsw_node_set_num_neighbors = NIL(int64:node_ptr, int32:layer, int32:count)
+    requires (node_ptr != 0i64), (layer >= 0i32), (@cast_unchecked<int64>(layer) < HNSW_MAX_LAYERS), (count >= 0i32) {
+    int64:layer64 = @cast_unchecked<int64>(layer);
+    drop(npk_mem_write_int32(node_ptr, HNSW_NODE_OFF_NUM_NEIGHBORS + (layer64 * 4i64), count));
+    pass(NIL);
+};
+
+// -------------------------------------------------------------------------
+// Node field: max_neighbors
+// -------------------------------------------------------------------------
+
+// Read the neighbor capacity for a layer.
+pub func:hnsw_node_get_max_neighbors = int32(int64:node_ptr, int32:layer)
+    requires (node_ptr != 0i64), (layer >= 0i32), (@cast_unchecked<int64>(layer) < HNSW_MAX_LAYERS) {
+    int64:layer64 = @cast_unchecked<int64>(layer);
+    pass(npk_mem_read_int32(node_ptr, HNSW_NODE_OFF_MAX_NEIGHBORS + (layer64 * 4i64)));
+};
+
+// Write the neighbor capacity for a layer.
+pub func:hnsw_node_set_max_neighbors = NIL(int64:node_ptr, int32:layer, int32:max)
+    requires (node_ptr != 0i64), (layer >= 0i32), (@cast_unchecked<int64>(layer) < HNSW_MAX_LAYERS), (max >= 0i32) {
+    int64:layer64 = @cast_unchecked<int64>(layer);
+    drop(npk_mem_write_int32(node_ptr, HNSW_NODE_OFF_MAX_NEIGHBORS + (layer64 * 4i64), max));
+    pass(NIL);
+};
+
+// -------------------------------------------------------------------------
+// Node field: vector_offset
+// -------------------------------------------------------------------------
+
+// Read the byte offset into the vector data arena for this node's embedding.
+pub func:hnsw_node_get_vector_offset = int64(int64:node_ptr)
+    requires (node_ptr != 0i64) {
+    pass(npk_mem_read_int64(node_ptr, HNSW_NODE_OFF_VECTOR_OFFSET));
+};
+
+// Write the byte offset into the vector data arena.
+pub func:hnsw_node_set_vector_offset = NIL(int64:node_ptr, int64:offset)
+    requires (node_ptr != 0i64), (offset >= 0i64) {
+    drop(npk_mem_write_int64(node_ptr, HNSW_NODE_OFF_VECTOR_OFFSET, offset));
+    pass(NIL);
+};
+
+// -------------------------------------------------------------------------
+// Neighbor handle array accessors
+// -------------------------------------------------------------------------
+
+// Base byte offset of neighbor slot i within the specified layer's section.
+func:hnsw_neighbor_base = int64(int32:layer, int64:i)
+    requires (layer >= 0i32), (@cast_unchecked<int64>(layer) < HNSW_MAX_LAYERS), (i >= 0i64) {
+    
+    int64:layer_start_idx = 0i64;
+    if (layer == 0i32) { layer_start_idx = 0i64; }
+    if (layer == 1i32) { layer_start_idx = 32i64; }
+    if (layer == 2i32) { layer_start_idx = 48i64; }
+    if (layer == 3i32) { layer_start_idx = 64i64; }
+    
+    int64:total_idx = layer_start_idx + i;
+    pass(HNSW_NODE_OFF_NEIGHBORS + total_idx * HNSW_HANDLE_SIZE);
+};
+
+// Read slot_idx of neighbor handle at slot i in a layer.
+pub func:hnsw_node_get_neighbor_slot = int32(int64:node_ptr, int32:layer, int64:i)
+    requires (node_ptr != 0i64), (layer >= 0i32), (@cast_unchecked<int64>(layer) < HNSW_MAX_LAYERS), (i >= 0i64) {
+    int64:base = hnsw_neighbor_base(layer, i)  ?! 0i64;
+    pass(npk_mem_read_int32(node_ptr, base + HNSW_HDL_OFF_SLOT_IDX));
+};
+
+// Read generation of neighbor handle at slot i in a layer.
+pub func:hnsw_node_get_neighbor_gen = int32(int64:node_ptr, int32:layer, int64:i)
+    requires (node_ptr != 0i64), (layer >= 0i32), (@cast_unchecked<int64>(layer) < HNSW_MAX_LAYERS), (i >= 0i64) {
+    int64:base = hnsw_neighbor_base(layer, i)  ?! 0i64;
+    pass(npk_mem_read_int32(node_ptr, base + HNSW_HDL_OFF_GENERATION));
+};
+
+// Read arena_id of neighbor handle at slot i in a layer.
+pub func:hnsw_node_get_neighbor_arena_id = int16(int64:node_ptr, int32:layer, int64:i)
+    requires (node_ptr != 0i64), (layer >= 0i32), (@cast_unchecked<int64>(layer) < HNSW_MAX_LAYERS), (i >= 0i64) {
+    int64:base = hnsw_neighbor_base(layer, i)  ?! 0i64;
+    pass(npk_mem_read_int16(node_ptr, base + HNSW_HDL_OFF_ARENA_ID));
+};
+
+// Write all three sub-fields of the neighbor handle at slot i in a layer.
+pub func:hnsw_node_set_neighbor = NIL(int64:node_ptr, int32:layer, int64:i, int32:slot_idx, int32:generation, int16:arena_id)
+    requires (node_ptr != 0i64), (layer >= 0i32), (@cast_unchecked<int64>(layer) < HNSW_MAX_LAYERS), (i >= 0i64), (generation > 0i32) {
+    int64:base = hnsw_neighbor_base(layer, i)  ?! 0i64;
+    drop(npk_mem_write_int32(node_ptr, base + HNSW_HDL_OFF_SLOT_IDX,   slot_idx));
+    drop(npk_mem_write_int32(node_ptr, base + HNSW_HDL_OFF_GENERATION,  generation));
+    drop(npk_mem_write_int16(node_ptr, base + HNSW_HDL_OFF_ARENA_ID,    arena_id));
+    drop(npk_mem_write_int16(node_ptr, base + HNSW_HDL_OFF_PAD,         0i16));
+    pass(NIL);
+};
+
+// Zero out the neighbor handle at slot i in a layer.
+pub func:hnsw_node_clear_neighbor = NIL(int64:node_ptr, int32:layer, int64:i)
+    requires (node_ptr != 0i64), (layer >= 0i32), (@cast_unchecked<int64>(layer) < HNSW_MAX_LAYERS), (i >= 0i64) {
+    int64:base = hnsw_neighbor_base(layer, i)  ?! 0i64;
+    drop(npk_mem_write_int32(node_ptr, base + HNSW_HDL_OFF_SLOT_IDX,   0i32));
+    drop(npk_mem_write_int32(node_ptr, base + HNSW_HDL_OFF_GENERATION,  0i32));
+    drop(npk_mem_write_int16(node_ptr, base + HNSW_HDL_OFF_ARENA_ID,    0i16));
+    drop(npk_mem_write_int16(node_ptr, base + HNSW_HDL_OFF_PAD,         0i16));
+    pass(NIL);
+};
+
+// Check whether the neighbor handle at slot i in a layer is the null handle.
+pub func:hnsw_neighbor_is_null = bool(int64:node_ptr, int32:layer, int64:i)
+    requires (node_ptr != 0i64), (layer >= 0i32), (@cast_unchecked<int64>(layer) < HNSW_MAX_LAYERS), (i >= 0i64) {
+    int64:base = hnsw_neighbor_base(layer, i)  ?! 0i64;
+    int32:gen  = npk_mem_read_int32(node_ptr, base + HNSW_HDL_OFF_GENERATION);
+    pass(gen == 0i32);
+};
