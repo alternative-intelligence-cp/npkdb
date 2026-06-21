@@ -194,51 +194,28 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         j = j + 1i64;
     }
     
-    int64:heap = heap_create(total_iters) ? 0i64;
+    // Bubble sort all_fids and all_levels
     i = 0i64;
     while (i < total_iters) {
-        int64:fid = npk_mem_read_int64(all_fids, i * 8i64);
-        int64:lvl = npk_mem_read_int64(all_levels, i * 8i64);
-        
-        string:fid_str = string_from_int(fid);
-        while (string_length(fid_str) < 10i64) { fid_str = "0" + fid_str; }
-        
-        // Allocate dummy sst_rec to safely use min_heap for ints
-        int64:rec = npk_core_alloc(40i64);
-        int64:k_len = string_length(fid_str);
-        int64:k_ptr = npk_core_alloc(k_len);
-        _?!npk_mem_write_string(k_ptr, fid_str);
-        drop(npk_mem_write_int64(rec, 0i64, k_ptr));
-        drop(npk_mem_write_int64(rec, 8i64, k_len));
-        
-        // Stash fid in val_ptr offset, set tombstone to 1 so sst_rec_free cleanly skips freeing our integer as a pointer
-        drop(npk_mem_write_int64(rec, 16i64, fid)); 
-        drop(npk_mem_write_int64(rec, 32i64, 1i64)); 
-        
-        drop(heap_push(heap, fid_str, lvl, rec));
-        
+        int64:j = 0i64;
+        while (j < total_iters - 1i64 - i) {
+            int64:fid1 = npk_mem_read_int64(all_fids, j * 8i64);
+            int64:fid2 = npk_mem_read_int64(all_fids, (j + 1i64) * 8i64);
+            if (fid1 > fid2) {
+                // Swap fids
+                drop(npk_mem_write_int64(all_fids, j * 8i64, fid2));
+                drop(npk_mem_write_int64(all_fids, (j + 1i64) * 8i64, fid1));
+                
+                // Swap levels
+                int64:lvl1 = npk_mem_read_int64(all_levels, j * 8i64);
+                int64:lvl2 = npk_mem_read_int64(all_levels, (j + 1i64) * 8i64);
+                drop(npk_mem_write_int64(all_levels, j * 8i64, lvl2));
+                drop(npk_mem_write_int64(all_levels, (j + 1i64) * 8i64, lvl1));
+            }
+            j = j + 1i64;
+        }
         i = i + 1i64;
     }
-    
-    // Pop them sequentially to sort all_fids and all_levels
-    i = 0i64;
-    while (1i64 == 1i64) {
-        int64:sz = heap_size(heap) ? 0i64;
-        if (sz == 0i64) { break; }
-        
-        int64:rec = heap_pop_record(heap) ? 0i64;
-        int64:lvl = heap_pop_iter_idx(heap) ? 0i64;
-        drop(heap_pop(heap)); 
-        
-        int64:fid = npk_mem_read_int64(rec, 16i64); 
-        
-        drop(npk_mem_write_int64(all_fids, i * 8i64, fid));
-        drop(npk_mem_write_int64(all_levels, i * 8i64, lvl));
-        
-        drop(sst_rec_free(rec));
-        i = i + 1i64;
-    }
-    drop(heap_destroy(heap));
     
     int64:readers = npk_core_alloc(total_iters * 8i64);
     int64:iters = npk_core_alloc(total_iters * 8i64);

@@ -345,11 +345,9 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
         tfp64:dist = hnsw_pq_get_dist(C) ? 0.0tf;
         int32:slot = hnsw_pq_get_slot(C) ? 0i32;
         
-        string:item = "{\"document_id\": \"doc";
-        item = string_concat(item, string_from_int((slot) => int64));
-        item = string_concat(item, "\", \"distance\": ");
-        item = string_concat(item, fmt_float((dist) => flt64, 4i64));
-        item = string_concat(item, "}");
+        int64:slot64 = slot => int64;
+        flt64:dist_f64 = dist => flt64;
+        string:item = `{"document_id": "doc&{slot64}", "distance": &{fmt_float(dist_f64, 4i64)}}`;
         
         if (count > 0i64) {
             item = string_concat(item, ",");
