@@ -8,6 +8,8 @@ use "../util/mem_primitives.npk".*;
 
 use "router.npk".*;
 
+use "../../libn/src/syscall/syscall_numbers.npk".*;
+
 pub int64:global_http_channel = 0i64; // Handle to the buffered channel for sockets
 
 pub func:server_start = int32() {
@@ -22,6 +24,15 @@ pub func:server_start = int32() {
             if (client_fd < 0i64) {
                 break;
             }
+            
+            // Set socket receive timeout (SO_RCVTIMEO) to prevent Slowloris attacks
+            int64->:tv = npk_core_alloc(16i64) => int64->;
+            tv[0] = 3i64; // 3 seconds timeout
+            tv[1] = 0i64; // 0 microseconds
+            int64:tv_ptr = asm!!!<int64>("x86_64", "movq $1, $0", "=r,r", tv);
+            // SYS_SETSOCKOPT=54, SOL_SOCKET=1, SO_RCVTIMEO=20
+            drop(sys!!(54i64, client_fd, 1i64, 20i64, tv_ptr, 16i64));
+            
             Request:req = raw Server.read_req(client_fd);
             drop(route_request(client_fd, req));
             drop(raw Server.close_cli(client_fd));
