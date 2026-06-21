@@ -1,7 +1,7 @@
 // constants.npk — NPKDB configuration constants
 
 // Page layout
-pub fixed int64:PAGE_SIZE           = 8192i64;     // 8KB pages
+pub fixed int64:PAGE_SIZE           = 32768i64;    // 32KB pages
 pub fixed int64:PAGE_HEADER_SIZE    = 32i64;       // Page header bytes
 // Footer (48 bytes):
 // 0-7: data_block_count (int64)
