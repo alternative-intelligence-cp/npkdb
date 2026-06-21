@@ -1,0 +1,29 @@
+// regex_types.npk — Foundational structs and constraints for niregx
+
+use "../util/error_codes.npk".*;
+
+// Mathematical limit for maximum string length of a valid regular expression pattern (8KB max).
+pub Rules<int64>:r_valid_regex_len = { $ > 0i64, $ <= 8192i64 };
+
+// Opcodes for the Pike VM
+pub fixed int32:OP_MATCH      = 0i32;
+pub fixed int32:OP_CHAR       = 1i32;
+pub fixed int32:OP_SPLIT      = 2i32;
+pub fixed int32:OP_JMP        = 3i32;
+pub fixed int32:OP_ANY        = 4i32;
+pub fixed int32:OP_CHAR_CLASS = 5i32;
+
+// NFA State node utilizing Generational Handles
+pub struct:NfaState = {
+    int32:opcode;
+    int32:match_char;
+    Handle<NfaState>:out1;
+    Handle<NfaState>:out2;
+    uint8[32]:charset; // 256-bit bitmask for character classes
+};
+
+// The compiled regular expression execution bundle
+pub struct:Regex = {
+    Handle<NfaState>:start_state;
+    int32:state_count;
+};

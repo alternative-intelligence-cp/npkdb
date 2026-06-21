@@ -1,0 +1,6 @@
+use "../../src/util/failsafe.npk".*;
+use "../../src/regex/regex_types.npk".*;
+
+pub func:main = int32() {
+    exit(0);
+};
