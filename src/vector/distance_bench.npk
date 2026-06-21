@@ -144,7 +144,7 @@ pub func:bench_run_l2 = NIL(int64:a_ptr, int64:b_ptr,
     // ── Warmup: SIMD ──
     int64:w = 0i64;
     when (w < BENCH_WARMUP_ITERS) {
-        tfp64:dummy_simd_w = l2sq_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ?! 0.0tf;
+        tfp64:dummy_simd_w = l2sq_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ? 0.0tf;
         w = w + 1i64;
     }
 
@@ -152,7 +152,7 @@ pub func:bench_run_l2 = NIL(int64:a_ptr, int64:b_ptr,
     drop(bench_now(ts0));
     int64:m = 0i64;
     when (m < BENCH_MEASURE_ITERS) {
-        tfp64:dummy_simd_w = l2sq_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ?! 0.0tf;
+        tfp64:dummy_simd_w = l2sq_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ? 0.0tf;
         m = m + 1i64;
     }
     drop(bench_now(ts1));
@@ -163,7 +163,7 @@ pub func:bench_run_l2 = NIL(int64:a_ptr, int64:b_ptr,
     // ── Warmup: Scalar ──
     int64:ws = 0i64;
     when (ws < BENCH_WARMUP_ITERS) {
-        tfp64:dummy_scalar = dist_l2_scalar(a_ptr, b_ptr, BENCH_DIM) ?! 0.0tf;
+        tfp64:dummy_scalar = dist_l2_scalar(a_ptr, b_ptr, BENCH_DIM) ? 0.0tf;
         ws = ws + 1i64;
     }
 
@@ -171,7 +171,7 @@ pub func:bench_run_l2 = NIL(int64:a_ptr, int64:b_ptr,
     drop(bench_now(ts0));
     int64:ms = 0i64;
     when (ms < BENCH_MEASURE_ITERS) {
-        tfp64:dummy_scalar = dist_l2_scalar(a_ptr, b_ptr, BENCH_DIM) ?! 0.0tf;
+        tfp64:dummy_scalar = dist_l2_scalar(a_ptr, b_ptr, BENCH_DIM) ? 0.0tf;
         ms = ms + 1i64;
     }
     drop(bench_now(ts1));
@@ -197,14 +197,14 @@ pub func:bench_run_cosine = NIL(int64:a_ptr, int64:b_ptr,
 
     int64:w = 0i64;
     when (w < BENCH_WARMUP_ITERS) {
-        tfp64:dummy_simd_w = cosine_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ?! 0.0tf;
+        tfp64:dummy_simd_w = cosine_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ? 0.0tf;
         w = w + 1i64;
     }
 
     drop(bench_now(ts0));
     int64:m = 0i64;
     when (m < BENCH_MEASURE_ITERS) {
-        tfp64:dummy_simd_w = cosine_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ?! 0.0tf;
+        tfp64:dummy_simd_w = cosine_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ? 0.0tf;
         m = m + 1i64;
     }
     drop(bench_now(ts1));
@@ -214,14 +214,14 @@ pub func:bench_run_cosine = NIL(int64:a_ptr, int64:b_ptr,
 
     int64:ws = 0i64;
     when (ws < BENCH_WARMUP_ITERS) {
-        tfp64:dummy_scalar = dist_cosine_scalar(a_ptr, b_ptr, BENCH_DIM) ?! 0.0tf;
+        tfp64:dummy_scalar = dist_cosine_scalar(a_ptr, b_ptr, BENCH_DIM) ? 0.0tf;
         ws = ws + 1i64;
     }
 
     drop(bench_now(ts0));
     int64:ms = 0i64;
     when (ms < BENCH_MEASURE_ITERS) {
-        tfp64:dummy_scalar = dist_cosine_scalar(a_ptr, b_ptr, BENCH_DIM) ?! 0.0tf;
+        tfp64:dummy_scalar = dist_cosine_scalar(a_ptr, b_ptr, BENCH_DIM) ? 0.0tf;
         ms = ms + 1i64;
     }
     drop(bench_now(ts1));
@@ -246,14 +246,14 @@ pub func:bench_run_ip = NIL(int64:a_ptr, int64:b_ptr,
 
     int64:w = 0i64;
     when (w < BENCH_WARMUP_ITERS) {
-        tfp64:dummy_simd_w = ip_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ?! 0.0tf;
+        tfp64:dummy_simd_w = ip_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ? 0.0tf;
         w = w + 1i64;
     }
 
     drop(bench_now(ts0));
     int64:m = 0i64;
     when (m < BENCH_MEASURE_ITERS) {
-        tfp64:dummy_simd_w = ip_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ?! 0.0tf;
+        tfp64:dummy_simd_w = ip_simd_pub(@cast_unchecked<tfp64->>(a_ptr), @cast_unchecked<tfp64->>(b_ptr), BENCH_DIM) ? 0.0tf;
         m = m + 1i64;
     }
     drop(bench_now(ts1));
@@ -263,14 +263,14 @@ pub func:bench_run_ip = NIL(int64:a_ptr, int64:b_ptr,
 
     int64:ws = 0i64;
     when (ws < BENCH_WARMUP_ITERS) {
-        tfp64:dummy_scalar = dist_ip_scalar(a_ptr, b_ptr, BENCH_DIM) ?! 0.0tf;
+        tfp64:dummy_scalar = dist_ip_scalar(a_ptr, b_ptr, BENCH_DIM) ? 0.0tf;
         ws = ws + 1i64;
     }
 
     drop(bench_now(ts0));
     int64:ms = 0i64;
     when (ms < BENCH_MEASURE_ITERS) {
-        tfp64:dummy_scalar = dist_ip_scalar(a_ptr, b_ptr, BENCH_DIM) ?! 0.0tf;
+        tfp64:dummy_scalar = dist_ip_scalar(a_ptr, b_ptr, BENCH_DIM) ? 0.0tf;
         ms = ms + 1i64;
     }
     drop(bench_now(ts1));

@@ -30,7 +30,7 @@ pub func:hnsw_traversal_filter_check = bool(
     requires num_vectors > 0i64
 {
     int64:node_ptr = hnsw_arena_get_node(arena, candidate.slot, candidate.generation)
-        ?! { pass(false); };  // Stale handle: treat as filtered-out.
+        ? { pass(false); };  // Stale handle: treat as filtered-out.
 
     int64:vec_id = hnsw_node_get_vector_offset(node_ptr) ? 0i64; // Using get_vector_offset
 
@@ -40,5 +40,5 @@ pub func:hnsw_traversal_filter_check = bool(
     prove vec_id >= 0i64;
     prove vec_id < num_vectors;
 
-    pass(filter_eval(filter_fn_ptr, vec_id, num_vectors) ?! false);
+    pass(filter_eval(filter_fn_ptr, vec_id, num_vectors) ? false);
 };

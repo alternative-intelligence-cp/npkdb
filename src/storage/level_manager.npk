@@ -166,7 +166,7 @@ pub func:lm_count_at_level = int64(int64:lm, int64:level) {
 
 // Check if L0 needs compaction.
 pub func:lm_l0_needs_compaction = int64(int64:lm) {
-    int64:c = lm_count_at_level(lm, 0i64) ?! 0i64;
+    int64:c = lm_count_at_level(lm, 0i64) ? 0i64;
     if (c >= L0_COMPACTION_THRESHOLD) {
         pass(1i64);
     }
@@ -198,7 +198,7 @@ pub func:lm_next_sstable_path = string(int64:lm, int64:level) {
 
 // Get all SSTable file IDs at a given level.
 pub func:lm_get_sstables = int64(int64:lm, int64:level) {
-    int64:count = lm_count_at_level(lm, level) ?! 0i64;
+    int64:count = lm_count_at_level(lm, level) ? 0i64;
     if (count == 0i64) { pass(0i64); }
     
     int64:levels_array = npk_mem_read_int64(lm, 24i64);
@@ -216,7 +216,7 @@ pub func:lm_get_sstables = int64(int64:lm, int64:level) {
 };
 
 pub func:lm_get_sstable_count = int64(int64:lm, int64:level) {
-    pass(lm_count_at_level(lm, level) ?! 0i64);
+    pass(lm_count_at_level(lm, level) ? 0i64);
 };
 
 pub func:lm_get_next_file_id = int64(int64:lm) {

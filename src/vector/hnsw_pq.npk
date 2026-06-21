@@ -34,7 +34,7 @@ pub func:hnsw_pq_get_elements = int64(int64:pq) requires (pq != 0i64) {
 
 pub func:hnsw_pq_get_candidate_ptr = int64(int64:pq, int64:index) 
     requires (pq != 0i64), (index >= 0i64) {
-    int64:elems = hnsw_pq_get_elements(pq)  ?! 0i64;
+    int64:elems = hnsw_pq_get_elements(pq)  ? 0i64;
     pass(elems + (index * HNSW_PQ_CANDIDATE_SIZE));
 };
 
@@ -61,17 +61,17 @@ func:hnsw_pq_set_candidate = int64(int64:candidate_ptr, float32:dist, int32:slot
 func:hnsw_pq_copy_candidate = int64(int64:dst_ptr, int64:src_ptr) 
     requires (dst_ptr != 0i64), (src_ptr != 0i64) {
     float32:dist = @cast_unchecked<float32>(npk_mem_read_int32(src_ptr, 0i64));
-    int32:slot = hnsw_pq_get_slot(src_ptr)  ?! 0i32;
-    int32:gen = hnsw_pq_get_gen(src_ptr)   ?! 0i32;
+    int32:slot = hnsw_pq_get_slot(src_ptr)  ? 0i32;
+    int32:gen = hnsw_pq_get_gen(src_ptr)   ? 0i32;
     drop(hnsw_pq_set_candidate(dst_ptr, dist, slot, gen));
     pass(0i64);
 };
 
 func:hnsw_pq_compare = int64(int64:pq, int64:ptr_a, int64:ptr_b) 
     requires (pq != 0i64), (ptr_a != 0i64), (ptr_b != 0i64) {
-    float32:dist_a = hnsw_pq_get_dist(ptr_a)  ?! 0.0f32;
-    float32:dist_b = hnsw_pq_get_dist(ptr_b)  ?! 0.0f32;
-    int64:is_max = hnsw_pq_get_is_max(pq)   ?! 0i64;
+    float32:dist_a = hnsw_pq_get_dist(ptr_a)  ? 0.0f32;
+    float32:dist_b = hnsw_pq_get_dist(ptr_b)  ? 0.0f32;
+    int64:is_max = hnsw_pq_get_is_max(pq)   ? 0i64;
 
     // Return 1 if A should be above B in the heap.
     if (is_max != 0i64) {
@@ -95,10 +95,10 @@ func:hnsw_pq_sift_up = int64(int64:pq, int64:index) requires (pq != 0i64), (inde
     int64:temp_ptr = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
 
     when (curr > 0i64) {
-        int64:curr_ptr = hnsw_pq_get_candidate_ptr(pq, curr)  ?! 0i64;
-        int64:parent_ptr = hnsw_pq_get_candidate_ptr(pq, parent)  ?! 0i64;
+        int64:curr_ptr = hnsw_pq_get_candidate_ptr(pq, curr)  ? 0i64;
+        int64:parent_ptr = hnsw_pq_get_candidate_ptr(pq, parent)  ? 0i64;
 
-        int64:cmp = hnsw_pq_compare(pq, curr_ptr, parent_ptr)  ?! 0i64;
+        int64:cmp = hnsw_pq_compare(pq, curr_ptr, parent_ptr)  ? 0i64;
         if (cmp == 0i64) { break; }
 
         drop(hnsw_pq_copy_candidate(temp_ptr, curr_ptr));
@@ -114,7 +114,7 @@ func:hnsw_pq_sift_up = int64(int64:pq, int64:index) requires (pq != 0i64), (inde
 };
 
 func:hnsw_pq_sift_down = int64(int64:pq, int64:index) requires (pq != 0i64), (index >= 0i64) {
-    int64:size = hnsw_pq_get_size(pq)  ?! 0i64;
+    int64:size = hnsw_pq_get_size(pq)  ? 0i64;
     int64:curr = index;
 
     int64:temp_ptr = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
@@ -124,11 +124,11 @@ func:hnsw_pq_sift_down = int64(int64:pq, int64:index) requires (pq != 0i64), (in
         int64:right = curr * 2i64 + 2i64;
         int64:best  = curr;
 
-        int64:best_ptr = hnsw_pq_get_candidate_ptr(pq, best)  ?! 0i64;
+        int64:best_ptr = hnsw_pq_get_candidate_ptr(pq, best)  ? 0i64;
 
         if (left < size) {
-            int64:left_ptr = hnsw_pq_get_candidate_ptr(pq, left)  ?! 0i64;
-            int64:cmp_left = hnsw_pq_compare(pq, left_ptr, best_ptr)  ?! 0i64;
+            int64:left_ptr = hnsw_pq_get_candidate_ptr(pq, left)  ? 0i64;
+            int64:cmp_left = hnsw_pq_compare(pq, left_ptr, best_ptr)  ? 0i64;
             if (cmp_left != 0i64) {
                 best = left;
                 best_ptr = left_ptr;
@@ -136,8 +136,8 @@ func:hnsw_pq_sift_down = int64(int64:pq, int64:index) requires (pq != 0i64), (in
         }
 
         if (right < size) {
-            int64:right_ptr = hnsw_pq_get_candidate_ptr(pq, right)  ?! 0i64;
-            int64:cmp_right = hnsw_pq_compare(pq, right_ptr, best_ptr)  ?! 0i64;
+            int64:right_ptr = hnsw_pq_get_candidate_ptr(pq, right)  ? 0i64;
+            int64:cmp_right = hnsw_pq_compare(pq, right_ptr, best_ptr)  ? 0i64;
             if (cmp_right != 0i64) {
                 best = right;
                 best_ptr = right_ptr;
@@ -146,7 +146,7 @@ func:hnsw_pq_sift_down = int64(int64:pq, int64:index) requires (pq != 0i64), (in
 
         if (best == curr) { break; }
 
-        int64:curr_ptr = hnsw_pq_get_candidate_ptr(pq, curr)  ?! 0i64;
+        int64:curr_ptr = hnsw_pq_get_candidate_ptr(pq, curr)  ? 0i64;
         drop(hnsw_pq_copy_candidate(temp_ptr, curr_ptr));
         drop(hnsw_pq_copy_candidate(curr_ptr, best_ptr));
         drop(hnsw_pq_copy_candidate(best_ptr, temp_ptr));
@@ -176,21 +176,21 @@ pub func:hnsw_pq_create = int64(int64:capacity, int64:is_max_heap) requires (cap
 };
 
 pub func:hnsw_pq_destroy = int64(int64:pq) requires (pq != 0i64) {
-    int64:elems = hnsw_pq_get_elements(pq)  ?! 0i64;
+    int64:elems = hnsw_pq_get_elements(pq)  ? 0i64;
     if (elems != 0i64) { drop(npk_core_dalloc(elems)); }
     drop(npk_core_dalloc(pq));
     pass(0i64);
 };
 
 func:hnsw_pq_grow = int64(int64:pq) requires (pq != 0i64) {
-    int64:old_capacity = hnsw_pq_get_capacity(pq)  ?! 0i64;
+    int64:old_capacity = hnsw_pq_get_capacity(pq)  ? 0i64;
     int64:new_capacity = old_capacity * 2i64;
-    int64:old_elems = hnsw_pq_get_elements(pq)  ?! 0i64;
+    int64:old_elems = hnsw_pq_get_elements(pq)  ? 0i64;
     
     int64:new_elems = npk_core_alloc(new_capacity * HNSW_PQ_CANDIDATE_SIZE);
     if (new_elems == 0i64) { fail@cast_unchecked<tbb8>(ERR_HNSW_OOM); }
     
-    int64:size = hnsw_pq_get_size(pq)  ?! 0i64;
+    int64:size = hnsw_pq_get_size(pq)  ? 0i64;
     if (size > 0i64) {
         // Nitpick memory primitives don't have npk_mem_copy natively exposed in the core in mem_primitives? 
         // Wait, mem_primitives.npk HAS npk_mem_copy!
@@ -205,14 +205,14 @@ func:hnsw_pq_grow = int64(int64:pq) requires (pq != 0i64) {
 
 // Returns 0 on success.
 pub func:hnsw_pq_push = int64(int64:pq, float32:dist, int32:slot, int32:gen) requires (pq != 0i64) {
-    int64:size = hnsw_pq_get_size(pq)      ?! 0i64;
-    int64:capacity = hnsw_pq_get_capacity(pq)  ?! 0i64;
+    int64:size = hnsw_pq_get_size(pq)      ? 0i64;
+    int64:capacity = hnsw_pq_get_capacity(pq)  ? 0i64;
 
     if (size >= capacity) {
         drop(hnsw_pq_grow(pq));
     }
 
-    int64:ptr = hnsw_pq_get_candidate_ptr(pq, size)  ?! 0i64;
+    int64:ptr = hnsw_pq_get_candidate_ptr(pq, size)  ? 0i64;
     drop(hnsw_pq_set_candidate(ptr, dist, slot, gen));
 
     drop(npk_mem_write_int64(pq, HNSW_PQ_OFF_SIZE, size + 1i64));
@@ -224,16 +224,16 @@ pub func:hnsw_pq_push = int64(int64:pq, float32:dist, int32:slot, int32:gen) req
 // Returns 0 on success, -1 on empty. Root candidate copied to out_candidate_ptr.
 pub func:hnsw_pq_pop = int64(int64:pq, int64:out_candidate_ptr) 
     requires (pq != 0i64), (out_candidate_ptr != 0i64) {
-    int64:size = hnsw_pq_get_size(pq)  ?! 0i64;
+    int64:size = hnsw_pq_get_size(pq)  ? 0i64;
 
     if (size == 0i64) { pass(-1i64); }
 
-    int64:root_ptr = hnsw_pq_get_candidate_ptr(pq, 0i64)  ?! 0i64;
+    int64:root_ptr = hnsw_pq_get_candidate_ptr(pq, 0i64)  ? 0i64;
     drop(hnsw_pq_copy_candidate(out_candidate_ptr, root_ptr));
 
     int64:last_idx = size - 1i64;
     if (last_idx > 0i64) {
-        int64:last_ptr = hnsw_pq_get_candidate_ptr(pq, last_idx)  ?! 0i64;
+        int64:last_ptr = hnsw_pq_get_candidate_ptr(pq, last_idx)  ? 0i64;
         drop(hnsw_pq_copy_candidate(root_ptr, last_ptr));
     }
 
@@ -248,11 +248,11 @@ pub func:hnsw_pq_pop = int64(int64:pq, int64:out_candidate_ptr)
 // Returns 0 on success, -1 on empty. Root candidate copied to out_candidate_ptr.
 pub func:hnsw_pq_peek = int64(int64:pq, int64:out_candidate_ptr) 
     requires (pq != 0i64), (out_candidate_ptr != 0i64) {
-    int64:size = hnsw_pq_get_size(pq)  ?! 0i64;
+    int64:size = hnsw_pq_get_size(pq)  ? 0i64;
 
     if (size == 0i64) { pass(-1i64); }
 
-    int64:root_ptr = hnsw_pq_get_candidate_ptr(pq, 0i64)  ?! 0i64;
+    int64:root_ptr = hnsw_pq_get_candidate_ptr(pq, 0i64)  ? 0i64;
     drop(hnsw_pq_copy_candidate(out_candidate_ptr, root_ptr));
 
     pass(0i64);

@@ -16,7 +16,7 @@ pub int64:CFG_HNSW_M = 24i64; // int64
 pub int64:CFG_HNSW_EF_CONSTRUCTION = 32i64; // int64
 
 pub func:config_init = int32(string:toml_path) {
-    int64:fd = sys(OPEN, toml_path, 0i64, 0i64) ?! -1i64;
+    int64:fd = sys(OPEN, toml_path, 0i64, 0i64) ? -1i64;
     if (fd < 0i64) {
         println("config_init: sys(OPEN) failed on " + toml_path);
         pass(ERR_CONFIG_LOAD_FAILED);
@@ -24,8 +24,8 @@ pub func:config_init = int32(string:toml_path) {
     
     // Allocate buffer for config (max 64KB)
     int64:buf = npk_core_alloc(65536i64);
-    int64:bytes_read = sys(READ, fd, buf, 65535i64) ?! -1i64;
-    drop(sys(CLOSE, fd) ?! 0i64);
+    int64:bytes_read = sys(READ, fd, buf, 65535i64) ? -1i64;
+    drop(sys(CLOSE, fd) ? 0i64);
     
     if (bytes_read <= 0i64) {
         println("config_init: sys(READ) failed or empty file");

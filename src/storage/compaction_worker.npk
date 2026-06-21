@@ -36,7 +36,7 @@ pub func:compaction_worker_loop = int64(int64:ctx) {
     int64:running = 1i64;
     
     while (running == 1i64) {
-        int64:msg = Channel.recv(ch) ?! -1i64;
+        int64:msg = Channel.recv(ch) ? -1i64;
         
         if (msg == COMPACT_SHUTDOWN) {
             break;
@@ -63,8 +63,8 @@ pub func:compaction_worker_loop = int64(int64:ctx) {
 // 0: channel handle
 // 8: thread handle
 // 16: worker ctx (to free later)
-pub func:compaction_worker_start = int64(int64:lm, ?->:worker_fn) {
-    int64:ch = Channel.create(16i32) ?! 0i64;
+pub func:compaction_worker_start = int64(int64:lm, (int64)(int64):worker_fn) {
+    int64:ch = Channel.create(16i32) ? 0i64;
     if (ch <= 0i64) { pass(0i64); }
     
     int64:ctx = npk_core_alloc(CTX_SIZE);

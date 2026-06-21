@@ -63,8 +63,8 @@ func:heap_less = int64(int64:array_ptr, int64:i, int64:j) {
     int64:j_idx = npk_mem_read_int64(array_ptr, j_offset);
     int64:j_rec = npk_mem_read_int64(array_ptr, j_offset + 8i64);
     
-    string:i_key = sst_rec_key(i_rec) ?! "";
-    string:j_key = sst_rec_key(j_rec) ?! "";
+    string:i_key = sst_rec_key(i_rec) ? "";
+    string:j_key = sst_rec_key(j_rec) ? "";
     
     if (i_key < j_key) { pass(1i64); }
     if (i_key > j_key) { pass(0i64); }
@@ -76,7 +76,7 @@ func:heap_less = int64(int64:array_ptr, int64:i, int64:j) {
 func:heap_up = NIL(int64:array_ptr, int64:j) {
     while (j > 0i64) {
         int64:i = (j - 1i64) / 2i64; // parent
-        int64:less = heap_less(array_ptr, j, i) ?! 0i64;
+        int64:less = heap_less(array_ptr, j, i) ? 0i64;
         if (less == 0i64) {
             break;
         }
@@ -95,13 +95,13 @@ func:heap_down = NIL(int64:array_ptr, int64:i0, int64:n) {
         int64:smallest = left;
         int64:right = left + 1i64;
         if (right < n) {
-            int64:less_r = heap_less(array_ptr, right, left) ?! 0i64;
+            int64:less_r = heap_less(array_ptr, right, left) ? 0i64;
             if (less_r == 1i64) {
                 smallest = right;
             }
         }
         
-        int64:less_s = heap_less(array_ptr, smallest, i) ?! 0i64;
+        int64:less_s = heap_less(array_ptr, smallest, i) ? 0i64;
         if (less_s == 0i64) { break; }
         
         drop(heap_swap(array_ptr, i, smallest));
@@ -153,7 +153,7 @@ pub func:heap_pop_key = string(int64:heap) {
     if (size == 0i64) { pass(""); }
     int64:array_ptr = npk_mem_read_int64(heap, 0i64);
     int64:rec = npk_mem_read_int64(array_ptr, 8i64);
-    pass(sst_rec_key(rec) ?! "");
+    pass(sst_rec_key(rec) ? "");
 };
 
 pub func:heap_pop = NIL(int64:heap) {

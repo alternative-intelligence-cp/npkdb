@@ -78,7 +78,7 @@ func:wal_append = int64(int64:wal_fd, int32:rec_type, int64:seq, int64:payload_p
     }
     
     // Offset 0: crc32 over bytes 4..end
-    int64:crc = crc32_compute(buf + 4i64, total_len - 4i64) ?! 0i64;
+    int64:crc = crc32_compute(buf + 4i64, total_len - 4i64) ? 0i64;
     drop(npk_mem_write_int32(buf, 0i64, @cast_unchecked<int32>(crc)));
     
     Result<int64>:w_res = sys(WRITE, wal_fd, buf, total_len);
@@ -115,7 +115,7 @@ pub func:wal_append_put = int64(int64:wal_fd, string:key, int64:value_ptr, int64
         drop(npk_mem_copy(payload + 8i64 + key_len, value_ptr, value_len));
     }
     
-    int64:res = wal_append(wal_fd, WAL_RECORD_PUT, seq, payload, payload_len) ?! 0i64;
+    int64:res = wal_append(wal_fd, WAL_RECORD_PUT, seq, payload, payload_len) ? 0i64;
     drop(npk_core_dalloc(payload));
     pass(res);
 };
@@ -132,13 +132,13 @@ pub func:wal_append_delete = int64(int64:wal_fd, string:key, int64:seq)
         drop(raw npk_mem_write_string(payload + 4i64, key));
     }
     
-    int64:res = wal_append(wal_fd, WAL_RECORD_DELETE, seq, payload, payload_len) ?! 0i64;
+    int64:res = wal_append(wal_fd, WAL_RECORD_DELETE, seq, payload, payload_len) ? 0i64;
     drop(npk_core_dalloc(payload));
     pass(res);
 };
 
 pub func:wal_append_checkpoint = int64(int64:wal_fd, int64:seq) {
-    int64:res = wal_append(wal_fd, WAL_RECORD_CHECKPOINT, seq, 0i64, 0i64) ?! 0i64;
+    int64:res = wal_append(wal_fd, WAL_RECORD_CHECKPOINT, seq, 0i64, 0i64) ? 0i64;
     pass(res);
 };
 
@@ -236,7 +236,7 @@ func:wal_batch_append = int64(int64:wal_fd, int32:rec_type, int64:seq, int64:pay
         drop(npk_mem_copy(write_ptr + 16i64, payload_ptr, payload_len));
     }
     
-    int64:crc = crc32_compute(write_ptr + 4i64, total_len - 4i64) ?! 0i64;
+    int64:crc = crc32_compute(write_ptr + 4i64, total_len - 4i64) ? 0i64;
     drop(npk_mem_write_int32(write_ptr, 0i64, @cast_unchecked<int32>(crc)));
     
     drop(npk_mem_write_int64(wal_state_ptr, 8i64, buf_len + total_len));
@@ -256,7 +256,7 @@ pub func:wal_batch_append_put = int64(int64:wal_fd, string:key, int64:value_ptr,
     drop(npk_mem_write_int32(payload, 4i64 + key_len, @cast_unchecked<int32>(value_len)));
     if (value_len > 0i64) { drop(npk_mem_copy(payload + 8i64 + key_len, value_ptr, value_len)); }
     
-    int64:res = wal_batch_append(wal_fd, WAL_RECORD_PUT, seq, payload, payload_len) ?! 0i64;
+    int64:res = wal_batch_append(wal_fd, WAL_RECORD_PUT, seq, payload, payload_len) ? 0i64;
     drop(npk_core_dalloc(payload));
     pass(res);
 };
@@ -269,7 +269,7 @@ pub func:wal_batch_append_delete = int64(int64:wal_fd, string:key, int64:seq) {
     drop(npk_mem_write_int32(payload, 0i64, @cast_unchecked<int32>(key_len)));
     if (key_len > 0i64) { drop(raw npk_mem_write_string(payload + 4i64, key)); }
     
-    int64:res = wal_batch_append(wal_fd, WAL_RECORD_DELETE, seq, payload, payload_len) ?! 0i64;
+    int64:res = wal_batch_append(wal_fd, WAL_RECORD_DELETE, seq, payload, payload_len) ? 0i64;
     drop(npk_core_dalloc(payload));
     pass(res);
 };
@@ -330,7 +330,7 @@ pub func:wal_read_next = int64(int64:wal_fd) {
         }
     }
     
-    int64:comp_crc = crc32_compute(full_buf + 4i64, record_length - 4i64) ?! -1i64;
+    int64:comp_crc = crc32_compute(full_buf + 4i64, record_length - 4i64) ? -1i64;
     if (comp_crc != crc32_stored) {
         drop(npk_core_dalloc(full_buf));
         pass(-1i64); // CRC mismatch
@@ -364,14 +364,14 @@ pub func:wal_record_value_len = int64(int64:record_buf) {
 };
 
 pub func:wal_replay = int64(string:wal_path, int64:active_mt) {
-    int64:fd = wal_open_read(wal_path) ?! 0i64;
+    int64:fd = wal_open_read(wal_path) ? 0i64;
     if (fd <= 0i64) { pass(0i64); }
     
     int64:count = 0i64;
     int64:valid_offset = 0i64;
     
     while (1i64 == 1i64) {
-        int64:rec = wal_read_next(fd) ?! -1i64;
+        int64:rec = wal_read_next(fd) ? -1i64;
         if (rec == 0i64) { break; }
         if (rec == -1i64) {
             println("WARNING: WAL torn/corrupt record detected. Halting replay and truncating at " + string_from_int(valid_offset));

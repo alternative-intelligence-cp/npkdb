@@ -33,38 +33,11 @@ pub func:server_start = int32() {
     int64:ch = raw Channel.create(4096i32);
     global_http_channel = ch;
     
-pub func:http_worker_shim = int64(int64:arg_handle) {
-    int64:thread_id = raw Thread.current_id();
-    println(string_concat(string_concat("HTTP Worker started (ID: ", string_from_int(thread_id)), ")"));
-    
-    int64:w_ch = arg_handle;
-    
-    till(1000000000, 1) { // practically infinite
-        int64:client_fd = raw Channel.recv(w_ch);
-        if (client_fd < 0i64) {
-            break;
-        }
-        
-        // Set socket receive timeout (SO_RCVTIMEO) to prevent Slowloris attacks
-        int64->:tv = @cast_unchecked<int64->>(npk_core_alloc(16i64));
-        tv[0] = 3i64; // 3 seconds timeout
-        tv[1] = 0i64; // 0 microseconds
-        int64:tv_ptr = asm!!!<int64>("x86_64", "movq $1, $0", "=r,r", tv);
-        // SYS_SETSOCKOPT=54, SOL_SOCKET=1, SO_RCVTIMEO=20
-        drop(sys!!(54i64, client_fd, 1i64, 20i64, tv_ptr, 16i64));
-        
-        Request:req = raw Server.read_req(client_fd);
-        drop(route_request(client_fd, req));
-        drop(raw Server.close_cli(client_fd));
-    }
-    
-    pass 0i64;
-};
-    
+
     // Spawn worker pool
     int64:i = 0i64;
     while (i < workers) {
-        int64:t_handle = nitpick_libc_thread_spawn(@http_worker_shim, global_http_channel);
+        int64:t_handle = nitpick_libc_thread_spawn(@http_worker_start, global_http_channel);
         i = i + 1i64;
     }
     

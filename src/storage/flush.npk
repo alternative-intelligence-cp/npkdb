@@ -22,13 +22,13 @@ pub func:flush_memtable = int64(int64:mt, int64:lm) {
     if (mt == 0i64) { pass(0i64); }
     if (lm == 0i64) { pass(0i64); }
     
-    int64:cnt = mt_count(mt) ?! 0i64;
+    int64:cnt = mt_count(mt) ? 0i64;
     if (cnt == 0i64) {
         drop(mt_destroy(mt));
         pass(0i64);
     }
     
-    int64:node = mt_first(mt) ?! 0i64;
+    int64:node = mt_first(mt) ? 0i64;
     if (node == 0i64) { pass(-1i64); }
     
     int64:is_first = 1i64;
@@ -36,20 +36,20 @@ pub func:flush_memtable = int64(int64:mt, int64:lm) {
     string:max_k = "";
     
     while (node != 0i64) {
-        string:k = sl_node_key(node) ?! "";
+        string:k = sl_node_key(node) ? "";
         if (is_first == 1i64) {
             min_k = k;
             is_first = 0i64;
         }
         max_k = k;
-        node = sl_next(node) ?! 0i64;
+        node = sl_next(node) ? 0i64;
     }
     
-    string:sst_path = lm_next_sstable_path(lm, 0i64) ?! "";
-    int64:file_id = lm_get_next_file_id(lm) ?! 1i64;
+    string:sst_path = lm_next_sstable_path(lm, 0i64) ? "";
+    int64:file_id = lm_get_next_file_id(lm) ? 1i64;
     file_id = file_id - 1i64; 
     
-    int64:written = sstable_write(sst_path, mt) ?! 0i64;
+    int64:written = sstable_write(sst_path, mt) ? 0i64;
     if (written <= 0i64) {
         pass(-1i64);
     }

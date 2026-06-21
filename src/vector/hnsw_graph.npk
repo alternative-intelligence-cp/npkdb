@@ -136,8 +136,8 @@ func:simd_l2_f32 = float32(int64:a, int64:b, int64:dim) {
 pub func:hnsw_graph_distance = float32(int64:graph, int64:vec1_offset, int64:vec2_offset)
     requires (graph != 0i64) {
     
-    int64:vec_buf = hnsw_graph_get_vector_buf(graph)  ?! 0i64;
-    int64:dim = hnsw_graph_get_vector_dim(graph)  ?! 0i64;
+    int64:vec_buf = hnsw_graph_get_vector_buf(graph)  ? 0i64;
+    int64:dim = hnsw_graph_get_vector_dim(graph)  ? 0i64;
     
     int64:ptr1 = vec_buf + vec1_offset;
     int64:ptr2 = vec_buf + vec2_offset;

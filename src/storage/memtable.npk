@@ -17,7 +17,7 @@ pub fixed int64:MT_STATE_SIZE = 24i64;
 
 pub func:mt_create = int64(int64:id) {
     int64:mt = npk_core_alloc(MT_STATE_SIZE);
-    int64:sl_head = sl_create() ?! 0i64;
+    int64:sl_head = sl_create() ? 0i64;
     
     drop(npk_mem_write_int64(mt, MT_OFF_HEAD, sl_head));
     drop(npk_mem_write_int64(mt, MT_OFF_FROZEN, 0i64));
@@ -61,12 +61,12 @@ pub func:mt_delete = int64(int64:mt, string:key) {
 
 pub func:mt_get = int64(int64:mt, string:key) {
     int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
-    pass(sl_search(sl_head, key) ?! 0i64);
+    pass(sl_search(sl_head, key) ? 0i64);
 };
 
 pub func:mt_should_flush = int64(int64:mt) {
     int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
-    int64:mem = sl_memory_usage(sl_head) ?! 0i64;
+    int64:mem = sl_memory_usage(sl_head) ? 0i64;
     // MEMTABLE_SIZE_LIMIT = 4 * 1024 * 1024 = 4194304
     if (mem >= MEMTABLE_SIZE_LIMIT => int64) {
         pass(1i64);
@@ -89,15 +89,15 @@ pub func:mt_get_id = int64(int64:mt) {
 
 pub func:mt_count = int64(int64:mt) {
     int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
-    pass(sl_count(sl_head) ?! 0i64);
+    pass(sl_count(sl_head) ? 0i64);
 };
 
 pub func:mt_memory_usage = int64(int64:mt) {
     int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
-    pass(sl_memory_usage(sl_head) ?! 0i64);
+    pass(sl_memory_usage(sl_head) ? 0i64);
 };
 
 pub func:mt_first = int64(int64:mt) {
     int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
-    pass(sl_first(sl_head) ?! 0i64);
+    pass(sl_first(sl_head) ? 0i64);
 };

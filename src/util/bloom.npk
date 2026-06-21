@@ -86,8 +86,8 @@ pub func:bloom_add = NIL(int64:bloom, string:key) {
     int64:num_bits = npk_mem_read_int64(bloom, 8i64);
     int64:num_hashes = npk_mem_read_int64(bloom, 16i64);
     
-    int64:h1 = bloom_hash1(key) ?! 0i64;
-    int64:h2 = bloom_hash2(key) ?! 0i64;
+    int64:h1 = bloom_hash1(key) ? 0i64;
+    int64:h2 = bloom_hash2(key) ? 0i64;
     
     int64:i = 0i64;
     while (i < num_hashes) {
@@ -111,8 +111,8 @@ pub func:bloom_check = int64(int64:bloom, string:key) {
     int64:num_bits = npk_mem_read_int64(bloom, 8i64);
     int64:num_hashes = npk_mem_read_int64(bloom, 16i64);
     
-    int64:h1 = bloom_hash1(key) ?! 0i64;
-    int64:h2 = bloom_hash2(key) ?! 0i64;
+    int64:h1 = bloom_hash1(key) ? 0i64;
+    int64:h2 = bloom_hash2(key) ? 0i64;
     
     int64:i = 0i64;
     while (i < num_hashes) {

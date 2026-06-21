@@ -114,11 +114,11 @@ pub func:seqlock_read_copy = int64(int64:seqlock_ptr, int64:data_ptr,
 {
     int64:retries = 0i64;
     when (retries < SEQLOCK_MAX_RETRIES) {
-        int64:seq = seqlock_read_begin(seqlock_ptr) ?! 0i64;
+        int64:seq = seqlock_read_begin(seqlock_ptr) ? 0i64;
         // Copy data into local buffer
         drop(npk_mem_copy(out_ptr, data_ptr, data_len));
         // Validate
-        if (seqlock_read_validate(seqlock_ptr, seq) ?! false) {
+        if (seqlock_read_validate(seqlock_ptr, seq) ? false) {
             pass(0i64);
         }
         retries = retries + 1i64;
