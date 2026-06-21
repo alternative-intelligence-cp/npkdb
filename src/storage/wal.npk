@@ -188,7 +188,7 @@ pub func:wal_batch_should_flush = int64(int64:wal_fd) {
     
     int64:last_sync = npk_mem_read_int64(wal_state_ptr, 32i64);
     int64:timespec = npk_mem_read_int64(wal_state_ptr, 40i64);
-    drop(sys!!(228i64, 1i64, timespec));
+    drop(sys(SYS_CLOCK_GETTIME, 1i64, timespec));
     int64:sec = npk_mem_read_int64(timespec, 0i64);
     int64:nsec = npk_mem_read_int64(timespec, 8i64);
     int64:now = (sec * 1000000i64) + (nsec / 1000i64);
@@ -374,7 +374,7 @@ pub func:wal_replay = int64(string:wal_path, int64:active_mt) {
         if (rec == 0i64) { break; }
         if (rec == -1i64) {
             println("WARNING: WAL torn/corrupt record detected. Halting replay and truncating at " + string_from_int(valid_offset));
-            drop(sys!!(77i64, fd, valid_offset)); // SYS_FTRUNCATE = 77
+            drop(sys(SYS_FTRUNCATE, fd, valid_offset)); // SYS_FTRUNCATE = 77
             break;
         }
         

@@ -12,7 +12,7 @@ pub fixed int64:HNSW_VISITED_HEADER_SIZE = 16i64;
 pub func:hnsw_visited_create = int64(int64:capacity) requires (capacity > 0i64) {
     int64:total_size = HNSW_VISITED_HEADER_SIZE + (capacity * 4i64);
     int64:visited = npk_core_alloc(total_size);
-    if (visited == 0i64) { fail((ERR_HNSW_OOM) => tbb8); }
+    if (visited == 0i64) { fail((ERR_HNSW_OOM) => tbb32); }
 
     drop(npk_mem_write_int64(visited, HNSW_VISITED_OFF_CAPACITY, capacity));
     drop(npk_mem_write_int64(visited, HNSW_VISITED_OFF_CURRENT, 0i64));

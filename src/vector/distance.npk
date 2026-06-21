@@ -145,7 +145,7 @@ pub func:ip_simd = tfp64(wild tfp64->:a, wild tfp64->:b,
 // Computes: dot(a, b) / (sqrt(dot(a,a)) * sqrt(dot(b,b)))
 //
 // Fails with ERR_SIMD_DIM_MISMATCH if either magnitude is exactly 0.0tf.
-// The failure is surfaced as: fail((ERR_SIMD_DIM_MISMATCH) => tbb8)
+// The failure is surfaced as: fail((ERR_SIMD_DIM_MISMATCH) => tbb32)
 func:cosine_scalar = tfp64(wild tfp64->:a, wild tfp64->:b,
                             limit<valid_dim> int64:dim)
 {
@@ -161,8 +161,8 @@ func:cosine_scalar = tfp64(wild tfp64->:a, wild tfp64->:b,
         mag_b = mag_b + (bi * bi);
         i = i + 1i64;
     }
-    if (mag_a == 0.0tf) { fail((ERR_SIMD_DIM_MISMATCH) => tbb8); }
-    if (mag_b == 0.0tf) { fail((ERR_SIMD_DIM_MISMATCH) => tbb8); }
+    if (mag_a == 0.0tf) { fail((ERR_SIMD_DIM_MISMATCH) => tbb32); }
+    if (mag_b == 0.0tf) { fail((ERR_SIMD_DIM_MISMATCH) => tbb32); }
     tfp64:denom = tfp64_sqrt(mag_a) * tfp64_sqrt(mag_b);
     pass(dot / denom);
 };
@@ -211,8 +211,8 @@ pub func:cosine_simd = tfp64(wild tfp64->:a, wild tfp64->:b,
         i = i + 1i64;
     }
 
-    if (mag_a == 0.0tf) { fail((ERR_SIMD_DIM_MISMATCH) => tbb8); }
-    if (mag_b == 0.0tf) { fail((ERR_SIMD_DIM_MISMATCH) => tbb8); }
+    if (mag_a == 0.0tf) { fail((ERR_SIMD_DIM_MISMATCH) => tbb32); }
+    if (mag_b == 0.0tf) { fail((ERR_SIMD_DIM_MISMATCH) => tbb32); }
 
     tfp64:denom = tfp64_sqrt(mag_a) * tfp64_sqrt(mag_b);
     pass(dot / denom);

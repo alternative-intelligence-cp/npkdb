@@ -22,7 +22,7 @@ pub func:hnsw_search_layer = int64(
     
     int64:arena = hnsw_graph_get_arena(graph)  ? 0i64;
     int64:ep_node_ptr = hnsw_arena_get_node(arena, ep_slot, ep_gen)  ? 0i64;
-    if (ep_node_ptr == 0i64) { fail((ERR_HNSW_STALE_HANDLE) => tbb8); }
+    if (ep_node_ptr == 0i64) { fail((ERR_HNSW_STALE_HANDLE) => tbb32); }
 
     int64:ep_vec_offset = hnsw_node_get_vector_offset(ep_node_ptr)  ? 0i64;
     tfp64:ep_dist = hnsw_graph_distance(graph, query_offset, ep_vec_offset)  ? 0.0tf;

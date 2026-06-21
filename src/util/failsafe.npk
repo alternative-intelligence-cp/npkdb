@@ -17,11 +17,11 @@ pub func:failsafe = int32(tbb32:err) {
     string:msg = "NPKDB FATAL ERROR: Catastrophic failure. Shutting down.\n";
     int64:ptr = string_to_cstr(msg);
     int64:len = string_length(msg);
-    drop(sys!!(1i64, 2i64, ptr, len)); // sys_write
+    drop(sys(WRITE, 2i64, ptr, len)); // sys_write
     
     // 2. Attempt to unlock POSIX directory lock
     if (g_db_lock_fd >= 0i32) {
-        drop(sys!!(73i64, g_db_lock_fd => int64, 8i64)); // sys_flock(fd, LOCK_UN)
+        drop(sys(SYS_FLOCK, g_db_lock_fd => int64, 8i64)); // sys_flock(fd, LOCK_UN)
     }
     
     exit(1i32);

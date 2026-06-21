@@ -162,10 +162,10 @@ func:hnsw_pq_sift_down = int64(int64:pq, int64:index) requires (pq != 0i64), (in
 
 pub func:hnsw_pq_create = int64(int64:capacity, int64:is_max_heap) requires (capacity > 0i64) {
     int64:pq = npk_core_alloc(HNSW_PQ_HEADER_SIZE);
-    if (pq == 0i64) { fail((ERR_HNSW_OOM) => tbb8); }
+    if (pq == 0i64) { fail((ERR_HNSW_OOM) => tbb32); }
 
     int64:elems = npk_core_alloc(capacity * HNSW_PQ_CANDIDATE_SIZE);
-    if (elems == 0i64) { fail((ERR_HNSW_OOM) => tbb8); }
+    if (elems == 0i64) { fail((ERR_HNSW_OOM) => tbb32); }
 
     drop(npk_mem_write_int64(pq, HNSW_PQ_OFF_CAPACITY, capacity));
     drop(npk_mem_write_int64(pq, HNSW_PQ_OFF_SIZE, 0i64));
@@ -188,7 +188,7 @@ func:hnsw_pq_grow = int64(int64:pq) requires (pq != 0i64) {
     int64:old_elems = hnsw_pq_get_elements(pq)  ? 0i64;
     
     int64:new_elems = npk_core_alloc(new_capacity * HNSW_PQ_CANDIDATE_SIZE);
-    if (new_elems == 0i64) { fail((ERR_HNSW_OOM) => tbb8); }
+    if (new_elems == 0i64) { fail((ERR_HNSW_OOM) => tbb32); }
     
     int64:size = hnsw_pq_get_size(pq)  ? 0i64;
     if (size > 0i64) {

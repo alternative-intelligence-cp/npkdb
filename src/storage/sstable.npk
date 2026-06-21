@@ -368,7 +368,7 @@ pub func:sstable_load_block = int64(int64:reader, int64:block_num) {
     int64:blk_off = block_num * PAGE_SIZE;
     
     // sys(SYS_MMAP, addr, length, prot, flags, fd, offset)
-    int64:page = sys(9i64, 0i64, PAGE_SIZE, 1i64, 2i64, fd, blk_off) ? 0i64;
+    int64:page = sys(SYS_MMAP, 0i64, PAGE_SIZE, 1i64, 2i64, fd, blk_off) ? 0i64;
     pass(page);
 };
 
@@ -470,7 +470,7 @@ pub func:sstable_get = int64(int64:reader, string:key) {
         i = i + 1i64;
     }
     
-    drop(sys(11i64, page, PAGE_SIZE));
+    drop(sys(SYS_MUNMAP, page, PAGE_SIZE));
     pass(found_rec);
 };
 
@@ -508,7 +508,7 @@ pub func:sstable_iter_next = int64(int64:iter) {
                 pass(rec);
             }
         } else {
-            drop(sys(11i64, page, PAGE_SIZE));
+            drop(sys(SYS_MUNMAP, page, PAGE_SIZE));
             blk = blk + 1i64;
             if (blk >= db_cnt) {
                 drop(npk_mem_write_int64(iter, 24i64, 0i64));
@@ -528,7 +528,7 @@ pub func:sstable_iter_next = int64(int64:iter) {
 pub func:sstable_iter_destroy = NIL(int64:iter) {
     if (iter != 0i64) {
         int64:page = npk_mem_read_int64(iter, 24i64);
-        if (page != 0i64) { drop(sys(11i64, page, PAGE_SIZE)); }
+        if (page != 0i64) { drop(sys(SYS_MUNMAP, page, PAGE_SIZE)); }
         drop(npk_core_dalloc(iter));
     }
     pass(NIL);

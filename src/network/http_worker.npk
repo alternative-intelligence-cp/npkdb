@@ -32,7 +32,7 @@ pub func:http_worker_loop = int64(int64:arg_handle) {
         tv[1] = 0i64; // 0 microseconds
         int64:tv_ptr = asm!!!<int64>("x86_64", "movq $1, $0", "=r,r", tv);
         // SYS_SETSOCKOPT=54, SOL_SOCKET=1, SO_RCVTIMEO=20
-        drop(sys!!(54i64, client_fd, 1i64, 20i64, tv_ptr, 16i64));
+        drop(sys(SYS_SETSOCKOPT, client_fd, 1i64, 20i64, tv_ptr, 16i64));
         drop(npk_core_dalloc(((tv) => int64)));
         
         Request:req = _?!Server.read_req(client_fd);

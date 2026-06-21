@@ -20,7 +20,7 @@ pub func:hnsw_graph_create = int64(int64:arena_ptr, int64:vector_buf_ptr, int64:
     requires (arena_ptr != 0i64) {
     
     int64:graph = npk_core_alloc(HNSW_GRAPH_STRUCT_SIZE);
-    if (graph == 0i64) { fail((ERR_HNSW_OOM) => tbb8); }
+    if (graph == 0i64) { fail((ERR_HNSW_OOM) => tbb32); }
     
     drop(npk_mem_write_int64(graph, HNSW_GRAPH_OFF_ARENA, arena_ptr));
     drop(npk_mem_write_int64(graph, HNSW_GRAPH_OFF_VECTOR_BUF, vector_buf_ptr));
