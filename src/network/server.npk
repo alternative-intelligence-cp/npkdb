@@ -37,7 +37,7 @@ pub func:server_start = int32() {
     // Spawn worker pool
     int64:i = 0i64;
     while (i < workers) {
-        int64:t_handle = nitpick_libc_thread_spawn(@http_worker_start, global_http_channel);
+        int64:t_handle = nitpick_libc_thread_spawn(@http_worker_loop, global_http_channel);
         i = i + 1i64;
     }
     

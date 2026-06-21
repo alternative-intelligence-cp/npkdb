@@ -1,6 +1,6 @@
 // hnsw_pq.npk
 // Fixed-capacity Priority Queue for HNSW Candidate Nodes
-// Elements: { distance: float32, slot: int32, gen: int32 } (12 bytes)
+// Elements: { distance: flt32, slot: int32, gen: int32 } (12 bytes)
 // Implements both Min-Heap (is_max_heap = 0) and Max-Heap (is_max_heap = 1)
 
 use "../util/error_codes.npk".*;
@@ -38,8 +38,8 @@ pub func:hnsw_pq_get_candidate_ptr = int64(int64:pq, int64:index)
     pass(elems + (index * HNSW_PQ_CANDIDATE_SIZE));
 };
 
-pub func:hnsw_pq_get_dist = float32(int64:candidate_ptr) requires (candidate_ptr != 0i64) {
-    pass(((npk_mem_read_int32(candidate_ptr, 0i64) => float32)));
+pub func:hnsw_pq_get_dist = flt32(int64:candidate_ptr) requires (candidate_ptr != 0i64) {
+    pass(((npk_mem_read_int32(candidate_ptr, 0i64) => flt32)));
 };
 
 pub func:hnsw_pq_get_slot = int32(int64:candidate_ptr) requires (candidate_ptr != 0i64) {
@@ -50,7 +50,7 @@ pub func:hnsw_pq_get_gen = int32(int64:candidate_ptr) requires (candidate_ptr !=
     pass(npk_mem_read_int32(candidate_ptr, 8i64));
 };
 
-func:hnsw_pq_set_candidate = int64(int64:candidate_ptr, float32:dist, int32:slot, int32:gen) 
+func:hnsw_pq_set_candidate = int64(int64:candidate_ptr, flt32:dist, int32:slot, int32:gen) 
     requires (candidate_ptr != 0i64) {
     drop(npk_mem_write_int32(candidate_ptr, 0i64, ((dist) => int32)));
     drop(npk_mem_write_int32(candidate_ptr, 4i64, slot));
@@ -60,7 +60,7 @@ func:hnsw_pq_set_candidate = int64(int64:candidate_ptr, float32:dist, int32:slot
 
 func:hnsw_pq_copy_candidate = int64(int64:dst_ptr, int64:src_ptr) 
     requires (dst_ptr != 0i64), (src_ptr != 0i64) {
-    float32:dist = ((npk_mem_read_int32(src_ptr, 0i64) => float32));
+    flt32:dist = ((npk_mem_read_int32(src_ptr, 0i64) => flt32));
     int32:slot = hnsw_pq_get_slot(src_ptr)  ? 0i32;
     int32:gen = hnsw_pq_get_gen(src_ptr)   ? 0i32;
     drop(hnsw_pq_set_candidate(dst_ptr, dist, slot, gen));
@@ -69,8 +69,8 @@ func:hnsw_pq_copy_candidate = int64(int64:dst_ptr, int64:src_ptr)
 
 func:hnsw_pq_compare = int64(int64:pq, int64:ptr_a, int64:ptr_b) 
     requires (pq != 0i64), (ptr_a != 0i64), (ptr_b != 0i64) {
-    float32:dist_a = hnsw_pq_get_dist(ptr_a)  ? 0.0f32;
-    float32:dist_b = hnsw_pq_get_dist(ptr_b)  ? 0.0f32;
+    flt32:dist_a = hnsw_pq_get_dist(ptr_a)  ? 0.0f32;
+    flt32:dist_b = hnsw_pq_get_dist(ptr_b)  ? 0.0f32;
     int64:is_max = hnsw_pq_get_is_max(pq)   ? 0i64;
 
     // Return 1 if A should be above B in the heap.
@@ -204,7 +204,7 @@ func:hnsw_pq_grow = int64(int64:pq) requires (pq != 0i64) {
 };
 
 // Returns 0 on success.
-pub func:hnsw_pq_push = int64(int64:pq, float32:dist, int32:slot, int32:gen) requires (pq != 0i64) {
+pub func:hnsw_pq_push = int64(int64:pq, flt32:dist, int32:slot, int32:gen) requires (pq != 0i64) {
     int64:size = hnsw_pq_get_size(pq)      ? 0i64;
     int64:capacity = hnsw_pq_get_capacity(pq)  ? 0i64;
 

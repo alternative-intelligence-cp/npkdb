@@ -13,19 +13,13 @@ pub struct:JsonArena = {
 };
 
 pub func:json_arena_init = int64(int64:capacity) {
-    int64:arena_ptr = json_arena_alloc(state->arena_ptr, 24i64);
+    int64:arena_ptr = npk_core_alloc(24i64);
     if (arena_ptr == 0i64) { pass(0i64); }
-    
-    int64:data = json_arena_alloc(state->arena_ptr, capacity);
-    if (data == 0i64) {
-        drop(npk_core_dalloc(arena_ptr));
-        pass(0i64);
-    }
-    
+    int64:data = npk_core_alloc(capacity);
+    if (data == 0i64) { drop(npk_core_dalloc(arena_ptr)); pass(0i64); }
     drop(npk_mem_write_int64(arena_ptr, 0i64, data));
     drop(npk_mem_write_int64(arena_ptr, 8i64, capacity));
     drop(npk_mem_write_int64(arena_ptr, 16i64, 0i64));
-    
     pass(arena_ptr);
 };
 

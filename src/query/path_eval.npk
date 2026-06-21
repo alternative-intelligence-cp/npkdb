@@ -30,7 +30,7 @@ func:path_segment_len = int64(int64:path_ptr) {
 };
 
 pub func:eval_path = NpkJsonVal(int64:path_ptr, int64:doc_raw_ptr) {
-    NpkJsonVal->:doc = (doc_raw_ptr) => NpkJsonVal-;
+    NpkJsonVal->:doc = (doc_raw_ptr) => NpkJsonVal->;
     if (path_ptr == 0i64) {
         pass(raw json_make_null());
     }
