@@ -109,8 +109,8 @@ pub func:hnsw_graph_distance = tfp64(int64:graph, int64:vec1_offset, int64:vec2_
     int64:ptr1 = vec_buf + vec1_offset;
     int64:ptr2 = vec_buf + vec2_offset;
     
-    tfp64->:t1 = @cast_unchecked<tfp64->>(ptr1);
-    tfp64->:t2 = @cast_unchecked<tfp64->>(ptr2);
+    tfp64->:t1 = ((ptr1) => tfp64->);
+    tfp64->:t2 = ((ptr2) => tfp64->);
     
     pass(l2sq_simd_pub(t1, t2, dim));
 };

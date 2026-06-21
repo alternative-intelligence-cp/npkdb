@@ -301,13 +301,18 @@ pub func:sstable_open_read = int64(string:path) {
     drop(npk_core_dalloc(bloom_buf));
     
     // Alloc 48-byte reader struct
-    int64:reader = npk_core_alloc(48i64);
+    int64:reader = npk_core_alloc(64i64);
     drop(npk_mem_write_int64(reader, 0i64, fd));
     drop(npk_mem_write_int64(reader, 8i64, db_cnt));
     drop(npk_mem_write_int64(reader, 16i64, idx_off));
     drop(npk_mem_write_int64(reader, 24i64, t_keys));
     drop(npk_mem_write_int64(reader, 32i64, index_page));
     drop(npk_mem_write_int64(reader, 40i64, bloom));
+    
+    int64:file_sz = sys(LSEEK, fd, 0i64, 2i64) ? -1i64; // SEEK_END
+    int64:base_ptr = sys(SYS_MMAP, 0i64, file_sz, 1i64, 2i64, fd, 0i64) ? 0i64;
+    drop(npk_mem_write_int64(reader, 48i64, base_ptr));
+    drop(npk_mem_write_int64(reader, 56i64, file_sz));
     
     pass(reader);
 };
@@ -318,6 +323,11 @@ pub func:sstable_close_read = NIL(int64:reader) {
         int64:index_page = npk_mem_read_int64(reader, 32i64);
         int64:bloom = npk_mem_read_int64(reader, 40i64);
         
+        int64:base_ptr = npk_mem_read_int64(reader, 48i64);
+        int64:file_sz = npk_mem_read_int64(reader, 56i64);
+        if (base_ptr != 0i64) {
+            drop(sys(SYS_MUNMAP, base_ptr, file_sz));
+        }
         drop(sys(CLOSE, fd));
         drop(page_free(index_page));
         if (bloom != 0i64) { drop(bloom_destroy(bloom)); }
@@ -364,12 +374,10 @@ pub func:sstable_find_block = int64(int64:reader, string:key) {
 };
 
 pub func:sstable_load_block = int64(int64:reader, int64:block_num) {
-    int64:fd = npk_mem_read_int64(reader, 0i64);
+    int64:base_ptr = npk_mem_read_int64(reader, 48i64);
+    if (base_ptr == 0i64) { pass(0i64); }
     int64:blk_off = block_num * PAGE_SIZE;
-    
-    // sys(SYS_MMAP, addr, length, prot, flags, fd, offset)
-    int64:page = sys(SYS_MMAP, 0i64, PAGE_SIZE, 1i64, 2i64, fd, blk_off) ? 0i64;
-    pass(page);
+    pass(base_ptr + blk_off);
 };
 
 // Record struct (40 bytes):
@@ -470,7 +478,6 @@ pub func:sstable_get = int64(int64:reader, string:key) {
         i = i + 1i64;
     }
     
-    drop(sys(SYS_MUNMAP, page, PAGE_SIZE));
     pass(found_rec);
 };
 
@@ -508,8 +515,7 @@ pub func:sstable_iter_next = int64(int64:iter) {
                 pass(rec);
             }
         } else {
-            drop(sys(SYS_MUNMAP, page, PAGE_SIZE));
-            blk = blk + 1i64;
+                    blk = blk + 1i64;
             if (blk >= db_cnt) {
                 drop(npk_mem_write_int64(iter, 24i64, 0i64));
                 break;
@@ -528,7 +534,6 @@ pub func:sstable_iter_next = int64(int64:iter) {
 pub func:sstable_iter_destroy = NIL(int64:iter) {
     if (iter != 0i64) {
         int64:page = npk_mem_read_int64(iter, 24i64);
-        if (page != 0i64) { drop(sys(SYS_MUNMAP, page, PAGE_SIZE)); }
         drop(npk_core_dalloc(iter));
     }
     pass(NIL);
