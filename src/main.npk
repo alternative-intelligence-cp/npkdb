@@ -46,15 +46,6 @@ func:main = int32(int32:argc, wild any->:argv) {
     global_doc_store = npk_core_alloc(10000i64 * 8i64);
     global_rand_state = npk_core_alloc(8i64);
     drop(npk_mem_write_int64(global_rand_state, 0i64, 12345i64));
-    global_visited_set = _?!hnsw_visited_create(10000i64);
-    
-    global_arena = _?!hnsw_arena_create(10000i64, 1i16);
-    global_vec_buf = npk_core_alloc(10000i64 * 128i64 * 8i64);
-    global_graph = _?!hnsw_graph_create(global_arena, global_vec_buf, 128i64, 16i32, 32i32, 100i32, 0.5f64);
-    global_doc_store = npk_core_alloc(10000i64 * 8i64);
-    global_rand_state = npk_core_alloc(8i64);
-    drop(npk_mem_write_int64(global_rand_state, 0i64, 12345i64));
-    global_visited_set = _?!hnsw_visited_create(10000i64);
     
     int32:server_res = _?!server_start();
     if (server_res != 0i32) {

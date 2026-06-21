@@ -32,6 +32,7 @@ pub func:controller_create_collection = int32(int64:client_fd, Request:req) {
 extern "nitpick_libc_thread" {
     func:nitpick_libc_rwlock_create    = int64();
     func:nitpick_libc_rwlock_wrlock    = int32(int64:handle);
+    func:nitpick_libc_rwlock_rdlock    = int32(int64:handle);
     func:nitpick_libc_rwlock_unlock    = int32(int64:handle);
     func:npk_shim_atomic_int64_create  = int64(int64:initial);
     func:npk_shim_atomic_int64_fetch_add = int64(int64:handle, int64:value, int32:order);
@@ -44,7 +45,6 @@ pub int64:global_arena = 0i64;
 pub int64:global_vec_buf = 0i64;
 pub int64:global_doc_store = 0i64;
 pub int64:global_rand_state = 0i64;
-pub int64:global_visited_set = 0i64;
 
 pub func:controller_insert = int32(int64:client_fd, Request:req, string:collection_name) {
     int64:arena = json_arena_init(1048576i64); // 1 MB limit
@@ -106,6 +106,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
                                     
                                     int64:ctr = npk_shim_atomic_int64_fetch_add(global_insert_counter, 1i64, 5i32);
                                     if (ctr >= 10000i64) {
+                                        drop(npk_shim_atomic_int64_fetch_add(global_insert_counter, -1i64, 5i32));
                                         _?!Server.send_typed(client_fd, 507i64, "application/json", "{\"error\":\"Database capacity reached\"}");
                                         pass(0i32);
                                     }
@@ -172,9 +173,14 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
                                         
                                         if (has_vector) {
                                             // Store doc in global doc_store
-                                            drop(npk_mem_write_int64(global_doc_store, ctr * 8i64, doc_buf));
-                                            drop(nitpick_libc_rwlock_wrlock(global_catalog_lock));
-                                            _?!hnsw_insert(global_graph, vec_offset, global_rand_state, global_visited_set);
+                                            int64:persistent_doc = npk_core_alloc(doc_len);
+                                            drop(npk_mem_copy(persistent_doc, doc_buf, doc_len));
+                                            drop(npk_mem_write_int64(global_doc_store, ctr * 8i64, persistent_doc));
+                                            
+                                            drop(nitpick_libc_rwlock_rdlock(global_catalog_lock));
+                                            int64:local_visited = _?!hnsw_visited_create(10000i64);
+                                            _?!hnsw_insert(global_graph, vec_offset, global_rand_state, local_visited);
+                                            drop(hnsw_visited_destroy(local_visited));
                                             drop(nitpick_libc_rwlock_unlock(global_catalog_lock));
                                         }
                                                                             }
@@ -293,7 +299,7 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
         pass(ERR_QUERY_PARSE_FAILED);
     }
     
-    drop(nitpick_libc_rwlock_wrlock(global_catalog_lock));
+    drop(nitpick_libc_rwlock_rdlock(global_catalog_lock));
     defer { _?nitpick_libc_rwlock_unlock(global_catalog_lock); }
     
     int64:ep_node_ptr = hnsw_graph_get_entry_point(global_graph) ? 0i64;
@@ -305,6 +311,9 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
         ep_gen = hnsw_node_get_generation(ep_node_ptr) ? 0i32;
     }
     
+    int64:visited_set = _?!hnsw_visited_create(10000i64);
+    defer { _?hnsw_visited_destroy(visited_set); }
+    
     int64:res_pq = hnsw_search_layer(
         arena, 
         global_graph, 
@@ -313,12 +322,11 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
         ep_gen, 
         (k) => int32, 
         0i32, 
-        global_visited_set, 
+        visited_set, 
         filter_ast, 
         global_doc_store
     ) ? 0i64;
     
-    drop(hnsw_visited_clear(global_visited_set));
     
     if (res_pq == 0i64) {
         _?!Server.send_typed(client_fd, 200i64, "application/json", "{\"status\": \"ok\", \"results\": []}");

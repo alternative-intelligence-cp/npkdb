@@ -76,7 +76,6 @@ pub func:wp_init = int64(string:data_dir, string:wal_path, ?->:worker_fn, string
 pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
     int64:lock = npk_mem_read_int64(wp, WP_OFF_LOCK);
     drop(nitpick_libc_rwlock_wrlock(lock));
-    defer { _?nitpick_libc_rwlock_unlock(lock); }
     int64:wal_fd = npk_mem_read_int64(wp, WP_OFF_WAL_FD);
     int64:active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
     
@@ -138,18 +137,19 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
     }
     
     if (w_res <= 0i64) {
+        drop(nitpick_libc_rwlock_unlock(lock));
         pass(-1i64); // WAL failed
     }
     
     // 3. Write to Memtable
     int64:m_res = mt_put(active_mt, key, val_ptr, val_len) ? -1i64;
+    drop(nitpick_libc_rwlock_unlock(lock));
     pass(m_res);
 };
 
 pub func:wp_delete = int64(int64:wp, string:key) {
     int64:lock = npk_mem_read_int64(wp, WP_OFF_LOCK);
     drop(nitpick_libc_rwlock_wrlock(lock));
-    defer { _?nitpick_libc_rwlock_unlock(lock); }
     int64:wal_fd = npk_mem_read_int64(wp, WP_OFF_WAL_FD);
     int64:active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
     
@@ -170,10 +170,12 @@ pub func:wp_delete = int64(int64:wp, string:key) {
     }
     
     if (w_res <= 0i64) {
+        drop(nitpick_libc_rwlock_unlock(lock));
         pass(-1i64);
     }
     
     int64:m_res = mt_delete(active_mt, key) ? -1i64;
+    drop(nitpick_libc_rwlock_unlock(lock));
     pass(m_res);
 };
 
