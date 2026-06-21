@@ -1,0 +1,10 @@
+pub func:main = int32() {
+    int64:timespec = npk_core_alloc(16i64);
+    drop(sys(228i64, 0i64, timespec));
+    int64:sec = npk_mem_read_int64(timespec, 0i64);
+    int64:nsec = npk_mem_read_int64(timespec, 8i64);
+    drop(npk_core_dalloc(timespec));
+    int64:now = (sec * 1000000i64) + (nsec / 1000i64);
+    println("Time: " + string_from_int(now));
+    pass(0i32);
+};

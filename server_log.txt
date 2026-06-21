@@ -1,0 +1,12 @@
+NPKDB v0.3.11 starting...
+DEBUG: npk_uhash_new called, cap=4096, returning 0x57e35f63b9c0
+DEBUG: npk_uhash_set called with handle=96634069563840, key=server.http_port
+DEBUG: npk_uhash_set called with handle=96634069563840, key=server.max_threads
+DEBUG: npk_uhash_set called with handle=96634069563840, key=storage.memtable_flush_bytes
+DEBUG: npk_uhash_set called with handle=96634069563840, key=vector.hnsw_m
+DEBUG: npk_uhash_set called with handle=96634069563840, key=vector.hnsw_ef_construction
+Replayed 21 records from WAL.
+Initializing HTTP server with 2 workers...
+HTTP Worker started (ID: 137824475014848)
+Server listening on port 8080
+HTTP Worker started (ID: 137824466622144)

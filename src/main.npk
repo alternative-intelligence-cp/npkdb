@@ -28,7 +28,7 @@ func:main = int32(int32:argc, wild any->:argv) {
     global_insert_counter = npk_shim_atomic_int64_create(0i64);
     
     // Initialize storage engine
-    global_wp = raw wp_init("data/", "wal.log", @compaction_worker_shim, "per_write");
+    global_wp = raw wp_init("data/", "wal.log", @compaction_worker_shim, "group_commit");
     if (global_wp == 0i64) {
         println("Failed to initialize storage engine!");
         exit(1i32);

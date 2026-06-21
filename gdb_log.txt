@@ -1,0 +1,31 @@
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+NPKDB v0.3.11 starting...
+DEBUG: npk_uhash_new called, cap=4096, returning 0x555559e849c0
+DEBUG: npk_uhash_set called with handle=93825068976576, key=server.http_port
+DEBUG: npk_uhash_set called with handle=93825068976576, key=server.max_threads
+DEBUG: npk_uhash_set called with handle=93825068976576, key=storage.memtable_flush_bytes
+DEBUG: npk_uhash_set called with handle=93825068976576, key=vector.hnsw_m
+DEBUG: npk_uhash_set called with handle=93825068976576, key=vector.hnsw_ef_construction
+Replayed 21 records from WAL.
+Initializing HTTP server with 2 workers...[New Thread 0x7ffff37ff6c0 (LWP 347517)]
+
+[New Thread 0x7ffff2ffe6c0 (LWP 347518)]
+HTTP Worker started (ID: 140737270245056)
+[New Thread 0x7ffff27fd6c0 (LWP 347519)]
+HTTP Worker started (ID: 140737261852352)
+Server listening on port 8080
+DEBUG: content_len=7738790 total_expected=7739016 bytes_read=127202
+DEBUG: route_request METHOD=[PUT] PATH=[/collections/default/docs]
+
+Thread 3 "npkdb_server" received signal SIGSEGV, Segmentation fault.
+[Switching to Thread 0x7ffff2ffe6c0 (LWP 347518)]
+0x000055555558a234 in npk_mem_read_byte ()
+#0  0x000055555558a234 in npk_mem_read_byte ()
+#1  0x000055555555a0bb in mem_primitives.npk_mem_read_string ()
+#2  0x0000555555562760 in controllers.controller_insert ()
+#3  0x0000555555562cae in router.route_request ()
+#4  0x0000555555562f8d in __thunk_http_worker_shim ()
+#5  0x00005555555b28c4 in thread_trampoline ()
+#6  0x00007ffff789caa4 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#7  0x00007ffff7929c6c in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78

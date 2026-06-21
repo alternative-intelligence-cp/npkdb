@@ -101,15 +101,35 @@ pub func:hnsw_graph_get_mL = float64(int64:graph) requires (graph != 0i64) {
 // ── Distance Calculation ────────────────────────────────────────────────────
 
 func:simd_l2_f32 = float32(int64:a, int64:b, int64:dim) {
-    int64:i = 0i64;
-    float32:dist = 0.0f32;
-    when (i < dim) {
-        float32:va = @cast_unchecked<float32>(npk_mem_read_int32(a, i * 4i64));
-        float32:vb = @cast_unchecked<float32>(npk_mem_read_int32(b, i * 4i64));
+    float32->:ptr_a = @cast_unchecked<float32->>(a);
+    float32->:ptr_b = @cast_unchecked<float32->>(b);
+    
+    int64:simd_iters = dim / 16i64;
+    int64:tail_start = simd_iters * 16i64;
+    
+    simd<float32, 16>:acc_vec = simd_splat(0.0f32, 16i64);
+    
+    int64:iter = 0i64;
+    while (iter < simd_iters) {
+        int64:idx = iter * 16i64;
+        simd<float32, 16>:va = simd_load(@ptr_add<float32>(ptr_a, idx), 16i64);
+        simd<float32, 16>:vb = simd_load(@ptr_add<float32>(ptr_b, idx), 16i64);
+        simd<float32, 16>:vd = va - vb;
+        acc_vec = acc_vec + vd * vd;
+        iter = iter + 1i64;
+    }
+    
+    float32:dist = simd_sum(acc_vec);
+    
+    int64:i = tail_start;
+    while (i < dim) {
+        float32:va = ptr_a[i];
+        float32:vb = ptr_b[i];
         float32:diff = va - vb;
         dist = dist + (diff * diff);
         i = i + 1i64;
     }
+    
     pass(dist);
 };
 

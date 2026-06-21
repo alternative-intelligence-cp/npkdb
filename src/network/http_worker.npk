@@ -37,6 +37,9 @@ pub func:http_worker_loop = int64(int64:arg_handle) {
         
         Request:req = raw Server.read_req(client_fd);
         drop(route_request(client_fd, req));
+        if (req.buf_addr != 0i64) {
+            drop(npk_core_dalloc(req.buf_addr));
+        }
         drop(raw Server.close_cli(client_fd));
     }
     

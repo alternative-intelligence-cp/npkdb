@@ -7,6 +7,8 @@ pub func:route_request = int32(int64:client_fd, Request:req) {
     string:method = req.method;
     string:path = req.path;
     
+    println("DEBUG: route_request METHOD=[" + method + "] PATH=[" + path + "]");
+    
     if (method == "POST" && path == "/collections") {
         pass(controller_create_collection(client_fd, req));
     } else if (method == "POST" && path == "/search") {
@@ -26,6 +28,7 @@ pub func:route_request = int32(int64:client_fd, Request:req) {
     }
     
     // Not found
-    drop(raw Server.send_typed(client_fd, 404i64, "application/json", "{\"error\": \"not found\"}"));
+    string:err_json = "{\"error\": \"not found: method=" + method + " path=" + path + "\"}";
+    drop(raw Server.send_typed(client_fd, 404i64, "application/json", err_json));
     pass(0i32);
 };

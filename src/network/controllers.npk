@@ -5,6 +5,7 @@ use "../document/json_types.npk".*;
 use "../util/error_codes.npk".*;
 use "errors.npk".*;
 use "../storage/write_path.npk".*;
+use "../storage/wal.npk".*;
 use "../document/json_serializer.npk".*;
 use "rwlock.npk".*;
 use "atomic.npk".*;
@@ -105,6 +106,13 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
             }
         }
         i = i + 1i64;
+    }
+    
+    // Explicit flush for group commit batching
+    int64:sync_mode = npk_mem_read_int64(global_wp, 48i64);
+    if (sync_mode == 1i64) {
+        int64:wal_fd = npk_mem_read_int64(global_wp, 0i64);
+        drop(wal_batch_flush(wal_fd));
     }
     
     // Success

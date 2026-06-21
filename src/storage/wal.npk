@@ -7,7 +7,7 @@ use "../document/json_serializer.npk".*;
 use "memtable.npk".*;
 use "sys.npk".*;
 
-pub fixed int64:WAL_GROUP_MAX_RECORDS = 32i64;
+pub fixed int64:WAL_GROUP_MAX_RECORDS = 1000i64;
 pub fixed int64:WAL_GROUP_WINDOW_US   = 1000i64; // 1ms
 
 int64:wal_state_ptr = 0i64;
@@ -150,13 +150,14 @@ pub func:wal_append_checkpoint = int64(int64:wal_fd, int64:seq) {
 
 pub func:wal_enable_group_commit = NIL(int64:wal_fd) {
     if (wal_state_ptr == 0i64) {
-        wal_state_ptr = npk_core_alloc(40i64);
+        wal_state_ptr = npk_core_alloc(48i64);
         int64:initial_cap = 65536i64;
         drop(npk_mem_write_int64(wal_state_ptr, 0i64, npk_core_alloc(initial_cap)));
         drop(npk_mem_write_int64(wal_state_ptr, 8i64, 0i64));
         drop(npk_mem_write_int64(wal_state_ptr, 16i64, initial_cap));
         drop(npk_mem_write_int64(wal_state_ptr, 24i64, 0i64));
         drop(npk_mem_write_int64(wal_state_ptr, 32i64, 0i64));
+        drop(npk_mem_write_int64(wal_state_ptr, 40i64, npk_core_alloc(16i64)));
     }
     wal_group_mode = 1i64;
     pass(NIL);
@@ -187,9 +188,19 @@ pub func:wal_batch_should_flush = int64(int64:wal_fd) {
     if (record_count >= WAL_GROUP_MAX_RECORDS) { pass(1i64); }
     
     int64:last_sync = npk_mem_read_int64(wal_state_ptr, 32i64);
-    int64:now = 0i64;
+    int64:timespec = npk_mem_read_int64(wal_state_ptr, 40i64);
+    drop(sys!!(228i64, 0i64, timespec));
+    int64:sec = npk_mem_read_int64(timespec, 0i64);
+    int64:nsec = npk_mem_read_int64(timespec, 8i64);
+    int64:now = (sec * 1000000i64) + (nsec / 1000i64);
+    
+    if (last_sync == 0i64) {
+        drop(npk_mem_write_int64(wal_state_ptr, 32i64, now));
+        pass(0i64);
+    }
+    
     int64:diff = now - last_sync;
-    if (diff >= (WAL_GROUP_WINDOW_US * 1000i64)) { pass(1i64); }
+    if (diff >= WAL_GROUP_WINDOW_US) { pass(1i64); }
     
     pass(0i64);
 };
