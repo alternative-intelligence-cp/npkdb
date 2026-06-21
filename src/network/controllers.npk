@@ -102,7 +102,12 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
                                         payload: npk_mem_read_int64(elem_ptr, 8i64)
                                     };
                                     
+                                    
                                     int64:ctr = npk_shim_atomic_int64_fetch_add(global_insert_counter, 1i64, 5i32);
+                                    if (ctr >= 10000i64) {
+                                        _?!Server.send_typed(client_fd, 507i64, "application/json", "{\"error\":\"Database capacity reached\"}");
+                                        pass(0i32);
+                                    }
                                     string:tmp1 = string_concat(collection_name, "_");
                                     string:tmp2 = string_from_int(ctr);
                                     string:key = string_concat(tmp1, tmp2);
@@ -112,7 +117,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
                                     Result<int64>:buf_res = serialize_document(@elem, len_out);
                                     if (!buf_res.is_error) {
                                         int64:doc_buf = buf_res.value;
-                                        defer { _?npk_core_dalloc(doc_buf); }
+                                        // removed defer doc_buf
                                         int64:doc_len = npk_mem_read_int64(len_out, 0i64);
                                         
                                                                                 _?!wp_put(global_wp, key, doc_buf, doc_len);
@@ -166,7 +171,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
                                         
                                         if (has_vector) {
                                             // Store doc in global doc_store
-                                            drop(npk_mem_write_int64(global_doc_store, ctr * 8i64, elem_ptr));
+                                            drop(npk_mem_write_int64(global_doc_store, ctr * 8i64, doc_buf));
                                             drop(nitpick_libc_rwlock_wrlock(global_catalog_lock));
                                             _?!hnsw_insert(global_graph, vec_offset, global_rand_state, global_visited_set);
                                             drop(nitpick_libc_rwlock_unlock(global_catalog_lock));
