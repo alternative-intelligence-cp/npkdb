@@ -27,6 +27,27 @@ pub func:catalog_init = int32() {
 };
 
 pub func:catalog_create_collection = int64(string:name) {
+    int64:name_len = string_length(name);
+    int64:name_ptr = string_to_cstr(name);
+    int64:i = 0i64;
+    int64:bad = 0i64;
+    while (i < name_len) {
+        int8:c = @cast_unchecked<int8>((npk_mem_read_byte(name_ptr, i)) => int8);
+        if (c == 47i8) { bad = 1i64; break; } // '/'
+        if (c == 92i8) { bad = 1i64; break; } // '\\'
+        if (c == 46i8) {
+            if (i + 1i64 < name_len) {
+                int8:next_c = @cast_unchecked<int8>((npk_mem_read_byte(name_ptr, i + 1i64)) => int8);
+                if (next_c == 46i8) { bad = 1i64; break; } // '..'
+            }
+        }
+        i = i + 1i64;
+    }
+    drop(npk_core_dalloc(name_ptr));
+    if (bad == 1i64) {
+        pass(0i64);
+    }
+
     drop(nitpick_libc_rwlock_wrlock(g_catalog_rwlock));
     
     // Check if exists

@@ -14,15 +14,14 @@ int64:wal_state_ptr = 0i64;
 int64:wal_group_mode = 0i64; // 0 = per_write, 1 = group_commit
 
 // Global sequence counter
-int64:wal_sequence = 0i64;
+atomic<int64>:wal_sequence = atomic_new(0i64);
 
 pub func:wal_next_seq = int64() {
-    wal_sequence = wal_sequence + 1i64;
-    pass(wal_sequence);
+    pass(wal_sequence.fetch_add(1i64));
 };
 
 pub func:wal_current_seq = int64() {
-    pass(wal_sequence);
+    pass(wal_sequence.load());
 };
 
 pub func:wal_open = int64(string:path) {

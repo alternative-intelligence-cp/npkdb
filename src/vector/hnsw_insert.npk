@@ -59,7 +59,7 @@ pub func:hnsw_select_neighbors = int64(
     
     when ((hnsw_pq_get_size(W_pq) ? 0i64) > 0i64) {
         drop(hnsw_pq_pop(W_pq, C));
-        float32:dist = hnsw_pq_get_dist(C)  ? 0.0f32;
+        tfp64:dist = hnsw_pq_get_dist(C)  ? 0.0tf;
         int32:slot = hnsw_pq_get_slot(C)  ? 0i32;
         int32:gen = hnsw_pq_get_gen(C)   ? 0i32;
         drop(hnsw_pq_push(min_heap, dist, slot, gen));
@@ -70,7 +70,7 @@ pub func:hnsw_select_neighbors = int64(
 
     when ((hnsw_pq_get_size(min_heap) ? 0i64) > 0i64) {
         drop(hnsw_pq_pop(min_heap, C));
-        float32:c_dist = hnsw_pq_get_dist(C)  ? 0.0f32;
+        tfp64:c_dist = hnsw_pq_get_dist(C)  ? 0.0tf;
         int32:c_slot = hnsw_pq_get_slot(C)  ? 0i32;
         int32:c_gen = hnsw_pq_get_gen(C)   ? 0i32;
 
@@ -93,7 +93,7 @@ pub func:hnsw_select_neighbors = int64(
             int64:r_node = hnsw_arena_get_node(arena, r_slot, r_gen)  ? 0i64;
             if (r_node != 0i64) {
                 int64:r_vec = hnsw_node_get_vector_offset(r_node)  ? 0i64;
-                float32:dist_cr = hnsw_graph_distance(graph, c_vec, r_vec)  ? 0.0f32;
+                tfp64:dist_cr = hnsw_graph_distance(graph, c_vec, r_vec)  ? 0.0tf;
                 if (dist_cr < c_dist) {
                     good = false;
                     break;
@@ -139,7 +139,7 @@ func:hnsw_shrink_connections = int64(
         int64:c_node = hnsw_arena_get_node(arena, c_slot, c_gen)  ? 0i64;
         if (c_node != 0i64) {
             int64:c_vec = hnsw_node_get_vector_offset(c_node)  ? 0i64;
-            float32:dist = hnsw_graph_distance(graph, n_vec, c_vec)  ? 0.0f32;
+            tfp64:dist = hnsw_graph_distance(graph, n_vec, c_vec)  ? 0.0tf;
             drop(hnsw_pq_push(W, dist, c_slot, c_gen));
         }
         i = i + 1i64;
@@ -148,7 +148,7 @@ func:hnsw_shrink_connections = int64(
     int64:new_node = hnsw_arena_get_node(arena, new_slot, new_gen)  ? 0i64;
     if (new_node != 0i64) {
         int64:new_vec = hnsw_node_get_vector_offset(new_node)  ? 0i64;
-        float32:dist = hnsw_graph_distance(graph, n_vec, new_vec)  ? 0.0f32;
+        tfp64:dist = hnsw_graph_distance(graph, n_vec, new_vec)  ? 0.0tf;
         drop(hnsw_pq_push(W, dist, new_slot, new_gen));
     }
 
@@ -276,12 +276,12 @@ pub func:hnsw_insert = int64(
 
         if (n_size > 0i64) {
             int64:min_idx = -1i64;
-            float32:min_dist = 999999999.0f32;
+            tfp64:min_dist = 999999999.0f32;
             int64:j = 0i64;
             int64:r_elems = hnsw_pq_get_elements(neighbors)  ? 0i64;
             when (j < n_size) {
                 int64:r_ptr = r_elems + (j * HNSW_PQ_CANDIDATE_SIZE);
-                float32:d = hnsw_pq_get_dist(r_ptr)  ? 0.0f32;
+                tfp64:d = hnsw_pq_get_dist(r_ptr)  ? 0.0tf;
                 if (d < min_dist) {
                     min_dist = d;
                     min_idx = j;

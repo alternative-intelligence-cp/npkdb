@@ -23,7 +23,16 @@ pub fixed int64:WP_OFF_COUNTER  = 24i64;
 pub fixed int64:WP_OFF_LM       = 32i64;
 pub fixed int64:WP_OFF_WORKER   = 40i64; // Contains {channel, thread, ctx} pointer
 pub fixed int64:WP_OFF_SYNC_MODE= 48i64; // 0 = per_write, 1 = group_commit
-pub fixed int64:WP_STATE_SIZE   = 56i64;
+pub fixed int64:WP_OFF_LOCK       = 56i64;
+pub fixed int64:WP_STATE_SIZE   = 64i64;
+
+extern "nitpick_libc_thread" {
+    func:nitpick_libc_rwlock_create    = int64();
+    func:nitpick_libc_rwlock_wrlock    = int32(int64:handle);
+    func:nitpick_libc_rwlock_unlock    = int32(int64:handle);
+}
+
+
 
 pub int64:global_wp = 0i64;
 
@@ -59,11 +68,15 @@ pub func:wp_init = int64(string:data_dir, string:wal_path, ?->:worker_fn, string
         drop(wal_enable_group_commit(wal_fd));
     }
     drop(npk_mem_write_int64(wp, WP_OFF_SYNC_MODE, mode));
+    drop(npk_mem_write_int64(wp, WP_OFF_LOCK, nitpick_libc_rwlock_create()));
     
     pass(wp);
 };
 
 pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
+    int64:lock = npk_mem_read_int64(wp, WP_OFF_LOCK);
+    drop(nitpick_libc_rwlock_wrlock(lock));
+    defer _?nitpick_libc_rwlock_unlock(lock);
     int64:wal_fd = npk_mem_read_int64(wp, WP_OFF_WAL_FD);
     int64:active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
     
@@ -130,6 +143,9 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
 };
 
 pub func:wp_delete = int64(int64:wp, string:key) {
+    int64:lock = npk_mem_read_int64(wp, WP_OFF_LOCK);
+    drop(nitpick_libc_rwlock_wrlock(lock));
+    defer _?nitpick_libc_rwlock_unlock(lock);
     int64:wal_fd = npk_mem_read_int64(wp, WP_OFF_WAL_FD);
     int64:active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
     
