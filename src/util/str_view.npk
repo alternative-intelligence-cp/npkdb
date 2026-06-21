@@ -1,0 +1,13 @@
+// str_view.npk — Zero-copy string bounds
+
+pub struct:StrView = {
+    int64:ptr;
+    int64:len;
+};
+
+pub struct:PrefixExtraction = {
+    int32:has_prefix;
+    int32:padding; // 4 byte padding for alignment
+    int64:ptr;     // equivalent to StrView:prefix inline
+    int64:len;
+};

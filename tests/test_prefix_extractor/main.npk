@@ -1,0 +1,8 @@
+use "../../src/util/failsafe.npk".*;
+use "../../src/regex/ast_types.npk".*;
+use "../../src/util/str_view.npk".*;
+use "../../src/regex/prefix_extractor.npk".*;
+
+pub func:main = int32() {
+    exit(0);
+};
