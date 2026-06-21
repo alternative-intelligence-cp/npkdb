@@ -51,62 +51,13 @@ pub func:json_arena_destroy = NIL(int64:arena_ptr) {
 };
 
 
-pub struct:JsonArena = {
-    int64:data;     // Address of memory block
-    int64:capacity; // Total capacity
-    int64:cursor;   // Current allocation offset
-};
 
-pub func:json_arena_init = int64(int64:capacity) {
-    int64:arena_ptr = json_arena_alloc(state->arena_ptr, 24i64);
-    if (arena_ptr == 0i64) { pass(0i64); }
-    
-    int64:data = json_arena_alloc(state->arena_ptr, capacity);
-    if (data == 0i64) {
-        drop(npk_core_dalloc(arena_ptr));
-        pass(0i64);
-    }
-    
-    drop(npk_mem_write_int64(arena_ptr, 0i64, data));
-    drop(npk_mem_write_int64(arena_ptr, 8i64, capacity));
-    drop(npk_mem_write_int64(arena_ptr, 16i64, 0i64));
-    
-    pass(arena_ptr);
-};
-
-pub func:json_arena_alloc = int64(int64:arena_ptr, int64:size) {
-    int64:capacity = npk_mem_read_int64(arena_ptr, 8i64);
-    int64:cursor   = npk_mem_read_int64(arena_ptr, 16i64);
-    
-    int64:aligned_size = size;
-    int64:rem = size % 8i64;
-    if (rem != 0i64) {
-        aligned_size = size + (8i64 - rem);
-    }
-    
-    if (cursor + aligned_size > capacity) { pass(0i64); }
-    
-    int64:data = npk_mem_read_int64(arena_ptr, 0i64);
-    int64:alloc_ptr = data + cursor;
-    drop(npk_mem_write_int64(arena_ptr, 16i64, cursor + aligned_size));
-    
-    drop(npk_mem_set(alloc_ptr, 0i64, aligned_size));
-    pass(alloc_ptr);
-};
-
-pub func:json_arena_destroy = NIL(int64:arena_ptr) {
-    int64:data = npk_mem_read_int64(arena_ptr, 0i64);
-    if (data != 0i64) { drop(npk_core_dalloc(data)); }
-    drop(npk_core_dalloc(arena_ptr));
-    pass(NIL);
-};
 
 pub struct:ParserState = {
     int64:buf;
     int64:length;
     int64:pos;
     int64:depth;
-    int64:arena_ptr;
     int64:arena_ptr;
 };
 

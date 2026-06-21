@@ -16,7 +16,7 @@ pub func:filter_eval = bool(
 {
     prove vec_id >= 0i64;
     prove vec_id < num_vectors;
-    bool:result = (((filter_fn_ptr) => func<bool(int64)>))(vec_id);
+    bool:result = (filter_fn_ptr => (bool)(int64))(vec_id);
     pass(result);
 };
 

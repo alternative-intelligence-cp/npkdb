@@ -310,7 +310,7 @@ pub func:sstable_open_read = int64(string:path) {
     drop(npk_mem_write_int64(reader, 40i64, bloom));
     
     int64:file_sz = sys(LSEEK, fd, 0i64, 2i64) ? -1i64; // SEEK_END
-    int64:base_ptr = sys(SYS_MMAP, 0i64, file_sz, 1i64, 2i64, fd, 0i64) ? 0i64;
+    int64:base_ptr = sys(MMAP, 0i64, file_sz, 1i64, 2i64, fd, 0i64) ? 0i64;
     drop(npk_mem_write_int64(reader, 48i64, base_ptr));
     drop(npk_mem_write_int64(reader, 56i64, file_sz));
     
@@ -326,7 +326,7 @@ pub func:sstable_close_read = NIL(int64:reader) {
         int64:base_ptr = npk_mem_read_int64(reader, 48i64);
         int64:file_sz = npk_mem_read_int64(reader, 56i64);
         if (base_ptr != 0i64) {
-            drop(sys(SYS_MUNMAP, base_ptr, file_sz));
+            drop(sys(MUNMAP, base_ptr, file_sz));
         }
         drop(sys(CLOSE, fd));
         drop(page_free(index_page));

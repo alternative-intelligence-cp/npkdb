@@ -255,7 +255,7 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
                 int64:f_type = (npk_mem_read_byte(v_ptr, 0i64)) => int64;
                 if (f_type == (JSON_OBJ) => int64) {
                     NpkJsonVal:f_val = NpkJsonVal{ type: JSON_OBJ, payload: npk_mem_read_int64(v_ptr, 8i64) };
-                    filter_ast = parse_filter(arena, f_val) ? 0i64;
+                    filter_ast = parse_filter(arena, (@f_val) => int64, 1i32) ? 0i64;
                 }
             }
             if (ks == "k") {

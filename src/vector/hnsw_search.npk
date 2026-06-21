@@ -9,6 +9,7 @@ use "../util/error_codes.npk".*;
 use "../query/evaluator.npk".*;
 
 pub func:hnsw_search_layer = int64(
+    int64:json_arena,
     int64:graph, 
     int64:query_offset, 
     int32:ep_slot, 
@@ -41,7 +42,7 @@ pub func:hnsw_search_layer = int64(
         if (doc_store != 0i64) {
             int64:ep_doc_ptr = npk_mem_read_int64(doc_store, ((ep_slot) => int64) * 8i64);
             if (ep_doc_ptr != 0i64) {
-                ep_match = _?!evaluate_filter(arena, filter_ast, ep_doc_ptr);
+                ep_match = _?!evaluate_filter(json_arena, filter_ast, ep_doc_ptr);
             }
         }
     }
@@ -94,7 +95,7 @@ pub func:hnsw_search_layer = int64(
                         if (doc_store != 0i64) {
                             int64:doc_ptr = npk_mem_read_int64(doc_store, ((n_slot) => int64) * 8i64);
                             if (doc_ptr != 0i64) {
-                                bool:match = _?!evaluate_filter(arena, filter_ast, doc_ptr);
+                                bool:match = _?!evaluate_filter(json_arena, filter_ast, doc_ptr);
                                 if (match == false) {
                                     i = i + 1i64;
                                     continue;

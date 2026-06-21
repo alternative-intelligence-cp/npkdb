@@ -21,7 +21,7 @@ pub func:failsafe = int32(tbb32:err) {
     
     // 2. Attempt to unlock POSIX directory lock
     if (g_db_lock_fd >= 0i32) {
-        drop(sys(SYS_FLOCK, g_db_lock_fd => int64, 8i64)); // sys_flock(fd, LOCK_UN)
+        drop(sys(FLOCK, g_db_lock_fd => int64, 8i64)); // sys_flock(fd, LOCK_UN)
     }
     
     exit(1i32);
