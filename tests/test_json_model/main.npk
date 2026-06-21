@@ -1,0 +1,30 @@
+use "../../src/document/json_types.npk".*;
+
+extern "C" {
+    func:_exit = void(int32:code);
+}
+
+pub func:proc_exit = NIL(int32:code) {
+    _exit(code);
+    pass(NIL);
+};
+
+func:main = int32(int32:argc, wild any->:argv) {
+    NpkJsonVal:n = _!json_make_null();
+    if (n.type != JSON_NULL) { exit(11i32); }
+
+    NpkJsonVal:f = _!json_make_f64(3.14159f64);
+    if (f.type != JSON_NUM_F64) { exit(12i32); }
+    
+    // Ensure bitcasting round-trips correctly
+    flt64:recast = <-(@f.payload => flt64->);
+    flt64:diff = recast - 3.14159f64;
+    if (diff < 0.0f64) { diff = 0.0f64 - diff; }
+    if (diff > 1e-10f64) { exit(13i32); }
+    
+    exit(0i32);
+};
+
+func:failsafe = int32(tbb32:err) {
+    exit(1i32);
+};

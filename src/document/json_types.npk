@@ -1,0 +1,53 @@
+// json_types.npk — Internal representation of JSON metadata
+
+pub fixed int8:JSON_NULL    = 0i8;
+pub fixed int8:JSON_BOOL    = 1i8;
+pub fixed int8:JSON_NUM_I64 = 2i8;
+pub fixed int8:JSON_NUM_F64 = 3i8;
+pub fixed int8:JSON_STR     = 4i8;
+pub fixed int8:JSON_ARR     = 5i8;
+pub fixed int8:JSON_OBJ     = 6i8;
+
+pub struct:NpkJsonVal = {
+    int8:type;
+    int64:payload;
+};
+
+pub func:json_make_null = NpkJsonVal() {
+    NpkJsonVal:v = NpkJsonVal{ type: JSON_NULL, payload: 0i64 };
+    pass(v);
+};
+
+pub func:json_make_bool = NpkJsonVal(tbb8:val) {
+    int64:p = 0i64;
+    if (val != NIL) { p = 1i64; }
+    NpkJsonVal:v = NpkJsonVal{ type: JSON_BOOL, payload: p };
+    pass(v);
+};
+
+pub func:json_make_i64 = NpkJsonVal(int64:val) {
+    NpkJsonVal:v = NpkJsonVal{ type: JSON_NUM_I64, payload: val };
+    pass(v);
+};
+
+pub func:json_make_f64 = NpkJsonVal(flt64:val) {
+    int64:bits = <-(@val => int64->);
+    NpkJsonVal:v = NpkJsonVal{ type: JSON_NUM_F64, payload: bits };
+    pass(v);
+};
+
+pub struct:NpkJsonStr = {
+    uint32:length;
+    int8->:data;
+};
+
+pub struct:NpkJsonArr = {
+    uint32:count;
+    int64->:handles;
+};
+
+pub struct:NpkJsonObj = {
+    uint32:count;
+    int64->:keys;
+    int64->:values;
+};
