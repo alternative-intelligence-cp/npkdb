@@ -54,15 +54,15 @@ pub func:sstable_serialize_record = int64(string:key, int64:val_ptr, int64:val_l
         drop(npk_mem_write_byte(buf, 0i64, RECORD_FLAG_LIVE => int64));
     }
     
-    drop(npk_mem_write_int32(buf, 1i64, @cast_unchecked<int32>(key_len)));
-    drop(raw npk_mem_write_string(buf + 5i64, key));
+    drop(npk_mem_write_int32(buf, 1i64, ((key_len) => int32)));
+    _?!npk_mem_write_string(buf + 5i64, key);
     
     int64:v_offset = 5i64 + key_len;
     
     if (is_tombstone == 1i64) {
         drop(npk_mem_write_int32(buf, v_offset, 0i32));
     } else {
-        drop(npk_mem_write_int32(buf, v_offset, @cast_unchecked<int32>(val_len)));
+        drop(npk_mem_write_int32(buf, v_offset, ((val_len) => int32)));
         drop(npk_mem_copy(buf + v_offset + 4i64, val_ptr, val_len));
     }
     
@@ -90,7 +90,7 @@ pub func:sstable_build_index = int64(int64:k_ptrs, int64:k_lens, int64:offsets, 
         // Serialize index record: key_len(4) + last_key(k_len) + block_offset(8)
         int64:rec_sz = 4i64 + k_len + 8i64;
         int64:rec = npk_core_alloc(rec_sz);
-        drop(npk_mem_write_int32(rec, 0i64, @cast_unchecked<int32>(k_len)));
+        drop(npk_mem_write_int32(rec, 0i64, ((k_len) => int32)));
         drop(npk_mem_copy(rec + 4i64, k_ptr, k_len));
         drop(npk_mem_write_int64(rec, 4i64 + k_len, block_num));
         
@@ -153,7 +153,7 @@ pub func:sstable_write = int64(string:path, int64:mt) {
             
             int64:last_k_len = string_length(last_key);
             int64:last_k_ptr = npk_core_alloc(last_k_len);
-            drop(raw npk_mem_write_string(last_k_ptr, last_key));
+            _?!npk_mem_write_string(last_k_ptr, last_key);
             
             drop(npk_mem_write_int64(k_ptrs, block_count * 8i64, last_k_ptr));
             drop(npk_mem_write_int64(k_lens, block_count * 8i64, last_k_len));
@@ -181,7 +181,7 @@ pub func:sstable_write = int64(string:path, int64:mt) {
         
         int64:last_k_len = string_length(last_key);
         int64:last_k_ptr = npk_core_alloc(last_k_len);
-        drop(raw npk_mem_write_string(last_k_ptr, last_key));
+        _?!npk_mem_write_string(last_k_ptr, last_key);
         
         drop(npk_mem_write_int64(k_ptrs, block_count * 8i64, last_k_ptr));
         drop(npk_mem_write_int64(k_lens, block_count * 8i64, last_k_len));
@@ -225,7 +225,7 @@ pub func:sstable_write = int64(string:path, int64:mt) {
     drop(npk_mem_write_int32(footer, 40i64, 1145192497i32)); // "DB01" -> 0x44423031
     
     int64:crc_calc = crc32_compute(footer, 44i64) ? 0i64;
-    drop(npk_mem_write_int32(footer, 44i64, @cast_unchecked<int32>(crc_calc)));
+    drop(npk_mem_write_int32(footer, 44i64, ((crc_calc) => int32)));
     
     int64:fw = sys(WRITE, fd, footer, SSTABLE_FOOTER_SIZE) ? -1i64;
     drop(npk_core_dalloc(footer));
@@ -269,7 +269,7 @@ pub func:sstable_open_read = int64(string:path) {
     
     int64:crc_calc = crc32_compute(footer, 44i64) ? 0i64;
     int32:chk = npk_mem_read_int32(footer, 44i64);
-    if (chk != @cast_unchecked<int32>(crc_calc)) {
+    if (chk != ((crc_calc) => int32)) {
         drop(npk_core_dalloc(footer));
         drop(sys(CLOSE, fd));
         pass(0i64);
@@ -343,7 +343,7 @@ pub func:sstable_find_block = int64(int64:reader, string:key) {
         
         int64:tup_ptr = npk_mem_offset(index_page, tup_off);
         int64:k_len = npk_mem_read_int32(tup_ptr, 0i64) => int64;
-        string:last_k = raw npk_mem_read_string(tup_ptr + 4i64, k_len);
+        string:last_k = _?!npk_mem_read_string(tup_ptr + 4i64, k_len);
         
         if (last_k >= key) {
             found = mid;

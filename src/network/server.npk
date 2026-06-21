@@ -14,7 +14,7 @@ use "http_worker.npk".*;
 pub int64:global_http_channel = 0i64; // Handle to the buffered channel for sockets
 
 pub func:server_start = int32() {
-    int64:cfg_ptr = raw config_get();
+    int64:cfg_ptr = _?!config_get();
     if (cfg_ptr == 0i64) {
         println("server_start: global config is null!");
         pass(ERR_CONFIG_LOAD_FAILED);
@@ -22,7 +22,7 @@ pub func:server_start = int32() {
     
     int64:workers = npk_mem_read_int64(cfg_ptr, CFG_MAX_THREADS);
     if (workers <= 0i64) {
-        workers = @cast_unchecked<int64>((raw Thread.hardware_concurrency()) * 2i32);
+        workers = (((raw Thread.hardware_concurrency() => int64)) * 2i32);
         if (workers <= 0i64) { workers = 4i64; }
     }
     
@@ -30,7 +30,7 @@ pub func:server_start = int32() {
     
     // Create a buffered channel for incoming client sockets
     // Capacity 4096 (can buffer 4096 simultaneous connections waiting to be serviced)
-    int64:ch = raw Channel.create(4096i32);
+    int64:ch = _?!Channel.create(4096i32);
     global_http_channel = ch;
     
 
@@ -43,20 +43,20 @@ pub func:server_start = int32() {
     
     // Start TCP Listener
     int32:port = npk_mem_read_int32(cfg_ptr, CFG_HTTP_PORT);
-    int64:server_fd = raw Server.bind_and_listen("0.0.0.0", @cast_unchecked<int64>(port), 1024i64);
+    int64:server_fd = _?!Server.bind_and_listen("0.0.0.0", ((port) => int64), 1024i64);
     if (server_fd < 0i64) {
-        println(string_concat("Failed to bind and listen on port ", string_from_int(@cast_unchecked<int64>(port))));
+        println(string_concat("Failed to bind and listen on port ", string_from_int(((port) => int64))));
         pass(ERR_SERVER_BIND_FAILED);
     }
     
-    println(string_concat("Server listening on port ", string_from_int(@cast_unchecked<int64>(port))));
+    println(string_concat("Server listening on port ", string_from_int(((port) => int64))));
     
     // Accept loop (runs on main thread)
     till(1000000000, 1) {
-        int64:client_fd = raw Server.accept_client(server_fd);
+        int64:client_fd = _?!Server.accept_client(server_fd);
         if (client_fd >= 0i64) {
             // Push to channel
-            drop(raw Channel.send(ch, client_fd));
+            _?!Channel.send(ch, client_fd);
         } else {
             // Accept failed or server closed
             break;

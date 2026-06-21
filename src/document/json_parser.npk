@@ -56,18 +56,70 @@ pub func:json_arena_destroy = NIL(int64:arena_ptr) {
     pass(NIL);
 };
 
+
+pub struct:JsonArena = {
+    int64:data;     // Address of memory block
+    int64:capacity; // Total capacity
+    int64:cursor;   // Current allocation offset
+};
+
+pub func:json_arena_init = int64(int64:capacity) {
+    int64:arena_ptr = json_arena_alloc(state->arena_ptr, 24i64);
+    if (arena_ptr == 0i64) { pass(0i64); }
+    
+    int64:data = json_arena_alloc(state->arena_ptr, capacity);
+    if (data == 0i64) {
+        drop(npk_core_dalloc(arena_ptr));
+        pass(0i64);
+    }
+    
+    drop(npk_mem_write_int64(arena_ptr, 0i64, data));
+    drop(npk_mem_write_int64(arena_ptr, 8i64, capacity));
+    drop(npk_mem_write_int64(arena_ptr, 16i64, 0i64));
+    
+    pass(arena_ptr);
+};
+
+pub func:json_arena_alloc = int64(int64:arena_ptr, int64:size) {
+    int64:capacity = npk_mem_read_int64(arena_ptr, 8i64);
+    int64:cursor   = npk_mem_read_int64(arena_ptr, 16i64);
+    
+    int64:aligned_size = size;
+    int64:rem = size % 8i64;
+    if (rem != 0i64) {
+        aligned_size = size + (8i64 - rem);
+    }
+    
+    if (cursor + aligned_size > capacity) { pass(0i64); }
+    
+    int64:data = npk_mem_read_int64(arena_ptr, 0i64);
+    int64:alloc_ptr = data + cursor;
+    drop(npk_mem_write_int64(arena_ptr, 16i64, cursor + aligned_size));
+    
+    drop(npk_mem_set(alloc_ptr, 0i64, aligned_size));
+    pass(alloc_ptr);
+};
+
+pub func:json_arena_destroy = NIL(int64:arena_ptr) {
+    int64:data = npk_mem_read_int64(arena_ptr, 0i64);
+    if (data != 0i64) { drop(npk_core_dalloc(data)); }
+    drop(npk_core_dalloc(arena_ptr));
+    pass(NIL);
+};
+
 pub struct:ParserState = {
     int64:buf;
     int64:length;
     int64:pos;
     int64:depth;
     int64:arena_ptr;
+    int64:arena_ptr;
 };
 
 pub func:skip_whitespace = NIL(ParserState->:state) {
     int8:c = 0i8;
     when (state->pos < state->length) {
-        c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+        c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
         if (c == 32i8 || c == 10i8 || c == 13i8 || c == 9i8) {
             state->pos = state->pos + 1i64;
         } else {
@@ -80,7 +132,7 @@ pub func:skip_whitespace = NIL(ParserState->:state) {
 pub func:parse_i64 = int64(ParserState->:state) {
     int64:acc = 0i64;
     int64:sign = 1i64;
-    int8:c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+    int8:c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
     
     if (c == 45i8) { // '-'
         sign = -1i64;
@@ -88,7 +140,7 @@ pub func:parse_i64 = int64(ParserState->:state) {
     }
     
     when (state->pos < state->length) {
-        c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+        c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
         if (c >= 48i8 && c <= 57i8) {
             int64:digit = (c - 48i8) => int64;
             acc = (acc * 10i64) + digit;
@@ -102,7 +154,7 @@ pub func:parse_i64 = int64(ParserState->:state) {
 
 pub func:parse_string = NpkJsonStr(ParserState->:state) {
     // Must start with '"'
-    if (@cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8) != 34i8) {
+    if (((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8 != 34i8) {
         fail(ERR_JSON_PARSE_FAIL);
     }
     state->pos = state->pos + 1i64;
@@ -110,7 +162,7 @@ pub func:parse_string = NpkJsonStr(ParserState->:state) {
     int64:start = state->pos;
     int8:c = 0i8;
     when (state->pos < state->length) {
-        c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+        c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
         if (c == 34i8) { break; } // end quote
         state->pos = state->pos + 1i64;
     }
@@ -121,7 +173,7 @@ pub func:parse_string = NpkJsonStr(ParserState->:state) {
     state->pos = state->pos + 1i64; // Consume closing quote
     
     NpkJsonStr:res = NpkJsonStr {
-        length: @cast_unchecked<uint32>(len),
+        length: (len) => uint32,
         data: state->buf + start
     };
     pass(res);
@@ -129,12 +181,12 @@ pub func:parse_string = NpkJsonStr(ParserState->:state) {
 
 pub func:parse_f64 = flt64(ParserState->:state) {
     int64:sign = 1i64;
-    int8:c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+    int8:c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
     if (c == 45i8) { sign = -1i64; state->pos = state->pos + 1i64; }
     
     int64:acc = 0i64;
     while (state->pos < state->length) {
-        c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+        c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
         if (c >= 48i8 && c <= 57i8) {
             acc = (acc * 10i64) + ((c - 48i8) => int64);
             state->pos = state->pos + 1i64;
@@ -143,13 +195,13 @@ pub func:parse_f64 = flt64(ParserState->:state) {
     
     flt64:f = acc => flt64;
     if (state->pos < state->length) {
-        c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+        c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
         if (c == 46i8) { // '.'
             state->pos = state->pos + 1i64;
             flt64:frac = 0.0f64;
             flt64:div = 10.0f64;
             while (state->pos < state->length) {
-                c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+                c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
                 if (c >= 48i8 && c <= 57i8) {
                     frac = frac + (((c - 48i8) => flt64) / div);
                     div = div * 10.0f64;
@@ -173,7 +225,7 @@ pub func:parse_array = NpkJsonVal(ParserState->:state) {
     int64:count = 0i64;
     
     drop(skip_whitespace(state));
-    int8:c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+    int8:c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
     if (c == 93i8) { // ']'
         state->pos = state->pos + 1i64;
     } else {
@@ -189,7 +241,7 @@ pub func:parse_array = NpkJsonVal(ParserState->:state) {
             count = count + 1i64;
             
             drop(skip_whitespace(state));
-            c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+            c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
             if (c == 93i8) { // ']'
                 state->pos = state->pos + 1i64;
                 break;
@@ -216,7 +268,7 @@ pub func:parse_object = NpkJsonVal(ParserState->:state) {
     int64:count = 0i64;
     
     drop(skip_whitespace(state));
-    int8:c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+    int8:c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
     if (c == 125i8) { // '}'
         state->pos = state->pos + 1i64;
     } else {
@@ -231,7 +283,7 @@ pub func:parse_object = NpkJsonVal(ParserState->:state) {
             drop(npk_mem_write_int64(keys_ptr, count * 8i64, k_ptr));
             
             drop(skip_whitespace(state));
-            c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+            c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
             if (c != 58i8) { fail(ERR_JSON_PARSE_FAIL); } // ':'
             state->pos = state->pos + 1i64; // skip ':'
             
@@ -246,7 +298,7 @@ pub func:parse_object = NpkJsonVal(ParserState->:state) {
             count = count + 1i64;
             
             drop(skip_whitespace(state));
-            c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+            c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
             if (c == 125i8) { // '}'
                 state->pos = state->pos + 1i64;
                 break;
@@ -273,7 +325,7 @@ pub func:parse_value = NpkJsonVal(ParserState->:state) {
     drop(skip_whitespace(state));
     if (state->pos >= state->length) { fail(ERR_JSON_PARSE_FAIL); }
     
-    int8:c = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, state->pos)) => int8);
+    int8:c = ((npk_mem_read_byte(state->buf, state->pos)) => int8) => int8;
     
     if (c == 123i8) { // '{'
         Result<NpkJsonVal>:obj_res = parse_object(state);
@@ -313,7 +365,7 @@ pub func:parse_value = NpkJsonVal(ParserState->:state) {
         int64:scan_pos = state->pos;
         int64:has_dot = 0i64;
         while (scan_pos < state->length) {
-            int8:sc = @cast_unchecked<int8>((npk_mem_read_byte(state->buf, scan_pos)) => int8);
+            int8:sc = ((npk_mem_read_byte(state->buf, scan_pos)) => int8) => int8;
             if (sc == 46i8) { has_dot = 1i64; break; }
             if (sc < 48i8 || sc > 57i8) { if (sc != 45i8) { break; } }
             scan_pos = scan_pos + 1i64;
@@ -348,6 +400,7 @@ pub func:parse_json_raw = NpkJsonVal(int64:arena_ptr, int64:ptr, int64:len) {
         length: len,
         pos: 0i64,
         depth: 0i64,
+        arena_ptr: arena_ptr,
         arena_ptr: arena_ptr
     };
     

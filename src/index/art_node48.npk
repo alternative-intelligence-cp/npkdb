@@ -28,7 +28,7 @@ pub func:node48_add_child = NIL(int64:node, int64:key_byte, int64:child) {
     int64:i = 0i64;
     int64:empty_slot = 0i64;
     while (i < 48i64) {
-        int64:c = raw node48_get_child(node, (i + 1i64));
+        int64:c = _?!node48_get_child(node, (i + 1i64));
         if (c == 0i64) {
             empty_slot = i + 1i64;
             break;
@@ -37,16 +37,16 @@ pub func:node48_add_child = NIL(int64:node, int64:key_byte, int64:child) {
     }
     
     if (empty_slot != 0i64) {
-        drop(raw node48_set_slot(node, key_byte, empty_slot));
-        drop(raw node48_set_child(node, empty_slot, child));
-        int64:count = raw art_node_num_children(node);
-        drop(raw art_node_set_num_children(node, count + 1i64));
+        _?!node48_set_slot(node, key_byte, empty_slot);
+        _?!node48_set_child(node, empty_slot, child);
+        int64:count = _?!art_node_num_children(node);
+        _?!art_node_set_num_children(node, count + 1i64);
     }
     pass(NIL);
 };
 
 pub func:node48_find_child = int64(int64:node, int64:key_byte) {
-    int64:slot = raw node48_get_slot(node, key_byte);
+    int64:slot = _?!node48_get_slot(node, key_byte);
     if (slot != 0i64) {
         pass(raw node48_get_child(node, slot));
     }
@@ -56,13 +56,13 @@ pub func:node48_find_child = int64(int64:node, int64:key_byte) {
 pub func:node48_remove_child = int64(int64:node, int64:key_byte)
     requires node != 0i64
 {
-    int64:slot = raw node48_get_slot(node, key_byte);
+    int64:slot = _?!node48_get_slot(node, key_byte);
     if (slot == 0i64) { pass(0i64); }
     
-    drop(raw node48_set_child(node, slot, 0i64));
-    drop(raw node48_set_slot(node, key_byte, 0i64));
+    _?!node48_set_child(node, slot, 0i64);
+    _?!node48_set_slot(node, key_byte, 0i64);
     
-    int64:num = raw art_node_num_children(node);
-    drop(raw art_node_set_num_children(node, num - 1i64));
+    int64:num = _?!art_node_num_children(node);
+    _?!art_node_set_num_children(node, num - 1i64);
     pass(0i64);
 };

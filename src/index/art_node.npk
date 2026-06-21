@@ -92,7 +92,7 @@ pub func:art_node_lock = NIL(int64:node) {
         int64:t = hdr & 255i64;
         if ((t & 128i64) == 0i64) {
             int64:new_hdr = hdr | 128i64;
-            bool:res = raw npk_cas_i64(node, hdr, new_hdr);
+            bool:res = _?!npk_cas_i64(node, hdr, new_hdr);
             if (res) { restart = 0i64; }
         }
     }
@@ -104,7 +104,7 @@ pub func:art_node_unlock = NIL(int64:node) {
     while (restart == 1i64) {
         int64:hdr = npk_mem_read_int64(node, 0i64);
         int64:new_hdr = hdr & (0xFFFFFFFFFFFFFF7Fi64); // clear bit 7
-        bool:res = raw npk_cas_i64(node, hdr, new_hdr);
+        bool:res = _?!npk_cas_i64(node, hdr, new_hdr);
         if (res) { restart = 0i64; }
     }
     pass(NIL);
@@ -121,7 +121,7 @@ pub func:art_node_mark_obsolete = NIL(int64:node) {
     while (restart == 1i64) {
         int64:hdr = npk_mem_read_int64(node, 0i64);
         int64:new_hdr = hdr | 64i64;
-        bool:res = raw npk_cas_i64(node, hdr, new_hdr);
+        bool:res = _?!npk_cas_i64(node, hdr, new_hdr);
         if (res) { restart = 0i64; }
     }
     pass(NIL);

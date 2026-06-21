@@ -106,10 +106,10 @@ pub func:lm_add_sstable = NIL(int64:lm, int64:level, int64:file_id, string:min_k
         int64:max_ptr = npk_core_alloc(8i64 + max_len);
         
         drop(npk_mem_write_int64(min_ptr, 0i64, min_len));
-        drop(raw npk_mem_write_string(min_ptr + 8i64, min_key));
+        _?!npk_mem_write_string(min_ptr + 8i64, min_key);
         
         drop(npk_mem_write_int64(max_ptr, 0i64, max_len));
-        drop(raw npk_mem_write_string(max_ptr + 8i64, max_key));
+        _?!npk_mem_write_string(max_ptr + 8i64, max_key);
         
         drop(npk_mem_write_int64(ent_ptr, 0i64, file_id));
         drop(npk_mem_write_int64(ent_ptr, 8i64, min_ptr));
@@ -180,7 +180,7 @@ pub func:lm_next_sstable_path = string(int64:lm, int64:level) {
     
     int64:d_ptr = npk_mem_read_int64(lm, 0i64);
     int64:d_len = npk_mem_read_int64(lm, 8i64);
-    string:dir = raw npk_mem_read_string(d_ptr, d_len);
+    string:dir = _?!npk_mem_read_string(d_ptr, d_len);
     
     string:fid_str = string_from_int(fid);
     while (string_length(fid_str) < 6i64) {

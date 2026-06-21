@@ -5,7 +5,7 @@ pub func:bloom_hash1 = int64(string:key) {
     int64:h = 0i64;
     int64:len = string_length(key);
     int64:buf = npk_core_alloc(len);
-    drop(raw npk_mem_write_string(buf, key));
+    _?!npk_mem_write_string(buf, key);
     
     int64:i = 0i64;
     while (i < len && i < 8i64) {
@@ -31,7 +31,7 @@ pub func:bloom_hash2 = int64(string:key) {
     int64:h = -3750763034362895579i64; // 0xcbf29ce484222325
     int64:len = string_length(key);
     int64:buf = npk_core_alloc(len);
-    drop(raw npk_mem_write_string(buf, key));
+    _?!npk_mem_write_string(buf, key);
     
     int64:i = 0i64;
     while (i < len) {

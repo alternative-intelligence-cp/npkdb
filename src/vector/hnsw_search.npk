@@ -22,12 +22,12 @@ pub func:hnsw_search_layer = int64(
     
     int64:arena = hnsw_graph_get_arena(graph)  ? 0i64;
     int64:ep_node_ptr = hnsw_arena_get_node(arena, ep_slot, ep_gen)  ? 0i64;
-    if (ep_node_ptr == 0i64) { fail@cast_unchecked<tbb8>(ERR_HNSW_STALE_HANDLE); }
+    if (ep_node_ptr == 0i64) { fail((ERR_HNSW_STALE_HANDLE) => tbb8); }
 
     int64:ep_vec_offset = hnsw_node_get_vector_offset(ep_node_ptr)  ? 0i64;
     tfp64:ep_dist = hnsw_graph_distance(graph, query_offset, ep_vec_offset)  ? 0.0tf;
 
-    int64:ef_64 = @cast_unchecked<int64>(ef);
+    int64:ef_64 = ((ef) => int64);
 
     // candidates: Min-Heap (capacity = ef initially, dynamically grows if needed)
     int64:candidates = hnsw_pq_create(ef_64, 0i64)  ? 0i64;
@@ -39,9 +39,9 @@ pub func:hnsw_search_layer = int64(
     bool:ep_match = true;
     if (filter_ast != 0i64) {
         if (doc_store != 0i64) {
-            int64:ep_doc_ptr = npk_mem_read_int64(doc_store, @cast_unchecked<int64>(ep_slot) * 8i64);
+            int64:ep_doc_ptr = npk_mem_read_int64(doc_store, ((ep_slot) => int64) * 8i64);
             if (ep_doc_ptr != 0i64) {
-                ep_match = raw evaluate_filter(filter_ast, ep_doc_ptr);
+                ep_match = _?!evaluate_filter(filter_ast, ep_doc_ptr);
             }
         }
     }
@@ -78,7 +78,7 @@ pub func:hnsw_search_layer = int64(
 
         int32:num_neighbors = hnsw_node_get_num_neighbors(c_node_ptr, layer)  ? 0i32;
         int64:i = 0i64;
-        int64:n_64 = @cast_unchecked<int64>(num_neighbors);
+        int64:n_64 = ((num_neighbors) => int64);
 
         when (i < n_64) {
             int32:n_slot = hnsw_node_get_neighbor_slot(c_node_ptr, layer, i)  ? 0i32;
@@ -92,9 +92,9 @@ pub func:hnsw_search_layer = int64(
                 if (n_node_ptr != 0i64) {
                     if (filter_ast != 0i64) {
                         if (doc_store != 0i64) {
-                            int64:doc_ptr = npk_mem_read_int64(doc_store, @cast_unchecked<int64>(n_slot) * 8i64);
+                            int64:doc_ptr = npk_mem_read_int64(doc_store, ((n_slot) => int64) * 8i64);
                             if (doc_ptr != 0i64) {
-                                bool:match = raw evaluate_filter(filter_ast, doc_ptr);
+                                bool:match = _?!evaluate_filter(filter_ast, doc_ptr);
                                 if (match == false) {
                                     i = i + 1i64;
                                     continue;

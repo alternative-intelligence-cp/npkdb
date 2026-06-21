@@ -23,10 +23,10 @@ pub func:node16_set_child = NIL(int64:node, int64:i, int64:child) {
 };
 
 pub func:node16_find_child = int64(int64:node, int64:key_byte) {
-    int64:count = raw art_node_num_children(node);
+    int64:count = _?!art_node_num_children(node);
     int64:i = 0i64;
     while (i < count) {
-        int64:kb = raw node16_get_key(node, i);
+        int64:kb = _?!node16_get_key(node, i);
         if (kb == key_byte) {
             pass(raw node16_get_child(node, i));
         }
@@ -36,7 +36,7 @@ pub func:node16_find_child = int64(int64:node, int64:key_byte) {
 };
 
 pub func:node16_remove_child = int64(int64:node, int64:key_byte) {
-    int64:count = raw art_node_num_children(node);
+    int64:count = _?!art_node_num_children(node);
     int64:i = 0i64;
     int64:found = -1i64;
     while (i < count) {
@@ -49,22 +49,22 @@ pub func:node16_remove_child = int64(int64:node, int64:key_byte) {
     
     if (found == -1i64) { pass(0i64); }
     
-    int64:child = raw node16_get_child(node, found);
+    int64:child = _?!node16_get_child(node, found);
     
     // Shift elements left
     i = found;
     while (i < (count - 1i64)) {
-        drop(raw node16_set_key(node, i, raw node16_get_key(node, i + 1i64)));
-        drop(raw node16_set_child(node, i, raw node16_get_child(node, i + 1i64)));
+        _?!node16_set_key(node, i, _?!node16_get_key(node, i + 1i64));
+        _?!node16_set_child(node, i, _?!node16_get_child(node, i + 1i64));
         i = i + 1i64;
     }
     
     // Zero the last slot
-    drop(raw node16_set_key(node, count - 1i64, 0i64));
-    drop(raw node16_set_child(node, count - 1i64, 0i64));
+    _?!node16_set_key(node, count - 1i64, 0i64);
+    _?!node16_set_child(node, count - 1i64, 0i64);
     
     // Decrement count
-    drop(raw art_node_set_num_children(node, count - 1i64));
+    _?!art_node_set_num_children(node, count - 1i64);
     
     pass(child);
 };

@@ -74,6 +74,6 @@ pub func:location_encode_in_memtable = int64() {
 pub func:location_verify_parity = NIL(int64:loc_buf)
     requires loc_buf != 0i64
 {
-    prove raw location_is_tombstone(loc_buf) == 0i64 || raw location_is_in_memtable(loc_buf) == 0i64;
+    prove _?!location_is_tombstone(loc_buf) == 0i64 || _?!location_is_in_memtable(loc_buf) == 0i64;
     pass(NIL);
 };

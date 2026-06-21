@@ -30,12 +30,12 @@ func:path_segment_len = int64(int64:path_ptr) {
 };
 
 pub func:eval_path = NpkJsonVal(int64:path_ptr, int64:doc_raw_ptr) {
-    NpkJsonVal->:doc = @cast_unchecked<NpkJsonVal->>(doc_raw_ptr);
+    NpkJsonVal->:doc = (doc_raw_ptr) => NpkJsonVal-;
     if (path_ptr == 0i64) {
         pass(raw json_make_null());
     }
     
-    int64:seg_len = raw path_segment_len(path_ptr);
+    int64:seg_len = _?!path_segment_len(path_ptr);
     if (seg_len == 0i64) {
         pass(raw json_make_null());
     }
@@ -85,7 +85,7 @@ pub func:eval_path = NpkJsonVal(int64:path_ptr, int64:doc_raw_ptr) {
                     } else {
                         if (nxt == 46i8) {
                             // Dot, recurse
-                            pass(raw eval_path(path_ptr + seg_len + 1i64, @cast_unchecked<int64>(@v_elem)));
+                            pass(raw eval_path(path_ptr + seg_len + 1i64, (@v_elem) => int64));
                         }
                     }
                 }

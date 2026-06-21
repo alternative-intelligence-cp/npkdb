@@ -76,7 +76,7 @@ pub func:wp_init = int64(string:data_dir, string:wal_path, ?->:worker_fn, string
 pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
     int64:lock = npk_mem_read_int64(wp, WP_OFF_LOCK);
     drop(nitpick_libc_rwlock_wrlock(lock));
-    defer _?nitpick_libc_rwlock_unlock(lock);
+    defer { _?nitpick_libc_rwlock_unlock(lock); }
     int64:wal_fd = npk_mem_read_int64(wp, WP_OFF_WAL_FD);
     int64:active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
     
@@ -95,7 +95,7 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
         
         int64:lm = npk_mem_read_int64(wp, WP_OFF_LM);
         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
-        string:before_flush = raw npk_mem_read_string(d_ptr, 11i64);
+        string:before_flush = _?!npk_mem_read_string(d_ptr, 11i64);
         println("d_ptr before flush: " + before_flush);
         drop(flush_memtable(npk_mem_read_int64(wp, WP_OFF_FROZEN), lm));
         drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, 0i64));
@@ -145,7 +145,7 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
 pub func:wp_delete = int64(int64:wp, string:key) {
     int64:lock = npk_mem_read_int64(wp, WP_OFF_LOCK);
     drop(nitpick_libc_rwlock_wrlock(lock));
-    defer _?nitpick_libc_rwlock_unlock(lock);
+    defer { _?nitpick_libc_rwlock_unlock(lock); }
     int64:wal_fd = npk_mem_read_int64(wp, WP_OFF_WAL_FD);
     int64:active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
     

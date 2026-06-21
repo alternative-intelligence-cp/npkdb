@@ -56,7 +56,7 @@ pub func:serialize_value = NIL(SerialBuffer->:buf, NpkJsonVal->:val) {
                         int64:data_ptr = npk_mem_read_int64(str_ptr, 8i64);    // int64:data is at offset 8
 
                         drop(serial_buffer_ensure(buf, 4i64 + len));
-                        drop(npk_mem_write_int32(buf->data, buf->cursor, @cast_unchecked<int32>(len)));
+                        drop(npk_mem_write_int32(buf->data, buf->cursor, (len) => int32));
                         buf->cursor = buf->cursor + 4i64;
                         if (len > 0i64) {
                             drop(npk_mem_copy(buf->data + buf->cursor, data_ptr, len));
@@ -69,7 +69,7 @@ pub func:serialize_value = NIL(SerialBuffer->:buf, NpkJsonVal->:val) {
                             int64:handles_ptr = npk_mem_read_int64(arr_ptr, 8i64);
 
                             drop(serial_buffer_ensure(buf, 4i64));
-                            drop(npk_mem_write_int32(buf->data, buf->cursor, @cast_unchecked<int32>(count)));
+                            drop(npk_mem_write_int32(buf->data, buf->cursor, (count) => int32));
                             buf->cursor = buf->cursor + 4i64;
 
                             int64:i = 0i64;
@@ -90,7 +90,7 @@ pub func:serialize_value = NIL(SerialBuffer->:buf, NpkJsonVal->:val) {
                                 int64:vals_ptr = npk_mem_read_int64(obj_ptr, 16i64);
 
                                 drop(serial_buffer_ensure(buf, 4i64));
-                                drop(npk_mem_write_int32(buf->data, buf->cursor, @cast_unchecked<int32>(count)));
+                                drop(npk_mem_write_int32(buf->data, buf->cursor, (count) => int32));
                                 buf->cursor = buf->cursor + 4i64;
 
                                 int64:i = 0i64;
@@ -149,7 +149,7 @@ pub func:serialize_colocated_record = int64(int64:vec_ptr, int64:vec_dim, NpkJso
     
     // 1. Vector Length (u32)
     drop(serial_buffer_ensure(@buf, 4i64));
-    drop(npk_mem_write_int32(buf.data, buf.cursor, @cast_unchecked<int32>(vec_dim)));
+    drop(npk_mem_write_int32(buf.data, buf.cursor, (vec_dim) => int32));
     buf.cursor = buf.cursor + 4i64;
     
     // 2. Vector Data (tfp64 array)
@@ -171,7 +171,7 @@ pub func:serialize_colocated_record = int64(int64:vec_ptr, int64:vec_dim, NpkJso
     int64:json_len = buf.cursor - json_start;
     
     // Write back JSON length
-    drop(npk_mem_write_int32(buf.data, json_len_offset, @cast_unchecked<int32>(json_len)));
+    drop(npk_mem_write_int32(buf.data, json_len_offset, (json_len) => int32));
     
     drop(npk_mem_write_int64(out_len_ptr, 0i64, buf.cursor));
     pass(buf.data);

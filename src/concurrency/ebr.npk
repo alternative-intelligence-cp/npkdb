@@ -123,9 +123,9 @@ pub func:ebr_shutdown = NIL() {
     // Force-free all remaining limbo nodes across all thread slots
     int64:i = 0i64;
     while (i < npk_mem_read_int64(ebr_global_state, 8i64)) {
-        int64:ts = raw ebr_thread_state(i);
+        int64:ts = _?!ebr_thread_state(i);
         if (ts != 0i64) {
-            drop(raw ebr_flush_limbo_all(ts));
+            _?!ebr_flush_limbo_all(ts);
         }
         i = i + 1i64;
     }
@@ -148,10 +148,10 @@ pub func:ebr_register_thread = int64() {
             fail(ERR_EBR_LIMBO_OVERFLOW => tbb8);
         }
         int64:addr = ebr_global_state + 8i64;
-        bool:res = raw npk_cas_i64(addr, tid, tid + 1i64);
+        bool:res = _?!npk_cas_i64(addr, tid, tid + 1i64);
         if (res) { success = 1i64; }
     }
-    int64:ts = raw ebr_thread_state(tid);
+    int64:ts = _?!ebr_thread_state(tid);
     if (ts != 0i64) {
         drop(npk_mem_write_int64(ts, EBR_TS_LOCAL_EPOCH,  0i64));
         drop(npk_mem_write_int64(ts, EBR_TS_IS_ACTIVE,    0i64));
@@ -171,7 +171,7 @@ pub func:ebr_pin = NIL(int64:thread_id)
 {
     if (thread_id < 0i64) { pass(NIL); }
     if (thread_id >= EBR_MAX_THREADS) { pass(NIL); }
-    int64:ts = raw ebr_thread_state(thread_id);
+    int64:ts = _?!ebr_thread_state(thread_id);
     if (ts != 0i64) {
         drop(npk_mem_write_int64(ts, EBR_TS_LOCAL_EPOCH, npk_mem_read_int64(ebr_global_state, 0i64)));
         drop(npk_mem_write_int64(ts, EBR_TS_IS_ACTIVE, 1i64));
@@ -186,7 +186,7 @@ pub func:ebr_unpin = NIL(int64:thread_id)
 {
     if (thread_id < 0i64) { pass(NIL); }
     if (thread_id >= EBR_MAX_THREADS) { pass(NIL); }
-    int64:ts = raw ebr_thread_state(thread_id);
+    int64:ts = _?!ebr_thread_state(thread_id);
     if (ts != 0i64) {
         drop(npk_mem_write_int64(ts, EBR_TS_IS_ACTIVE, 0i64));
     }
@@ -202,7 +202,7 @@ pub func:ebr_try_advance = int64()
     int64:i = 0i64;
     int64:tcount = npk_mem_read_int64(ebr_global_state, 8i64);
     while (i < tcount) {
-        int64:ts = raw ebr_thread_state(i);
+        int64:ts = _?!ebr_thread_state(i);
         if (ts != 0i64) {
             int64:is_active   = npk_mem_read_int64(ts, EBR_TS_IS_ACTIVE);
             int64:local_epoch = npk_mem_read_int64(ts, EBR_TS_LOCAL_EPOCH);
@@ -227,7 +227,7 @@ pub func:ebr_retire = int32(int64:thread_id, int64:node_ptr)
     if (thread_id < 0i64) { pass(0i32); }
     if (thread_id >= EBR_MAX_THREADS) { pass(0i32); }
     if (node_ptr == 0i64) { pass(0i32); }
-    int64:ts = raw ebr_thread_state(thread_id);
+    int64:ts = _?!ebr_thread_state(thread_id);
     if (ts == 0i64) { pass(0i32); }
     
     int64:count = npk_mem_read_int64(ts, EBR_TS_LIMBO_COUNT);
@@ -251,7 +251,7 @@ pub func:ebr_retire = int32(int64:thread_id, int64:node_ptr)
     int64:rcount = npk_mem_read_int64(ts, EBR_TS_RETIRE_COUNT) + 1i64;
     if (rcount >= EBR_ADVANCE_INTERVAL) {
         drop(ebr_try_advance());
-        drop(raw ebr_flush_limbo(ts));
+        _?!ebr_flush_limbo(ts);
         drop(npk_mem_write_int64(ts, EBR_TS_RETIRE_COUNT, 0i64));
     } else {
         drop(npk_mem_write_int64(ts, EBR_TS_RETIRE_COUNT, rcount));
@@ -267,19 +267,19 @@ pub func:ebr_get_global_epoch = int64() {
 
 // Accessor for testing: get limbo count for thread
 pub func:ebr_get_limbo_count = int64(int64:thread_id) {
-    int64:ts = raw ebr_thread_state(thread_id);
+    int64:ts = _?!ebr_thread_state(thread_id);
     pass(npk_mem_read_int64(ts, EBR_TS_LIMBO_COUNT));
 };
 
 // Accessor for testing: get local epoch for thread
 pub func:ebr_get_local_epoch = int64(int64:thread_id) {
-    int64:ts = raw ebr_thread_state(thread_id);
+    int64:ts = _?!ebr_thread_state(thread_id);
     pass(npk_mem_read_int64(ts, EBR_TS_LOCAL_EPOCH));
 };
 
 // Accessor for testing: get is_active for thread
 pub func:ebr_get_is_active = int64(int64:thread_id) {
-    int64:ts = raw ebr_thread_state(thread_id);
+    int64:ts = _?!ebr_thread_state(thread_id);
     pass(npk_mem_read_int64(ts, EBR_TS_IS_ACTIVE));
 };
 
@@ -291,8 +291,8 @@ pub func:ebr_test_force_advance = NIL() {
 
 // Test helper: manually flush limbo
 pub func:ebr_test_flush_limbo = NIL(int64:thread_id) {
-    int64:ts = raw ebr_thread_state(thread_id);
-    drop(raw ebr_flush_limbo(ts));
+    int64:ts = _?!ebr_thread_state(thread_id);
+    _?!ebr_flush_limbo(ts);
     pass(NIL);
 };
 
@@ -301,7 +301,7 @@ pub func:ebr_test_flush_limbo = NIL(int64:thread_id) {
 pub func:ebr_retire_or_flush = int32(int64:thread_id, int64:node_ptr) {
     int64:retries = 0i64;
     while (retries < 10i64) {
-        int32:err = raw ebr_retire(thread_id, node_ptr);
+        int32:err = _?!ebr_retire(thread_id, node_ptr);
         
         if (err == 0i32) {
             pass(0i32);
@@ -309,9 +309,9 @@ pub func:ebr_retire_or_flush = int32(int64:thread_id, int64:node_ptr) {
         
         if (err == ERR_EBR_LIMBO_OVERFLOW) {
             drop(ebr_try_advance());
-            int64:ts = raw ebr_thread_state(thread_id);
+            int64:ts = _?!ebr_thread_state(thread_id);
             if (ts != 0i64) {
-                drop(raw ebr_flush_limbo(ts));
+                _?!ebr_flush_limbo(ts);
             }
             retries = retries + 1i64;
         } else {

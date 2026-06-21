@@ -8,6 +8,12 @@ use "network/server.npk".*;
 use "storage/compaction_worker.npk".*;
 use "storage/write_path.npk".*;
 use "network/controllers.npk".*;
+use "vector/hnsw_arena.npk".*;
+use "vector/hnsw_graph.npk".*;
+use "vector/hnsw_visited.npk".*;
+use "vector/hnsw_arena.npk".*;
+use "vector/hnsw_graph.npk".*;
+use "vector/hnsw_visited.npk".*;
 
 func:compaction_worker_shim = int64(int64:ctx) {
     pass compaction_worker_loop(ctx);
@@ -17,7 +23,7 @@ func:main = int32(int32:argc, wild any->:argv) {
     println("NPKDB v0.3.11 starting...");
     
     string:cfg_path = "npkdb.toml";
-    int32:res = raw config_init(cfg_path);
+    int32:res = _?!config_init(cfg_path);
     if (res != 0i32) {
         println("Failed to load config from " + cfg_path);
         exit(1i32);
@@ -28,13 +34,29 @@ func:main = int32(int32:argc, wild any->:argv) {
     global_insert_counter = npk_shim_atomic_int64_create(0i64);
     
     // Initialize storage engine
-    global_wp = raw wp_init("data/", "wal.log", @compaction_worker_shim, "group_commit");
+    global_wp = _?!wp_init("data/", "wal.log", @compaction_worker_shim, "group_commit");
     if (global_wp == 0i64) {
         println("Failed to initialize storage engine!");
         exit(1i32);
     }
     
-    int32:server_res = raw server_start();
+    global_arena = _?!hnsw_arena_create(10000i64, 1i16);
+    global_vec_buf = npk_core_alloc(10000i64 * 128i64 * 8i64);
+    global_graph = _?!hnsw_graph_create(global_arena, global_vec_buf, 128i64, 16i32, 32i32, 100i32, 0.5f64);
+    global_doc_store = npk_core_alloc(10000i64 * 8i64);
+    global_rand_state = npk_core_alloc(8i64);
+    drop(npk_mem_write_int64(global_rand_state, 0i64, 12345i64));
+    global_visited_set = _?!hnsw_visited_create(10000i64);
+    
+    global_arena = _?!hnsw_arena_create(10000i64, 1i16);
+    global_vec_buf = npk_core_alloc(10000i64 * 128i64 * 8i64);
+    global_graph = _?!hnsw_graph_create(global_arena, global_vec_buf, 128i64, 16i32, 32i32, 100i32, 0.5f64);
+    global_doc_store = npk_core_alloc(10000i64 * 8i64);
+    global_rand_state = npk_core_alloc(8i64);
+    drop(npk_mem_write_int64(global_rand_state, 0i64, 12345i64));
+    global_visited_set = _?!hnsw_visited_create(10000i64);
+    
+    int32:server_res = _?!server_start();
     if (server_res != 0i32) {
         println("Server exited with error.");
         exit(1i32);

@@ -21,7 +21,7 @@ pub func:route_request = int32(int64:client_fd, Request:req) {
             int64:d_idx = string_index_of(suffix, "/docs");
             if (d_idx > 0i64) {
                 string:col_name = string_substring(suffix, 0i64, d_idx);
-                int32:res = raw controller_insert(client_fd, req, col_name);
+                int32:res = _?!controller_insert(client_fd, req, col_name);
                 pass(res);
             }
         }
@@ -29,6 +29,6 @@ pub func:route_request = int32(int64:client_fd, Request:req) {
     
     // Not found
     string:err_json = "{\"error\": \"not found: method=" + method + " path=" + path + "\"}";
-    drop(raw Server.send_typed(client_fd, 404i64, "application/json", err_json));
+    _?!Server.send_typed(client_fd, 404i64, "application/json", err_json);
     pass(0i32);
 };

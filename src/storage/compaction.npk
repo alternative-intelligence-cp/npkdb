@@ -248,7 +248,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         // Actually, we can just manually build it.
         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
         int64:d_len = npk_mem_read_int64(lm, 8i64);
-        string:dir = raw npk_mem_read_string(d_ptr, d_len);
+        string:dir = _?!npk_mem_read_string(d_ptr, d_len);
         
         string:fid_str = string_from_int(fid);
         while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
@@ -363,14 +363,14 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         // println("DEBUG: Freeing copied values...");
         int64:c_node = mt_first(out_mt) ? 0i64;
         while (c_node != 0i64) {
-            int64:c_is_tomb = raw sl_node_is_deleted(c_node);
+            int64:c_is_tomb = _?!sl_node_is_deleted(c_node);
             if (c_is_tomb == 0i64) {
-                int64:c_v_ptr = raw sl_node_val_ptr(c_node);
+                int64:c_v_ptr = _?!sl_node_val_ptr(c_node);
                 if (c_v_ptr != 0i64) {
                     drop(npk_core_dalloc(c_v_ptr));
                 }
             }
-            c_node = raw sl_next(c_node);
+            c_node = _?!sl_next(c_node);
         }
         // println("DEBUG: Freed copied values!");
         
@@ -395,7 +395,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         
         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
         int64:d_len = npk_mem_read_int64(lm, 8i64);
-        string:dir = raw npk_mem_read_string(d_ptr, d_len);
+        string:dir = _?!npk_mem_read_string(d_ptr, d_len);
         string:fid_str = string_from_int(fid);
         while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
         string:p1 = dir + "/L";
@@ -415,7 +415,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         
         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
         int64:d_len = npk_mem_read_int64(lm, 8i64);
-        string:dir = raw npk_mem_read_string(d_ptr, d_len);
+        string:dir = _?!npk_mem_read_string(d_ptr, d_len);
         string:fid_str = string_from_int(fid);
         while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
         string:p1 = dir + "/L";

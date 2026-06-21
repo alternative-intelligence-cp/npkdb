@@ -108,7 +108,7 @@ pub func:evaluate_filter = bool(int64:ast_root, int64:doc_ptr) {
         
         // Leaf Nodes
         int64:path = npk_mem_read_int64(node, 8i64);
-        NpkJsonVal:actual = raw eval_path(path, doc_ptr);
+        NpkJsonVal:actual = _?!eval_path(path, doc_ptr);
         
         NpkJsonVal:target = NpkJsonVal {
             type: npk_mem_read_byte(node, 16i64) => int8,

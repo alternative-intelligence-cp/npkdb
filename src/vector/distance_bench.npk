@@ -28,13 +28,13 @@ pub fixed int64:TIMESPEC_NSEC_OFF   = 8i64;
 // ts_buf: pointer to a zeroed 16-byte buffer allocated by the caller.
 //         After return, tv_sec is at offset 0 and tv_nsec at offset 8.
 //
-// Returns NIL or fails with a raw syscall error code cast to tbb8.
+// Returns NIL or fails with a _?!syscall error code cast to tbb8.
 // ──────────────────────────────────────────────────────────────────────────
 pub func:bench_now = NIL(int64:ts_buf)
 {
     int64:ret = sys!!(228i64, CLOCK_MONOTONIC, ts_buf) ;
     if (ret != 0i64) {
-        fail@cast_unchecked<tbb8>(ret);
+        fail((ret) => tbb8);
     }
     pass(NIL);
 };
@@ -98,8 +98,8 @@ pub func:dist_cosine_scalar = tfp64(int64:a_ptr, int64:b_ptr, int64:dim)
         mag_b   = mag_b + (b * b);
         i       = i + 1i64;
     }
-    if (mag_a == 0.0tf) { fail@cast_unchecked<tbb8>(ERR_VECTOR_ZERO_MAGNITUDE); }
-    if (mag_b == 0.0tf) { fail@cast_unchecked<tbb8>(ERR_VECTOR_ZERO_MAGNITUDE); }
+    if (mag_a == 0.0tf) { fail((ERR_VECTOR_ZERO_MAGNITUDE) => tbb8); }
+    if (mag_b == 0.0tf) { fail((ERR_VECTOR_ZERO_MAGNITUDE) => tbb8); }
     tfp64:result = dot / (tfp64_sqrt(mag_a) * tfp64_sqrt(mag_b));
     pass(result);
 };
@@ -181,7 +181,7 @@ pub func:bench_run_l2 = NIL(int64:a_ptr, int64:b_ptr,
 
     // ── Speedup assertion: scalar_nsop >= 3 * simd_nsop ──
     if ((simd_nsop * 3i64) > scalar_nsop) {
-        fail@cast_unchecked<tbb8>(ERR_SIMD_DIM_MISMATCH);  // re-uses error slot; bench failure
+        fail((ERR_SIMD_DIM_MISMATCH) => tbb8);  // re-uses error slot; bench failure
     }
     pass(NIL);
 };
@@ -230,7 +230,7 @@ pub func:bench_run_cosine = NIL(int64:a_ptr, int64:b_ptr,
     npk_mem_write_int64(scalar_nsop_out, 0i64, scalar_nsop);
 
     if ((simd_nsop * 3i64) > scalar_nsop) {
-        fail@cast_unchecked<tbb8>(ERR_SIMD_DIM_MISMATCH);
+        fail((ERR_SIMD_DIM_MISMATCH) => tbb8);
     }
     pass(NIL);
 };
@@ -279,7 +279,7 @@ pub func:bench_run_ip = NIL(int64:a_ptr, int64:b_ptr,
     npk_mem_write_int64(scalar_nsop_out, 0i64, scalar_nsop);
 
     if ((simd_nsop * 3i64) > scalar_nsop) {
-        fail@cast_unchecked<tbb8>(ERR_SIMD_DIM_MISMATCH);
+        fail((ERR_SIMD_DIM_MISMATCH) => tbb8);
     }
     pass(NIL);
 };

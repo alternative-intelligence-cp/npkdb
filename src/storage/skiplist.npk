@@ -54,7 +54,7 @@ pub func:sl_node_alloc = int64(string:key, int64:val_ptr, int64:val_len, int64:l
     int64:key_data_ptr = 0i64;
     if (key_len > 0i64) {
         key_data_ptr = node + size;
-        drop(raw npk_mem_write_string(key_data_ptr, key));
+        _?!npk_mem_write_string(key_data_ptr, key);
     }
     
     drop(npk_mem_write_int64(node, 0i64, key_data_ptr));

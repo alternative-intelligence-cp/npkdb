@@ -102,7 +102,7 @@ pub func:slot_write = NIL(int64:buf, int64:slot_index, int64:tuple_offset, int64
     pass(NIL);
 };
 
-// Read raw tuple bytes from the page into a new buffer
+// Read _?!tuple bytes from the page into a new buffer
 pub func:page_read_tuple = int64(int64:buf, int64:slot_index) {
     int64:count = (page_get_slot_count(buf) ? 0i32) => int64;
     if (slot_index < 0i64 || slot_index >= count) {

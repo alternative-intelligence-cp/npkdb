@@ -20,7 +20,7 @@ pub func:hnsw_graph_create = int64(int64:arena_ptr, int64:vector_buf_ptr, int64:
     requires (arena_ptr != 0i64) {
     
     int64:graph = npk_core_alloc(HNSW_GRAPH_STRUCT_SIZE);
-    if (graph == 0i64) { fail@cast_unchecked<tbb8>(ERR_HNSW_OOM); }
+    if (graph == 0i64) { fail((ERR_HNSW_OOM) => tbb8); }
     
     drop(npk_mem_write_int64(graph, HNSW_GRAPH_OFF_ARENA, arena_ptr));
     drop(npk_mem_write_int64(graph, HNSW_GRAPH_OFF_VECTOR_BUF, vector_buf_ptr));
@@ -31,7 +31,7 @@ pub func:hnsw_graph_create = int64(int64:arena_ptr, int64:vector_buf_ptr, int64:
     drop(npk_mem_write_int32(graph, HNSW_GRAPH_OFF_M, M));
     drop(npk_mem_write_int32(graph, HNSW_GRAPH_OFF_M0, M0));
     drop(npk_mem_write_int32(graph, HNSW_GRAPH_OFF_EF_CONST, ef_construction));
-    drop(npk_mem_write_int64(graph, HNSW_GRAPH_OFF_ML, @cast_unchecked<int64>(mL)));
+    drop(npk_mem_write_int64(graph, HNSW_GRAPH_OFF_ML, ((mL) => int64)));
     
     pass(graph);
 };
@@ -95,7 +95,7 @@ pub func:hnsw_graph_get_ef_construction = int32(int64:graph) requires (graph != 
 };
 
 pub func:hnsw_graph_get_mL = float64(int64:graph) requires (graph != 0i64) {
-    pass(@cast_unchecked<float64>(npk_mem_read_int64(graph, HNSW_GRAPH_OFF_ML)));
+    pass(((npk_mem_read_int64(graph, HNSW_GRAPH_OFF_ML) => float64)));
 };
 
 // ── Distance Calculation ────────────────────────────────────────────────────
