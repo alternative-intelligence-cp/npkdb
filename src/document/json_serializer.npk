@@ -1,0 +1,138 @@
+// json_serializer.npk — Packs an in-memory JSON struct into a contiguous byte array
+// suitable for WAL persistence and SSTable writing.
+
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+use "json_types.npk".*;
+
+pub struct:SerialBuffer = {
+    int64:data;     // Address of buffer
+    int64:capacity;
+    int64:cursor;
+};
+
+pub func:serial_buffer_ensure = NIL(SerialBuffer->:buf, int64:needed) {
+    if (buf->cursor + needed > buf->capacity) {
+        int64:new_cap = buf->capacity * 2i64;
+        if (new_cap < buf->cursor + needed) {
+            new_cap = buf->cursor + needed;
+        }
+        int64:new_data = npk_core_alloc(new_cap);
+        drop(npk_mem_copy(new_data, buf->data, buf->cursor));
+        drop(npk_core_dalloc(buf->data));
+        buf->data = new_data;
+        buf->capacity = new_cap;
+    }
+    pass(NIL);
+};
+
+pub func:serialize_value = NIL(SerialBuffer->:buf, NpkJsonVal->:val) {
+    // Write 1-byte type
+    drop(serial_buffer_ensure(buf, 1i64));
+    drop(npk_mem_write_byte(buf->data, buf->cursor, val->type => int64));
+    buf->cursor = buf->cursor + 1i64;
+
+    if (val->type == JSON_NULL) {
+        // No payload needed
+    } else {
+        if (val->type == JSON_BOOL) {
+            drop(serial_buffer_ensure(buf, 8i64));
+            drop(npk_mem_write_int64(buf->data, buf->cursor, val->payload));
+            buf->cursor = buf->cursor + 8i64;
+        } else {
+            if (val->type == JSON_NUM_I64) {
+                drop(serial_buffer_ensure(buf, 8i64));
+                drop(npk_mem_write_int64(buf->data, buf->cursor, val->payload));
+                buf->cursor = buf->cursor + 8i64;
+            } else {
+                if (val->type == JSON_NUM_F64) {
+                    drop(serial_buffer_ensure(buf, 8i64));
+                    drop(npk_mem_write_int64(buf->data, buf->cursor, val->payload));
+                    buf->cursor = buf->cursor + 8i64;
+                } else {
+                    if (val->type == JSON_STR) {
+                        int64:str_ptr = val->payload;
+                        int64:len = npk_mem_read_int32(str_ptr, 0i64) => int64; // uint32:length is at offset 0
+                        int64:data_ptr = npk_mem_read_int64(str_ptr, 8i64);    // int64:data is at offset 8
+
+                        drop(serial_buffer_ensure(buf, 4i64 + len));
+                        drop(npk_mem_write_int32(buf->data, buf->cursor, @cast_unchecked<int32>(len)));
+                        buf->cursor = buf->cursor + 4i64;
+                        if (len > 0i64) {
+                            drop(npk_mem_copy(buf->data + buf->cursor, data_ptr, len));
+                            buf->cursor = buf->cursor + len;
+                        }
+                    } else {
+                        if (val->type == JSON_ARR) {
+                            int64:arr_ptr = val->payload;
+                            int64:count = npk_mem_read_int32(arr_ptr, 0i64) => int64;
+                            int64:handles_ptr = npk_mem_read_int64(arr_ptr, 8i64);
+
+                            drop(serial_buffer_ensure(buf, 4i64));
+                            drop(npk_mem_write_int32(buf->data, buf->cursor, @cast_unchecked<int32>(count)));
+                            buf->cursor = buf->cursor + 4i64;
+
+                            int64:i = 0i64;
+                            while (i < count) {
+                                int64:elem_ptr = npk_mem_read_int64(handles_ptr, i * 8i64);
+                                NpkJsonVal:elem = NpkJsonVal {
+                                    type: npk_mem_read_byte(elem_ptr, 0i64) => int8,
+                                    payload: npk_mem_read_int64(elem_ptr, 8i64)
+                                };
+                                drop(serialize_value(buf, @elem));
+                                i = i + 1i64;
+                            }
+                        } else {
+                            if (val->type == JSON_OBJ) {
+                                int64:obj_ptr = val->payload;
+                                int64:count = npk_mem_read_int32(obj_ptr, 0i64) => int64;
+                                int64:keys_ptr = npk_mem_read_int64(obj_ptr, 8i64);
+                                int64:vals_ptr = npk_mem_read_int64(obj_ptr, 16i64);
+
+                                drop(serial_buffer_ensure(buf, 4i64));
+                                drop(npk_mem_write_int32(buf->data, buf->cursor, @cast_unchecked<int32>(count)));
+                                buf->cursor = buf->cursor + 4i64;
+
+                                int64:i = 0i64;
+                                while (i < count) {
+                                    int64:key_ptr = npk_mem_read_int64(keys_ptr, i * 8i64);
+                                    NpkJsonVal:k_elem = NpkJsonVal {
+                                        type: npk_mem_read_byte(key_ptr, 0i64) => int8,
+                                        payload: npk_mem_read_int64(key_ptr, 8i64)
+                                    };
+                                    drop(serialize_value(buf, @k_elem));
+                                    
+                                    int64:val_ptr = npk_mem_read_int64(vals_ptr, i * 8i64);
+                                    NpkJsonVal:v_elem = NpkJsonVal {
+                                        type: npk_mem_read_byte(val_ptr, 0i64) => int8,
+                                        payload: npk_mem_read_int64(val_ptr, 8i64)
+                                    };
+                                    drop(serialize_value(buf, @v_elem));
+                                    
+                                    i = i + 1i64;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    pass(NIL);
+};
+
+// Returns a pointer to the newly allocated serialized buffer, and updates out_len.
+// Caller is responsible for freeing the buffer.
+pub func:serialize_document = int64(NpkJsonVal->:val, int64:out_len_ptr) {
+    int64:initial_cap = 256i64;
+    SerialBuffer:buf = SerialBuffer {
+        data: npk_core_alloc(initial_cap),
+        capacity: initial_cap,
+        cursor: 0i64
+    };
+    
+    drop(serialize_value(@buf, val));
+    
+    drop(npk_mem_write_int64(out_len_ptr, 0i64, buf.cursor));
+    pass(buf.data);
+};

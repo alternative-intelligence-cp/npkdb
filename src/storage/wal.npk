@@ -3,6 +3,7 @@ use "../util/constants.npk".*;
 use "../util/error_codes.npk".*;
 use "../util/mem_primitives.npk".*;
 use "../util/crc32.npk".*;
+use "../document/json_serializer.npk".*;
 use "sys.npk".*;
 
 pub fixed int64:WAL_GROUP_MAX_RECORDS = 32i64;
@@ -137,6 +138,38 @@ pub func:wal_append_delete = int64(int64:wal_fd, string:key, int64:seq)
 
 pub func:wal_append_checkpoint = int64(int64:wal_fd, int64:seq) {
     int64:res = wal_append(wal_fd, WAL_RECORD_CHECKPOINT, seq, 0i64, 0i64) ?! 0i64;
+    pass(res);
+};
+
+pub func:wal_append_document = int64(int64:wal_fd, string:key, int64:val_ptr, int64:seq) {
+    int64:key_len = string_length(key);
+    int64:doc_len_ptr = npk_core_alloc(8i64);
+    int64:doc_buf = raw serialize_document(@cast_unchecked<NpkJsonVal->>(val_ptr), doc_len_ptr);
+    int64:doc_len = npk_mem_read_int64(doc_len_ptr, 0i64);
+    
+    int64:payload_len = 4i64 + key_len + 4i64 + doc_len;
+    int64:payload = npk_core_alloc(payload_len);
+    
+    // Offset 0: key_len
+    drop(npk_mem_write_int32(payload, 0i64, @cast_unchecked<int32>(key_len)));
+    if (key_len > 0i64) {
+        drop(raw npk_mem_write_string(payload + 4i64, key));
+    }
+    
+    // Offset 4+key_len: doc_len
+    drop(npk_mem_write_int32(payload, 4i64 + key_len, @cast_unchecked<int32>(doc_len)));
+    
+    // Offset 8+key_len: doc
+    if (doc_len > 0i64) {
+        drop(npk_mem_copy(payload + 8i64 + key_len, doc_buf, doc_len));
+    }
+    
+    int64:res = wal_append(wal_fd, WAL_RECORD_PUT, seq, payload, payload_len) ?! 0i64;
+    
+    drop(npk_core_dalloc(payload));
+    drop(npk_core_dalloc(doc_buf));
+    drop(npk_core_dalloc(doc_len_ptr));
+    
     pass(res);
 };
 

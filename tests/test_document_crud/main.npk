@@ -1,0 +1,69 @@
+use "sys.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/document/json_types.npk".*;
+use "../../src/document/json_serializer.npk".*;
+use "../../src/storage/wal.npk".*;
+
+extern "C" {
+    func:_exit = void(int32:code);
+}
+
+pub func:proc_exit = NIL(int32:code) {
+    _exit(code);
+    pass(NIL);
+};
+
+pub func:failsafe = int32(tbb32:err) {
+    println("Failsafe triggered");
+    exit(1i32);
+};
+
+pub func:main = int32(int32:argc, wild int8->:argv) {
+    println("Starting Document CRUD test...");
+    
+    int64:wal_fd = sys(OPEN, "test_doc_crud.wal", 578i64, 420i64) ?! -1i64; // O_RDWR|O_CREAT|O_TRUNC, 0644
+    if (wal_fd == -1i64) {
+        println("Failed to open wal file");
+        exit(1i32);
+    }
+    
+    // Create string JSON document
+    string:test_str = "hello_world_json";
+    int64:str_len = string_length(test_str);
+    int64:str_data = npk_core_alloc(str_len);
+    drop(raw npk_mem_write_string(str_data, test_str));
+    
+    int64:str_obj = npk_core_alloc(16i64); // NpkJsonStr is 16 bytes due to padding
+    drop(npk_mem_write_int32(str_obj, 0i64, @cast_unchecked<int32>(str_len)));
+    drop(npk_mem_write_int64(str_obj, 8i64, str_data));
+    
+    int64:val_ptr = npk_core_alloc(16i64);
+    drop(npk_mem_write_byte(val_ptr, 0i64, 4i64)); // JSON_STR is 4
+    drop(npk_mem_write_int64(val_ptr, 8i64, str_obj));
+    
+    println("Serializing document...");
+    int64:res = wal_append_document(wal_fd, "doc_key", val_ptr, 100i64) ?! 0i64;
+    if (res == 0i64) {
+        println("Failed to append document to WAL");
+        exit(1i32);
+    }
+    println("Document appended to WAL successfully.");
+    
+    // Add tombstone
+    println("Appending tombstone...");
+    int64:del_res = wal_append_delete(wal_fd, "doc_key", 101i64) ?! 0i64;
+    if (del_res == 0i64) {
+        println("Failed to append delete to WAL");
+        exit(1i32);
+    }
+    println("Tombstone appended successfully.");
+    
+    drop(sys(CLOSE, wal_fd));
+    
+    // Cleanup
+    drop(npk_core_dalloc(str_obj));
+    drop(npk_core_dalloc(str_data));
+    
+    println("Test passed.");
+    exit(0i32);
+};
