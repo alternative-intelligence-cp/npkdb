@@ -37,6 +37,10 @@ pub fixed int32:ERR_QUERY_INVALID_FILTER = 301i32;
 pub fixed int32:ERR_JSON_PARSE_FAIL      = 310i32; // Syntax error in JSON buffer
 pub fixed int32:ERR_JSON_DEPTH_EXCEEDED  = 311i32; // Too many nested objects/arrays
 
+pub fixed int32:ERR_REGEX_PARSE                 = 320i32;
+pub fixed int32:ERR_REGEX_TIMEOUT               = 321i32;
+pub fixed int32:ERR_REGEX_COMPLEXITY_EXCEEDED   = 322i32;
+
 // Server errors (400-499)
 pub fixed int32:ERR_SERVER_BIND_FAILED   = 400i32;
 pub fixed int32:ERR_SERVER_ACCEPT_FAILED = 401i32;

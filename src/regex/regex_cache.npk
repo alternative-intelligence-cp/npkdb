@@ -1,0 +1,158 @@
+// regex_cache.npk — Concurrency & Caching
+
+use "regex_types.npk".*;
+use "regex_arena.npk".*;
+use "regex_vm.npk".*;
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+use "atomic.npk".*;
+
+extern "nitpick_libc_sys" {
+    func:npk_shim_rwlock_create = int64();
+    func:npk_shim_rwlock_rdlock = int32(int64:handle);
+    func:npk_shim_rwlock_wrlock = int32(int64:handle);
+    func:npk_shim_rwlock_unlock = int32(int64:handle);
+}
+
+// Global rwlock and list head
+pub int64:g_regex_rwlock = 0i64;
+pub int64:g_regex_cache_head = 0i64;
+
+pub func:regex_cache_init = int32() {
+    g_regex_rwlock = npk_shim_rwlock_create();
+    g_regex_cache_head = 0i64;
+    pass(0i32);
+};
+
+func:strings_equal = int32(int64:str1, int64:len1, int64:str2, int64:len2) {
+    if (len1 != len2) { pass(0i32); }
+    int64:i = 0i64;
+    int32:match = 1i32;
+    when (i < len1) {
+        int64:c1 = npk_mem_read_byte(str1, i);
+        int64:c2 = npk_mem_read_byte(str2, i);
+        if (c1 != c2) {
+            match = 0i32;
+            i = len1; // break
+        } else {
+            i = i + 1i64;
+        }
+    }
+    pass(match);
+};
+
+pub func:regex_cache_get = int64(int64:pattern, int64:pattern_len) {
+    int32:rdlock_res = npk_shim_rwlock_rdlock(g_regex_rwlock);
+    defer { drop(npk_shim_rwlock_unlock(g_regex_rwlock)); }
+    
+    int64:curr = g_regex_cache_head;
+    int64:found = 0i64;
+    int32:running = 1i32;
+    
+    when (running == 1i32) {
+        if (curr == 0i64) {
+            running = 0i32;
+        } else {
+            int64:p_str = npk_mem_read_int64(curr, 0i64);
+            int64:p_len = npk_mem_read_int64(curr, 8i64);
+            
+            int32:eq = raw strings_equal(pattern, pattern_len, p_str, p_len);
+            if (eq == 1i32) {
+                found = curr;
+                running = 0i32;
+            } else {
+                curr = npk_mem_read_int64(curr, 40i64);
+            }
+        }
+    }
+    
+    pass(found);
+};
+
+pub func:regex_cache_insert = int64(int64:pattern, int64:pattern_len, int64:arena_ptr, int64:start_state) {
+    int32:wrlock_res = npk_shim_rwlock_wrlock(g_regex_rwlock);
+    defer { drop(npk_shim_rwlock_unlock(g_regex_rwlock)); }
+    
+    // Eviction logic
+    int64:curr = g_regex_cache_head;
+    int32:count = 0i32;
+    int64:prev = 0i64;
+    int64:lowest_hit_node = 0i64;
+    int64:lowest_hit_prev = 0i64;
+    int64:min_hits = 999999999i64;
+    
+    when (curr != 0i64) {
+        count = count + 1i32;
+        int64:hndl = npk_mem_read_int64(curr, 32i64);
+        int64:hits = raw AtomicInt64.add(AtomicInt64{handle: hndl}, 0i64, raw AtomicInt64.RELAXED());
+        if (hits < min_hits) {
+            min_hits = hits;
+            lowest_hit_node = curr;
+            lowest_hit_prev = prev;
+        }
+        prev = curr;
+        curr = npk_mem_read_int64(curr, 40i64);
+    }
+    
+    if (count >= 1000i32) {
+        if (lowest_hit_node != 0i64) {
+            if (lowest_hit_prev == 0i64) {
+                g_regex_cache_head = npk_mem_read_int64(lowest_hit_node, 40i64);
+            } else {
+                int64:next_node = npk_mem_read_int64(lowest_hit_node, 40i64);
+                drop(npk_mem_write_int64(lowest_hit_prev, 40i64, next_node));
+            }
+            int64:p_str = npk_mem_read_int64(lowest_hit_node, 0i64);
+            drop(npk_core_dalloc(p_str));
+            // arena_ptr is freed by the VM or GC in NPKDB usually, but we drop the node
+            drop(npk_core_dalloc(lowest_hit_node));
+        }
+    }
+
+    int64:entry = npk_core_alloc(48i64);
+    
+    // Copy the string
+    int64:p_copy = npk_core_alloc(pattern_len);
+    int64:i = 0i64;
+    when (i < pattern_len) {
+        int64:c = npk_mem_read_byte(pattern, i);
+        drop(npk_mem_write_byte(p_copy, i, c));
+        i = i + 1i64;
+    }
+    
+    drop(npk_mem_write_int64(entry, 0i64, p_copy));
+    drop(npk_mem_write_int64(entry, 8i64, pattern_len));
+    drop(npk_mem_write_int64(entry, 16i64, arena_ptr));
+    drop(npk_mem_write_int64(entry, 24i64, start_state));
+    
+    // hit_counter
+    AtomicInt64:hit_counter = raw AtomicInt64.create(0i64);
+    drop(npk_mem_write_int64(entry, 32i64, hit_counter.handle));
+    
+    // insert at head
+    drop(npk_mem_write_int64(entry, 40i64, g_regex_cache_head));
+    g_regex_cache_head = entry;
+    
+    pass(entry);
+};
+
+pub func:regex_cache_increment_hit = int32(int64:entry) {
+    if (entry == 0i64) { pass(0i32); }
+    int64:handle = npk_mem_read_int64(entry, 32i64);
+    AtomicInt64:hit_counter = AtomicInt64{handle: handle};
+    int32:RELAXED = raw AtomicInt64.RELAXED();
+    drop(AtomicInt64.add(hit_counter, 1i64, RELAXED));
+    pass(1i32);
+};
+
+pub func:regex_execute = int32(int64:entry, int64:text, int64:text_len) {
+    if (entry == 0i64) { pass(0i32); }
+    drop(regex_cache_increment_hit(entry));
+    
+    int64:arena_ptr = npk_mem_read_int64(entry, 16i64);
+    int64:start_state = npk_mem_read_int64(entry, 24i64);
+    
+    // Call the VM
+    int32:match = raw regex_vm_match(arena_ptr, start_state, text, text_len);
+    pass(match);
+};

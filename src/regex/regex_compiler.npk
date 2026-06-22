@@ -1,0 +1,203 @@
+// regex_compiler.npk — Iterative AST Compilation for nregx
+
+use "ast_types.npk".*;
+use "regex_types.npk".*;
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+
+// Thread-Local Cache allocations for ephemeral AST Nodes
+extern "nitpick_libc_sys" {
+    func:npk_tlc_batch_alloc = int64(int64:size);
+    func:npk_tlc_batch_flush = void();
+}
+
+// Memory-safe AST Node allocator using the thread-local batch
+func:alloc_ast_node = int64(int32:type, int32:val) {
+    int64:node = npk_tlc_batch_alloc(32i64);
+    drop(npk_mem_write_int32(node, 0i64, type));
+    drop(npk_mem_write_int32(node, 4i64, val));
+    drop(npk_mem_write_int64(node, 8i64, 0i64));
+    drop(npk_mem_write_int64(node, 16i64, 0i64));
+    pass(node);
+};
+
+// ── LEXER ────────────────────────────────────────────────────────────────
+
+pub func:lex_pattern = int32(int64:pattern, limit<r_valid_regex_len> int64:len, int64:out_tokens) {
+    int64:i = 0i64;
+    int32:token_count = 0i32;
+
+    when (i < len) {
+        int64:c = npk_mem_read_byte(pattern, i);
+        int64:tok_ptr = out_tokens + ((token_count => int64) * 8i64);
+        
+        if (c == 42i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_STAR));
+        } else if (c == 43i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_PLUS));
+        } else if (c == 63i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_QMARK));
+        } else if (c == 124i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_PIPE));
+        } else if (c == 40i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_LPAREN));
+        } else if (c == 41i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_RPAREN));
+        } else if (c == 46i64) { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_DOT));
+        } else { 
+            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_LITERAL));
+            drop(npk_mem_write_int32(tok_ptr, 4i64, c => int32));
+        }
+        
+        token_count = token_count + 1i32;
+        i = i + 1i64;
+    }
+    
+    pass(token_count);
+};
+
+// ── RECURSIVE DESCENT PARSER ──────────────────────────────────────────────────
+
+func:parse_alt = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth) {
+    if (depth > 128i32) { pass(0i64); }
+    int64:left = raw parse_concat(tokens, count, idx_ptr, depth + 1i32);
+    if (left == 0i64) { pass(0i64); }
+    
+    int32:running = 1i32;
+    when (running == 1i32) {
+        int32:idx = npk_mem_read_int32(idx_ptr, 0i64);
+        if (idx >= count) {
+            running = 0i32;
+        } else {
+            int64:tok_ptr = tokens + ((idx => int64) * 8i64);
+            int32:tok_type = npk_mem_read_int32(tok_ptr, 0i64);
+            if (tok_type == TOKEN_PIPE) {
+                drop(npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32));
+                int64:right = raw parse_concat(tokens, count, idx_ptr, depth + 1i32);
+                if (right == 0i64) { pass(0i64); }
+                int64:alt_node = raw alloc_ast_node(AST_ALT, 0i32);
+                drop(npk_mem_write_int64(alt_node, 8i64, left));
+                drop(npk_mem_write_int64(alt_node, 16i64, right));
+                left = alt_node;
+            } else {
+                running = 0i32;
+            }
+        }
+    }
+    pass(left);
+};
+
+func:parse_concat = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth) {
+    if (depth > 128i32) { pass(0i64); }
+    int64:left = raw parse_rep(tokens, count, idx_ptr, depth + 1i32);
+    if (left == 0i64) { pass(0i64); }
+    
+    int32:running = 1i32;
+    when (running == 1i32) {
+        int32:idx = npk_mem_read_int32(idx_ptr, 0i64);
+        if (idx >= count) {
+            running = 0i32;
+        } else {
+            int64:tok_ptr = tokens + ((idx => int64) * 8i64);
+            int32:tok_type = npk_mem_read_int32(tok_ptr, 0i64);
+            // concat if token is LITERAL, DOT, LPAREN
+            if ((tok_type == TOKEN_LITERAL) || (tok_type == TOKEN_DOT) || (tok_type == TOKEN_LPAREN)) {
+                int64:right = raw parse_rep(tokens, count, idx_ptr, depth + 1i32);
+                if (right == 0i64) { pass(0i64); }
+                int64:concat_node = raw alloc_ast_node(AST_CONCAT, 0i32);
+                drop(npk_mem_write_int64(concat_node, 8i64, left));
+                drop(npk_mem_write_int64(concat_node, 16i64, right));
+                left = concat_node;
+            } else {
+                running = 0i32;
+            }
+        }
+    }
+    pass(left);
+};
+
+func:parse_rep = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth) {
+    if (depth > 128i32) { pass(0i64); }
+    int64:node = raw parse_atom(tokens, count, idx_ptr, depth + 1i32);
+    if (node == 0i64) { pass(0i64); }
+    
+    int32:idx = npk_mem_read_int32(idx_ptr, 0i64);
+    if (idx < count) {
+        int64:tok_ptr = tokens + ((idx => int64) * 8i64);
+        int32:tok_type = npk_mem_read_int32(tok_ptr, 0i64);
+        
+        if (tok_type == TOKEN_STAR) {
+            drop(npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32));
+            int64:star_node = raw alloc_ast_node(AST_STAR, 0i32);
+            drop(npk_mem_write_int64(star_node, 8i64, node));
+            node = star_node;
+        } else if (tok_type == TOKEN_PLUS) {
+            drop(npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32));
+            int64:plus_node = raw alloc_ast_node(AST_PLUS, 0i32);
+            drop(npk_mem_write_int64(plus_node, 8i64, node));
+            node = plus_node;
+        } else if (tok_type == TOKEN_QMARK) {
+            drop(npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32));
+            int64:qmark_node = raw alloc_ast_node(AST_QMARK, 0i32);
+            drop(npk_mem_write_int64(qmark_node, 8i64, node));
+            node = qmark_node;
+        }
+    }
+    pass(node);
+};
+
+func:parse_atom = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth) {
+    if (depth > 128i32) { pass(0i64); }
+    
+    int32:idx = npk_mem_read_int32(idx_ptr, 0i64);
+    if (idx >= count) { pass(0i64); }
+    
+    int64:tok_ptr = tokens + ((idx => int64) * 8i64);
+    int32:tok_type = npk_mem_read_int32(tok_ptr, 0i64);
+    int32:tok_val = npk_mem_read_int32(tok_ptr, 4i64);
+    
+    drop(npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32));
+    
+    if (tok_type == TOKEN_LITERAL) {
+        pass(raw alloc_ast_node(AST_LITERAL, tok_val));
+    } else if (tok_type == TOKEN_DOT) {
+        pass(raw alloc_ast_node(AST_ANY, 0i32));
+    } else if (tok_type == TOKEN_LPAREN) {
+        int64:inner = raw parse_alt(tokens, count, idx_ptr, depth + 1i32);
+        if (inner == 0i64) { pass(0i64); }
+        
+        int32:idx2 = npk_mem_read_int32(idx_ptr, 0i64);
+        if (idx2 >= count) { pass(0i64); }
+        int64:tok_ptr2 = tokens + ((idx2 => int64) * 8i64);
+        int32:tok_type2 = npk_mem_read_int32(tok_ptr2, 0i64);
+        
+        if (tok_type2 != TOKEN_RPAREN) { pass(0i64); }
+        drop(npk_mem_write_int32(idx_ptr, 0i64, idx2 + 1i32));
+        
+        pass(inner);
+    }
+    
+    pass(0i64);
+};
+
+pub func:parse_regex_ast = int64(int64:tokens, int32:count) {
+    defer { npk_tlc_batch_flush(); }
+    
+    if (count == 0i32) {
+        pass(0i64);
+    }
+    
+    int64:idx_ptr = npk_tlc_batch_alloc(8i64);
+    drop(npk_mem_write_int32(idx_ptr, 0i64, 0i32));
+    
+    int64:root = raw parse_alt(tokens, count, idx_ptr, 0i32);
+    if (root == 0i64) { pass(0i64); }
+    
+    int32:idx = npk_mem_read_int32(idx_ptr, 0i64);
+    if (idx != count) {
+        pass(0i64); // unexpected trailing tokens
+    }
+    
+    pass(root);
+};

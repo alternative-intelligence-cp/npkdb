@@ -1,0 +1,9 @@
+use "../../src/util/failsafe.npk".*;
+use "../../src/regex/ast_types.npk".*;
+use "../../src/regex/regex_types.npk".*;
+use "../../src/regex/regex_arena.npk".*;
+use "../../src/regex/nfa_compiler.npk".*;
+
+pub func:main = int32() {
+    exit(0);
+};

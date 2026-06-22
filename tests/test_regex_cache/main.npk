@@ -1,0 +1,11 @@
+use "../../src/util/failsafe.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/regex/ast_types.npk".*;
+use "../../src/regex/regex_types.npk".*;
+use "../../src/regex/regex_arena.npk".*;
+use "../../src/regex/regex_cache.npk".*;
+
+pub func:main = int32() {
+    drop(regex_cache_init());
+    exit(0);
+};

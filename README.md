@@ -210,6 +210,38 @@ curl http://localhost:7373/collections/docs/get/doc_001
 
 ---
 
+## Regex Engine (nregx internal module)
+
+NPKDB includes a fully-featured, memory-safe regular expression engine capable of evaluating advanced queries over metadata and unstructured text.
+This internal component uses an iterative Recursive Descent parser coupled with a Thompson NFA compiler to safely match patterns.
+
+### Building the Regex Module
+
+The regex engine builds automatically with the core database:
+```bash
+npkbld build
+```
+
+### Regex Engine Usage
+
+Within Nitpick, use the thread-local regex compiler and bounded cache to securely execute evaluations without memory leaks.
+
+```nitpick
+use "regex/regex_cache.npk".*;
+
+// Initialize the cache subsystem globally
+_?regex_cache_init();
+
+// Insert or Retrieve a pattern (automatically compiles & LRU caches)
+int64:pattern_str = "hello( |-)world+";
+int64:entry = regex_cache_insert(pattern_str, string_length(pattern_str), arena, start);
+
+// Match against text safely
+int32:is_match = regex_execute(entry, text_str, string_length(text_str));
+```
+
+---
+
 ## Related Projects
 
 | Project | Description |

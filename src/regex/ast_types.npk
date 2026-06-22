@@ -1,0 +1,32 @@
+// ast_types.npk — Token and AST Node types for niregx
+
+// Token definitions
+pub fixed int32:TOKEN_LITERAL = 1i32;
+pub fixed int32:TOKEN_STAR    = 2i32;
+pub fixed int32:TOKEN_PLUS    = 3i32;
+pub fixed int32:TOKEN_QMARK   = 4i32;
+pub fixed int32:TOKEN_PIPE    = 5i32;
+pub fixed int32:TOKEN_LPAREN  = 6i32;
+pub fixed int32:TOKEN_RPAREN  = 7i32;
+pub fixed int32:TOKEN_DOT     = 8i32;
+
+pub struct:Token = {
+    int32:type;
+    int32:val;
+};
+
+// AST Node types
+pub fixed int32:AST_LITERAL = 1i32;
+pub fixed int32:AST_CONCAT  = 2i32;
+pub fixed int32:AST_ALT     = 3i32;
+pub fixed int32:AST_STAR    = 4i32;
+pub fixed int32:AST_PLUS    = 5i32;
+pub fixed int32:AST_QMARK   = 6i32;
+pub fixed int32:AST_ANY     = 7i32;
+
+pub struct:AstNode = {
+    int32:type;
+    int32:val;
+    int64:left;
+    int64:right;
+};

@@ -1,0 +1,121 @@
+// regex_vm.npk — Thompson VM Core Engine Execution
+
+use "regex_types.npk".*;
+use "ast_types.npk".*;
+use "regex_arena.npk".*;
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+
+func:add_state = int64(int64:state, int64:list_ptr, int64:list_size_ptr, int64:visit_gen) {
+    if (state == 0i64) { pass(0i64); }
+    
+    // Read visit_gen (offset 32)
+    int64:last_visit = npk_mem_read_int64(state, 32i64);
+    if (last_visit == visit_gen) { pass(0i64); }
+    
+    drop(npk_mem_write_int64(state, 32i64, visit_gen));
+    
+    int32:opcode = npk_mem_read_int32(state, 0i64);
+    int64:out1 = npk_mem_read_int64(state, 8i64);
+    int64:out2 = npk_mem_read_int64(state, 16i64);
+    
+    if (opcode == OP_SPLIT) {
+        drop(add_state(out1, list_ptr, list_size_ptr, visit_gen));
+        drop(add_state(out2, list_ptr, list_size_ptr, visit_gen));
+        pass(0i64);
+    } else if (opcode == OP_JMP) {
+        drop(add_state(out1, list_ptr, list_size_ptr, visit_gen));
+        pass(0i64);
+    }
+    
+    int64:size = npk_mem_read_int64(list_size_ptr, 0i64);
+    drop(npk_mem_write_int64(list_ptr, size * 8i64, state));
+    drop(npk_mem_write_int64(list_size_ptr, 0i64, size + 1i64));
+    
+    pass(0i64);
+};
+
+pub func:regex_vm_match = int32(int64:arena_ptr, int64:start_state, int64:text, int64:text_len) {
+    if (start_state == 0i64) { pass(0i32); }
+    
+    int64:capacity = npk_mem_read_int64(arena_ptr, 8i64);
+    int64:clist = npk_core_alloc(capacity * 8i64);
+    int64:nlist = npk_core_alloc(capacity * 8i64);
+    int64:clist_sz_ptr = npk_core_alloc(8i64);
+    int64:nlist_sz_ptr = npk_core_alloc(8i64);
+    
+    int64:visit_gen = 1i64;
+    drop(npk_mem_write_int64(clist_sz_ptr, 0i64, 0i64));
+    drop(npk_mem_write_int64(nlist_sz_ptr, 0i64, 0i64));
+    
+    drop(add_state(start_state, clist, clist_sz_ptr, visit_gen));
+    
+    int64:idx = 0i64;
+    int32:matched = 0i32;
+    int32:running = 1i32;
+    
+    when (running == 1i32) {
+        int64:clist_sz = npk_mem_read_int64(clist_sz_ptr, 0i64);
+        if (clist_sz == 0i64) {
+            running = 0i32;
+        } else {
+            // Process current states
+            // If we run out of string, we can't consume characters, but we still check for OP_MATCH
+            int64:c = -1i64;
+            if (idx < text_len) {
+                c = npk_mem_read_byte(text, idx);
+            }
+            
+            visit_gen = visit_gen + 1i64;
+            drop(npk_mem_write_int64(nlist_sz_ptr, 0i64, 0i64));
+            
+            int64:i = 0i64;
+            when (i < clist_sz) {
+                int64:state = npk_mem_read_int64(clist, i * 8i64);
+                int32:opcode = npk_mem_read_int32(state, 0i64);
+                
+                if (opcode == OP_MATCH) {
+                    matched = 1i32;
+                    running = 0i32;
+                    // We found a match, but if we want greedy matching we might need to continue.
+                    // For now, any match is accepted (since we are doing regex match, not search).
+                } else if (c != -1i64) {
+                    if (opcode == OP_CHAR) {
+                        int32:match_char = npk_mem_read_int32(state, 4i64);
+                        if (c == (match_char => int64)) {
+                            int64:out1 = npk_mem_read_int64(state, 8i64);
+                            drop(add_state(out1, nlist, nlist_sz_ptr, visit_gen));
+                        }
+                    } else if (opcode == OP_ANY) {
+                        int64:out1 = npk_mem_read_int64(state, 8i64);
+                        drop(add_state(out1, nlist, nlist_sz_ptr, visit_gen));
+                    }
+                }
+                
+                i = i + 1i64;
+            }
+            
+            if (matched == 0i32) {
+                if (idx >= text_len) {
+                    running = 0i32;
+                } else {
+                    // Swap clist and nlist
+                    int64:tmp = clist;
+                    clist = nlist;
+                    nlist = tmp;
+                    
+                    int64:nlist_sz = npk_mem_read_int64(nlist_sz_ptr, 0i64);
+                    drop(npk_mem_write_int64(clist_sz_ptr, 0i64, nlist_sz));
+                    idx = idx + 1i64;
+                }
+            }
+        }
+    }
+    
+    drop(npk_core_dalloc(clist));
+    drop(npk_core_dalloc(nlist));
+    drop(npk_core_dalloc(clist_sz_ptr));
+    drop(npk_core_dalloc(nlist_sz_ptr));
+    
+    pass(matched);
+};
