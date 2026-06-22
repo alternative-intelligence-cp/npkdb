@@ -3,6 +3,7 @@ use "channel.npk".*;
 use "thread.npk".*;
 use "router.npk".*;
 use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
+use "../../libn/src/syscall/syscall_numbers.npk".*;
 
 extern "nitpick_libc_mem" {
     func:npk_core_alloc = int64(int64:size);

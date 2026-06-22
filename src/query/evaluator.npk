@@ -14,14 +14,17 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
         pass(true); // Empty filter matches everything
     }
     
-    astack(2048i64);
+    astack(2048i64); // Allocate a 2048-slot stack array on the C stack (8 bytes each, 16KB)
+
+    // Create a local arena for deserialization to prevent OOM
+    int64:doc_arena = json_arena_init(65536i64);
+    defer { _?json_arena_destroy(doc_arena); }
 
     int64:cursor_ptr = npk_core_alloc(8i64);
     drop(npk_mem_write_int64(cursor_ptr, 0i64, 0i64));
-    NpkJsonVal:doc = deserialize_value(arena, doc_buf, cursor_ptr);
+    NpkJsonVal:doc = deserialize_value(doc_arena, doc_buf, cursor_ptr);
     drop(npk_core_dalloc(cursor_ptr));
     int64:doc_ptr = (@doc) => int64;
- // Allocate a 2048-slot stack array on the C stack (8 bytes each, 16KB)
     
     // Push the root task
     // Frame layout (pushed top-to-bottom):

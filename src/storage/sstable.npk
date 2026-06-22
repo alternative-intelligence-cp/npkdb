@@ -9,6 +9,7 @@ use "../util/error_codes.npk".*;
 use "../util/crc32.npk".*;
 use "../util/bloom.npk".*;
 use "../util/mem_primitives.npk".*;
+use "../../libn/src/syscall/syscall_numbers.npk".*;
 
 // SSTable magic number (identifies file type)
 // "NPKDB01" in hex: 4E 50 4B 44 42 30 31 => 0x4E504B44423031

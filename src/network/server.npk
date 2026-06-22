@@ -22,7 +22,7 @@ pub func:server_start = int32() {
     
     int64:workers = npk_mem_read_int64(cfg_ptr, CFG_MAX_THREADS);
     if (workers <= 0i64) {
-        workers = (((raw Thread.hardware_concurrency() => int64)) * 2i32);
+        workers = (((raw Thread.hardware_concurrency() => int64)) * 2i64);
         if (workers <= 0i64) { workers = 4i64; }
     }
     

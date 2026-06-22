@@ -345,7 +345,6 @@ pub func:parse_json_raw = NpkJsonVal(int64:arena_ptr, int64:ptr, int64:len) {
         length: len,
         pos: 0i64,
         depth: 0i64,
-        arena_ptr: arena_ptr,
         arena_ptr: arena_ptr
     };
     

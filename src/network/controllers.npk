@@ -44,7 +44,7 @@ pub int64:global_graph = 0i64;
 pub int64:global_arena = 0i64;
 pub int64:global_vec_buf = 0i64;
 pub int64:global_doc_store = 0i64;
-pub int64:global_rand_state = 0i64;
+
 
 pub func:controller_insert = int32(int64:client_fd, Request:req, string:collection_name) {
     int64:arena = json_arena_init(1048576i64); // 1 MB limit
@@ -63,7 +63,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
     NpkJsonVal:v = v_res.value;
     if (v.type != JSON_OBJ) {
         _?!Server.send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Expected object\"}");
-        pass(NIL);
+        pass(400i32);
     }
 
     int64:obj_ptr = v.payload;
@@ -179,7 +179,10 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
                                             
                                             drop(nitpick_libc_rwlock_rdlock(global_catalog_lock));
                                             int64:local_visited = _?!hnsw_visited_create(10000i64);
-                                            _?!hnsw_insert(global_graph, vec_offset, global_rand_state, local_visited);
+                                            int64:local_rand = npk_core_alloc(8i64);
+                                            defer { _?npk_core_dalloc(local_rand); }
+                                            drop(npk_mem_write_int64(local_rand, 0i64, ctr)); // Seed with counter
+                                            _?!hnsw_insert(global_graph, vec_offset, local_rand, local_visited);
                                             drop(hnsw_visited_destroy(local_visited));
                                             drop(nitpick_libc_rwlock_unlock(global_catalog_lock));
                                         }

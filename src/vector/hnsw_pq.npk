@@ -44,7 +44,7 @@ pub func:hnsw_pq_get_dist = tfp64(int64:candidate_ptr) requires (candidate_ptr !
 };
 
 pub func:hnsw_pq_get_slot = int32(int64:candidate_ptr) requires (candidate_ptr != 0i64) {
-    pass(npk_mem_read_int32(candidate_ptr, 12i64));
+    pass(npk_mem_read_int32(candidate_ptr, 8i64));
 };
 
 pub func:hnsw_pq_get_gen = int32(int64:candidate_ptr) requires (candidate_ptr != 0i64) {
