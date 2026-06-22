@@ -341,20 +341,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         drop(mt_freeze(out_mt));
         int64:s_res = sstable_write(new_path, out_mt) ? -1i64;
         
-        // Free copied value pointers
-        // println("DEBUG: Freeing copied values...");
-        int64:c_node = mt_first(out_mt) ? 0i64;
-        while (c_node != 0i64) {
-            int64:c_is_tomb = _?!sl_node_is_deleted(c_node);
-            if (c_is_tomb == 0i64) {
-                int64:c_v_ptr = _?!sl_node_val_ptr(c_node);
-                if (c_v_ptr != 0i64) {
-                    drop(npk_core_dalloc(c_v_ptr));
-                }
-            }
-            c_node = _?!sl_next(c_node);
-        }
-        // println("DEBUG: Freed copied values!");
+        // Copied value pointers are freed natively by mt_destroy!
         
         drop(mt_destroy(out_mt));
         

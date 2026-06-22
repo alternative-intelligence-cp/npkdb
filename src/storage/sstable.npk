@@ -21,7 +21,7 @@ pub fixed int64:SSTABLE_MAGIC = 22033878037372977i64; // 0x4E504B44423031
 //   Offset 16: total_keys (int64)
 //   Offset 24: magic (int32)
 //   Offset 28: footer_checksum (int32)
-pub fixed int64:SSTABLE_FOOTER_SIZE = 32i64;
+pub fixed int64:SSTABLE_FOOTER_SIZE = 48i64;
 
 // Record flags
 pub fixed int8:RECORD_FLAG_LIVE      = 0i8;
@@ -126,9 +126,9 @@ pub func:sstable_write = int64(string:path, int64:mt) {
     int64:total_bytes = 0i64;
     
     // Max 1000 blocks for cycle 0
-    int64:k_ptrs = npk_core_alloc(8000i64);
-    int64:k_lens = npk_core_alloc(8000i64);
-    int64:b_offs = npk_core_alloc(8000i64);
+    int64:k_ptrs = npk_core_alloc(8000i64 * 8i64);
+    int64:k_lens = npk_core_alloc(8000i64 * 8i64);
+    int64:b_offs = npk_core_alloc(8000i64 * 8i64);
     int64:block_count = 0i64;
     int64:total_keys = 0i64;
     
@@ -149,6 +149,7 @@ pub func:sstable_write = int64(string:path, int64:mt) {
         
         int64:ins = page_insert(curr_page, rec, rec_sz) ? -1i64;
         if (ins == -1i64) {
+            if (block_count >= 8000i64) { break; }
             // Page full, flush it
             int64:offset = sstable_flush_page(fd, curr_page) ? -1i64;
             
@@ -177,7 +178,7 @@ pub func:sstable_write = int64(string:path, int64:mt) {
     }
     
     // Flush last page if any keys
-    if (has_pending == 1i64) {
+    if (has_pending == 1i64 && block_count < 8000i64) {
         int64:offset = sstable_flush_page(fd, curr_page) ? -1i64;
         
         int64:last_k_len = string_length(last_key);

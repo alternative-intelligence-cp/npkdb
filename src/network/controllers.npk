@@ -119,6 +119,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
                                     Result<int64>:buf_res = serialize_document(@elem, len_out);
                                     if (!buf_res.is_error) {
                                         int64:doc_buf = buf_res.value;
+                                        defer { _?npk_core_dalloc(doc_buf); }
                                         // removed defer doc_buf
                                         int64:doc_len = npk_mem_read_int64(len_out, 0i64);
                                         
@@ -148,6 +149,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
                                                         int64:a_cnt = (npk_mem_read_int32(a_ptr, 0i64)) => int64;
                                                         int64:a_h = npk_mem_read_int64(a_ptr, 8i64);
                                                         int64:vi = 0i64;
+                                                        _?npk_mem_set(global_vec_buf + vec_offset, 0i64, 128i64 * 8i64);
                                                         while (vi < a_cnt && vi < 128i64) {
                                                             int64:ve_ptr = npk_mem_read_int64(a_h, vi * 8i64);
                                                             int64:vet = (npk_mem_read_byte(ve_ptr, 0i64)) => int64;
@@ -177,7 +179,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
                                             drop(npk_mem_copy(persistent_doc, doc_buf, doc_len));
                                             drop(npk_mem_write_int64(global_doc_store, ctr * 8i64, persistent_doc));
                                             
-                                            drop(nitpick_libc_rwlock_rdlock(global_catalog_lock));
+                                            drop(nitpick_libc_rwlock_wrlock(global_catalog_lock));
                                             int64:local_visited = _?!hnsw_visited_create(10000i64);
                                             int64:local_rand = npk_core_alloc(8i64);
                                             defer { _?npk_core_dalloc(local_rand); }
@@ -202,8 +204,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
     // Explicit flush for group commit batching
     int64:sync_mode = npk_mem_read_int64(global_wp, 48i64);
     if (sync_mode == 1i64) {
-        int64:wal_fd = npk_mem_read_int64(global_wp, 0i64);
-        drop(wal_batch_flush(wal_fd));
+        _?wp_flush_wal(global_wp);
     }
     
     // Success

@@ -26,7 +26,7 @@ pub func:hnsw_search_layer = int64(
     if (ep_node_ptr == 0i64) { fail((ERR_HNSW_STALE_HANDLE) => tbb32); }
 
     int64:ep_vec_offset = hnsw_node_get_vector_offset(ep_node_ptr)  ? 0i64;
-    tfp64:ep_dist = hnsw_graph_distance(graph, query_offset, ep_vec_offset)  ? 0.0tf;
+    tfp64:ep_dist = hnsw_graph_distance(graph, query_offset, ep_vec_offset)  ? 3.402823466e+38tf;
 
     int64:ef_64 = ((ef) => int64);
 
@@ -57,7 +57,7 @@ pub func:hnsw_search_layer = int64(
 
     when ((hnsw_pq_get_size(candidates) ? 0i64) > 0i64) {
         drop(hnsw_pq_pop(candidates, C));
-        tfp64:c_dist = hnsw_pq_get_dist(C)  ? 0.0tf;
+        tfp64:c_dist = hnsw_pq_get_dist(C)  ? 3.402823466e+38tf;
         int32:c_slot = hnsw_pq_get_slot(C)  ? 0i32;
         int32:c_gen = hnsw_pq_get_gen(C)   ? 0i32;
 
@@ -65,7 +65,7 @@ pub func:hnsw_search_layer = int64(
         int64:w_size = hnsw_pq_get_size(W) ? 0i64;
         if (w_size > 0i64) {
             drop(hnsw_pq_peek(W, furthest));
-            f_dist = hnsw_pq_get_dist(furthest)  ? 0.0tf;
+            f_dist = hnsw_pq_get_dist(furthest)  ? 3.402823466e+38tf;
         }
 
         if (c_dist > f_dist) {
@@ -105,13 +105,13 @@ pub func:hnsw_search_layer = int64(
                     }
 
                     int64:n_vec_offset = hnsw_node_get_vector_offset(n_node_ptr)  ? 0i64;
-                    tfp64:n_dist = hnsw_graph_distance(graph, query_offset, n_vec_offset)  ? 0.0tf;
+                    tfp64:n_dist = hnsw_graph_distance(graph, query_offset, n_vec_offset)  ? 3.402823466e+38tf;
 
                     tfp64:f_dist2 = 3.402823466e+38f32;
                     int64:w_size2 = hnsw_pq_get_size(W)  ? 0i64;
                     if (w_size2 > 0i64) {
                         drop(hnsw_pq_peek(W, furthest));
-                        f_dist2 = hnsw_pq_get_dist(furthest)  ? 0.0tf;
+                        f_dist2 = hnsw_pq_get_dist(furthest)  ? 3.402823466e+38tf;
                     }
 
                     if (w_size2 < ef_64) {

@@ -167,6 +167,7 @@ pub func:parse_array = NpkJsonVal(ParserState->:state) {
     state->pos = state->pos + 1i64; // skip '['
     int64:max_cap = 4096i64;
     int64:handles_ptr = json_arena_alloc(state->arena_ptr, max_cap * 8i64);
+    if (handles_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
     int64:count = 0i64;
     
     drop(skip_whitespace(state));
@@ -209,7 +210,9 @@ pub func:parse_object = NpkJsonVal(ParserState->:state) {
     state->pos = state->pos + 1i64; // skip '{'
     int64:max_cap = 1024i64;
     int64:keys_ptr = json_arena_alloc(state->arena_ptr, max_cap * 8i64);
+    if (keys_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
     int64:values_ptr = json_arena_alloc(state->arena_ptr, max_cap * 8i64);
+    if (values_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
     int64:count = 0i64;
     
     drop(skip_whitespace(state));

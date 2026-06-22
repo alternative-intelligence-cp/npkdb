@@ -105,7 +105,7 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
     int64:k0_str_ptr = npk_mem_read_int64(k0_elem.payload, 8i64);
     
     int64:node_ptr = _?!ast_arena_alloc(arena_ptr, AST_NODE_SIZE);
-    if (node_ptr == 0i64) { pass(0i64); }
+    if (node_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
     
     // Check if it's an operator
     if (raw streq(k0_str_ptr, "$and") || _?!streq(k0_str_ptr, "$or")) {
@@ -124,6 +124,8 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
         drop(npk_mem_write_int32(node_ptr, 32i64, (arr_count) => int32));
         
         int64:children_ptr = _?!ast_arena_alloc(arena_ptr, arr_count * 8i64);
+        if (children_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
+        if (children_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
         drop(npk_mem_write_int64(node_ptr, 36i64, children_ptr)); // aligned at 36 vs 40? Let's use 40! Wait, struct alignment. I'll use 40 for children just to be safe with 8-byte alignment
         drop(npk_mem_write_int64(node_ptr, 40i64, children_ptr)); // use 40 for children
         
