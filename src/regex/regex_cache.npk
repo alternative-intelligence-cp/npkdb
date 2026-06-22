@@ -73,6 +73,42 @@ pub func:regex_cache_insert = int64(int64:pattern, int64:pattern_len, int64:aren
     int32:wrlock_res = npk_shim_rwlock_wrlock(g_regex_rwlock);
     defer { drop(npk_shim_rwlock_unlock(g_regex_rwlock)); }
     
+    // Eviction logic
+    int64:curr = g_regex_cache_head;
+    int32:count = 0i32;
+    int64:prev = 0i64;
+    int64:lowest_hit_node = 0i64;
+    int64:lowest_hit_prev = 0i64;
+    int64:min_hits = 999999999i64;
+    
+    when (curr != 0i64) {
+        count = count + 1i32;
+        int64:hndl = npk_mem_read_int64(curr, 32i64);
+        int64:hits = raw AtomicInt64.add(AtomicInt64{handle: hndl}, 0i64, raw AtomicInt64.RELAXED());
+        if (hits < min_hits) {
+            min_hits = hits;
+            lowest_hit_node = curr;
+            lowest_hit_prev = prev;
+        }
+        prev = curr;
+        curr = npk_mem_read_int64(curr, 40i64);
+    }
+    
+    if (count >= 1000i32) {
+        if (lowest_hit_node != 0i64) {
+            if (lowest_hit_prev == 0i64) {
+                g_regex_cache_head = npk_mem_read_int64(lowest_hit_node, 40i64);
+            } else {
+                int64:next_node = npk_mem_read_int64(lowest_hit_node, 40i64);
+                drop(npk_mem_write_int64(lowest_hit_prev, 40i64, next_node));
+            }
+            int64:p_str = npk_mem_read_int64(lowest_hit_node, 0i64);
+            drop(npk_core_dalloc(p_str));
+            // arena_ptr is freed by the VM or GC in NPKDB usually, but we drop the node
+            drop(npk_core_dalloc(lowest_hit_node));
+        }
+    }
+
     int64:entry = npk_core_alloc(48i64);
     
     // Copy the string
