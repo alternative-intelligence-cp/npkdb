@@ -1,5 +1,6 @@
 // src/network/http_worker.npk
 use "channel.npk".*;
+use "../network/controllers.npk".*;
 use "thread.npk".*;
 use "router.npk".*;
 use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;

@@ -45,7 +45,7 @@ func:main = int32() {
     
     int64:mt1 = mt_create(1i64) ?! 0i64;
     int64:v_ptr = npk_core_alloc(8i64);
-    drop(raw npk_mem_write_string(v_ptr, "test_val"));
+    drop(npk_mem_write_string(v_ptr, "test_val"));
     
     int64:i = 0i64;
     while (i < 10i64) {

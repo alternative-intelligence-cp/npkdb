@@ -33,7 +33,7 @@ pub func:main = int32() {
     
     // Allocate a value
     int64:v1 = npk_core_alloc(12i64);
-    drop(raw npk_mem_write_string(v1, "hello_world1")); // 12 bytes
+    drop(npk_mem_write_string(v1, "hello_world1")); // 12 bytes
     
     drop(mt_put(mt1, "key_a", v1, 12i64));
     drop(mt_put(mt1, "key_b", v1, 12i64));
@@ -67,7 +67,7 @@ pub func:main = int32() {
             int64:r_vlen = sst_rec_val_len(rec_a) ?! 0i64;
             int64:r_vptr = sst_rec_val_ptr(rec_a) ?! 0i64;
             if (r_vlen == 12i64 && r_vptr != 0i64) {
-                string:rv = raw npk_mem_read_string(r_vptr, r_vlen);
+                string:rv = npk_mem_read_string(r_vptr, r_vlen);
                 drop(check(rv == "hello_world1", "T06 Record value matches what was written"));
             } else {
                 drop(check(false, "T06 Record value matches what was written"));

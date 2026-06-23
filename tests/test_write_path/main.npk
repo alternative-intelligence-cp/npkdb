@@ -20,6 +20,8 @@ func:check = NIL(bool:cond, string:msg) {
 
 func:failsafe = int32(tbb32:err) { exit(1); };
 
+
+
 func:bg_worker_shim = int64(int64:ctx) {
     pass 0i64;
 };
@@ -33,7 +35,7 @@ func:main = int32() {
     drop(sys(UNLINK, wal_path));
 
     int64:v_ptr = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(v_ptr, "v"));
+    drop(npk_mem_write_string(v_ptr, "v"));
 
     // T01
     int64:wp = wp_init("test_data", wal_path, @bg_worker_shim, "per_write") ?! 0i64;

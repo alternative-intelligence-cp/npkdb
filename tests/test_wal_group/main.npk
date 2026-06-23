@@ -34,7 +34,7 @@ pub func:main = int32() {
     drop(wal_enable_group_commit(wal_fd));
     
     int64:v1_ptr = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(v1_ptr, "v1"));
+    drop(npk_mem_write_string(v1_ptr, "v1"));
     
     int64:seq = wal_next_seq() ?! 0i64;
     drop(wal_batch_append_put(wal_fd, "k1", v1_ptr, 2i64, seq) ?! -1i64);

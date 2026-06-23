@@ -27,7 +27,7 @@ func:main = int32() {
     println("╚══════════════════════════════════════╝");
 
     int64:v_ptr = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(v_ptr, "v"));
+    drop(npk_mem_write_string(v_ptr, "v"));
 
     // T01, T02, T03
     int64:sz1 = sstable_record_size("key1", 1i64, 0i64) ?! 0i64;

@@ -49,10 +49,8 @@ pub func:npk_mem_write_int16 = int64(int64:ptr, int64:offset, int16:val) {
 
 
 
-pub func:npk_mem_read_int8 = int8(int8->:buf_arg, int64:pos) {
-    int8->:local_buf = buf_arg;
-    int64:ptr = <-(@cast_unchecked<int64->>(@local_buf));
-    int64:val = npk_mem_read_byte(ptr, pos);
+pub func:npk_mem_read_int8 = int8(int64:buf_arg, int64:pos) {
+    int64:val = npk_mem_read_byte(buf_arg, pos);
     pass(@cast_unchecked<int8>(val));
 };
 

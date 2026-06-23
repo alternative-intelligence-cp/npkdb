@@ -1,6 +1,6 @@
 // hnsw_node.npk — HnswNode flat buffer layout constants and field accessors
 //
-// HnswNode is a fixed-size 216-byte struct stored in a flat wild int8-> arena buffer.
+// HnswNode is a fixed-size 216-byte struct stored in a flat wild int8 arena buffer.
 // Every field is accessed via npk_mem_read_* / npk_mem_write_* with limit<Rules> bounds.
 //
 // Layout (all offsets in bytes, zero-indexed):

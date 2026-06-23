@@ -1,10 +1,11 @@
 pub func:send_typed = int64(int64:fd, int64:code, string:ct, string:body);
 // router.npk — HTTP API Router
 use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
+use "../network/controllers.npk".*;
 use "controllers_mock.npk".*;
 use "../../src/util/error_codes.npk".*;
 
-pub func:route_request = int32(int64:client_fd, Request:req) {
+pub func:route_request = int32(int64:client_fd, Request:req, int64:ebr_tid) {
     string:method = req.method;
     string:path = req.path;
     
@@ -13,7 +14,7 @@ pub func:route_request = int32(int64:client_fd, Request:req) {
     if (method == "POST" && path == "/collections") {
         pass(controller_create_collection(client_fd, req));
     } else if (method == "POST" && path == "/search") {
-        pass(controller_search(client_fd, req));
+        pass(controller_search(client_fd, req, ebr_tid));
     } else if (method == "PUT") {
         // Match /collections/:name/docs
         int64:c_idx = string_index_of(path, "/collections/");
@@ -22,7 +23,7 @@ pub func:route_request = int32(int64:client_fd, Request:req) {
             int64:d_idx = string_index_of(suffix, "/docs");
             if (d_idx > 0i64) {
                 string:col_name = string_substring(suffix, 0i64, d_idx);
-                int32:res = raw controller_insert(client_fd, req, col_name);
+                int32:res = raw controller_insert(client_fd, req, col_name, ebr_tid);
                 pass(res);
             }
         }

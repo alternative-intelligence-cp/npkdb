@@ -16,7 +16,9 @@ pub func:main = int32() {
     
     string:line = raw FileStream.readLine(fuzz_in);
     if (string_length(line) > 0i64) {
-        drop(parse_json(line));
+        int64:arena_ptr = raw json_arena_init(65536i64);
+        drop(parse_json(arena_ptr, line));
+        drop(json_arena_destroy(arena_ptr));
         drop(stdout_write("ok\n"));
     }
     

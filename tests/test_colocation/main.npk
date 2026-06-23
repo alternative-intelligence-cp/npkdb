@@ -10,7 +10,7 @@ extern "C" {
     func:_exit = void(int32:code);
 }
 
-pub func:proc_exit = NIL(int32:code) {
+pub func:mock_proc_exit = NIL(int32:code) {
     _exit(code);
     pass(NIL);
 };
@@ -37,7 +37,7 @@ func:main = int32(int32:argc, wild any->:argv) {
     // 2. Create a dummy JSON document
     int64:str_len = 12i64;
     int64:str_data = npk_core_alloc(str_len);
-    drop(raw npk_mem_write_string(str_data, "hello vector"));
+    drop(npk_mem_write_string(str_data, "hello vector"));
     
     int64:str_obj = npk_core_alloc(16i64);
     drop(npk_mem_write_int32(str_obj, 0i64, @cast_unchecked<int32>(str_len)));
@@ -98,7 +98,7 @@ func:main = int32(int32:argc, wild any->:argv) {
     drop(raw art_init());
     
     int64:key_data = npk_core_alloc(8i64);
-    drop(raw npk_mem_write_string(key_data, "my_doc_1"));
+    drop(npk_mem_write_string(key_data, "my_doc_1"));
     
     int64:insert_res = raw art_insert(tid, key_data, 8i64, slot_id_ptr, 8i64);
     if (insert_res != 0i64) {

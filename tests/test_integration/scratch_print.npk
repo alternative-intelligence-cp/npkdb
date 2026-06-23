@@ -16,7 +16,7 @@ pub func:main = int32() {
         string:k = sst_rec_key(rec) ?! "";
         int64:vlen = sst_rec_val_len(rec) ?! 0i64;
         int64:vptr = sst_rec_val_ptr(rec) ?! 0i64;
-        string:v = raw npk_mem_read_string(vptr, vlen);
+        string:v = npk_mem_read_string(vptr, vlen);
         println("FOUND! Key: " + k + ", Value: " + v);
         drop(sst_rec_free(rec));
     } else {

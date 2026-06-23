@@ -1,4 +1,7 @@
 use "sstable.npk".*;
+use "../util/crc32.npk".*;
+use "../page/page.npk".*;
+use "../util/bloom.npk".*;
 use "level_manager.npk".*;
 use "memtable.npk".*;
 use "skiplist.npk".*;

@@ -13,13 +13,26 @@ cp src/network/router.npk tests/test_api_endpoints/router_mock.npk
 
 sed -i 's/raw Server.send_typed/send_typed/g' tests/test_api_endpoints/controllers_mock.npk
 sed -i 's/raw Server.send_typed/send_typed/g' tests/test_api_endpoints/router_mock.npk
-sed -i 's/\.\.\/document/\.\.\/\.\.\/src\/document/g' tests/test_api_endpoints/controllers_mock.npk
-sed -i 's/\.\.\/util/\.\.\/\.\.\/src\/util/g' tests/test_api_endpoints/controllers_mock.npk
-sed -i 's/\.\.\/util/\.\.\/\.\.\/src\/util/g' tests/test_api_endpoints/router_mock.npk
-sed -i 's/"controllers.npk".*/"controllers_mock.npk".*;/g' tests/test_api_endpoints/router_mock.npk
 sed -i '1s/^/pub func:send_typed = int64(int64:fd, int64:code, string:ct, string:body);\n/' tests/test_api_endpoints/controllers_mock.npk
 sed -i '1s/^/pub func:send_typed = int64(int64:fd, int64:code, string:ct, string:body);\n/' tests/test_api_endpoints/router_mock.npk
-sed -i 's/..\/..\/src\/network\/router.npk/router_mock.npk/g' tests/test_api_endpoints/main.npk
+sed -i 's/use "..\/document/use "..\/..\/src\/document/g' tests/test_api_endpoints/controllers_mock.npk
+sed -i 's/use "..\/util/use "..\/..\/src\/util/g' tests/test_api_endpoints/controllers_mock.npk
+sed -i 's/use "..\/index/use "..\/..\/src\/index/g' tests/test_api_endpoints/controllers_mock.npk
+sed -i 's/use "..\/storage/use "..\/..\/src\/storage/g' tests/test_api_endpoints/controllers_mock.npk
+sed -i 's/use "..\/query/use "..\/..\/src\/query/g' tests/test_api_endpoints/controllers_mock.npk
+sed -i 's/use "..\/vector/use "..\/..\/src\/vector/g' tests/test_api_endpoints/controllers_mock.npk
+sed -i 's/use "errors.npk"/use "..\/..\/src\/network\/errors.npk"/g' tests/test_api_endpoints/controllers_mock.npk
+sed -i 's/use "errors_mock.npk"/use "..\/..\/src\/network\/errors.npk"/g' tests/test_api_endpoints/controllers_mock.npk
+sed -i 's/use "rwlock.npk"/use "..\/..\/src\/network\/rwlock.npk"/g' tests/test_api_endpoints/controllers_mock.npk
+sed -i 's/use "atomic.npk"/use "..\/..\/src\/network\/atomic.npk"/g' tests/test_api_endpoints/controllers_mock.npk
+sed -i 's/use "..\/..\/..\/nitpick\/stdlib/use "..\/..\/..\/..\/nitpick\/stdlib/g' tests/test_api_endpoints/controllers_mock.npk
+sed -i 's/use "..\/util/use "..\/..\/src\/util/g' tests/test_api_endpoints/router_mock.npk
+sed -i 's/use "errors.npk"/use "..\/..\/src\/network\/errors.npk"/g' tests/test_api_endpoints/router_mock.npk
+sed -i 's/use "errors_mock.npk"/use "..\/..\/src\/network\/errors.npk"/g' tests/test_api_endpoints/router_mock.npk
+sed -i 's/use "rwlock.npk"/use "..\/..\/src\/network\/rwlock.npk"/g' tests/test_api_endpoints/router_mock.npk
+sed -i 's/use "atomic.npk"/use "..\/..\/src\/network\/atomic.npk"/g' tests/test_api_endpoints/router_mock.npk
+sed -i 's/"controllers.npk"/"controllers_mock.npk"/g' tests/test_api_endpoints/router_mock.npk
+sed -i 's/"controllers.npk".*/"controllers_mock.npk".*;/g' tests/test_api_endpoints/router_mock.npk
 
 /home/randy/Workspace/REPOS/nitpick/build/npkc tests/test_api_endpoints/main.npk -o tests/test_api_endpoints/main_bin
 ./tests/test_api_endpoints/main_bin

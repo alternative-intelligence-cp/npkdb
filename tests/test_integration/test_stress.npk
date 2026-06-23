@@ -66,7 +66,7 @@ func:db_get = string(int64:wp, string:key) {
             if (is_del1 == 1i64) { pass(""); }
             int64:val_len1 = raw sl_node_val_len(node);
             int64:vptr1 = raw sl_node_val_ptr(node);
-            pass(raw npk_mem_read_string(vptr1, val_len1));
+            pass(npk_mem_read_string(vptr1, val_len1));
         }
     }
     int64:frozen_mt = raw wp_frozen_memtable(wp);
@@ -77,7 +77,7 @@ func:db_get = string(int64:wp, string:key) {
             if (is_del2 == 1i64) { pass(""); }
             int64:val_len2 = raw sl_node_val_len(node);
             int64:vptr2 = raw sl_node_val_ptr(node);
-            pass(raw npk_mem_read_string(vptr2, val_len2));
+            pass(npk_mem_read_string(vptr2, val_len2));
         }
     }
     int64:lm = raw wp_level_manager(wp);
@@ -108,7 +108,7 @@ func:db_get = string(int64:wp, string:key) {
                             }
                             int64:vlen = raw sst_rec_val_len(rec);
                             int64:vptr = raw sst_rec_val_ptr(rec);
-                            string:s = raw npk_mem_read_string(vptr, vlen);
+                            string:s = npk_mem_read_string(vptr, vlen);
                             drop(sst_rec_free(rec));
                             if (sstables != 0i64) { drop(npk_core_dalloc(sstables)); }
                             pass(s);
@@ -136,7 +136,7 @@ pub func:main = int32() {
     
     // Allocate a reasonable value string
     int64:v_ptr = npk_core_alloc(32i64);
-    drop(raw npk_mem_write_string(v_ptr, "stress_value_data_1234567890"));
+    drop(npk_mem_write_string(v_ptr, "stress_value_data_1234567890"));
     
     // Group Commit helps performance for bulk loading
     int64:wp1 = raw wp_init(data_dir, wal_path, @bg_worker_shim, "group_commit");

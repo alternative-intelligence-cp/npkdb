@@ -1,11 +1,12 @@
 use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
+use "controllers_mock.npk".*;
 use "router_mock.npk".*;
 
 extern "C" {
     func:_exit = void(int32:code);
 }
 
-pub func:proc_exit = NIL(int32:code) {
+pub func:mock_proc_exit = NIL(int32:code) {
     _exit(code);
     pass(NIL);
 };
@@ -34,7 +35,10 @@ func:main = int32(int32:argc, wild any->:argv) {
         version: "HTTP/1.1",
         body: "{}",
         raw_req: "",
-        headers_raw: ""
+        headers_raw: "",
+        headers: 0i64,
+        query_params: 0i64,
+        fd: 1i64
     };
     drop(route_request(1i64, r1));
     
@@ -46,7 +50,10 @@ func:main = int32(int32:argc, wild any->:argv) {
         version: "HTTP/1.1",
         body: "{\"field\": \"value\"}",
         raw_req: "",
-        headers_raw: ""
+        headers_raw: "",
+        headers: 0i64,
+        query_params: 0i64,
+        fd: 1i64
     };
     drop(route_request(2i64, r2));
     
@@ -58,7 +65,10 @@ func:main = int32(int32:argc, wild any->:argv) {
         version: "HTTP/1.1",
         body: "{\"vector\": [0.1, 0.2], \"filter\": {}}",
         raw_req: "",
-        headers_raw: ""
+        headers_raw: "",
+        headers: 0i64,
+        query_params: 0i64,
+        fd: 1i64
     };
     drop(route_request(3i64, r3));
     
@@ -70,7 +80,10 @@ func:main = int32(int32:argc, wild any->:argv) {
         version: "HTTP/1.1",
         body: "",
         raw_req: "",
-        headers_raw: ""
+        headers_raw: "",
+        headers: 0i64,
+        query_params: 0i64,
+        fd: 1i64
     };
     drop(route_request(4i64, r4));
     

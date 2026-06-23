@@ -1,5 +1,6 @@
 // router.npk — HTTP API Router
 use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
+use "../network/controllers.npk".*;
 use "controllers.npk".*;
 use "../util/error_codes.npk".*;
 

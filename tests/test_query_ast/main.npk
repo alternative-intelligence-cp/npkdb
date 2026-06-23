@@ -11,7 +11,7 @@ extern "C" {
     func:_exit = void(int32:code);
 }
 
-pub func:proc_exit = NIL(int32:code) {
+pub func:mock_proc_exit = NIL(int32:code) {
     _exit(code);
     pass(NIL);
 };
@@ -24,7 +24,7 @@ pub func:failsafe = int32(tbb32:err) {
 func:make_json_str = int64(string:s) {
     int64:len = string_length(s);
     int64:data = npk_core_alloc(len + 1i64);
-    drop(raw npk_mem_write_string(data, s));
+    drop(npk_mem_write_string(data, s));
     int64:obj = npk_core_alloc(16i64);
     drop(npk_mem_write_int32(obj, 0i64, @cast_unchecked<int32>(len)));
     drop(npk_mem_write_int64(obj, 8i64, data));

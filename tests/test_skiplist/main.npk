@@ -25,7 +25,7 @@ func:main = int32() {
 
     // Dummy value
     int64:val_ptr = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(val_ptr, "v"));
+    drop(npk_mem_write_string(val_ptr, "v"));
 
     // T01, T02
     int64:head = sl_create() ?! 0i64;
@@ -63,14 +63,14 @@ func:main = int32() {
 
     // T10, T11
     int64:val_ptr2 = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(val_ptr2, "newv"));
+    drop(npk_mem_write_string(val_ptr2, "newv"));
     int64:ins_dup = sl_insert(head, "key_a", val_ptr2, 4i64) ?! -1i64;
     drop(check(ins_dup == 1i64, "T10 Insert duplicate 'key_a' with new value -> returns 1 (updated)"));
     
     int64:s_a2 = sl_search(head, "key_a") ?! 0i64;
     int64:vp2 = sl_node_val_ptr(s_a2) ?! 0i64;
     int64:vl2 = sl_node_val_len(s_a2) ?! 0i64;
-    string:v2 = raw npk_mem_read_string(vp2, vl2);
+    string:v2 = npk_mem_read_string(vp2, vl2);
     drop(check(v2 == "newv", "T11 Updated value is retrievable"));
 
     // T12, T13, T14

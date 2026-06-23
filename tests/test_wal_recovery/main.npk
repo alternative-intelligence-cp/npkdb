@@ -29,7 +29,7 @@ func:main = int32() {
 
     // Setup helper
     int64:v_ptr = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(v_ptr, "value"));
+    drop(npk_mem_write_string(v_ptr, "value"));
 
     // T01
     drop(sys(UNLINK, path));
@@ -81,7 +81,7 @@ func:main = int32() {
     drop(check(rk1 == "k1" && rk3 == "k2", "T05 Replay record keys match"));
 
     int64:vp = wal_record_value_ptr(rec1) ?! 0i64;
-    string:rv1 = raw npk_mem_read_string(vp, 5i64);
+    string:rv1 = npk_mem_read_string(vp, 5i64);
     drop(check(rv1 == "value", "T06 Replay record values match"));
 
     int32:s1 = wal_record_seq(rec1) ?! -1i32;

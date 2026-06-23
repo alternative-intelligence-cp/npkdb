@@ -34,7 +34,7 @@ pub func:main = int32() {
     drop(sys(RMDIR, data_dir));
     
     int64:v_ptr = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(v_ptr, "v"));
+    drop(npk_mem_write_string(v_ptr, "v"));
 
     // T09: Basic Recovery (per_write)
     int64:wp1 = wp_init(data_dir, wal_path, @bg_worker_shim, "per_write") ?! 0i64;

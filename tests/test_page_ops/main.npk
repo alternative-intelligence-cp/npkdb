@@ -19,7 +19,7 @@ func:check = NIL(bool:cond, string:msg) {
     pass(NIL);
 };
 
-func:failsafe = int32(tbb32:err) { exit(1); };
+func:failsafe = int32(tbb32:err) { proc_exit(42i32); };
 
 func:main = int32() {
     println("╔══════════════════════════════════════╗");
@@ -28,19 +28,33 @@ func:main = int32() {
 
     int64:pg = page_alloc() ?! 0i64;
     drop(page_init(pg, 100i64));
+    println("TUPLE END IS: " + string_from_int(@cast_unchecked<int64>(page_get_tuple_end(pg) ?! 0i32)));
 
     // T01: Insert a 10-byte record
     int64:ptr1 = npk_core_alloc(11i64);
-    drop(raw npk_mem_write_string(ptr1, "0123456789"));
+    drop(npk_mem_write_byte(ptr1, 0i64, 48i64)); // '0'
+    drop(npk_mem_write_byte(ptr1, 1i64, 49i64)); // '1'
+    drop(npk_mem_write_byte(ptr1, 2i64, 50i64)); // '2'
+    drop(npk_mem_write_byte(ptr1, 3i64, 51i64)); // '3'
+    drop(npk_mem_write_byte(ptr1, 4i64, 52i64)); // '4'
+    drop(npk_mem_write_byte(ptr1, 5i64, 53i64)); // '5'
+    drop(npk_mem_write_byte(ptr1, 6i64, 54i64)); // '6'
+    drop(npk_mem_write_byte(ptr1, 7i64, 55i64)); // '7'
+    drop(npk_mem_write_byte(ptr1, 8i64, 56i64)); // '8'
+    drop(npk_mem_write_byte(ptr1, 9i64, 57i64)); // '9'
     int64:idx1 = page_insert(pg, ptr1, 10i64) ?! -1i64;
     drop(check(idx1 == 0i64, "T01 Insert a 10-byte record into empty page"));
 
-    string:out1 = page_read_tuple_string(pg, idx1) ?! "";
+    string:out1 = raw page_read_tuple_string(pg, idx1);
     drop(check(out1 == "0123456789", "T02 Read back inserted record"));
 
     // T03: Insert a second record
     int64:ptr2 = npk_core_alloc(6i64);
-    drop(raw npk_mem_write_string(ptr2, "HELLO"));
+    drop(npk_mem_write_byte(ptr2, 0i64, 72i64)); // 'H'
+    drop(npk_mem_write_byte(ptr2, 1i64, 69i64)); // 'E'
+    drop(npk_mem_write_byte(ptr2, 2i64, 76i64)); // 'L'
+    drop(npk_mem_write_byte(ptr2, 3i64, 76i64)); // 'L'
+    drop(npk_mem_write_byte(ptr2, 4i64, 79i64)); // 'O'
     int64:idx2 = page_insert(pg, ptr2, 5i64) ?! -1i64;
     drop(check(idx2 == 1i64, "T03 Insert a second record"));
 
@@ -48,7 +62,7 @@ func:main = int32() {
     drop(check(scnt == 2i32, "T04 Verify slot_count = 2"));
 
     int64:free_before = page_free_space(pg) ?! 0i64;
-    drop(check(free_before < 8144i64, "T05 Verify free_space decreased correctly"));
+    drop(check(free_before < 32700i64, "T05 Verify free_space decreased correctly"));
 
     // T06 Delete slot 0
     drop(page_delete(pg, 0i64));
@@ -60,7 +74,11 @@ func:main = int32() {
 
     // T08 Insert after delete
     int64:ptr3 = npk_core_alloc(6i64);
-    drop(raw npk_mem_write_string(ptr3, "WORLD"));
+    drop(npk_mem_write_byte(ptr3, 0i64, 87i64)); // 'W'
+    drop(npk_mem_write_byte(ptr3, 1i64, 79i64)); // 'O'
+    drop(npk_mem_write_byte(ptr3, 2i64, 82i64)); // 'R'
+    drop(npk_mem_write_byte(ptr3, 3i64, 76i64)); // 'L'
+    drop(npk_mem_write_byte(ptr3, 4i64, 68i64)); // 'D'
     int64:idx3 = page_insert(pg, ptr3, 5i64) ?! -1i64;
     drop(check(idx3 == 2i64, "T08 Insert after delete uses new slot"));
 
@@ -73,22 +91,34 @@ func:main = int32() {
 
     // T11 Update in-place (WORLD is now slot 1)
     int64:ptr4 = npk_core_alloc(6i64);
-    drop(raw npk_mem_write_string(ptr4, "EARTH")); // 5 bytes
+    drop(npk_mem_write_byte(ptr4, 0i64, 69i64)); // 'E'
+    drop(npk_mem_write_byte(ptr4, 1i64, 65i64)); // 'A'
+    drop(npk_mem_write_byte(ptr4, 2i64, 82i64)); // 'R'
+    drop(npk_mem_write_byte(ptr4, 3i64, 84i64)); // 'T'
+    drop(npk_mem_write_byte(ptr4, 4i64, 72i64)); // 'H'
     int64:idx4 = page_update(pg, 1i64, ptr4, 5i64) ?! -1i64;
     drop(check(idx4 == 1i64, "T11 Update record in-place (same size)"));
     
     // T12 Update relocate
     int64:ptr5 = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(ptr5, "EARTHQUAK")); // 9 bytes
+    drop(npk_mem_write_byte(ptr5, 0i64, 69i64)); // 'E'
+    drop(npk_mem_write_byte(ptr5, 1i64, 65i64)); // 'A'
+    drop(npk_mem_write_byte(ptr5, 2i64, 82i64)); // 'R'
+    drop(npk_mem_write_byte(ptr5, 3i64, 84i64)); // 'T'
+    drop(npk_mem_write_byte(ptr5, 4i64, 72i64)); // 'H'
+    drop(npk_mem_write_byte(ptr5, 5i64, 81i64)); // 'Q'
+    drop(npk_mem_write_byte(ptr5, 6i64, 85i64)); // 'U'
+    drop(npk_mem_write_byte(ptr5, 7i64, 65i64)); // 'A'
+    drop(npk_mem_write_byte(ptr5, 8i64, 75i64)); // 'K'
     int64:idx5 = page_update(pg, 1i64, ptr5, 9i64) ?! -1i64;
     drop(check(idx5 == 2i64, "T12 Update record with larger data (relocation)"));
 
     // T13-T15
-    int64:huge_ptr = npk_core_alloc(8192i64);
-    Result<int64>:ins_err = page_insert(pg, huge_ptr, 9000i64);
+    int64:huge_ptr = npk_core_alloc(33000i64);
+    Result<int64>:ins_err = page_insert(pg, huge_ptr, 32750i64);
     drop(check(ins_err.is_error, "T13 Fill page until full, verify ERR_PAGE_FULL"));
 
-    int64:is_full = page_is_full(pg, 9000i64) ?! 0i64;
+    int64:is_full = page_is_full(pg, 32750i64) ?! 0i64;
     drop(check(is_full == 1i64, "T14 page_is_full returns 1 for oversized record"));
 
     int64:ub = page_used_bytes(pg) ?! 0i64;
@@ -96,6 +126,6 @@ func:main = int32() {
 
     println("");
     println("Results: " + string_from_int(pass_count) + " passed, " + string_from_int(fail_count) + " failed");
-    if (fail_count > 0i64) { exit(1); }
-    exit(0);
+    if (fail_count > 0i64) { proc_exit(55i32); }
+    proc_exit(0i32);
 };

@@ -1,5 +1,5 @@
 // errors.npk — HTTP Error Handling and Responses
-use "../util/error_codes.npk".*;
+use "../../src/util/error_codes.npk".*;
 
 pub func:format_error_json = string(int32:err_code) {
     string:msg = "UNKNOWN_ERROR";
@@ -46,5 +46,6 @@ pub func:format_error_status = int64(int32:err_code) {
     // Default 500 Internal Server Error
     pass(500i64);
 };
+
 
 
