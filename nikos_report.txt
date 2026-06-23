@@ -1,0 +1,592 @@
+?: In function 'config.config_init':
+?:?:?: warning: expression '(*(npk_string_concat_simple(&{&"config_init: sys(OPEN) failed on ", 33}, __arg0))).0' might be uninitialized
+?: In function 'main':
+?:?:?: warning: expression '(*(npk_string_concat_simple(&{&"Failed to load config from ", 27}, &{&"npkdb.toml", 10}))).0' might be uninitialized
+?: In function 'flush.flush_ensure_dirs':
+?:?:?: warning: expression '*l_dir2.0' might be uninitialized
+?: In function 'level_manager.lm_create':
+?:?:?: warning: expression '*__arg0.1' might be uninitialized
+?: In function 'mem_primitives.npk_mem_write_string':
+?:?:?: warning: expression '*__arg1.1' might be uninitialized
+?: In function 'mem_primitives.npk_mem_write_string':
+?:?:?: warning: expression '*__arg1.1' might be uninitialized
+?: In function 'wal.wal_replay':
+?:?:?: warning: expression '(wal.wal_open_read(__arg0)).2' might be uninitialized
+?: In function 'wal.wal_replay':
+?:?:?: warning: expression '(wal.wal_open_read(__arg0)).2' might be uninitialized
+?: In function 'wal.wal_replay':
+?:?:?: warning: expression '(((wal.wal_open_read(__arg0)).2) != 0) ? 0 : (wal.wal_open_read(__arg0)).0' might be uninitialized
+?: In function 'wal.wal_replay':
+?:?:?: warning: expression '(((wal.wal_open_read(__arg0)).2) != 0) ? 0 : (wal.wal_open_read(__arg0)).0' might be uninitialized
+?: In function 'wal.wal_replay':
+?:?:?: warning: expression '(wal.wal_read_next((((wal.wal_open_read(__arg0)).2) != 0) ? 0 : (wal.wal_open_read(__arg0)).0)).2' might be uninitialized
+?: In function 'wal.wal_replay':
+?:?:?: warning: expression '(wal.wal_read_next((((wal.wal_open_read(__arg0)).2) != 0) ? 0 : (wal.wal_open_read(__arg0)).0)).2' might be uninitialized
+?: In function 'wal.wal_replay':
+?:?:?: warning: expression '(((wal.wal_read_next((((wal.wal_open_read(__arg0)).2) != 0) ? 0 : (wal.wal_open_read(__arg0)).0)).2) != 0) ? -1 : (wal.wal_read_next((((wal.wal_open_read(__arg0)).2) != 0) ? 0 : (wal.wal_open_read(__arg0)).0)).0' might be uninitialized
+?: In function 'wal.wal_replay':
+?:?:?: warning: expression '(*(npk_string_concat_simple(&{&"WARNING: WAL torn/corrupt record detected. Halting replay and truncating at ", 76}, npk_string_from_int_simple(valid_offset)))).0' might be uninitialized
+?: In function 'write_path.wp_init':
+?:?:?: warning: expression '(wal.wal_replay(__arg1, active_mt)).2' might be uninitialized
+?: In function 'write_path.wp_init':
+?:?:?: warning: expression '(wal.wal_replay(__arg1, active_mt)).2' might be uninitialized
+?: In function 'write_path.wp_init':
+?:?:?: warning: expression '(((wal.wal_replay(__arg1, active_mt)).2) != 0) ? 0 : (wal.wal_replay(__arg1, active_mt)).0' might be uninitialized
+?: In function 'write_path.wp_init':
+?:?:?: warning: expression '(*(npk_string_concat_simple(npk_string_concat_simple(&{&"Replayed ", 9}, npk_string_from_int_simple(replayed_count)), &{&" records from WAL.", 18}))).0' might be uninitialized
+?: In function 'write_path.wp_init':
+?:?:?: warning: expression '(compaction_worker.compaction_worker_start(lm, __arg2)).2' might be uninitialized
+?: In function 'write_path.wp_init':
+?:?:?: warning: expression '(compaction_worker.compaction_worker_start(lm, __arg2)).2' might be uninitialized
+?: In function 'write_path.wp_init':
+?:?:?: warning: expression '(((compaction_worker.compaction_worker_start(lm, __arg2)).2) != 0) ? 0 : (compaction_worker.compaction_worker_start(lm, __arg2)).0' might be uninitialized
+?: In function 'main':
+?:?:?: warning: expression '(write_path.wp_init(&{&"data/", 5}, &{&"wal.log", 7}, &__thunk_compaction_worker_shim, &{&"group_commit", 12})).0' might be uninitialized
+?: In function 'config.config_init':
+?:?:?: warning: pointer 'npk_string_concat_simple(&{&"config_init: sys(OPEN) failed on ", 33}, __arg0)' might be null
+?: In function 'main':
+?:?:?: warning: pointer 'npk_string_concat_simple(&{&"Failed to load config from ", 27}, &{&"npkdb.toml", 10})' might be null
+?: In function 'flush.flush_ensure_dirs':
+?:?:?: warning: pointer 'l_dir2' might be null
+?: In function 'wal.wal_replay':
+?:?:?: warning: pointer 'npk_string_concat_simple(&{&"WARNING: WAL torn/corrupt record detected. Halting replay and truncating at ", 76}, npk_string_from_int_simple(valid_offset))' might be null
+?: In function 'write_path.wp_init':
+?:?:?: warning: pointer 'npk_string_concat_simple(npk_string_concat_simple(&{&"Replayed ", 9}, npk_string_from_int_simple(replayed_count)), &{&" records from WAL.", 18})' might be null
+?: In function 'config.config_init':
+?:?:?: warning: memory access might be invalid, could not infer information about pointer 'npk_string_concat_simple(&{&"config_init: sys(OPEN) failed on ", 33}, __arg0)'
+?: In function 'main':
+?:?:?: warning: memory access might be invalid, could not infer information about pointer 'npk_string_concat_simple(&{&"Failed to load config from ", 27}, &{&"npkdb.toml", 10})'
+?: In function 'flush.flush_ensure_dirs':
+?:?:?: warning: memory access might be invalid, could not infer information about pointer 'l_dir2'
+?: In function 'wal.wal_replay':
+?:?:?: warning: memory access might be invalid, could not infer information about pointer 'npk_string_concat_simple(&{&"WARNING: WAL torn/corrupt record detected. Halting replay and truncating at ", 76}, npk_string_from_int_simple(valid_offset))'
+?: In function 'write_path.wp_init':
+?:?:?: warning: memory access might be invalid, could not infer information about pointer 'npk_string_concat_simple(npk_string_concat_simple(&{&"Replayed ", 9}, npk_string_from_int_simple(replayed_count)), &{&" records from WAL.", 18})'
+?: In function 'main':
+?:?:?: warning: ignored side effect of call to extern function 'npk_gc_init'. Analysis might be unsound.
+?: In function 'main':
+?:?:?: warning: ignored side effect of call to extern function 'npk_args_init'. Analysis might be unsound.
+?: In function 'main':
+?:?:?: warning: ignored side effect of call to extern function 'npk_streams_init'. Analysis might be unsound.
+?: In function 'main':
+?:?:?: warning: ignored side effect of call to extern function 'npk_println_cstr'. Analysis might be unsound.
+?: In function 'config.config_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_concat_simple'. Analysis might be unsound.
+?: In function 'config.config_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_println_cstr'. Analysis might be unsound.
+?: In function 'config.config_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'config.config_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_println_cstr'. Analysis might be unsound.
+?: In function 'config.config_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_dalloc'. Analysis might be unsound.
+?: In function 'config.config_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_byte'. Analysis might be unsound.
+?: In function 'mem_primitives.npk_mem_read_string':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_read_byte'. Analysis might be unsound.
+?: In function 'mem_primitives.npk_mem_read_string':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'mem_primitives.npk_mem_read_string':
+?:?:?: warning: ignored side effect of call to extern function 'npk_gc_safepoint'. Analysis might be unsound.
+?: In function 'mem_primitives.npk_mem_read_string':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_copy'. Analysis might be unsound.
+?: In function 'mem_primitives.npk_mem_read_string':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_byte'. Analysis might be unsound.
+?: In function 'mem_primitives.npk_mem_read_string':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_from_cstr_simple'. Analysis might be unsound.
+?: In function 'mem_primitives.npk_mem_read_string':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_dalloc'. Analysis might be unsound.
+?: In function 'main':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_concat_simple'. Analysis might be unsound.
+?: In function 'main':
+?:?:?: warning: ignored side effect of call to extern function 'npk_println_cstr'. Analysis might be unsound.
+?: In function 'failsafe.proc_exit':
+?:?:?: warning: ignored side effect of call to extern function '_exit'. Analysis might be unsound.
+?: In function 'main':
+?:?:?: warning: ignored side effect of call to extern function 'nitpick_libc_rwlock_create'. Analysis might be unsound.
+?: In function 'main':
+?:?:?: warning: ignored side effect of call to extern function 'npk_shim_atomic_int64_create'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'flush.flush_ensure_dirs':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_concat_simple'. Analysis might be unsound.
+?: In function 'flush.flush_ensure_dirs':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_from_int_simple'. Analysis might be unsound.
+?: In function 'flush.flush_ensure_dirs':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_concat_simple'. Analysis might be unsound.
+?: In function 'flush.flush_ensure_dirs':
+?:?:?: warning: ignored side effect of call to extern function 'npk_gc_safepoint'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_dalloc'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'mem_primitives.npk_mem_write_string':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_to_cstr_simple'. Analysis might be unsound.
+?: In function 'mem_primitives.npk_mem_write_string':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_copy'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_gc_safepoint'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'level_manager.lm_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'memtable.mt_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'skiplist.sl_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'skiplist.sl_node_alloc':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'skiplist.sl_node_alloc':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'skiplist.sl_node_alloc':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'skiplist.sl_node_alloc':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'skiplist.sl_node_alloc':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'skiplist.sl_node_alloc':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'skiplist.sl_node_alloc':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'skiplist.sl_node_alloc':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'skiplist.sl_node_alloc':
+?:?:?: warning: ignored side effect of call to extern function 'npk_gc_safepoint'. Analysis might be unsound.
+?: In function 'skiplist.sl_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'skiplist.sl_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'skiplist.sl_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'memtable.mt_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'memtable.mt_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'memtable.mt_create':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_dalloc'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_dalloc'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_dalloc'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_read_int32'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_read_int32'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_dalloc'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_copy'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_dalloc'. Analysis might be unsound.
+?: In function 'crc32.crc32_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'crc32.crc32_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'crc32.crc32_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_gc_safepoint'. Analysis might be unsound.
+?: In function 'crc32.crc32_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_gc_safepoint'. Analysis might be unsound.
+?: In function 'crc32.crc32_compute':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_read_byte'. Analysis might be unsound.
+?: In function 'crc32.crc32_compute':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_read_int64'. Analysis might be unsound.
+?: In function 'crc32.crc32_compute':
+?:?:?: warning: ignored side effect of call to extern function 'npk_gc_safepoint'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_dalloc'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_dalloc'. Analysis might be unsound.
+?: In function 'wal.wal_read_next':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_dalloc'. Analysis might be unsound.
+?: In function 'wal.wal_replay':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_from_int_simple'. Analysis might be unsound.
+?: In function 'wal.wal_replay':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_concat_simple'. Analysis might be unsound.
+?: In function 'wal.wal_replay':
+?:?:?: warning: ignored side effect of call to extern function 'npk_println_cstr'. Analysis might be unsound.
+?: In function 'wal.wal_replay':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_read_int32'. Analysis might be unsound.
+?: In function 'wal.wal_record_type':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_read_int32'. Analysis might be unsound.
+?: In function 'wal.wal_record_seq':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_read_int32'. Analysis might be unsound.
+?: In function 'wal.wal_record_key':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_read_int32'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_from_int_simple'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_concat_simple'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_concat_simple'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_println_cstr'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'channel.Channel_create':
+?:?:?: warning: ignored side effect of call to extern function 'nitpick_libc_channel_create'. Analysis might be unsound.
+?: In function 'compaction_worker.compaction_worker_start':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'compaction_worker.compaction_worker_start':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'compaction_worker.compaction_worker_start':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'compaction_worker.compaction_worker_start':
+?:?:?: warning: ignored side effect of call to extern function 'nitpick_libc_thread_spawn'. Analysis might be unsound.
+?: In function 'compaction_worker.compaction_worker_start':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'compaction_worker.compaction_worker_start':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'compaction_worker.compaction_worker_start':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'compaction_worker.compaction_worker_start':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'compaction_worker.compaction_worker_start':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_dalloc'. Analysis might be unsound.
+?: In function 'channel.Channel_destroy':
+?:?:?: warning: ignored side effect of call to extern function 'nitpick_libc_channel_destroy'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_string_equals'. Analysis might be unsound.
+?: In function 'wal.wal_enable_group_commit':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'wal.wal_enable_group_commit':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'wal.wal_enable_group_commit':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'wal.wal_enable_group_commit':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'wal.wal_enable_group_commit':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'wal.wal_enable_group_commit':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'wal.wal_enable_group_commit':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'wal.wal_enable_group_commit':
+?:?:?: warning: ignored side effect of call to extern function 'npk_core_alloc'. Analysis might be unsound.
+?: In function 'wal.wal_enable_group_commit':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'write_path.wp_init':
+?:?:?: warning: ignored side effect of call to extern function 'npk_mem_write_int64'. Analysis might be unsound.
+?: In function 'main':
+?:?:?: warning: ignored side effect of call to extern function 'npk_println_cstr'. Analysis might be unsound.
+?: In function 'server.server_start':
+?:?:?: warning: ignored side effect of call to extern function 'npk_println_cstr'. Analysis might be unsound.
+?: In function 'main':
+?:?:?: warning: ignored side effect of call to extern function 'npk_println_cstr'. Analysis might be unsound.
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'config.config_init':
+?:?:?: unreachable: code is dead
+?: In function 'main':
+?:?:?: unreachable: code is dead
+?: In function 'main':
+?:?:?: unreachable: code is dead
+?: In function 'skiplist.sl_node_alloc':
+?:?:?: unreachable: code is dead
+?: In function 'skiplist.sl_node_alloc':
+?:?:?: unreachable: code is dead
+?: In function 'skiplist.sl_node_alloc':
+?:?:?: unreachable: code is dead
+?: In function 'crc32.crc32_init':
+?:?:?: unreachable: code is dead
+?: In function 'crc32.crc32_init':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_record_key':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_replay':
+?:?:?: unreachable: code is dead
+?: In function 'compaction_worker.compaction_worker_start':
+?:?:?: unreachable: code is dead
+?: In function 'compaction_worker.compaction_worker_start':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_enable_group_commit':
+?:?:?: unreachable: code is dead
+?: In function 'wal.wal_enable_group_commit':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'server.server_start':
+?:?:?: unreachable: code is dead
+?: In function 'main':
+?:?:?: unreachable: code is dead
+?: In function 'main':
+?:?:?: unreachable: code is dead

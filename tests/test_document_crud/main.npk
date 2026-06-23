@@ -8,7 +8,7 @@ extern "C" {
     func:_exit = void(int32:code);
 }
 
-pub func:proc_exit = NIL(int32:code) {
+pub func:mock_proc_exit = NIL(int32:code) {
     _exit(code);
     pass(NIL);
 };
@@ -31,7 +31,7 @@ pub func:main = int32(int32:argc, wild int8->:argv) {
     string:test_str = "hello_world_json";
     int64:str_len = string_length(test_str);
     int64:str_data = npk_core_alloc(str_len);
-    drop(raw npk_mem_write_string(str_data, test_str));
+    drop(npk_mem_write_string(str_data, test_str));
     
     int64:str_obj = npk_core_alloc(16i64); // NpkJsonStr is 16 bytes due to padding
     drop(npk_mem_write_int32(str_obj, 0i64, @cast_unchecked<int32>(str_len)));
@@ -42,7 +42,7 @@ pub func:main = int32(int32:argc, wild int8->:argv) {
     drop(npk_mem_write_int64(val_ptr, 8i64, str_obj));
     
     println("Serializing document...");
-    int64:res = wal_append_document(wal_fd, "doc_key", val_ptr, 100i64) ?! 0i64;
+    int64:res = wal_append_put(wal_fd, "doc_key", val_ptr, 16i64, 100i64) ?! 1i32;
     if (res == 0i64) {
         println("Failed to append document to WAL");
         exit(1i32);
@@ -51,7 +51,7 @@ pub func:main = int32(int32:argc, wild int8->:argv) {
     
     // Add tombstone
     println("Appending tombstone...");
-    int64:del_res = wal_append_delete(wal_fd, "doc_key", 101i64) ?! 0i64;
+    int64:del_res = wal_append_delete(wal_fd, "doc_key", 101i64) ?! 2i32;
     if (del_res == 0i64) {
         println("Failed to append delete to WAL");
         exit(1i32);

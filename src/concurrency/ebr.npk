@@ -1,7 +1,7 @@
 // ebr.npk — Epoch-Based Reclamation (EBR) for safe memory reclamation
 //
 // The global epoch advances when all active threads have observed the current
-// epoch. Nodes unlinked in epoch E are safe to free only after the global
+// epoch. Nodes unlinked in epoch E are safe to npk_core_dalloc only after the global
 // epoch has advanced to E+2 (all readers from epoch E have retired).
 
 use "../util/error_codes.npk".*;
@@ -51,7 +51,7 @@ pub func:ebr_init = NIL() {
     int64:states_size = EBR_MAX_THREADS * EBR_THREAD_STATE_SIZE;
     ebr_thread_states = npk_core_alloc(states_size);
     if (ebr_thread_states == 0i64) {
-        fail(ERR_EBR_LIMBO_OVERFLOW => tbb8);
+        fail(@cast_unchecked<tbb8>(ERR_EBR_LIMBO_OVERFLOW));
     }
     ebr_global_state = npk_core_alloc(16i64);
     drop(npk_mem_write_int64(ebr_global_state, 0i64, 0i64)); // epoch
@@ -65,7 +65,7 @@ pub func:ebr_thread_state = int64(int64:thread_id) {
     pass(ebr_thread_states + thread_id * EBR_THREAD_STATE_SIZE);
 };
 
-// Force-free ALL remaining limbo nodes (used during shutdown).
+// Force-npk_core_dalloc ALL remaining limbo nodes (used during shutdown).
 pub func:ebr_flush_limbo_all = NIL(int64:ts) {
     int64:curr = npk_mem_read_int64(ts, EBR_TS_LIMBO_HEAD);
     while (curr != 0i64) {
@@ -97,7 +97,7 @@ func:ebr_flush_limbo = NIL(int64:ts) {
         if (epoch <= safe_epoch) {
             // Inside the loop: epoch tag of freed node is always <= global_epoch - 2
             prove epoch <= npk_mem_read_int64(ebr_global_state, 0i64) - 2i64;
-            // Safe to free
+            // Safe to npk_core_dalloc
             if (prev == 0i64) {
                 drop(npk_mem_write_int64(ts, EBR_TS_LIMBO_HEAD, nxt));
             } else {
@@ -118,14 +118,14 @@ func:ebr_flush_limbo = NIL(int64:ts) {
     pass(NIL);
 };
 
-// Shutdown EBR: flush and free all remaining limbo nodes, free thread-state array.
+// Shutdown EBR: flush and npk_core_dalloc all remaining limbo nodes, npk_core_dalloc thread-state array.
 pub func:ebr_shutdown = NIL() {
-    // Force-free all remaining limbo nodes across all thread slots
+    // Force-npk_core_dalloc all remaining limbo nodes across all thread slots
     int64:i = 0i64;
     while (i < npk_mem_read_int64(ebr_global_state, 8i64)) {
         int64:ts = raw ebr_thread_state(i);
         if (ts != 0i64) {
-            drop(raw ebr_flush_limbo_all(ts));
+            raw ebr_flush_limbo_all(ts);
         }
         i = i + 1i64;
     }
@@ -145,7 +145,7 @@ pub func:ebr_register_thread = int64() {
     while (success == 0i64) {
         tid = npk_mem_read_int64(ebr_global_state, 8i64);
         if (tid >= EBR_MAX_THREADS) {
-            fail(ERR_EBR_LIMBO_OVERFLOW => tbb8);
+            fail(@cast_unchecked<tbb8>(ERR_EBR_LIMBO_OVERFLOW));
         }
         int64:addr = ebr_global_state + 8i64;
         bool:res = raw npk_cas_i64(addr, tid, tid + 1i64);
@@ -251,7 +251,7 @@ pub func:ebr_retire = int32(int64:thread_id, int64:node_ptr)
     int64:rcount = npk_mem_read_int64(ts, EBR_TS_RETIRE_COUNT) + 1i64;
     if (rcount >= EBR_ADVANCE_INTERVAL) {
         drop(ebr_try_advance());
-        drop(raw ebr_flush_limbo(ts));
+        raw ebr_flush_limbo(ts);
         drop(npk_mem_write_int64(ts, EBR_TS_RETIRE_COUNT, 0i64));
     } else {
         drop(npk_mem_write_int64(ts, EBR_TS_RETIRE_COUNT, rcount));
@@ -292,7 +292,7 @@ pub func:ebr_test_force_advance = NIL() {
 // Test helper: manually flush limbo
 pub func:ebr_test_flush_limbo = NIL(int64:thread_id) {
     int64:ts = raw ebr_thread_state(thread_id);
-    drop(raw ebr_flush_limbo(ts));
+    raw ebr_flush_limbo(ts);
     pass(NIL);
 };
 
@@ -311,7 +311,7 @@ pub func:ebr_retire_or_flush = int32(int64:thread_id, int64:node_ptr) {
             drop(ebr_try_advance());
             int64:ts = raw ebr_thread_state(thread_id);
             if (ts != 0i64) {
-                drop(raw ebr_flush_limbo(ts));
+                raw ebr_flush_limbo(ts);
             }
             retries = retries + 1i64;
         } else {
@@ -320,3 +320,5 @@ pub func:ebr_retire_or_flush = int32(int64:thread_id, int64:node_ptr) {
     }
     pass(ERR_EBR_LIMBO_OVERFLOW);
 };
+
+

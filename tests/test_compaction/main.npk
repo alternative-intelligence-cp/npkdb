@@ -38,7 +38,7 @@ pub func:main = int32() {
     
     // Create 4 L0 files
     int64:v_ptr = npk_core_alloc(100i64);
-    drop(raw npk_mem_write_string(v_ptr, "testval"));
+    drop(npk_mem_write_string(v_ptr, "testval"));
     
     int64:mt1 = mt_create(1i64) ?! 0i64;
     drop(mt_put(mt1, "a", v_ptr, 100i64));
@@ -97,7 +97,7 @@ pub func:main = int32() {
     while (1i64 == 1i64) {
         int64:rec = sstable_iter_next(iter) ?! 0i64;
         if (rec == 0i64) { break; }
-        string:k = sst_rec_key(rec) ?! "";
+        string:k = sst_rec_key(rec) ?! 99i32;
         all_k = all_k + k;
         drop(sst_rec_free(rec));
     }

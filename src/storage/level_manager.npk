@@ -2,6 +2,13 @@
 use "../util/constants.npk".*;
 use "../util/mem_primitives.npk".*;
 
+extern "nitpick_libc_thread" {
+    func:nitpick_libc_rwlock_create    = int64();
+    func:nitpick_libc_rwlock_wrlock    = int32(int64:handle);
+    func:nitpick_libc_rwlock_rdlock    = int32(int64:handle);
+    func:nitpick_libc_rwlock_unlock    = int32(int64:handle);
+}
+
 // Level metadata per SSTable entry:
 //   Offset 0: file_id (int64) — unique SSTable file number
 //   Offset 8: min_key_ptr (int64) — pointer to minimum key string (self-describing, first 8 bytes = len)
@@ -47,6 +54,7 @@ pub func:lm_create = int64(string:data_dir) {
     
     drop(npk_mem_write_int64(lm, 24i64, levels_array));
     drop(npk_mem_write_int64(lm, 32i64, count_array));
+    drop(npk_mem_write_int64(lm, 40i64, nitpick_libc_rwlock_create()));
     
     pass(lm);
 };
@@ -89,6 +97,9 @@ pub func:lm_destroy = NIL(int64:lm) {
 // Register a new SSTable at a given level.
 pub func:lm_add_sstable = NIL(int64:lm, int64:level, int64:file_id, string:min_key, string:max_key, int64:file_size, int64:total_keys) {
     if (level < 0i64 || level >= LM_MAX_LEVELS) { pass(NIL); }
+    int64:lock = npk_mem_read_int64(lm, 40i64);
+    drop(nitpick_libc_rwlock_wrlock(lock));
+    defer { drop(nitpick_libc_rwlock_unlock(lock)); }
     
     int64:levels_array = npk_mem_read_int64(lm, 24i64);
     int64:count_array = npk_mem_read_int64(lm, 32i64);
@@ -106,10 +117,10 @@ pub func:lm_add_sstable = NIL(int64:lm, int64:level, int64:file_id, string:min_k
         int64:max_ptr = npk_core_alloc(8i64 + max_len);
         
         drop(npk_mem_write_int64(min_ptr, 0i64, min_len));
-        drop(raw npk_mem_write_string(min_ptr + 8i64, min_key));
+        npk_mem_write_string(min_ptr + 8i64, min_key);
         
         drop(npk_mem_write_int64(max_ptr, 0i64, max_len));
-        drop(raw npk_mem_write_string(max_ptr + 8i64, max_key));
+        npk_mem_write_string(max_ptr + 8i64, max_key);
         
         drop(npk_mem_write_int64(ent_ptr, 0i64, file_id));
         drop(npk_mem_write_int64(ent_ptr, 8i64, min_ptr));
@@ -125,6 +136,9 @@ pub func:lm_add_sstable = NIL(int64:lm, int64:level, int64:file_id, string:min_k
 // Remove an SSTable from a level (after compaction replaces it).
 pub func:lm_remove_sstable = NIL(int64:lm, int64:level, int64:file_id) {
     if (level < 0i64 || level >= LM_MAX_LEVELS) { pass(NIL); }
+    int64:lock = npk_mem_read_int64(lm, 40i64);
+    drop(nitpick_libc_rwlock_wrlock(lock));
+    defer { drop(nitpick_libc_rwlock_unlock(lock)); }
     
     int64:levels_array = npk_mem_read_int64(lm, 24i64);
     int64:count_array = npk_mem_read_int64(lm, 32i64);
@@ -160,13 +174,16 @@ pub func:lm_remove_sstable = NIL(int64:lm, int64:level, int64:file_id) {
 // Get the number of SSTables at a given level.
 pub func:lm_count_at_level = int64(int64:lm, int64:level) {
     if (level < 0i64 || level >= LM_MAX_LEVELS) { pass(0i64); }
+    int64:lock = npk_mem_read_int64(lm, 40i64);
+    drop(nitpick_libc_rwlock_rdlock(lock));
+    defer { drop(nitpick_libc_rwlock_unlock(lock)); }
     int64:count_array = npk_mem_read_int64(lm, 32i64);
     pass(npk_mem_read_int64(count_array, level * 8i64));
 };
 
 // Check if L0 needs compaction.
 pub func:lm_l0_needs_compaction = int64(int64:lm) {
-    int64:c = lm_count_at_level(lm, 0i64) ?! 0i64;
+    int64:c = lm_count_at_level(lm, 0i64) ? 0i64;
     if (c >= L0_COMPACTION_THRESHOLD) {
         pass(1i64);
     }
@@ -180,7 +197,7 @@ pub func:lm_next_sstable_path = string(int64:lm, int64:level) {
     
     int64:d_ptr = npk_mem_read_int64(lm, 0i64);
     int64:d_len = npk_mem_read_int64(lm, 8i64);
-    string:dir = raw npk_mem_read_string(d_ptr, d_len);
+    string:dir = npk_mem_read_string(d_ptr, d_len);
     
     string:fid_str = string_from_int(fid);
     while (string_length(fid_str) < 6i64) {
@@ -198,8 +215,11 @@ pub func:lm_next_sstable_path = string(int64:lm, int64:level) {
 
 // Get all SSTable file IDs at a given level.
 pub func:lm_get_sstables = int64(int64:lm, int64:level) {
-    int64:count = lm_count_at_level(lm, level) ?! 0i64;
+    int64:count = lm_count_at_level(lm, level) ? 0i64;
     if (count == 0i64) { pass(0i64); }
+    int64:lock = npk_mem_read_int64(lm, 40i64);
+    drop(nitpick_libc_rwlock_rdlock(lock));
+    defer { drop(nitpick_libc_rwlock_unlock(lock)); }
     
     int64:levels_array = npk_mem_read_int64(lm, 24i64);
     int64:lvl_mem = npk_mem_read_int64(levels_array, level * 8i64);
@@ -216,7 +236,7 @@ pub func:lm_get_sstables = int64(int64:lm, int64:level) {
 };
 
 pub func:lm_get_sstable_count = int64(int64:lm, int64:level) {
-    pass(lm_count_at_level(lm, level) ?! 0i64);
+    pass(lm_count_at_level(lm, level) ? 0i64);
 };
 
 pub func:lm_get_next_file_id = int64(int64:lm) {
@@ -229,6 +249,9 @@ pub func:lm_set_next_file_id = NIL(int64:lm, int64:fid) {
 };
 
 pub func:lm_get_sstable_min_key = string(int64:lm, int64:level, int64:file_id) {
+    int64:lock = npk_mem_read_int64(lm, 40i64);
+    drop(nitpick_libc_rwlock_rdlock(lock));
+    defer { drop(nitpick_libc_rwlock_unlock(lock)); }
     int64:count = npk_mem_read_int64(npk_mem_read_int64(lm, 32i64), level * 8i64);
     int64:lvl_mem = npk_mem_read_int64(npk_mem_read_int64(lm, 24i64), level * 8i64);
     int64:i = 0i64;
@@ -237,7 +260,7 @@ pub func:lm_get_sstable_min_key = string(int64:lm, int64:level, int64:file_id) {
         if (npk_mem_read_int64(ent, 0i64) == file_id) {
             int64:m_ptr = npk_mem_read_int64(ent, 8i64);
             int64:m_len = npk_mem_read_int64(m_ptr, 0i64);
-            pass(raw npk_mem_read_string(m_ptr + 8i64, m_len));
+            pass(npk_mem_read_string(m_ptr + 8i64, m_len));
         }
         i = i + 1i64;
     }
@@ -245,6 +268,9 @@ pub func:lm_get_sstable_min_key = string(int64:lm, int64:level, int64:file_id) {
 };
 
 pub func:lm_get_sstable_max_key = string(int64:lm, int64:level, int64:file_id) {
+    int64:lock = npk_mem_read_int64(lm, 40i64);
+    drop(nitpick_libc_rwlock_rdlock(lock));
+    defer { drop(nitpick_libc_rwlock_unlock(lock)); }
     int64:count = npk_mem_read_int64(npk_mem_read_int64(lm, 32i64), level * 8i64);
     int64:lvl_mem = npk_mem_read_int64(npk_mem_read_int64(lm, 24i64), level * 8i64);
     int64:i = 0i64;
@@ -253,9 +279,11 @@ pub func:lm_get_sstable_max_key = string(int64:lm, int64:level, int64:file_id) {
         if (npk_mem_read_int64(ent, 0i64) == file_id) {
             int64:m_ptr = npk_mem_read_int64(ent, 16i64);
             int64:m_len = npk_mem_read_int64(m_ptr, 0i64);
-            pass(raw npk_mem_read_string(m_ptr + 8i64, m_len));
+            pass(npk_mem_read_string(m_ptr + 8i64, m_len));
         }
         i = i + 1i64;
     }
     pass("");
 };
+
+

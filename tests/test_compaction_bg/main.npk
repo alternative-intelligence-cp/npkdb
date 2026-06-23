@@ -43,7 +43,7 @@ pub func:main = int32() {
     }
     
     int64:v_ptr = npk_core_alloc(100i64);
-    drop(raw npk_mem_write_string(v_ptr, "test_value"));
+    drop(npk_mem_write_string(v_ptr, "test_value"));
     
     // Manual flush 4 times
     int64:lm = npk_mem_read_int64(wp, WP_OFF_LM);

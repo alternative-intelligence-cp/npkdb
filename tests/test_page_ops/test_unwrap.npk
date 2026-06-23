@@ -1,0 +1,7 @@
+use "../../src/util/error_codes.npk".*;
+func:some_err = Result<int32>() { fail(@cast_unchecked<tbb8>(1i32)); };
+func:failsafe = int32(tbb32:err) { proc_exit(1i32); };
+func:main = int32() {
+    int32:x = some_err() ? 42i32;
+    pass(x);
+};

@@ -8,7 +8,12 @@ use "network/server.npk".*;
 use "storage/compaction_worker.npk".*;
 use "storage/write_path.npk".*;
 use "network/controllers.npk".*;
-
+use "vector/hnsw_arena.npk".*;
+use "vector/hnsw_graph.npk".*;
+use "vector/hnsw_visited.npk".*;
+use "concurrency/ebr.npk".*;
+use "index/art.npk".*;
+use "engine/catalog.npk".*;
 func:compaction_worker_shim = int64(int64:ctx) {
     pass compaction_worker_loop(ctx);
 };
@@ -25,7 +30,13 @@ func:main = int32(int32:argc, wild any->:argv) {
     
     // Initialize locks
     global_catalog_lock = nitpick_libc_rwlock_create();
-    global_insert_counter = npk_shim_atomic_int64_create(0i64);
+    global_insert_counter = npk_core_alloc(8i64);
+    drop(npk_mem_write_int64(global_insert_counter, 0i64, 0i64));
+    
+    // Initialize components
+    drop(catalog_init());
+    drop(ebr_init());
+    drop(art_init());
     
     // Initialize storage engine
     global_wp = raw wp_init("data/", "wal.log", @compaction_worker_shim, "group_commit");
@@ -33,6 +44,12 @@ func:main = int32(int32:argc, wild any->:argv) {
         println("Failed to initialize storage engine!");
         exit(1i32);
     }
+    
+    global_arena = raw hnsw_arena_create(10000i64, 1i16);
+    global_vec_buf = npk_core_alloc(10000i64 * 128i64 * 8i64);
+    global_graph = raw hnsw_graph_create(global_arena, global_vec_buf, 128i64, 16i32, 32i32, 100i32, 0.5f64);
+    global_doc_store = npk_core_alloc(10000i64 * 8i64);
+
     
     int32:server_res = raw server_start();
     if (server_res != 0i32) {
@@ -42,3 +59,5 @@ func:main = int32(int32:argc, wild any->:argv) {
     
     exit(0);
 };
+
+

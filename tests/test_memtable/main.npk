@@ -24,7 +24,7 @@ func:main = int32() {
     println("╚══════════════════════════════════════╝");
 
     int64:v_ptr = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(v_ptr, "v"));
+    drop(npk_mem_write_string(v_ptr, "v"));
 
     // T01
     int64:mt = mt_create(1i64) ?! 0i64;

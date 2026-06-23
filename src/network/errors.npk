@@ -25,7 +25,7 @@ pub func:format_error_json = string(int32:err_code) {
     else if (err_code == ERR_WAL_FSYNC_FAILED) { msg = "ERR_WAL_FSYNC_FAILED"; }
     
     // Format JSON
-    string:res = "{\"error\": {\"code\": " + string_from_int(err_code => int64) + ", \"message\": \"" + msg + "\"}}";
+    string:res = "{\"error\": {\"code\": " + string_from_int(@cast_unchecked<int64>(err_code)) + ", \"message\": \"" + msg + "\"}}";
     pass(res);
 };
 
@@ -46,3 +46,5 @@ pub func:format_error_status = int64(int32:err_code) {
     // Default 500 Internal Server Error
     pass(500i64);
 };
+
+

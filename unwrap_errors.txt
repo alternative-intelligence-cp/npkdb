@@ -1,0 +1,2 @@
+24:src/query/filter_parser.npk:108 - Cannot silently unwrap Result<int64> into 'node_ptr' of type 'int64'. Declare as Result<int64> and check .is_error, or use 'raw expr' to explicitly assert the call cannot fail.
+30:src/query/path_eval.npk:39 - Cannot silently unwrap Result<int64> into 'seg_len' of type 'int64'. Declare as Result<int64> and check .is_error, or use 'raw expr' to explicitly assert the call cannot fail.

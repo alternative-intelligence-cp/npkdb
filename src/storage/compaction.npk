@@ -1,11 +1,19 @@
 use "sstable.npk".*;
+use "../util/crc32.npk".*;
+use "../page/page.npk".*;
+use "../util/bloom.npk".*;
 use "level_manager.npk".*;
 use "memtable.npk".*;
 use "skiplist.npk".*;
 use "../util/constants.npk".*;
 use "../util/error_codes.npk".*;
-
+use "../util/mem_primitives.npk".*;
 use "../util/min_heap.npk".*;
+
+// Global stat variables
+int64:g_compaction_stats_total = 0i64;
+int64:g_compaction_stats_bytes_written = 0i64;
+int64:g_compaction_stats_records_merged = 0i64;
 
 pub func:merge_iter_create = int64(int64:iters, int64:readers, int64:count) {
     int64:merge_iter = npk_core_alloc(32i64);
@@ -13,16 +21,16 @@ pub func:merge_iter_create = int64(int64:iters, int64:readers, int64:count) {
     drop(npk_mem_write_int64(merge_iter, 8i64, count));
     drop(npk_mem_write_int64(merge_iter, 24i64, readers));
     
-    int64:heap = heap_create(count) ?! 0i64;
+    int64:heap = heap_create(count) ? 0i64;
     drop(npk_mem_write_int64(merge_iter, 16i64, heap));
     
     // push first element from each iterator
     int64:i = 0i64;
     while (i < count) {
         int64:iter = npk_mem_read_int64(iters, i * 8i64);
-        int64:rec = sstable_iter_next(iter) ?! 0i64;
+        int64:rec = sstable_iter_next(iter) ? 0i64;
         if (rec != 0i64) {
-            string:key = sst_rec_key(rec) ?! "";
+            string:key = sst_rec_key(rec) ? "";
             drop(heap_push(heap, key, i, rec));
         }
         i = i + 1i64;
@@ -34,39 +42,39 @@ pub func:merge_iter_create = int64(int64:iters, int64:readers, int64:count) {
 pub func:merge_iter_next = int64(int64:merge_iter) {
     int64:heap = npk_mem_read_int64(merge_iter, 16i64);
     
-    int64:first_sz = heap_size(heap) ?! 0i64;
+    int64:first_sz = heap_size(heap) ? 0i64;
     if (first_sz == 0i64) { pass(0i64); }
     
-    int64:best_rec = heap_pop_record(heap) ?! 0i64;
-    int64:best_idx = heap_pop_iter_idx(heap) ?! -1i64;
-    string:best_key = heap_pop_key(heap) ?! "";
+    int64:best_rec = heap_pop_record(heap) ? 0i64;
+    int64:best_idx = heap_pop_iter_idx(heap) ? -1i64;
+    string:best_key = heap_pop_key(heap) ? "";
     drop(heap_pop(heap));
     
     int64:iters = npk_mem_read_int64(merge_iter, 0i64);
     int64:best_iter = npk_mem_read_int64(iters, best_idx * 8i64);
     
-    int64:next_rec = sstable_iter_next(best_iter) ?! 0i64;
+    int64:next_rec = sstable_iter_next(best_iter) ? 0i64;
     if (next_rec != 0i64) {
-        string:next_key = sst_rec_key(next_rec) ?! "";
+        string:next_key = sst_rec_key(next_rec) ? "";
         drop(heap_push(heap, next_key, best_idx, next_rec));
     }
     
     while (1i64 == 1i64) {
-        int64:sz = heap_size(heap) ?! 0i64;
+        int64:sz = heap_size(heap) ? 0i64;
         if (sz == 0i64) { break; }
         
-        string:peek_key = heap_pop_key(heap) ?! "";
+        string:peek_key = heap_pop_key(heap) ? "";
         if (peek_key != best_key) { break; }
         
-        int64:dup_rec = heap_pop_record(heap) ?! 0i64;
-        int64:dup_idx = heap_pop_iter_idx(heap) ?! -1i64;
+        int64:dup_rec = heap_pop_record(heap) ? 0i64;
+        int64:dup_idx = heap_pop_iter_idx(heap) ? -1i64;
         drop(heap_pop(heap));
-        drop(sst_rec_free(dup_rec)); // free old record
+        drop(sst_rec_free(dup_rec)); // npk_core_dalloc old record
         
         int64:dup_iter = npk_mem_read_int64(iters, dup_idx * 8i64);
-        int64:dup_next = sstable_iter_next(dup_iter) ?! 0i64;
+        int64:dup_next = sstable_iter_next(dup_iter) ? 0i64;
         if (dup_next != 0i64) {
-            string:dup_next_key = sst_rec_key(dup_next) ?! "";
+            string:dup_next_key = sst_rec_key(dup_next) ? "";
             drop(heap_push(heap, dup_next_key, dup_idx, dup_next));
         }
     }
@@ -96,11 +104,11 @@ pub func:merge_iter_destroy = NIL(int64:merge_iter) {
     
     int64:heap = npk_mem_read_int64(merge_iter, 16i64);
     
-    // empty heap to free leftover records
+    // empty heap to npk_core_dalloc leftover records
     while (1i64 == 1i64) {
-        int64:sz = heap_size(heap) ?! 0i64;
+        int64:sz = heap_size(heap) ? 0i64;
         if (sz == 0i64) { break; }
-        int64:rec = heap_pop_record(heap) ?! 0i64;
+        int64:rec = heap_pop_record(heap) ? 0i64;
         drop(heap_pop(heap));
         drop(sst_rec_free(rec));
     }
@@ -116,24 +124,6 @@ pub func:merge_iter_destroy = NIL(int64:merge_iter) {
     pass(NIL);
 };
 
-// Helper: sort an array of int64s (file_ids)
-func:sort_int64_array = NIL(int64:arr, int64:count) {
-    int64:i = 0i64;
-    while (i < count) {
-        int64:j = i + 1i64;
-        while (j < count) {
-            int64:a = npk_mem_read_int64(arr, i * 8i64);
-            int64:b = npk_mem_read_int64(arr, j * 8i64);
-            if (a > b) {
-                drop(npk_mem_write_int64(arr, i * 8i64, b));
-                drop(npk_mem_write_int64(arr, j * 8i64, a));
-            }
-            j = j + 1i64;
-        }
-        i = i + 1i64;
-    }
-    pass(NIL);
-};
 
 // Internal function to do the compaction.
 // Collects all files from from_level, computes overlap, collects overlapping files from to_level.
@@ -141,18 +131,18 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
     int64:to_level = from_level + 1i64;
     if (to_level >= LM_MAX_LEVELS) { pass(0i64); }
     
-    int64:from_count = lm_count_at_level(lm, from_level) ?! 0i64;
+    int64:from_count = lm_count_at_level(lm, from_level) ? 0i64;
     if (from_count == 0i64) { pass(0i64); }
     
-    int64:from_files = lm_get_sstables(lm, from_level) ?! 0i64;
+    int64:from_files = lm_get_sstables(lm, from_level) ? 0i64;
     
     string:min_k = "";
     string:max_k = "";
     int64:i = 0i64;
     while (i < from_count) {
         int64:fid = npk_mem_read_int64(from_files, i * 8i64);
-        string:fk_min = lm_get_sstable_min_key(lm, from_level, fid) ?! "";
-        string:fk_max = lm_get_sstable_max_key(lm, from_level, fid) ?! "";
+        string:fk_min = lm_get_sstable_min_key(lm, from_level, fid) ? "";
+        string:fk_max = lm_get_sstable_max_key(lm, from_level, fid) ? "";
         
         if (i == 0i64) {
             min_k = fk_min;
@@ -164,10 +154,10 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         i = i + 1i64;
     }
     
-    int64:to_count_total = lm_count_at_level(lm, to_level) ?! 0i64;
+    int64:to_count_total = lm_count_at_level(lm, to_level) ? 0i64;
     int64:to_files_all = 0i64;
     if (to_count_total > 0i64) {
-        to_files_all = lm_get_sstables(lm, to_level) ?! 0i64;
+        to_files_all = lm_get_sstables(lm, to_level) ? 0i64;
     }
     
     int64:overlap_files = npk_core_alloc(LM_MAX_SSTABLES_PER_LEVEL * 8i64);
@@ -176,8 +166,8 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
     i = 0i64;
     while (i < to_count_total) {
         int64:fid = npk_mem_read_int64(to_files_all, i * 8i64);
-        string:fk_min = lm_get_sstable_min_key(lm, to_level, fid) ?! "";
-        string:fk_max = lm_get_sstable_max_key(lm, to_level, fid) ?! "";
+        string:fk_min = lm_get_sstable_min_key(lm, to_level, fid) ? "";
+        string:fk_max = lm_get_sstable_max_key(lm, to_level, fid) ? "";
         
         // Overlap condition: not (fk_max < min_k or fk_min > max_k)
         int64:no_overlap = 0i64;
@@ -212,26 +202,26 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         j = j + 1i64;
     }
     
-    // Sort all_fids (and keep all_levels synced, wait, do we need all_levels? Yes, to get the file path!)
-    // Let's sort both together based on fid
-    i = 0i64;
+    // Insertion sort all_fids and all_levels
+    i = 1i64;
     while (i < total_iters) {
-        j = i + 1i64;
-        while (j < total_iters) {
-            int64:fid_a = npk_mem_read_int64(all_fids, i * 8i64);
-            int64:fid_b = npk_mem_read_int64(all_fids, j * 8i64);
-            if (fid_a > fid_b) {
-                int64:lvl_a = npk_mem_read_int64(all_levels, i * 8i64);
-                int64:lvl_b = npk_mem_read_int64(all_levels, j * 8i64);
-                
-                drop(npk_mem_write_int64(all_fids, i * 8i64, fid_b));
-                drop(npk_mem_write_int64(all_fids, j * 8i64, fid_a));
-                
-                drop(npk_mem_write_int64(all_levels, i * 8i64, lvl_b));
-                drop(npk_mem_write_int64(all_levels, j * 8i64, lvl_a));
+        int64:key_fid = npk_mem_read_int64(all_fids, i * 8i64);
+        int64:key_lvl = npk_mem_read_int64(all_levels, i * 8i64);
+        int64:j = i - 1i64;
+        
+        while (j >= 0i64) {
+            int64:curr_fid = npk_mem_read_int64(all_fids, j * 8i64);
+            if (curr_fid > key_fid) {
+                int64:curr_lvl = npk_mem_read_int64(all_levels, j * 8i64);
+                drop(npk_mem_write_int64(all_fids, (j + 1i64) * 8i64, curr_fid));
+                drop(npk_mem_write_int64(all_levels, (j + 1i64) * 8i64, curr_lvl));
+                j = j - 1i64;
+            } else {
+                break;
             }
-            j = j + 1i64;
         }
+        drop(npk_mem_write_int64(all_fids, (j + 1i64) * 8i64, key_fid));
+        drop(npk_mem_write_int64(all_levels, (j + 1i64) * 8i64, key_lvl));
         i = i + 1i64;
     }
     
@@ -248,7 +238,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         // Actually, we can just manually build it.
         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
         int64:d_len = npk_mem_read_int64(lm, 8i64);
-        string:dir = raw npk_mem_read_string(d_ptr, d_len);
+        string:dir = npk_mem_read_string(d_ptr, d_len);
         
         string:fid_str = string_from_int(fid);
         while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
@@ -259,21 +249,21 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         string:p4 = p3 + fid_str;
         string:path = p4 + ".npkdb";
         
-        int64:reader = sstable_open_read(path) ?! 0i64;
-        int64:iter = sstable_iter_create(reader) ?! 0i64;
+        int64:reader = sstable_open_read(path) ? 0i64;
+        int64:iter = sstable_iter_create(reader) ? 0i64;
         
         drop(npk_mem_write_int64(readers, i * 8i64, reader));
         drop(npk_mem_write_int64(iters, i * 8i64, iter));
         i = i + 1i64;
     }
     
-    int64:m_iter = merge_iter_create(iters, readers, total_iters) ?! 0i64;
+    int64:m_iter = merge_iter_create(iters, readers, total_iters) ? 0i64;
     
     // Check if we can drop tombstones (if no SSTables exist at levels > to_level)
     int64:can_drop_tombstones = 1i64;
     int64:lvl = to_level + 1i64;
     while (lvl < LM_MAX_LEVELS) {
-        int64:c = lm_count_at_level(lm, lvl) ?! 0i64;
+        int64:c = lm_count_at_level(lm, lvl) ? 0i64;
         if (c > 0i64) {
             can_drop_tombstones = 0i64;
             break;
@@ -285,96 +275,172 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
     // For simplicity, we write EVERYTHING to ONE new SSTable.
     // In a real LSM, we'd roll over at 4MB.
     
-    string:new_path = lm_next_sstable_path(lm, to_level) ?! "";
-    int64:new_fid = lm_get_next_file_id(lm) ?! 1i64;
-    int64:new_fid = new_fid - 1i64; // lm_next_sstable_path increments it
+    string:new_path = lm_next_sstable_path(lm, to_level) ? "";
+    int64:new_fid = lm_get_next_file_id(lm) ? 1i64;
+    new_fid = new_fid - 1i64; // lm_next_sstable_path increments it
     
-    // Create a temporary memtable to hold records before writing
-    // Wait, sstable_write takes a memtable!
-    // But we are merging records that might not fit in memory!
-    // We need a sstable_write_from_iter or similar?
-    // Wait, the roadmap says: "when L0 accumulates... compact".
-    // If we just use a memtable, we'd load everything into memory. L0 max size is 4 * 4MB = 16MB.
-    // L1 could be 40MB. 56MB in memory is fine for NPKDB.
-    // Let's use a memtable!
-    int64:out_mt = mt_create(0i64) ?! 0i64;
+    int64:c_path = string_to_cstr(new_path);
+    int64:fd = sys(OPEN, c_path, 578i64, 420i64) ? -1i64; // O_RDWR|O_CREAT|O_TRUNC, 0644
+    drop(npk_core_dalloc(c_path));
+    if (fd <= 0i64) { 
+        println("compact_level: OPEN failed for " + new_path);
+        pass(0i64); 
+    }
+    
+    int64:bloom = bloom_create(100000i64) ? 0i64;
+    int64:curr_page = page_alloc() ? 0i64;
+    drop(page_init(curr_page, 0i64));
+    
+    int64:capacity = 8000i64;
+    int64:k_ptrs = npk_core_alloc(capacity * 8i64);
+    int64:k_lens = npk_core_alloc(capacity * 8i64);
+    int64:b_offs = npk_core_alloc(capacity * 8i64);
+    int64:block_count = 0i64;
+    int64:total_keys = 0i64;
+    string:last_key = "";
+    int64:has_pending = 0i64;
     int64:rec_count = 0i64;
     
     string:out_min_k = "";
     string:out_max_k = "";
     
     while (1i64 == 1i64) {
-        int64:rec = merge_iter_next(m_iter) ?! 0i64;
+        int64:rec = merge_iter_next(m_iter) ? 0i64;
         if (rec == 0i64) { break; }
         
-        string:k = sst_rec_key(rec) ?! "";
-        int64:is_tomb = sst_rec_is_tombstone(rec) ?! 0i64;
+        string:k = sst_rec_key(rec) ? "";
+        int64:is_tomb = sst_rec_is_tombstone(rec) ? 0i64;
         
         int64:can_purge = 1i64;
         int64:chk_lvl = to_level + 1i64;
         while (chk_lvl < LM_MAX_LEVELS) {
-            int64:c = lm_count_at_level(lm, chk_lvl) ?! 0i64;
-            if (c > 0i64) {
-                can_purge = 0i64;
-                break;
-            }
+            int64:c = lm_count_at_level(lm, chk_lvl) ? 0i64;
+            if (c > 0i64) { can_purge = 0i64; break; }
             chk_lvl = chk_lvl + 1i64;
         }
         
         int64:skip = 0i64;
         if (is_tomb == 1i64) {
-            if (can_purge == 1i64) {
-                skip = 1i64;
-            }
+            if (can_purge == 1i64) { skip = 1i64; }
         }
         
         if (skip == 0i64) {
-            int64:v_ptr = sst_rec_val_ptr(rec) ?! 0i64;
-            int64:v_len = sst_rec_val_len(rec) ?! 0i64;
-            if (is_tomb == 1i64) {
-                drop(mt_delete(out_mt, k));
-            } else {
-                int64:v_copy = npk_core_alloc(v_len);
-                drop(npk_mem_copy(v_copy, v_ptr, v_len));
-                drop(mt_put(out_mt, k, v_copy, v_len));
-            }
+            int64:vp = sst_rec_val_ptr(rec) ? 0i64;
+            int64:vl = sst_rec_val_len(rec) ? 0i64;
             
-            if (rec_count == 0i64) {
+            drop(bloom_add(bloom, k));
+            
+            int64:rec_sz = sstable_record_size(k, vl, is_tomb) ? 0i64;
+            int64:s_rec = sstable_serialize_record(k, vp, vl, is_tomb) ? 0i64;
+            
+            int64:ins = page_insert(curr_page, s_rec, rec_sz) ? -1i64;
+            if (ins == -1i64) {
+                if (block_count >= capacity) {
+                    int64:new_cap = capacity * 2i64;
+                    int64:new_k_ptrs = npk_core_alloc(new_cap * 8i64);
+                    int64:new_k_lens = npk_core_alloc(new_cap * 8i64);
+                    int64:new_b_offs = npk_core_alloc(new_cap * 8i64);
+                    drop(npk_mem_copy(new_k_ptrs, k_ptrs, capacity * 8i64));
+                    drop(npk_mem_copy(new_k_lens, k_lens, capacity * 8i64));
+                    drop(npk_mem_copy(new_b_offs, b_offs, capacity * 8i64));
+                    drop(npk_core_dalloc(k_ptrs));
+                    drop(npk_core_dalloc(k_lens));
+                    drop(npk_core_dalloc(b_offs));
+                    k_ptrs = new_k_ptrs;
+                    k_lens = new_k_lens;
+                    b_offs = new_b_offs;
+                    capacity = new_cap;
+                }
+                
+                int64:offset = sstable_flush_page(fd, curr_page) ? -1i64;
+                int64:last_k_len = string_length(last_key);
+                int64:last_k_ptr = npk_core_alloc(last_k_len);
+                npk_mem_write_string(last_k_ptr, last_key);
+                
+                drop(npk_mem_write_int64(k_ptrs, block_count * 8i64, last_k_ptr));
+                drop(npk_mem_write_int64(k_lens, block_count * 8i64, last_k_len));
+                drop(npk_mem_write_int64(b_offs, block_count * 8i64, offset));
+                block_count = block_count + 1i64;
+                
+                drop(page_free(curr_page));
+                curr_page = page_alloc() ? 0i64;
+                drop(page_init(curr_page, block_count));
+                ins = page_insert(curr_page, s_rec, rec_sz) ? -1i64;
+            }
+            drop(npk_core_dalloc(s_rec));
+            
+            last_key = k;
+            has_pending = 1i64;
+            total_keys = total_keys + 1i64;
+            rec_count = rec_count + 1i64;
+            
+            if (rec_count == 1i64) {
                 out_min_k = k;
                 out_max_k = k;
             } else {
                 if (k < out_min_k) { out_min_k = k; }
                 if (k > out_max_k) { out_max_k = k; }
             }
-            rec_count = rec_count + 1i64;
         }
-        
         drop(sst_rec_free(rec));
     }
     
     drop(merge_iter_destroy(m_iter));
     
-    // Write new SSTable
+    int64:s_res = 0i64;
+    
     if (rec_count > 0i64) {
-        drop(mt_freeze(out_mt));
-        int64:s_res = sstable_write(new_path, out_mt) ?! -1i64;
-        
-        // Free copied value pointers
-        // println("DEBUG: Freeing copied values...");
-        int64:c_node = mt_first(out_mt) ?! 0i64;
-        while (c_node != 0i64) {
-            int64:c_is_tomb = raw sl_node_is_deleted(c_node);
-            if (c_is_tomb == 0i64) {
-                int64:c_v_ptr = raw sl_node_val_ptr(c_node);
-                if (c_v_ptr != 0i64) {
-                    drop(npk_core_dalloc(c_v_ptr));
-                }
-            }
-            c_node = raw sl_next(c_node);
+        if (has_pending == 1i64) {
+            int64:offset = sstable_flush_page(fd, curr_page) ? -1i64;
+            int64:last_k_len = string_length(last_key);
+            int64:last_k_ptr = npk_core_alloc(last_k_len);
+            npk_mem_write_string(last_k_ptr, last_key);
+            drop(npk_mem_write_int64(k_ptrs, block_count * 8i64, last_k_ptr));
+            drop(npk_mem_write_int64(k_lens, block_count * 8i64, last_k_len));
+            drop(npk_mem_write_int64(b_offs, block_count * 8i64, offset));
+            block_count = block_count + 1i64;
         }
-        // println("DEBUG: Freed copied values!");
         
-        drop(mt_destroy(out_mt));
+        drop(page_free(curr_page));
+        
+        int64:bloom_buf = bloom_serialize(bloom) ? 0i64;
+        int64:bloom_sz = bloom_serialize_size(bloom) ? 0i64;
+        int64:bloom_offset = sys(LSEEK, fd, 0i64, 1i64) ? -1i64;
+        drop(sys(WRITE, fd, bloom_buf, bloom_sz));
+        drop(npk_core_dalloc(bloom_buf));
+        drop(bloom_destroy(bloom));
+        
+        int64:index_page = sstable_build_index(k_ptrs, k_lens, b_offs, block_count) ? 0i64;
+        int64:index_offset = sstable_flush_page(fd, index_page) ? -1i64;
+        drop(page_free(index_page));
+        
+        int64:ki = 0i64;
+        while (ki < block_count) {
+            int64:kp = npk_mem_read_int64(k_ptrs, ki * 8i64);
+            drop(npk_core_dalloc(kp));
+            ki = ki + 1i64;
+        }
+        drop(npk_core_dalloc(k_ptrs));
+        drop(npk_core_dalloc(k_lens));
+        drop(npk_core_dalloc(b_offs));
+        
+        int64:footer = npk_core_alloc(SSTABLE_FOOTER_SIZE);
+        drop(npk_mem_write_int64(footer, 0i64, block_count));
+        drop(npk_mem_write_int64(footer, 8i64, index_offset));
+        drop(npk_mem_write_int64(footer, 16i64, bloom_offset));
+        drop(npk_mem_write_int64(footer, 24i64, bloom_sz));
+        drop(npk_mem_write_int64(footer, 32i64, total_keys));
+        drop(npk_mem_write_int32(footer, 40i64, 1145192497i32));
+        
+        int64:crc_calc = crc32_compute(footer, 44i64) ? 0i64;
+        drop(npk_mem_write_int32(footer, 44i64, (@cast_unchecked<int32>((crc_calc)))));
+        
+        drop(sys(WRITE, fd, footer, SSTABLE_FOOTER_SIZE));
+        drop(npk_core_dalloc(footer));
+        
+        s_res = sys(LSEEK, fd, 0i64, 1i64) ? -1i64;
+        drop(sys(FSYNC, fd));
+        drop(sys(CLOSE, fd));
         
         if (s_res > 0i64) {
             g_compaction_stats_total = g_compaction_stats_total + 1i64;
@@ -384,7 +450,13 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
             drop(lm_add_sstable(lm, to_level, new_fid, out_min_k, out_max_k, s_res, rec_count));
         }
     } else {
-        drop(mt_destroy(out_mt));
+        drop(sys(CLOSE, fd));
+        drop(sys(UNLINK, new_path));
+        drop(page_free(curr_page));
+        drop(bloom_destroy(bloom));
+        drop(npk_core_dalloc(k_ptrs));
+        drop(npk_core_dalloc(k_lens));
+        drop(npk_core_dalloc(b_offs));
     }
     
     // Remove old files
@@ -395,7 +467,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         
         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
         int64:d_len = npk_mem_read_int64(lm, 8i64);
-        string:dir = raw npk_mem_read_string(d_ptr, d_len);
+        string:dir = npk_mem_read_string(d_ptr, d_len);
         string:fid_str = string_from_int(fid);
         while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
         string:p1 = dir + "/L";
@@ -415,7 +487,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
         
         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
         int64:d_len = npk_mem_read_int64(lm, 8i64);
-        string:dir = raw npk_mem_read_string(d_ptr, d_len);
+        string:dir = npk_mem_read_string(d_ptr, d_len);
         string:fid_str = string_from_int(fid);
         while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
         string:p1 = dir + "/L";
@@ -440,10 +512,6 @@ pub func:compact_l0_to_l1 = int64(int64:lm) {
     pass(compact_level(lm, 0i64));
 };
 
-// Global stat variables
-int64:g_compaction_stats_total = 0i64;
-int64:g_compaction_stats_bytes_written = 0i64;
-int64:g_compaction_stats_records_merged = 0i64;
 
 pub func:compaction_stats_total = int64() {
     pass(g_compaction_stats_total);
@@ -458,9 +526,11 @@ pub func:compaction_stats_records_merged = int64() {
 };
 
 pub func:maybe_compact = int64(int64:lm) {
-    int64:needs = lm_l0_needs_compaction(lm) ?! 0i64;
+    int64:needs = lm_l0_needs_compaction(lm) ? 0i64;
     if (needs == 1i64) {
-        pass(compact_l0_to_l1(lm) ?! 0i64);
+        pass(compact_l0_to_l1(lm) ? 0i64);
     }
     pass(0i64);
 };
+
+

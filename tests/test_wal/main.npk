@@ -28,7 +28,7 @@ func:main = int32() {
     // T01: CRC32 of known string
     string:str1 = "123456789";
     int64:ptr1 = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(ptr1, str1));
+    drop(npk_mem_write_string(ptr1, str1));
     int64:crc1 = crc32_compute(ptr1, 9i64) ?! 0i64;
     // CRC32 of "123456789" is 0xCBF43926 = 3421780262
     drop(check(crc1 == 3421780262i64, "T01 CRC32 of '123456789' matches 0xCBF43926"));
@@ -48,7 +48,7 @@ func:main = int32() {
     string:k1 = "key1";
     string:v1 = "value1";
     int64:v1_ptr = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(v1_ptr, v1));
+    drop(npk_mem_write_string(v1_ptr, v1));
     int64:seq1 = wal_next_seq() ?! 0i64;
     int64:bw1 = wal_append_put(wal_fd, k1, v1_ptr, 6i64, seq1) ?! -1i64;
     drop(check(bw1 == 34i64, "T04 wal_append_put writes bytes to file (16 + 4+4 + 4+6 = 34)"));
@@ -89,15 +89,15 @@ func:main = int32() {
     drop(sys(READ, r_fd, buf, 34i64));
     
     // npk_mem_read_int32 returns an int32, which might be negative. Let's do bitwise cast.
-    int64:read_crc_signed = npk_mem_read_int32(buf, 0i64) => int64;
+    int64:read_crc_signed = npk_mem_read_int32@cast_unchecked<int64>(buf, 0i64);
     int64:read_crc = read_crc_signed & 4294967295i64; // mask to unsigned 32-bit
 
     int64:comp_crc = crc32_compute(buf + 4i64, 30i64) ?! -1i64;
     drop(check(read_crc == comp_crc, "T11 Read back WAL file bytes, verify first record CRC matches"));
 
     // T12: Read back first record type
-    int64:read_type = npk_mem_read_int32(buf, 8i64) => int64;
-    drop(check(read_type == WAL_RECORD_PUT => int64, "T12 Read back first record type = WAL_RECORD_PUT"));
+    int64:read_type = npk_mem_read_int32@cast_unchecked<int64>(buf, 8i64);
+    drop(check(read_type == @cast_unchecked<int64>(WAL_RECORD_PUT), "T12 Read back first record type = WAL_RECORD_PUT"));
 
     drop(npk_core_dalloc(buf));
     drop(sys(CLOSE, r_fd));

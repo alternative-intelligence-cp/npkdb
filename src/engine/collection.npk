@@ -10,3 +10,5 @@ pub struct:Collection = {
 };
 
 // In the future, this file will contain methods to initialize and destroy a collection.
+
+

@@ -34,7 +34,7 @@ pub func:main = int32() {
     drop(wal_enable_group_commit(wal_fd));
     
     int64:v1_ptr = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(v1_ptr, "v1"));
+    drop(npk_mem_write_string(v1_ptr, "v1"));
     
     int64:seq = wal_next_seq() ?! 0i64;
     drop(wal_batch_append_put(wal_fd, "k1", v1_ptr, 2i64, seq) ?! -1i64);
@@ -68,7 +68,7 @@ pub func:main = int32() {
     drop(check(fsize > 0i64, "T03 batch_flush writes all 32 records to disk"));
     
     // T04: Replay WAL after group commit: all 32 records recovered
-    int64:rep1 = wal_replay(wal_path) ?! -1i64;
+    int64:rep1 = wal_replay(wal_path, 0i64) ?! -1i64;
     drop(check(rep1 == 32i64, "T04 Replay WAL after group commit: all 32 records recovered"));
     
     // T05: Append 10 records, force flush, all 10 recovered
@@ -85,7 +85,7 @@ pub func:main = int32() {
     drop(wal_batch_flush(wal_fd2) ?! -1i64);
     drop(wal_close(wal_fd2));
     
-    int64:rep2 = wal_replay(wal_path) ?! -1i64;
+    int64:rep2 = wal_replay(wal_path, 0i64) ?! -1i64;
     drop(check(rep2 == 10i64, "T05 Append 10 records, force flush, all 10 recovered"));
     
     // T06: Group commit: wal_close flushes pending batch automatically
@@ -103,7 +103,7 @@ pub func:main = int32() {
     // wal_close should automatically flush "kz2"
     drop(wal_close(wal_fd3));
     
-    int64:rep3 = wal_replay(wal_path) ?! -1i64;
+    int64:rep3 = wal_replay(wal_path, 0i64) ?! -1i64;
     drop(check(rep3 == 2i64, "T06 Group commit: wal_close flushes pending batch automatically"));
     
     // T07: Group commit disabled (per_write mode): each write fsynced
@@ -117,7 +117,7 @@ pub func:main = int32() {
     
     drop(wal_close(wal_fd4));
     
-    int64:rep4 = wal_replay(wal_path) ?! -1i64;
+    int64:rep4 = wal_replay(wal_path, 0i64) ?! -1i64;
     drop(check(rep4 == 2i64, "T07 Group commit disabled (per_write mode): each write fsynced"));
     
     // T08: Mixed puts and deletes in a batch
@@ -134,7 +134,7 @@ pub func:main = int32() {
     drop(wal_batch_flush(wal_fd5) ?! -1i64);
     drop(wal_close(wal_fd5));
     
-    int64:rep5 = wal_replay(wal_path8) ?! -1i64;
+    int64:rep5 = wal_replay(wal_path8, 0i64) ?! -1i64;
     println("DEBUG: rep5 = " + string_from_int(rep5));
     drop(check(rep5 == 2i64, "T08 Mixed puts and deletes in a batch"));
     

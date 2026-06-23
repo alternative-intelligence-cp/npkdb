@@ -4,7 +4,7 @@ extern "C" {
     func:_exit = void(int32:code);
 }
 
-pub func:proc_exit = NIL(int32:code) {
+pub func:mock_proc_exit = NIL(int32:code) {
     _exit(code);
     pass(NIL);
 };

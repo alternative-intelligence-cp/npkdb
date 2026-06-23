@@ -1,0 +1,111 @@
+src/util/config.npk:43 - Undefined identifier: 'Toml'. Did you mean 'fmt'?
+src/util/config.npk:46 - Undefined identifier: 'n'. Did you mean 'fd'?
+src/util/config.npk:55 - Undefined identifier: 'Toml'. Did you mean 'port'?
+src/util/config.npk:56 - Undefined identifier: 'p'. Did you mean 'fd'?
+src/util/config.npk:58 - Undefined identifier: 'Toml'. Did you mean 'port'?
+src/util/config.npk:59 - Undefined identifier: 'threads'
+src/util/config.npk:61 - Undefined identifier: 'Toml'. Did you mean 'port'?
+src/util/config.npk:62 - Undefined identifier: 'flush'
+src/util/config.npk:64 - Undefined identifier: 'Toml'. Did you mean 'port'?
+src/util/config.npk:65 - Undefined identifier: 'hm'. Did you mean 'fd'?
+src/util/config.npk:67 - Undefined identifier: 'Toml'. Did you mean 'port'?
+src/util/config.npk:68 - Undefined identifier: 'efc'. Did you mean 'fd'?
+src/util/config.npk:72 - Undefined identifier: 'threads'
+src/util/config.npk:73 - Undefined identifier: 'flush'
+src/util/config.npk:74 - Undefined identifier: 'hm'. Did you mean 'fd'?
+src/util/config.npk:75 - Undefined identifier: 'efc'. Did you mean 'fd'?
+src/util/config.npk:91 - Undefined identifier: 'Toml'. Did you mean 'fmt'?
+src/storage/compaction.npk:349 - Undefined identifier: 'g_compaction_stats_total'. Did you mean 'compaction_stats_total'?
+src/storage/compaction.npk:350 - Undefined identifier: 'g_compaction_stats_bytes_written'. Did you mean 'compaction_stats_bytes_written'?
+src/storage/compaction.npk:351 - Undefined identifier: 'g_compaction_stats_records_merged'. Did you mean 'compaction_stats_records_merged'?
+src/storage/compaction_worker.npk:39 - Undefined identifier: 'Channel'
+src/storage/compaction_worker.npk:41 - Undefined identifier: 'msg'. Did you mean 'ch'?
+src/storage/compaction_worker.npk:45 - Undefined identifier: 'msg'. Did you mean 'ch'?
+src/storage/compaction_worker.npk:50 - Undefined identifier: 'Thread'
+src/storage/compaction_worker.npk:67 - Undefined identifier: 'Channel'
+src/storage/compaction_worker.npk:68 - Undefined identifier: 'ch'. Did you mean 'lm'?
+src/storage/compaction_worker.npk:72 - Undefined identifier: 'ch'. Did you mean 'ctx'?
+src/storage/compaction_worker.npk:79 - Undefined identifier: 'ch'. Did you mean 'ctx'?
+src/storage/compaction_worker.npk:86 - Undefined identifier: 'ch'. Did you mean 'ctx'?
+src/storage/compaction_worker.npk:97 - Undefined identifier: 'Channel'. Did you mean 'channel'?
+src/storage/compaction_worker.npk:105 - Undefined identifier: 'Channel'. Did you mean 'channel'?
+src/storage/write_path.npk:115 - Undefined identifier: 'Thread'
+src/storage/write_path.npk:225 - Undefined identifier: 'Thread'
+src/storage/write_path.npk:226 - Undefined identifier: 'Thread'
+src/storage/write_path.npk:228 - Undefined identifier: 'Channel'
+src/storage/write_path.npk:229 - Undefined identifier: 'Channel'
+src/vector/distance.npk:63 - NITPICK-065 NITPICK-PTRARITH-NOIMPORT: @ptr_add requires an explicit `use "unsafe.npk".*;` gate. Pointer arithmetic is only available through stdlib/unsafe.npk.
+src/vector/distance.npk:64 - NITPICK-065 NITPICK-PTRARITH-NOIMPORT: @ptr_add requires an explicit `use "unsafe.npk".*;` gate. Pointer arithmetic is only available through stdlib/unsafe.npk.
+src/vector/distance.npk:65 - Undefined identifier: 'va'. Did you mean 'a'?
+src/vector/distance.npk:65 - Undefined identifier: 'vb'. Did you mean 'b'?
+src/vector/distance.npk:66 - Undefined identifier: 'vd'. Did you mean 'idx'?
+src/vector/distance.npk:66 - Undefined identifier: 'vd'. Did you mean 'idx'?
+src/vector/distance.npk:123 - NITPICK-065 NITPICK-PTRARITH-NOIMPORT: @ptr_add requires an explicit `use "unsafe.npk".*;` gate. Pointer arithmetic is only available through stdlib/unsafe.npk.
+src/vector/distance.npk:124 - NITPICK-065 NITPICK-PTRARITH-NOIMPORT: @ptr_add requires an explicit `use "unsafe.npk".*;` gate. Pointer arithmetic is only available through stdlib/unsafe.npk.
+src/vector/distance.npk:125 - Undefined identifier: 'va'. Did you mean 'a'?
+src/vector/distance.npk:125 - Undefined identifier: 'vb'. Did you mean 'b'?
+src/vector/distance.npk:191 - NITPICK-065 NITPICK-PTRARITH-NOIMPORT: @ptr_add requires an explicit `use "unsafe.npk".*;` gate. Pointer arithmetic is only available through stdlib/unsafe.npk.
+src/vector/distance.npk:192 - NITPICK-065 NITPICK-PTRARITH-NOIMPORT: @ptr_add requires an explicit `use "unsafe.npk".*;` gate. Pointer arithmetic is only available through stdlib/unsafe.npk.
+src/vector/distance.npk:193 - Undefined identifier: 'va'. Did you mean 'a'?
+src/vector/distance.npk:193 - Undefined identifier: 'vb'. Did you mean 'b'?
+src/vector/distance.npk:194 - Undefined identifier: 'va'. Did you mean 'a'?
+src/vector/distance.npk:194 - Undefined identifier: 'va'. Did you mean 'a'?
+src/vector/distance.npk:195 - Undefined identifier: 'vb'. Did you mean 'b'?
+src/vector/distance.npk:195 - Undefined identifier: 'vb'. Did you mean 'b'?
+src/network/controllers.npk:28 - Undefined identifier: 'Server'
+src/network/controllers.npk:55 - Member access (.) requires struct, object, or union type, got 'Request'. Use -> for pointer member access.
+src/network/controllers.npk:56 - Undefined identifier: 'v_res'. Did you mean 'req'?
+src/network/controllers.npk:63 - Undefined identifier: 'v_res'. Did you mean 'req'?
+src/network/controllers.npk:64 - Undefined identifier: 'v'. Did you mean 'req'?
+src/network/controllers.npk:69 - Undefined identifier: 'v'. Did you mean 'req'?
+src/network/controllers.npk:70 - Type 'obj' has no method 'ptr'
+src/network/controllers.npk:71 - Type 'obj' has no method 'ptr'
+src/network/controllers.npk:72 - Type 'obj' has no method 'ptr'
+src/network/controllers.npk:73 - Type 'obj' has no method 'ptr'
+src/network/controllers.npk:76 - Undefined identifier: 'count'. Did you mean 'mt_count'?
+src/network/controllers.npk:211 - Undefined identifier: 'Server'
+src/network/controllers.npk:221 - Member access (.) requires struct, object, or union type, got 'Request'. Use -> for pointer member access.
+src/network/controllers.npk:222 - Undefined identifier: 'v_res'. Did you mean 'req'?
+src/network/controllers.npk:229 - Undefined identifier: 'v_res'. Did you mean 'req'?
+src/network/controllers.npk:230 - Undefined identifier: 'v'. Did you mean 'req'?
+src/network/controllers.npk:243 - Undefined identifier: 'v'. Did you mean 'k'?
+src/network/controllers.npk:244 - Undefined identifier: 'v'. Did you mean 'k'?
+src/network/controllers.npk:245 - Undefined identifier: 'v'. Did you mean 'k'?
+src/network/controllers.npk:248 - Type 'obj' has no method 'count'
+src/network/controllers.npk:302 - Undefined identifier: 'Server'
+src/network/controllers.npk:309 - Undefined identifier: 'hnsw_graph_get_entry_point'. Did you mean 'hnsw_graph_get_vector_dim'?
+src/network/controllers.npk:313 - Undefined identifier: 'ep_node_ptr'
+src/network/controllers.npk:321 - Cannot silently unwrap Result<int64> into 'res_pq' of type 'int64'. Declare as Result<int64> and check .is_error, or use 'raw expr' to explicitly assert the call cannot fail.
+src/network/controllers.npk:335 - Undefined identifier: 'res_pq'. Did you mean 'req'?
+src/network/controllers.npk:342 - Undefined identifier: 'res_pq'. Did you mean 'req'?
+src/network/controllers.npk:347 - Undefined identifier: 'sz'. Did you mean 'i'?
+src/network/controllers.npk:365 - Undefined identifier: 'res_pq'. Did you mean 'req'?
+src/network/controllers.npk:371 - Undefined identifier: 'Server'
+src/network/router.npk:7 - Member access (.) requires struct, object, or union type, got 'Request'. Use -> for pointer member access.
+src/network/router.npk:8 - Member access (.) requires struct, object, or union type, got 'Request'. Use -> for pointer member access.
+src/network/router.npk:10 - Undefined identifier: 'method'
+src/network/router.npk:10 - Undefined identifier: 'path'. Did you mean 'fmt3'?
+src/network/router.npk:12 - Undefined identifier: 'method'
+src/network/router.npk:12 - Undefined identifier: 'path'. Did you mean 'fmt3'?
+src/network/router.npk:31 - Undefined identifier: 'method'
+src/network/router.npk:31 - Undefined identifier: 'path'. Did you mean 'fmt3'?
+src/network/router.npk:32 - Undefined identifier: 'Server'
+src/network/http_worker.npk:19 - Undefined identifier: 'Thread'
+src/network/http_worker.npk:20 - Undefined identifier: 'thread_id'
+src/network/http_worker.npk:25 - Undefined identifier: 'Channel'
+src/network/http_worker.npk:26 - Undefined identifier: 'client_fd'
+src/network/http_worker.npk:36 - Undefined identifier: 'client_fd'
+src/network/http_worker.npk:37 - @cast supports numeric types and pointer types only. Cannot cast 'int64@' to 'int64'
+src/network/http_worker.npk:39 - Undefined identifier: 'Server'
+src/network/http_worker.npk:40 - Undefined identifier: 'client_fd'
+src/network/http_worker.npk:41 - Undefined identifier: 'req'. Did you mean 'streq'?
+src/network/http_worker.npk:44 - Undefined identifier: 'Server'
+src/network/server.npk:26 - Undefined identifier: 'Thread'
+src/network/server.npk:34 - Undefined identifier: 'Channel'
+src/network/server.npk:35 - Undefined identifier: 'ch'. Did you mean 'log'?
+src/network/server.npk:47 - Undefined identifier: 'Server'
+src/network/server.npk:48 - Undefined identifier: 'server_fd'
+src/network/server.npk:57 - Undefined identifier: 'Server'
+src/network/server.npk:58 - Undefined identifier: 'client_fd'
+src/storage/compaction.npk:272 - Use of uninitialized variable 'new_fid'
+Total Errors: 110

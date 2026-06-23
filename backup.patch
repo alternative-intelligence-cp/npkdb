@@ -1,0 +1,3779 @@
+diff --git a/src/concurrency/ebr.npk b/src/concurrency/ebr.npk
+index 6b82d83..8c99f56 100644
+--- a/src/concurrency/ebr.npk
++++ b/src/concurrency/ebr.npk
+@@ -123,9 +123,9 @@ pub func:ebr_shutdown = NIL() {
+     // Force-free all remaining limbo nodes across all thread slots
+     int64:i = 0i64;
+     while (i < npk_mem_read_int64(ebr_global_state, 8i64)) {
+-        int64:ts = _?!ebr_thread_state(i);
++        int64:ts = raw ebr_thread_state(i);
+         if (ts != 0i64) {
+-            _?!ebr_flush_limbo_all(ts);
++            raw ebr_flush_limbo_all(ts);
+         }
+         i = i + 1i64;
+     }
+@@ -148,10 +148,10 @@ pub func:ebr_register_thread = int64() {
+             fail(ERR_EBR_LIMBO_OVERFLOW => tbb8);
+         }
+         int64:addr = ebr_global_state + 8i64;
+-        bool:res = _?!npk_cas_i64(addr, tid, tid + 1i64);
++        bool:res = raw npk_cas_i64(addr, tid, tid + 1i64);
+         if (res) { success = 1i64; }
+     }
+-    int64:ts = _?!ebr_thread_state(tid);
++    int64:ts = raw ebr_thread_state(tid);
+     if (ts != 0i64) {
+         drop(npk_mem_write_int64(ts, EBR_TS_LOCAL_EPOCH,  0i64));
+         drop(npk_mem_write_int64(ts, EBR_TS_IS_ACTIVE,    0i64));
+@@ -171,7 +171,7 @@ pub func:ebr_pin = NIL(int64:thread_id)
+ {
+     if (thread_id < 0i64) { pass(NIL); }
+     if (thread_id >= EBR_MAX_THREADS) { pass(NIL); }
+-    int64:ts = _?!ebr_thread_state(thread_id);
++    int64:ts = raw ebr_thread_state(thread_id);
+     if (ts != 0i64) {
+         drop(npk_mem_write_int64(ts, EBR_TS_LOCAL_EPOCH, npk_mem_read_int64(ebr_global_state, 0i64)));
+         drop(npk_mem_write_int64(ts, EBR_TS_IS_ACTIVE, 1i64));
+@@ -186,7 +186,7 @@ pub func:ebr_unpin = NIL(int64:thread_id)
+ {
+     if (thread_id < 0i64) { pass(NIL); }
+     if (thread_id >= EBR_MAX_THREADS) { pass(NIL); }
+-    int64:ts = _?!ebr_thread_state(thread_id);
++    int64:ts = raw ebr_thread_state(thread_id);
+     if (ts != 0i64) {
+         drop(npk_mem_write_int64(ts, EBR_TS_IS_ACTIVE, 0i64));
+     }
+@@ -202,7 +202,7 @@ pub func:ebr_try_advance = int64()
+     int64:i = 0i64;
+     int64:tcount = npk_mem_read_int64(ebr_global_state, 8i64);
+     while (i < tcount) {
+-        int64:ts = _?!ebr_thread_state(i);
++        int64:ts = raw ebr_thread_state(i);
+         if (ts != 0i64) {
+             int64:is_active   = npk_mem_read_int64(ts, EBR_TS_IS_ACTIVE);
+             int64:local_epoch = npk_mem_read_int64(ts, EBR_TS_LOCAL_EPOCH);
+@@ -227,7 +227,7 @@ pub func:ebr_retire = int32(int64:thread_id, int64:node_ptr)
+     if (thread_id < 0i64) { pass(0i32); }
+     if (thread_id >= EBR_MAX_THREADS) { pass(0i32); }
+     if (node_ptr == 0i64) { pass(0i32); }
+-    int64:ts = _?!ebr_thread_state(thread_id);
++    int64:ts = raw ebr_thread_state(thread_id);
+     if (ts == 0i64) { pass(0i32); }
+     
+     int64:count = npk_mem_read_int64(ts, EBR_TS_LIMBO_COUNT);
+@@ -251,7 +251,7 @@ pub func:ebr_retire = int32(int64:thread_id, int64:node_ptr)
+     int64:rcount = npk_mem_read_int64(ts, EBR_TS_RETIRE_COUNT) + 1i64;
+     if (rcount >= EBR_ADVANCE_INTERVAL) {
+         drop(ebr_try_advance());
+-        _?!ebr_flush_limbo(ts);
++        raw ebr_flush_limbo(ts);
+         drop(npk_mem_write_int64(ts, EBR_TS_RETIRE_COUNT, 0i64));
+     } else {
+         drop(npk_mem_write_int64(ts, EBR_TS_RETIRE_COUNT, rcount));
+@@ -267,19 +267,19 @@ pub func:ebr_get_global_epoch = int64() {
+ 
+ // Accessor for testing: get limbo count for thread
+ pub func:ebr_get_limbo_count = int64(int64:thread_id) {
+-    int64:ts = _?!ebr_thread_state(thread_id);
++    int64:ts = raw ebr_thread_state(thread_id);
+     pass(npk_mem_read_int64(ts, EBR_TS_LIMBO_COUNT));
+ };
+ 
+ // Accessor for testing: get local epoch for thread
+ pub func:ebr_get_local_epoch = int64(int64:thread_id) {
+-    int64:ts = _?!ebr_thread_state(thread_id);
++    int64:ts = raw ebr_thread_state(thread_id);
+     pass(npk_mem_read_int64(ts, EBR_TS_LOCAL_EPOCH));
+ };
+ 
+ // Accessor for testing: get is_active for thread
+ pub func:ebr_get_is_active = int64(int64:thread_id) {
+-    int64:ts = _?!ebr_thread_state(thread_id);
++    int64:ts = raw ebr_thread_state(thread_id);
+     pass(npk_mem_read_int64(ts, EBR_TS_IS_ACTIVE));
+ };
+ 
+@@ -291,8 +291,8 @@ pub func:ebr_test_force_advance = NIL() {
+ 
+ // Test helper: manually flush limbo
+ pub func:ebr_test_flush_limbo = NIL(int64:thread_id) {
+-    int64:ts = _?!ebr_thread_state(thread_id);
+-    _?!ebr_flush_limbo(ts);
++    int64:ts = raw ebr_thread_state(thread_id);
++    raw ebr_flush_limbo(ts);
+     pass(NIL);
+ };
+ 
+@@ -301,7 +301,7 @@ pub func:ebr_test_flush_limbo = NIL(int64:thread_id) {
+ pub func:ebr_retire_or_flush = int32(int64:thread_id, int64:node_ptr) {
+     int64:retries = 0i64;
+     while (retries < 10i64) {
+-        int32:err = _?!ebr_retire(thread_id, node_ptr);
++        int32:err = raw ebr_retire(thread_id, node_ptr);
+         
+         if (err == 0i32) {
+             pass(0i32);
+@@ -309,9 +309,9 @@ pub func:ebr_retire_or_flush = int32(int64:thread_id, int64:node_ptr) {
+         
+         if (err == ERR_EBR_LIMBO_OVERFLOW) {
+             drop(ebr_try_advance());
+-            int64:ts = _?!ebr_thread_state(thread_id);
++            int64:ts = raw ebr_thread_state(thread_id);
+             if (ts != 0i64) {
+-                _?!ebr_flush_limbo(ts);
++                raw ebr_flush_limbo(ts);
+             }
+             retries = retries + 1i64;
+         } else {
+@@ -320,3 +320,4 @@ pub func:ebr_retire_or_flush = int32(int64:thread_id, int64:node_ptr) {
+     }
+     pass(ERR_EBR_LIMBO_OVERFLOW);
+ };
++
+diff --git a/src/concurrency/seqlock.npk b/src/concurrency/seqlock.npk
+index a3a4094..e0245c4 100644
+--- a/src/concurrency/seqlock.npk
++++ b/src/concurrency/seqlock.npk
+@@ -39,15 +39,15 @@ pub func:seqlock_free = NIL(int64:seqlock_ptr) {
+     pass(NIL);
+ };
+ 
+-// Acquire write lock: increments seq to odd (signals write in progress).
++// Acquire write lock: increments seq to raw odd (signals write in progress).
+ // Spins until seq is even (no other writer) before incrementing.
+ // Returns the pre-write sequence number (for bookkeeping).
+ pub func:seqlock_write_begin = int64(int64:seqlock_ptr)
+     requires seqlock_ptr != 0i64
+-    ensures _?!atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ) % 2i64 == 1i64
++    ensures atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ) % 2i64 == 1i64
+ {
+     when (true) {
+-        int64:seq = _?!atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ);
++        int64:seq = raw atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ);
+         if (seq % 2i64 == 0i64) {
+             // Try to CAS from even to odd
+             if (raw atomic_compare_exchange_seqcst(
+@@ -68,7 +68,7 @@ pub func:seqlock_write_end = NIL(int64:seqlock_ptr)
+     requires seqlock_ptr != 0i64
+ {
+     // seq is currently odd; increment to even
+-    int64:seq = _?!atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ);
++    int64:seq = raw atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ);
+     drop(atomic_store_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ, seq + 1i64));
+     pass(NIL);
+ };
+@@ -80,7 +80,7 @@ pub func:seqlock_read_begin = int64(int64:seqlock_ptr)
+     requires seqlock_ptr != 0i64
+ {
+     when (true) {
+-        int64:seq = _?!atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ);
++        int64:seq = raw atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ);
+         if (seq % 2i64 == 0i64) {
+             pass(seq);  // Even — safe to start reading
+         }
+@@ -95,7 +95,7 @@ pub func:seqlock_read_begin = int64(int64:seqlock_ptr)
+ pub func:seqlock_read_validate = bool(int64:seqlock_ptr, int64:start_seq)
+     requires seqlock_ptr != 0i64
+ {
+-    int64:end_seq = _?!atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ);
++    int64:end_seq = raw atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ);
+     pass(end_seq == start_seq && start_seq % 2i64 == 0i64);
+ };
+ 
+@@ -141,3 +141,4 @@ pub func:seqlock_write_copy = NIL(int64:seqlock_ptr, int64:data_ptr,
+     drop(seqlock_write_end(seqlock_ptr));
+     pass(NIL);
+ };
++
+diff --git a/src/document/json_parser.npk b/src/document/json_parser.npk
+index e62af06..945a275 100644
+--- a/src/document/json_parser.npk
++++ b/src/document/json_parser.npk
+@@ -166,7 +166,7 @@ pub func:parse_f64 = flt64(ParserState->:state) {
+ pub func:parse_array = NpkJsonVal(ParserState->:state) {
+     state->pos = state->pos + 1i64; // skip '['
+     int64:max_cap = 4096i64;
+-    int64:handles_ptr = json_arena_alloc(state->arena_ptr, max_cap * 8i64);
++    int64:handles_ptr = raw json_arena_alloc(state->arena_ptr, max_cap * 8i64);
+     if (handles_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
+     int64:count = 0i64;
+     
+@@ -177,9 +177,9 @@ pub func:parse_array = NpkJsonVal(ParserState->:state) {
+     } else {
+         while (count < max_cap) {
+             Result<NpkJsonVal>:v_res = parse_value(state);
+-            if (v_res.is_error) { fail(v_res.err); }
+-            NpkJsonVal:v = _!v_res;
+-            int64:v_ptr = json_arena_alloc(state->arena_ptr, 16i64);
++            if (v_res.is_error) { fail(v_res.error); }
++            NpkJsonVal:v = v_res.value;
++            int64:v_ptr = raw json_arena_alloc(state->arena_ptr, 16i64);
+             drop(npk_mem_write_byte(v_ptr, 0i64, v.type => int64));
+             drop(npk_mem_write_int64(v_ptr, 8i64, v.payload));
+             
+@@ -199,7 +199,7 @@ pub func:parse_array = NpkJsonVal(ParserState->:state) {
+         }
+     }
+     
+-    int64:arr_ptr = json_arena_alloc(state->arena_ptr, 16i64);
++    int64:arr_ptr = raw json_arena_alloc(state->arena_ptr, 16i64);
+     drop(npk_mem_write_int32(arr_ptr, 0i64, count => int32));
+     drop(npk_mem_write_int64(arr_ptr, 8i64, handles_ptr));
+     
+@@ -209,9 +209,9 @@ pub func:parse_array = NpkJsonVal(ParserState->:state) {
+ pub func:parse_object = NpkJsonVal(ParserState->:state) {
+     state->pos = state->pos + 1i64; // skip '{'
+     int64:max_cap = 1024i64;
+-    int64:keys_ptr = json_arena_alloc(state->arena_ptr, max_cap * 8i64);
++    int64:keys_ptr = raw json_arena_alloc(state->arena_ptr, max_cap * 8i64);
+     if (keys_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
+-    int64:values_ptr = json_arena_alloc(state->arena_ptr, max_cap * 8i64);
++    int64:values_ptr = raw json_arena_alloc(state->arena_ptr, max_cap * 8i64);
+     if (values_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
+     int64:count = 0i64;
+     
+@@ -223,9 +223,9 @@ pub func:parse_object = NpkJsonVal(ParserState->:state) {
+         while (count < max_cap) {
+             drop(skip_whitespace(state));
+             Result<NpkJsonStr>:k_res = parse_string(state);
+-            if (k_res.is_error) { fail(k_res.err); }
+-            NpkJsonStr:k = _!k_res;
+-            int64:k_ptr = json_arena_alloc(state->arena_ptr, 16i64);
++            if (k_res.is_error) { fail(k_res.error); }
++            NpkJsonStr:k = k_res.value;
++            int64:k_ptr = raw json_arena_alloc(state->arena_ptr, 16i64);
+             drop(npk_mem_write_int32(k_ptr, 0i64, k.length => int32));
+             drop(npk_mem_write_int64(k_ptr, 8i64, k.data));
+             drop(npk_mem_write_int64(keys_ptr, count * 8i64, k_ptr));
+@@ -236,9 +236,9 @@ pub func:parse_object = NpkJsonVal(ParserState->:state) {
+             state->pos = state->pos + 1i64; // skip ':'
+             
+             Result<NpkJsonVal>:v_res = parse_value(state);
+-            if (v_res.is_error) { fail(v_res.err); }
+-            NpkJsonVal:v = _!v_res;
+-            int64:v_ptr = json_arena_alloc(state->arena_ptr, 16i64);
++            if (v_res.is_error) { fail(v_res.error); }
++            NpkJsonVal:v = v_res.value;
++            int64:v_ptr = raw json_arena_alloc(state->arena_ptr, 16i64);
+             drop(npk_mem_write_byte(v_ptr, 0i64, v.type => int64));
+             drop(npk_mem_write_int64(v_ptr, 8i64, v.payload));
+             drop(npk_mem_write_int64(values_ptr, count * 8i64, v_ptr));
+@@ -258,7 +258,7 @@ pub func:parse_object = NpkJsonVal(ParserState->:state) {
+         }
+     }
+     
+-    int64:obj_ptr = json_arena_alloc(state->arena_ptr, 24i64);
++    int64:obj_ptr = raw json_arena_alloc(state->arena_ptr, 24i64);
+     drop(npk_mem_write_int32(obj_ptr, 0i64, count => int32));
+     drop(npk_mem_write_int64(obj_ptr, 8i64, keys_ptr));
+     drop(npk_mem_write_int64(obj_ptr, 16i64, values_ptr));
+@@ -277,21 +277,21 @@ pub func:parse_value = NpkJsonVal(ParserState->:state) {
+     
+     if (c == 123i8) { // '{'
+         Result<NpkJsonVal>:obj_res = parse_object(state);
+-        if (obj_res.is_error) { fail(obj_res.err); }
+-        NpkJsonVal:obj = _!obj_res;
++        if (obj_res.is_error) { fail(obj_res.error); }
++        NpkJsonVal:obj = obj_res.value;
+         state->depth = state->depth - 1i64;
+         pass(obj);
+     } else if (c == 91i8) { // '['
+         Result<NpkJsonVal>:arr_res = parse_array(state);
+-        if (arr_res.is_error) { fail(arr_res.err); }
+-        NpkJsonVal:arr = _!arr_res;
++        if (arr_res.is_error) { fail(arr_res.error); }
++        NpkJsonVal:arr = arr_res.value;
+         state->depth = state->depth - 1i64;
+         pass(arr);
+     } else if (c == 34i8) { // '"'
+         Result<NpkJsonStr>:s_res = parse_string(state);
+-            if (s_res.is_error) { fail(s_res.err); }
+-            NpkJsonStr:s = _!s_res;
+-        int64:s_ptr = json_arena_alloc(state->arena_ptr, 16i64);
++            if (s_res.is_error) { fail(s_res.error); }
++            NpkJsonStr:s = s_res.value;
++        int64:s_ptr = raw json_arena_alloc(state->arena_ptr, 16i64);
+         drop(npk_mem_write_int32(s_ptr, 0i64, s.length => int32));
+         drop(npk_mem_write_int64(s_ptr, 8i64, s.data));
+         state->depth = state->depth - 1i64;
+@@ -321,15 +321,15 @@ pub func:parse_value = NpkJsonVal(ParserState->:state) {
+         
+         if (has_dot == 1i64) {
+             Result<flt64>:fv_res = parse_f64(state);
+-            if (fv_res.is_error) { fail(fv_res.err); }
+-            flt64:fv = _!fv_res;
++            if (fv_res.is_error) { fail(fv_res.error); }
++            flt64:fv = fv_res.value;
+             int64:fv_bits = <-(@fv => int64->);
+             state->depth = state->depth - 1i64;
+             pass(NpkJsonVal{ type: JSON_NUM_F64, payload: fv_bits });
+         } else {
+             Result<int64>:iv_res = parse_i64(state);
+-            if (iv_res.is_error) { fail(iv_res.err); }
+-            int64:iv = _!iv_res;
++            if (iv_res.is_error) { fail(iv_res.error); }
++            int64:iv = iv_res.value;
+             state->depth = state->depth - 1i64;
+             pass(NpkJsonVal{ type: JSON_NUM_I64, payload: iv });
+         }
+@@ -353,3 +353,4 @@ pub func:parse_json_raw = NpkJsonVal(int64:arena_ptr, int64:ptr, int64:len) {
+     
+     pass(parse_value(@state));
+ };
++
+diff --git a/src/document/json_serializer.npk b/src/document/json_serializer.npk
+index fa665e7..18ab99b 100644
+--- a/src/document/json_serializer.npk
++++ b/src/document/json_serializer.npk
+@@ -215,11 +215,11 @@ pub func:deserialize_value = NpkJsonVal(int64:arena, int64:buf, int64:cursor_ptr
+         }
+         drop(npk_mem_write_int64(cursor_ptr, 0i64, cursor));
+         
+-        int64:payload = json_arena_alloc(arena, 16i64);
++        int64:payload = raw json_arena_alloc(arena, 16i64);
+         drop(npk_mem_write_int32(payload, 0i64, len => int32));
+         
+         if (len > 0i64) {
+-            int64:s_buf = json_arena_alloc(arena, len);
++            int64:s_buf = raw json_arena_alloc(arena, len);
+             drop(npk_mem_copy(s_buf, str_data, len));
+             drop(npk_mem_write_int64(payload, 8i64, s_buf));
+         } else {
+@@ -234,15 +234,15 @@ pub func:deserialize_value = NpkJsonVal(int64:arena, int64:buf, int64:cursor_ptr
+         cursor = cursor + 4i64;
+         drop(npk_mem_write_int64(cursor_ptr, 0i64, cursor));
+         
+-        int64:payload = json_arena_alloc(arena, 16i64);
++        int64:payload = raw json_arena_alloc(arena, 16i64);
+         drop(npk_mem_write_int32(payload, 0i64, count => int32));
+-        int64:handles_ptr = json_arena_alloc(arena, count * 8i64);
++        int64:handles_ptr = raw json_arena_alloc(arena, count * 8i64);
+         drop(npk_mem_write_int64(payload, 8i64, handles_ptr));
+         
+         int64:i = 0i64;
+         while (i < count) {
+-            NpkJsonVal:elem = deserialize_value(arena, buf, cursor_ptr);
+-            int64:elem_ptr = json_arena_alloc(arena, 16i64);
++            NpkJsonVal:elem = raw deserialize_value(arena, buf, cursor_ptr);
++            int64:elem_ptr = raw json_arena_alloc(arena, 16i64);
+             drop(npk_mem_write_byte(elem_ptr, 0i64, elem.type => int8));
+             drop(npk_mem_write_int64(elem_ptr, 8i64, elem.payload));
+             drop(npk_mem_write_int64(handles_ptr, i * 8i64, elem_ptr));
+@@ -256,23 +256,23 @@ pub func:deserialize_value = NpkJsonVal(int64:arena, int64:buf, int64:cursor_ptr
+         cursor = cursor + 4i64;
+         drop(npk_mem_write_int64(cursor_ptr, 0i64, cursor));
+         
+-        int64:payload = json_arena_alloc(arena, 24i64);
++        int64:payload = raw json_arena_alloc(arena, 24i64);
+         drop(npk_mem_write_int32(payload, 0i64, count => int32));
+-        int64:keys_ptr = json_arena_alloc(arena, count * 8i64);
+-        int64:vals_ptr = json_arena_alloc(arena, count * 8i64);
++        int64:keys_ptr = raw json_arena_alloc(arena, count * 8i64);
++        int64:vals_ptr = raw json_arena_alloc(arena, count * 8i64);
+         drop(npk_mem_write_int64(payload, 8i64, keys_ptr));
+         drop(npk_mem_write_int64(payload, 16i64, vals_ptr));
+         
+         int64:i = 0i64;
+         while (i < count) {
+-            NpkJsonVal:k = deserialize_value(arena, buf, cursor_ptr);
+-            int64:k_ptr = json_arena_alloc(arena, 16i64);
++            NpkJsonVal:k = raw deserialize_value(arena, buf, cursor_ptr);
++            int64:k_ptr = raw json_arena_alloc(arena, 16i64);
+             drop(npk_mem_write_byte(k_ptr, 0i64, k.type => int8));
+             drop(npk_mem_write_int64(k_ptr, 8i64, k.payload));
+             drop(npk_mem_write_int64(keys_ptr, i * 8i64, k_ptr));
+             
+-            NpkJsonVal:v = deserialize_value(arena, buf, cursor_ptr);
+-            int64:v_ptr = json_arena_alloc(arena, 16i64);
++            NpkJsonVal:v = raw deserialize_value(arena, buf, cursor_ptr);
++            int64:v_ptr = raw json_arena_alloc(arena, 16i64);
+             drop(npk_mem_write_byte(v_ptr, 0i64, v.type => int8));
+             drop(npk_mem_write_int64(v_ptr, 8i64, v.payload));
+             drop(npk_mem_write_int64(vals_ptr, i * 8i64, v_ptr));
+@@ -283,3 +283,4 @@ pub func:deserialize_value = NpkJsonVal(int64:arena, int64:buf, int64:cursor_ptr
+     }
+     pass(raw json_make_null());
+ };
++
+diff --git a/src/document/json_types.npk b/src/document/json_types.npk
+index d77e307..8182d73 100644
+--- a/src/document/json_types.npk
++++ b/src/document/json_types.npk
+@@ -51,3 +51,4 @@ pub struct:NpkJsonObj = {
+     int64->:keys;
+     int64->:values;
+ };
++
+diff --git a/src/engine/catalog.npk b/src/engine/catalog.npk
+index 57a7832..3683e92 100644
+--- a/src/engine/catalog.npk
++++ b/src/engine/catalog.npk
+@@ -20,8 +20,8 @@ pub func:catalog_init = int32() {
+     g_catalog_rwlock = nitpick_libc_rwlock_create();
+     
+     // Create base data directories
+-    _?!sys(MKDIR, "data", 511i64);             // 0777
+-    _?!sys(MKDIR, "data/collections", 511i64); // 0777
++    raw sys(MKDIR, "data", 511i64);             // 0777
++    raw sys(MKDIR, "data/collections", 511i64); // 0777
+     
+     pass(0i32);
+ };
+@@ -61,7 +61,7 @@ pub func:catalog_create_collection = int64(string:name) {
+     string:base_dir = "data/collections/";
+     string:full_path = string_concat(base_dir, name);
+     
+-    _?!sys(MKDIR, full_path, 511i64);
++    raw sys(MKDIR, full_path, 511i64);
+     
+     int64:coll_ptr = npk_core_alloc(24i64);
+     Collection->:coll = @cast_unchecked<Collection->>(coll_ptr);
+@@ -86,3 +86,4 @@ pub func:catalog_get_collection = int64(string:name) {
+     drop(nitpick_libc_rwlock_unlock(g_catalog_rwlock));
+     pass(coll);
+ };
++
+diff --git a/src/engine/collection.npk b/src/engine/collection.npk
+index 68a94cb..54fd570 100644
+--- a/src/engine/collection.npk
++++ b/src/engine/collection.npk
+@@ -10,3 +10,4 @@ pub struct:Collection = {
+ };
+ 
+ // In the future, this file will contain methods to initialize and destroy a collection.
++
+diff --git a/src/index/art.npk b/src/index/art.npk
+index 862a4e8..6090f95 100644
+--- a/src/index/art.npk
++++ b/src/index/art.npk
+@@ -47,14 +47,14 @@ pub func:art_check_prefix = int64(int64:node, int64:key_ptr, int64:key_len, int6
+     requires node != 0i64, key_ptr != 0i64, depth >= 0i64, depth <= key_len
+     ensures result >= 0i64
+ {
+-    int64:prefix_len = _?!art_node_prefix_len(node);
++    int64:prefix_len = raw art_node_prefix_len(node);
+     int64:max_compare = prefix_len;
+     if ((depth + max_compare) > key_len) {
+         max_compare = key_len - depth;
+     }
+     int64:i = 0i64;
+     while (i < max_compare) {
+-        int64:prefix_byte = _?!art_node_prefix_byte(node, i);
++        int64:prefix_byte = raw art_node_prefix_byte(node, i);
+         int64:key_byte    = npk_mem_read_byte(key_ptr, depth + i) ;
+         if (prefix_byte != key_byte) {
+             pass(i);
+@@ -68,7 +68,7 @@ pub func:art_check_prefix = int64(int64:node, int64:key_ptr, int64:key_len, int6
+ pub func:art_find_child = int64(int64:node, int64:key_byte)
+     requires node != 0i64
+ {
+-    int64:ntype = _?!art_node_type(node);
++    int64:ntype = raw art_node_type(node);
+     if (ntype == ART_NODE4)   { pass(raw node4_find_child(node, key_byte)); }
+     if (ntype == ART_NODE16)  { pass(raw node16_find_child(node, key_byte)); }
+     if (ntype == ART_NODE48)  { pass(raw node48_find_child(node, key_byte)); }
+@@ -90,7 +90,7 @@ pub func:art_search = int64(int64:thread_id, int64:key_ptr, int64:key_len)
+         invariant depth >= 0i64, depth <= key_len
+     {
+         if (raw art_is_leaf(node)) {
+-            int64:lklen = _?!art_leaf_key_len(node);
++            int64:lklen = raw art_leaf_key_len(node);
+             if (lklen != key_len) { drop(ebr_unpin(thread_id)); pass(0i64); }
+             int64:lkptr = node + LEAF_DATA_OFFSET;
+             int64:match = npk_mem_compare(lkptr, key_ptr, key_len);
+@@ -98,8 +98,8 @@ pub func:art_search = int64(int64:thread_id, int64:key_ptr, int64:key_len)
+             drop(ebr_unpin(thread_id)); pass(0i64);
+         }
+ 
+-        int64:p = _?!art_check_prefix(node, key_ptr, key_len, depth);
+-        int64:plen = _?!art_node_prefix_len(node);
++        int64:p = raw art_check_prefix(node, key_ptr, key_len, depth);
++        int64:plen = raw art_node_prefix_len(node);
+         if (p != plen) {
+             drop(ebr_unpin(thread_id)); pass(0i64);
+         }
+@@ -108,7 +108,7 @@ pub func:art_search = int64(int64:thread_id, int64:key_ptr, int64:key_len)
+         if (depth < key_len) {
+             key_byte = npk_mem_read_byte(key_ptr, depth) ;
+         }
+-        node = _?!art_find_child(node, key_byte);
++        node = raw art_find_child(node, key_byte);
+         depth = depth + 1i64;
+     }
+     drop(ebr_unpin(thread_id));
+@@ -117,35 +117,35 @@ pub func:art_search = int64(int64:thread_id, int64:key_ptr, int64:key_len)
+ 
+ // Helper: updates the parent's child pointer
+ pub func:art_update_child = NIL(int64:parent, int64:key_byte, int64:new_child) {
+-    int64:ptype = _?!art_node_type(parent);
++    int64:ptype = raw art_node_type(parent);
+     if (ptype == ART_NODE4) {
+-        int64:num = _?!art_node_num_children(parent);
++        int64:num = raw art_node_num_children(parent);
+         int64:i = 0i64;
+         while (i < num) {
+             if (raw node4_get_key(parent, i) == key_byte) {
+-                _?!node4_set_child(parent, i, new_child);
++                raw node4_set_child(parent, i, new_child);
+                 pass(NIL);
+             }
+             i = i + 1i64;
+         }
+     }
+     if (ptype == ART_NODE16) {
+-        int64:num = _?!art_node_num_children(parent);
++        int64:num = raw art_node_num_children(parent);
+         int64:i = 0i64;
+         while (i < num) {
+             if (raw node16_get_key(parent, i) == key_byte) {
+-                _?!node16_set_child(parent, i, new_child);
++                raw node16_set_child(parent, i, new_child);
+                 pass(NIL);
+             }
+             i = i + 1i64;
+         }
+     }
+     if (ptype == ART_NODE48) {
+-        int64:slot = _?!node48_get_slot(parent, key_byte);
+-        _?!node48_set_child(parent, slot, new_child);
++        int64:slot = raw node48_get_slot(parent, key_byte);
++        raw node48_set_child(parent, slot, new_child);
+     }
+     if (ptype == ART_NODE256) {
+-        _?!node256_set_child(parent, key_byte, new_child);
++        raw node256_set_child(parent, key_byte, new_child);
+     }
+     pass(NIL);
+ };
+@@ -157,11 +157,11 @@ pub func:art_update_child = NIL(int64:parent, int64:key_byte, int64:new_child) {
+ pub func:art_cas_child = int64(int64:parent_node, int64:key_byte, int64:expected_child, int64:new_child)
+     requires parent_node != 0i64
+ {
+-    int64:ntype = _?!art_node_type(parent_node);
++    int64:ntype = raw art_node_type(parent_node);
+     int64:addr = 0i64;
+     
+     if (ntype == ART_NODE4) {
+-        int64:count = _?!art_node_num_children(parent_node);
++        int64:count = raw art_node_num_children(parent_node);
+         int64:i = 0i64;
+         while (i < count) {
+             if (raw node4_get_key(parent_node, i) == key_byte) {
+@@ -172,7 +172,7 @@ pub func:art_cas_child = int64(int64:parent_node, int64:key_byte, int64:expected
+         }
+     } else {
+         if (ntype == ART_NODE16) {
+-            int64:count = _?!art_node_num_children(parent_node);
++            int64:count = raw art_node_num_children(parent_node);
+             int64:i = 0i64;
+             while (i < count) {
+                 if (raw node16_get_key(parent_node, i) == key_byte) {
+@@ -183,7 +183,7 @@ pub func:art_cas_child = int64(int64:parent_node, int64:key_byte, int64:expected
+             }
+         } else {
+             if (ntype == ART_NODE48) {
+-                int64:slot = _?!node48_get_slot(parent_node, key_byte);
++                int64:slot = raw node48_get_slot(parent_node, key_byte);
+                 if (slot != 0i64) {
+                     addr = parent_node + NODE48_CHILDREN_OFFSET + ((slot - 1i64) * 8i64);
+                 }
+@@ -197,53 +197,53 @@ pub func:art_cas_child = int64(int64:parent_node, int64:key_byte, int64:expected
+     
+     if (addr == 0i64) { pass(0i64); }
+     
+-    bool:success = _?!npk_cas_i64(addr, expected_child, new_child);
++    bool:success = raw npk_cas_i64(addr, expected_child, new_child);
+     if (success) { pass(1i64); }
+     pass(0i64);
+ };
+ 
+ pub func:art_copy_node = int64(int64:node) {
+-    int64:ntype = _?!art_node_type(node);
++    int64:ntype = raw art_node_type(node);
+     int64:new_node = 0i64;
+-    if (ntype == ART_NODE4) { new_node = _?!art_alloc_node4(); }
+-    if (ntype == ART_NODE16) { new_node = _?!art_alloc_node16(); }
+-    if (ntype == ART_NODE48) { new_node = _?!art_alloc_node48(); }
+-    if (ntype == ART_NODE256) { new_node = _?!art_alloc_node256(); }
++    if (ntype == ART_NODE4) { new_node = raw art_alloc_node4(); }
++    if (ntype == ART_NODE16) { new_node = raw art_alloc_node16(); }
++    if (ntype == ART_NODE48) { new_node = raw art_alloc_node48(); }
++    if (ntype == ART_NODE256) { new_node = raw art_alloc_node256(); }
+     
+-    int64:plen = _?!art_node_prefix_len(node);
+-    _?!art_node_set_prefix_len(new_node, plen);
++    int64:plen = raw art_node_prefix_len(node);
++    raw art_node_set_prefix_len(new_node, plen);
+     int64:i = 0i64;
+     while (i < plen) {
+-        _?!art_node_set_prefix_byte(new_node, i, _?!art_node_prefix_byte(node, i));
++        raw art_node_set_prefix_byte(new_node, i, raw _art_node_prefix_byte(node, i));
+         i = i + 1i64;
+     }
+     
+-    int64:num = _?!art_node_num_children(node);
+-    _?!art_node_set_num_children(new_node, num);
++    int64:num = raw art_node_num_children(node);
++    raw art_node_set_num_children(new_node, num);
+     
+     if (ntype == ART_NODE4) {
+         i = 0i64;
+         while (i < num) {
+-            _?!node4_set_key(new_node, i, _?!node4_get_key(node, i));
+-            _?!node4_set_child(new_node, i, _?!node4_get_child(node, i));
++            raw node4_set_key(new_node, i, raw _node4_get_key(node, i));
++            raw node4_set_child(new_node, i, raw _node4_get_child(node, i));
+             i = i + 1i64;
+         }
+     } else {
+         if (ntype == ART_NODE16) {
+             i = 0i64;
+             while (i < num) {
+-                _?!node16_set_key(new_node, i, _?!node16_get_key(node, i));
+-                _?!node16_set_child(new_node, i, _?!node16_get_child(node, i));
++                raw node16_set_key(new_node, i, raw _node16_get_key(node, i));
++                raw node16_set_child(new_node, i, raw _node16_get_child(node, i));
+                 i = i + 1i64;
+             }
+         } else {
+             if (ntype == ART_NODE48) {
+                 int64:k = 0i64;
+                 while (k < 256i64) {
+-                    int64:slot = _?!node48_get_slot(node, k);
++                    int64:slot = raw node48_get_slot(node, k);
+                     if (slot != 0i64) {
+-                        _?!node48_set_slot(new_node, k, slot);
+-                        _?!node48_set_child(new_node, slot, _?!node48_get_child(node, slot));
++                        raw node48_set_slot(new_node, k, slot);
++                        raw node48_set_child(new_node, slot, raw _node48_get_child(node, slot));
+                     }
+                     k = k + 1i64;
+                 }
+@@ -251,9 +251,9 @@ pub func:art_copy_node = int64(int64:node) {
+                 if (ntype == ART_NODE256) {
+                     int64:k = 0i64;
+                     while (k < 256i64) {
+-                        int64:child = _?!node256_get_child(node, k);
++                        int64:child = raw node256_get_child(node, k);
+                         if (child != 0i64) {
+-                            _?!node256_set_child(new_node, k, child);
++                            raw node256_set_child(new_node, k, child);
+                         }
+                         k = k + 1i64;
+                     }
+@@ -267,68 +267,68 @@ pub func:art_copy_node = int64(int64:node) {
+ pub func:art_add_child_copy = int64(int64:node, int64:key_byte, int64:child_ptr)
+     requires node != 0i64, child_ptr != 0i64
+ {
+-    int64:ntype = _?!art_node_type(node);
+-    int64:num = _?!art_node_num_children(node);
++    int64:ntype = raw art_node_type(node);
++    int64:num = raw art_node_num_children(node);
+     if (ntype == ART_NODE4) {
+         if (num < 4i64) {
+-            int64:new_node = _?!art_copy_node(node);
+-            _?!node4_set_key(new_node, num, key_byte);
+-            _?!node4_set_child(new_node, num, child_ptr);
+-            _?!art_node_set_num_children(new_node, num + 1i64);
++            int64:new_node = raw art_copy_node(node);
++            raw node4_set_key(new_node, num, key_byte);
++            raw node4_set_child(new_node, num, child_ptr);
++            raw art_node_set_num_children(new_node, num + 1i64);
+             pass(new_node);
+         } else {
+-            int64:n16 = _?!art_alloc_node16();
+-            int64:plen = _?!art_node_prefix_len(node);
+-            _?!art_node_set_prefix_len(n16, plen);
++            int64:n16 = raw art_alloc_node16();
++            int64:plen = raw art_node_prefix_len(node);
++            raw art_node_set_prefix_len(n16, plen);
+             int64:i = 0i64;
+             while (i < plen) {
+-                _?!art_node_set_prefix_byte(n16, i, _?!art_node_prefix_byte(node, i));
++                raw art_node_set_prefix_byte(n16, i, raw _art_node_prefix_byte(node, i));
+                 i = i + 1i64;
+             }
+             i = 0i64;
+             while (i < num) {
+-                _?!node16_set_key(n16, i, _?!node4_get_key(node, i));
+-                _?!node16_set_child(n16, i, _?!node4_get_child(node, i));
++                raw node16_set_key(n16, i, raw _node4_get_key(node, i));
++                raw node16_set_child(n16, i, raw _node4_get_child(node, i));
+                 i = i + 1i64;
+             }
+-            _?!node16_set_key(n16, num, key_byte);
+-            _?!node16_set_child(n16, num, child_ptr);
+-            _?!art_node_set_num_children(n16, num + 1i64);
++            raw node16_set_key(n16, num, key_byte);
++            raw node16_set_child(n16, num, child_ptr);
++            raw art_node_set_num_children(n16, num + 1i64);
+             pass(n16);
+         }
+     } else {
+         if (ntype == ART_NODE16) {
+             if (num < 16i64) {
+-                int64:new_node = _?!art_copy_node(node);
+-                _?!node16_set_key(new_node, num, key_byte);
+-                _?!node16_set_child(new_node, num, child_ptr);
+-                _?!art_node_set_num_children(new_node, num + 1i64);
++                int64:new_node = raw art_copy_node(node);
++                raw node16_set_key(new_node, num, key_byte);
++                raw node16_set_child(new_node, num, child_ptr);
++                raw art_node_set_num_children(new_node, num + 1i64);
+                 pass(new_node);
+             } else {
+-                int64:n48 = _?!art_alloc_node48();
+-                int64:plen = _?!art_node_prefix_len(node);
+-                _?!art_node_set_prefix_len(n48, plen);
++                int64:n48 = raw art_alloc_node48();
++                int64:plen = raw art_node_prefix_len(node);
++                raw art_node_set_prefix_len(n48, plen);
+                 int64:i = 0i64;
+                 while (i < plen) {
+-                    _?!art_node_set_prefix_byte(n48, i, _?!art_node_prefix_byte(node, i));
++                    raw art_node_set_prefix_byte(n48, i, raw _art_node_prefix_byte(node, i));
+                     i = i + 1i64;
+                 }
+                 i = 0i64;
+                 while (i < num) {
+-                    int64:kb = _?!node16_get_key(node, i);
+-                    _?!node48_set_slot(n48, kb, i + 1i64);
+-                    _?!node48_set_child(n48, i + 1i64, _?!node16_get_child(node, i));
++                    int64:kb = raw node16_get_key(node, i);
++                    raw node48_set_slot(n48, kb, i + 1i64);
++                    raw node48_set_child(n48, i + 1i64, raw _node16_get_child(node, i));
+                     i = i + 1i64;
+                 }
+-                _?!node48_set_slot(n48, key_byte, num + 1i64);
+-                _?!node48_set_child(n48, num + 1i64, child_ptr);
+-                _?!art_node_set_num_children(n48, num + 1i64);
++                raw node48_set_slot(n48, key_byte, num + 1i64);
++                raw node48_set_child(n48, num + 1i64, child_ptr);
++                raw art_node_set_num_children(n48, num + 1i64);
+                 pass(n48);
+             }
+         } else {
+             if (ntype == ART_NODE48) {
+                 if (num < 48i64) {
+-                    int64:new_node = _?!art_copy_node(node);
++                    int64:new_node = raw art_copy_node(node);
+                     int64:i = 0i64;
+                     int64:empty_slot = 0i64;
+                     while (i < 48i64) {
+@@ -338,36 +338,36 @@ pub func:art_add_child_copy = int64(int64:node, int64:key_byte, int64:child_ptr)
+                         }
+                         i = i + 1i64;
+                     }
+-                    _?!node48_set_slot(new_node, key_byte, empty_slot);
+-                    _?!node48_set_child(new_node, empty_slot, child_ptr);
+-                    _?!art_node_set_num_children(new_node, num + 1i64);
++                    raw node48_set_slot(new_node, key_byte, empty_slot);
++                    raw node48_set_child(new_node, empty_slot, child_ptr);
++                    raw art_node_set_num_children(new_node, num + 1i64);
+                     pass(new_node);
+                 } else {
+-                    int64:n256 = _?!art_alloc_node256();
+-                    int64:plen = _?!art_node_prefix_len(node);
+-                    _?!art_node_set_prefix_len(n256, plen);
++                    int64:n256 = raw art_alloc_node256();
++                    int64:plen = raw art_node_prefix_len(node);
++                    raw art_node_set_prefix_len(n256, plen);
+                     int64:i = 0i64;
+                     while (i < plen) {
+-                        _?!art_node_set_prefix_byte(n256, i, _?!art_node_prefix_byte(node, i));
++                        raw art_node_set_prefix_byte(n256, i, raw _art_node_prefix_byte(node, i));
+                         i = i + 1i64;
+                     }
+                     int64:k = 0i64;
+                     while (k < 256i64) {
+-                        int64:slot = _?!node48_get_slot(node, k);
++                        int64:slot = raw node48_get_slot(node, k);
+                         if (slot != 0i64) {
+-                            _?!node256_set_child(n256, k, _?!node48_get_child(node, slot));
++                            raw node256_set_child(n256, k, raw _node48_get_child(node, slot));
+                         }
+                         k = k + 1i64;
+                     }
+-                    _?!node256_set_child(n256, key_byte, child_ptr);
+-                    _?!art_node_set_num_children(n256, num + 1i64);
++                    raw node256_set_child(n256, key_byte, child_ptr);
++                    raw art_node_set_num_children(n256, num + 1i64);
+                     pass(n256);
+                 }
+             } else {
+                 if (ntype == ART_NODE256) {
+-                    int64:new_node = _?!art_copy_node(node);
+-                    _?!node256_set_child(new_node, key_byte, child_ptr);
+-                    _?!art_node_set_num_children(new_node, num + 1i64);
++                    int64:new_node = raw art_copy_node(node);
++                    raw node256_set_child(new_node, key_byte, child_ptr);
++                    raw art_node_set_num_children(new_node, num + 1i64);
+                     pass(new_node);
+                 }
+             }
+@@ -388,13 +388,13 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+         
+         int64:root = npk_mem_read_int64(art_root_ptr, 0i64);
+         if (root == 0i64) {
+-            int64:new_leaf = _?!art_alloc_leaf(key_ptr, key_len, val_ptr, val_len);
+-            bool:success = _?!npk_cas_i64(art_root_ptr, 0i64, new_leaf);
++            int64:new_leaf = raw art_alloc_leaf(key_ptr, key_len, val_ptr, val_len);
++            bool:success = raw npk_cas_i64(art_root_ptr, 0i64, new_leaf);
+             if (success) {
+                 drop(ebr_unpin(thread_id));
+                 pass(0i64);
+             } else {
+-                _?!art_free_node(new_leaf);
++                raw art_free_node(new_leaf);
+                 restart = 1i64;
+                 continue;
+             }
+@@ -407,7 +407,7 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+         
+         while (node != 0i64) {
+             if (raw art_is_leaf(node)) {
+-                int64:lklen = _?!art_leaf_key_len(node);
++                int64:lklen = raw art_leaf_key_len(node);
+                 int64:lkptr = node + LEAF_DATA_OFFSET;
+                 int64:match = 1i64;
+                 if (lklen == key_len) {
+@@ -415,26 +415,26 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+                 }
+                 if (match == 0i64) {
+                     // Upsert: replace leaf
+-                    int64:new_leaf = _?!art_alloc_leaf(key_ptr, key_len, val_ptr, val_len);
++                    int64:new_leaf = raw art_alloc_leaf(key_ptr, key_len, val_ptr, val_len);
+                     if (parent == 0i64) {
+-                        bool:success = _?!npk_cas_i64(art_root_ptr, node, new_leaf);
++                        bool:success = raw npk_cas_i64(art_root_ptr, node, new_leaf);
+                         if (success) {
+-                            _?!ebr_retire_or_flush(thread_id, node);
++                            raw ebr_retire_or_flush(thread_id, node);
+                             drop(ebr_unpin(thread_id));
+                             pass(1i64);
+                         } else {
+-                            _?!art_free_node(new_leaf);
++                            raw art_free_node(new_leaf);
+                             restart = 1i64;
+                             break; // restart
+                         }
+                     } else {
+-                        int64:cas_res = _?!art_cas_child(parent, parent_key_byte, node, new_leaf);
++                        int64:cas_res = raw art_cas_child(parent, parent_key_byte, node, new_leaf);
+                         if (cas_res == 1i64) {
+-                            _?!ebr_retire_or_flush(thread_id, node);
++                            raw ebr_retire_or_flush(thread_id, node);
+                             drop(ebr_unpin(thread_id));
+                             pass(1i64);
+                         } else {
+-                            _?!art_free_node(new_leaf);
++                            raw art_free_node(new_leaf);
+                             restart = 1i64;
+                             break; // restart
+                         }
+@@ -453,118 +453,118 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+                 }
+                 
+                 // Create a Node4 to hold both leaves
+-                int64:n4 = _?!art_alloc_node4();
+-                _?!art_node_set_prefix_len(n4, p);
++                int64:n4 = raw art_alloc_node4();
++                raw art_node_set_prefix_len(n4, p);
+                 int64:i = 0i64;
+                 while (i < p) {
+-                    _?!art_node_set_prefix_byte(n4, i, npk_mem_read_byte(key_ptr, depth + i));
++                    raw art_node_set_prefix_byte(n4, i, npk_mem_read_byte(key_ptr, depth + i));
+                     i = i + 1i64;
+                 }
+                 
+                 int64:b_exist = 0i64;
+                 if ((depth + p) < lklen) { b_exist = npk_mem_read_byte(lkptr, depth + p); }
+-                _?!node4_set_key(n4, 0i64, b_exist);
+-                _?!node4_set_child(n4, 0i64, node);
++                raw node4_set_key(n4, 0i64, b_exist);
++                raw node4_set_child(n4, 0i64, node);
+                 
+                 int64:b_new = 0i64;
+                 if ((depth + p) < key_len) { b_new = npk_mem_read_byte(key_ptr, depth + p); }
+-                int64:new_leaf2 = _?!art_alloc_leaf(key_ptr, key_len, val_ptr, val_len);
+-                _?!node4_set_key(n4, 1i64, b_new);
+-                _?!node4_set_child(n4, 1i64, new_leaf2);
++                int64:new_leaf2 = raw art_alloc_leaf(key_ptr, key_len, val_ptr, val_len);
++                raw node4_set_key(n4, 1i64, b_new);
++                raw node4_set_child(n4, 1i64, new_leaf2);
+                 
+-                _?!art_node_set_num_children(n4, 2i64);
++                raw art_node_set_num_children(n4, 2i64);
+                 
+                 if (parent == 0i64) {
+-                    bool:success = _?!npk_cas_i64(art_root_ptr, node, n4);
++                    bool:success = raw npk_cas_i64(art_root_ptr, node, n4);
+                     if (success) {
+                         drop(ebr_unpin(thread_id));
+                         pass(0i64);
+                     } else {
+-                        _?!art_free_node(new_leaf2);
+-                        _?!art_free_node(n4);
++                        raw art_free_node(new_leaf2);
++                        raw art_free_node(n4);
+                         restart = 1i64;
+                         break;
+                     }
+                 } else {
+-                    int64:cas_res = _?!art_cas_child(parent, parent_key_byte, node, n4);
++                    int64:cas_res = raw art_cas_child(parent, parent_key_byte, node, n4);
+                     if (cas_res == 1i64) {
+                         drop(ebr_unpin(thread_id));
+                         pass(0i64);
+                     } else {
+-                        _?!art_free_node(new_leaf2);
+-                        _?!art_free_node(n4);
++                        raw art_free_node(new_leaf2);
++                        raw art_free_node(n4);
+                         restart = 1i64;
+                         break;
+                     }
+                 }
+             }
+             
+-            int64:p2 = _?!art_check_prefix(node, key_ptr, key_len, depth);
+-            int64:plen = _?!art_node_prefix_len(node);
++            int64:p2 = raw art_check_prefix(node, key_ptr, key_len, depth);
++            int64:plen = raw art_node_prefix_len(node);
+             if (p2 != plen) {
+                 // Prefix mismatch at internal node -> split node!
+-                int64:n4 = _?!art_alloc_node4();
++                int64:n4 = raw art_alloc_node4();
+                 
+-                _?!art_node_set_prefix_len(n4, p2);
++                raw art_node_set_prefix_len(n4, p2);
+                 int64:i = 0i64;
+                 while (i < p2) {
+-                    _?!art_node_set_prefix_byte(n4, i, _?!art_node_prefix_byte(node, i));
++                    raw art_node_set_prefix_byte(n4, i, raw _art_node_prefix_byte(node, i));
+                     i = i + 1i64;
+                 }
+                 
+-                int64:b_exist = _?!art_node_prefix_byte(node, p2);
+-                _?!node4_set_key(n4, 0i64, b_exist);
+-                _?!node4_set_child(n4, 0i64, node);
++                int64:b_exist = raw art_node_prefix_byte(node, p2);
++                raw node4_set_key(n4, 0i64, b_exist);
++                raw node4_set_child(n4, 0i64, node);
+                 
+                 // But wait, we cannot mutate `node` in place! We must COPY `node`!
+                 // Wait! Splitting a prefix requires mutating the old node's prefix_len and prefix bytes!
+                 // In OLC, we CANNOT mutate `node` in place. We MUST copy `node`!
+                 
+                 // Copy the node
+-                int64:node_copy = _?!art_copy_node(node);
++                int64:node_copy = raw art_copy_node(node);
+                 
+                 int64:new_plen = plen - p2 - 1i64;
+-                _?!art_node_set_prefix_len(node_copy, new_plen);
++                raw art_node_set_prefix_len(node_copy, new_plen);
+                 i = 0i64;
+                 while (i < new_plen) {
+-                    _?!art_node_set_prefix_byte(node_copy, i, _?!art_node_prefix_byte(node, p2 + 1i64 + i));
++                    raw art_node_set_prefix_byte(node_copy, i, raw _art_node_prefix_byte(node, p2 + 1i64 + i));
+                     i = i + 1i64;
+                 }
+-                _?!node4_set_child(n4, 0i64, node_copy);
++                raw node4_set_child(n4, 0i64, node_copy);
+                 
+                 int64:b_new = 0i64;
+                 if ((depth + p2) < key_len) {
+                     b_new = npk_mem_read_byte(key_ptr, depth + p2);
+                 }
+-                int64:new_leaf2 = _?!art_alloc_leaf(key_ptr, key_len, val_ptr, val_len);
+-                _?!node4_set_key(n4, 1i64, b_new);
+-                _?!node4_set_child(n4, 1i64, new_leaf2);
++                int64:new_leaf2 = raw art_alloc_leaf(key_ptr, key_len, val_ptr, val_len);
++                raw node4_set_key(n4, 1i64, b_new);
++                raw node4_set_child(n4, 1i64, new_leaf2);
+                 
+-                _?!art_node_set_num_children(n4, 2i64);
++                raw art_node_set_num_children(n4, 2i64);
+                 
+                 if (parent == 0i64) {
+-                    bool:success = _?!npk_cas_i64(art_root_ptr, node, n4);
++                    bool:success = raw npk_cas_i64(art_root_ptr, node, n4);
+                     if (success) {
+-                        _?!ebr_retire_or_flush(thread_id, node);
++                        raw ebr_retire_or_flush(thread_id, node);
+                         drop(ebr_unpin(thread_id));
+                         pass(0i64);
+                     } else {
+-                        _?!art_free_node(new_leaf2);
+-                        _?!art_free_node(node_copy);
+-                        _?!art_free_node(n4);
++                        raw art_free_node(new_leaf2);
++                        raw art_free_node(node_copy);
++                        raw art_free_node(n4);
+                         restart = 1i64;
+                         break;
+                     }
+                 } else {
+-                    int64:cas_res = _?!art_cas_child(parent, parent_key_byte, node, n4);
++                    int64:cas_res = raw art_cas_child(parent, parent_key_byte, node, n4);
+                     if (cas_res == 1i64) {
+-                        _?!ebr_retire_or_flush(thread_id, node);
++                        raw ebr_retire_or_flush(thread_id, node);
+                         drop(ebr_unpin(thread_id));
+                         pass(0i64);
+                     } else {
+-                        _?!art_free_node(new_leaf2);
+-                        _?!art_free_node(node_copy);
+-                        _?!art_free_node(n4);
++                        raw art_free_node(new_leaf2);
++                        raw art_free_node(node_copy);
++                        raw art_free_node(n4);
+                         restart = 1i64;
+                         break;
+                     }
+@@ -577,35 +577,35 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+                 key_byte = npk_mem_read_byte(key_ptr, depth) ;
+             }
+             
+-            int64:next_child = _?!art_find_child(node, key_byte);
++            int64:next_child = raw art_find_child(node, key_byte);
+             
+             if (next_child == 0i64) {
+                 // Slot is empty, add child. But we cannot mutate `node` in place!
+                 // We must COPY `node`, add child to the copy, and CAS the parent's pointer to the copy!
+-                int64:new_leaf = _?!art_alloc_leaf(key_ptr, key_len, val_ptr, val_len);
+-                int64:new_node = _?!art_add_child_copy(node, key_byte, new_leaf);
++                int64:new_leaf = raw art_alloc_leaf(key_ptr, key_len, val_ptr, val_len);
++                int64:new_node = raw art_add_child_copy(node, key_byte, new_leaf);
+                 
+                 if (parent == 0i64) {
+-                    bool:success = _?!npk_cas_i64(art_root_ptr, node, new_node);
++                    bool:success = raw npk_cas_i64(art_root_ptr, node, new_node);
+                     if (success) {
+-                        _?!ebr_retire_or_flush(thread_id, node);
++                        raw ebr_retire_or_flush(thread_id, node);
+                         drop(ebr_unpin(thread_id));
+                         pass(0i64);
+                     } else {
+-                        _?!art_free_node(new_leaf);
+-                        _?!art_free_node(new_node);
++                        raw art_free_node(new_leaf);
++                        raw art_free_node(new_node);
+                         restart = 1i64;
+                         break;
+                     }
+                 } else {
+-                    int64:cas_res = _?!art_cas_child(parent, parent_key_byte, node, new_node);
++                    int64:cas_res = raw art_cas_child(parent, parent_key_byte, node, new_node);
+                     if (cas_res == 1i64) {
+-                        _?!ebr_retire_or_flush(thread_id, node);
++                        raw ebr_retire_or_flush(thread_id, node);
+                         drop(ebr_unpin(thread_id));
+                         pass(0i64);
+                     } else {
+-                        _?!art_free_node(new_leaf);
+-                        _?!art_free_node(new_node);
++                        raw art_free_node(new_leaf);
++                        raw art_free_node(new_node);
+                         restart = 1i64;
+                         break;
+                     }
+@@ -626,117 +626,117 @@ pub func:art_insert = int64(int64:thread_id, int64:key_ptr, int64:key_len, int64
+     ensures result == 0i64 || result == 1i64
+ {
+     drop(art_lock());
+-    int64:res = _?!art_insert_internal(thread_id, key_ptr, key_len, val_ptr, val_len);
++    int64:res = raw art_insert_internal(thread_id, key_ptr, key_len, val_ptr, val_len);
+     drop(art_unlock());
+     pass(res);
+ };
+ 
+ // Scratch for art_delete lockfree
+ pub func:art_remove_child_copy = int64(int64:node, int64:key_byte) {
+-    int64:ntype = _?!art_node_type(node);
+-    int64:num = _?!art_node_num_children(node);
++    int64:ntype = raw art_node_type(node);
++    int64:num = raw art_node_num_children(node);
+ 
+-    int64:plen = _?!art_node_prefix_len(node);
++    int64:plen = raw art_node_prefix_len(node);
+     int64:i = 0i64;
+ 
+     if (ntype == ART_NODE4) {
+-        int64:n4 = _?!art_alloc_node4();
+-        _?!art_node_set_prefix_len(n4, plen);
+-        while (i < plen) { _?!art_node_set_prefix_byte(n4, i, _?!art_node_prefix_byte(node, i)); i = i + 1i64; }
++        int64:n4 = raw art_alloc_node4();
++        raw art_node_set_prefix_len(n4, plen);
++        while (i < plen) { raw art_node_set_prefix_byte(n4, i, raw _art_node_prefix_byte(node, i)); i = i + 1i64; }
+ 
+         i = 0i64;
+         int64:idx = 0i64;
+         while (i < num) {
+-            int64:kb = _?!node4_get_key(node, i);
++            int64:kb = raw node4_get_key(node, i);
+             if (kb != key_byte) {
+-                _?!node4_set_key(n4, idx, kb);
+-                _?!node4_set_child(n4, idx, _?!node4_get_child(node, i));
++                raw node4_set_key(n4, idx, kb);
++                raw node4_set_child(n4, idx, raw _node4_get_child(node, i));
+                 idx = idx + 1i64;
+             }
+             i = i + 1i64;
+         }
+-        _?!art_node_set_num_children(n4, num - 1i64);
++        raw art_node_set_num_children(n4, num - 1i64);
+         pass(n4);
+     } else if (ntype == ART_NODE16) {
+         if (num <= 4i64) {
+-            int64:n4 = _?!art_alloc_node4();
+-            _?!art_node_set_prefix_len(n4, plen);
+-            while (i < plen) { _?!art_node_set_prefix_byte(n4, i, _?!art_node_prefix_byte(node, i)); i = i + 1i64; }
++            int64:n4 = raw art_alloc_node4();
++            raw art_node_set_prefix_len(n4, plen);
++            while (i < plen) { raw art_node_set_prefix_byte(n4, i, raw _art_node_prefix_byte(node, i)); i = i + 1i64; }
+ 
+             i = 0i64;
+             int64:idx = 0i64;
+             while (i < num) {
+-                int64:kb = _?!node16_get_key(node, i);
++                int64:kb = raw node16_get_key(node, i);
+                 if (kb != key_byte) {
+-                    _?!node4_set_key(n4, idx, kb);
+-                    _?!node4_set_child(n4, idx, _?!node16_get_child(node, i));
++                    raw node4_set_key(n4, idx, kb);
++                    raw node4_set_child(n4, idx, raw _node16_get_child(node, i));
+                     idx = idx + 1i64;
+                 }
+                 i = i + 1i64;
+             }
+-            _?!art_node_set_num_children(n4, num - 1i64);
++            raw art_node_set_num_children(n4, num - 1i64);
+             pass(n4);
+         } else {
+-            int64:n16 = _?!art_alloc_node16();
+-            _?!art_node_set_prefix_len(n16, plen);
+-            while (i < plen) { _?!art_node_set_prefix_byte(n16, i, _?!art_node_prefix_byte(node, i)); i = i + 1i64; }
++            int64:n16 = raw art_alloc_node16();
++            raw art_node_set_prefix_len(n16, plen);
++            while (i < plen) { raw art_node_set_prefix_byte(n16, i, raw _art_node_prefix_byte(node, i)); i = i + 1i64; }
+ 
+             i = 0i64;
+             int64:idx = 0i64;
+             while (i < num) {
+-                int64:kb = _?!node16_get_key(node, i);
++                int64:kb = raw node16_get_key(node, i);
+                 if (kb != key_byte) {
+-                    _?!node16_set_key(n16, idx, kb);
+-                    _?!node16_set_child(n16, idx, _?!node16_get_child(node, i));
++                    raw node16_set_key(n16, idx, kb);
++                    raw node16_set_child(n16, idx, raw _node16_get_child(node, i));
+                     idx = idx + 1i64;
+                 }
+                 i = i + 1i64;
+             }
+-            _?!art_node_set_num_children(n16, num - 1i64);
++            raw art_node_set_num_children(n16, num - 1i64);
+             pass(n16);
+         }
+     } else if (ntype == ART_NODE48) {
+         if (num <= 12i64) {
+-            int64:n16 = _?!art_alloc_node16();
+-            _?!art_node_set_prefix_len(n16, plen);
+-            while (i < plen) { _?!art_node_set_prefix_byte(n16, i, _?!art_node_prefix_byte(node, i)); i = i + 1i64; }
++            int64:n16 = raw art_alloc_node16();
++            raw art_node_set_prefix_len(n16, plen);
++            while (i < plen) { raw art_node_set_prefix_byte(n16, i, raw _art_node_prefix_byte(node, i)); i = i + 1i64; }
+ 
+             i = 0i64;
+             int64:idx = 0i64;
+             while (i < 256i64) {
+-                int64:slot = _?!node48_get_slot(node, i);
++                int64:slot = raw node48_get_slot(node, i);
+                 if (slot != 0i64) {
+                     if (i != key_byte) {
+-                        _?!node16_set_key(n16, idx, i);
+-                        _?!node16_set_child(n16, idx, _?!node48_get_child(node, slot));
++                        raw node16_set_key(n16, idx, i);
++                        raw node16_set_child(n16, idx, raw _node48_get_child(node, slot));
+                         idx = idx + 1i64;
+                     }
+                 }
+                 i = i + 1i64;
+             }
+-            _?!art_node_set_num_children(n16, num - 1i64);
++            raw art_node_set_num_children(n16, num - 1i64);
+             pass(n16);
+         }
+     } else if (ntype == ART_NODE256) {
+         if (num <= 48i64) {
+-            int64:n48 = _?!art_alloc_node48();
+-            _?!art_node_set_prefix_len(n48, plen);
+-            while (i < plen) { _?!art_node_set_prefix_byte(n48, i, _?!art_node_prefix_byte(node, i)); i = i + 1i64; }
++            int64:n48 = raw art_alloc_node48();
++            raw art_node_set_prefix_len(n48, plen);
++            while (i < plen) { raw art_node_set_prefix_byte(n48, i, raw _art_node_prefix_byte(node, i)); i = i + 1i64; }
+ 
+             i = 0i64;
+             int64:idx = 1i64;
+             while (i < 256i64) {
+-                int64:child = _?!node256_get_child(node, i);
++                int64:child = raw node256_get_child(node, i);
+                 if (child != 0i64) {
+                     if (i != key_byte) {
+-                        _?!node48_set_slot(n48, i, idx);
+-                        _?!node48_set_child(n48, idx, child);
++                        raw node48_set_slot(n48, i, idx);
++                        raw node48_set_child(n48, idx, child);
+                         idx = idx + 1i64;
+                     }
+                 }
+                 i = i + 1i64;
+             }
+-            _?!art_node_set_num_children(n48, num - 1i64);
++            raw art_node_set_num_children(n48, num - 1i64);
+             pass(n48);
+         }
+     }
+@@ -760,13 +760,13 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+         }
+         
+         if (raw art_is_leaf(root)) {
+-            int64:lklen = _?!art_leaf_key_len(root);
++            int64:lklen = raw art_leaf_key_len(root);
+             int64:lkptr = root + LEAF_DATA_OFFSET;
+             if (lklen == key_len) {
+                 if (npk_mem_compare(lkptr, key_ptr, key_len) == 0i64) {
+-                    bool:success = _?!npk_cas_i64(art_root_ptr, root, 0i64);
++                    bool:success = raw npk_cas_i64(art_root_ptr, root, 0i64);
+                     if (success) {
+-                        _?!ebr_retire_or_flush(thread_id, root);
++                        raw ebr_retire_or_flush(thread_id, root);
+                         drop(ebr_unpin(thread_id));
+                         pass(0i64);
+                     } else {
+@@ -790,41 +790,41 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+ 
+         while (node != 0i64) {
+             if (raw art_is_leaf(node)) {
+-                int64:lklen = _?!art_leaf_key_len(node);
++                int64:lklen = raw art_leaf_key_len(node);
+                 int64:lkptr = node + LEAF_DATA_OFFSET;
+                 if (lklen != key_len) { drop(ebr_unpin(thread_id)); pass(ERR_ART_KEY_NOT_FOUND); }
+                 if (npk_mem_compare(lkptr, key_ptr, key_len) != 0i64) { drop(ebr_unpin(thread_id)); pass(ERR_ART_KEY_NOT_FOUND); }
+ 
+                 // Match! Remove from parent
+-                int64:ntype = _?!art_node_type(parent);
+-                int64:num = _?!art_node_num_children(parent);
++                int64:ntype = raw art_node_type(parent);
++                int64:num = raw art_node_num_children(parent);
+ 
+                 // For Node48 and Node256, we can zero in place
+                 if (ntype == ART_NODE256) {
+                     if (num <= 48i64) {
+-                        int64:new_node = _?!art_remove_child_copy(parent, parent_key_byte);
++                        int64:new_node = raw art_remove_child_copy(parent, parent_key_byte);
+                         int64:cas_res = 0i64;
+                         if (gparent == 0i64) {
+-                            bool:success = _?!npk_cas_i64(art_root_ptr, parent, new_node);
++                            bool:success = raw npk_cas_i64(art_root_ptr, parent, new_node);
+                             if (success) { cas_res = 1i64; }
+                         } else {
+-                            cas_res = _?!art_cas_child(gparent, gparent_key_byte, parent, new_node);
++                            cas_res = raw art_cas_child(gparent, gparent_key_byte, parent, new_node);
+                         }
+                         if (cas_res == 1i64) {
+-                            _?!ebr_retire_or_flush(thread_id, parent);
+-                            _?!ebr_retire_or_flush(thread_id, node);
++                            raw ebr_retire_or_flush(thread_id, parent);
++                            raw ebr_retire_or_flush(thread_id, node);
+                             drop(ebr_unpin(thread_id));
+                             pass(0i64);
+                         } else {
+-                            _?!art_free_node(new_node);
++                            raw art_free_node(new_node);
+                             restart = 1i64;
+                             break;
+                         }
+                     } else {
+-                        int64:cas_res = _?!art_cas_child(parent, parent_key_byte, node, 0i64);
++                        int64:cas_res = raw art_cas_child(parent, parent_key_byte, node, 0i64);
+                         if (cas_res == 1i64) {
+-                            _?!art_node_set_num_children(parent, num - 1i64);
+-                            _?!ebr_retire_or_flush(thread_id, node);
++                            raw art_node_set_num_children(parent, num - 1i64);
++                            raw ebr_retire_or_flush(thread_id, node);
+                             drop(ebr_unpin(thread_id));
+                             pass(0i64);
+                         } else {
+@@ -834,30 +834,30 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+                     }
+                 } else if (ntype == ART_NODE48) {
+                     if (num <= 12i64) {
+-                        int64:new_node = _?!art_remove_child_copy(parent, parent_key_byte);
++                        int64:new_node = raw art_remove_child_copy(parent, parent_key_byte);
+                         int64:cas_res = 0i64;
+                         if (gparent == 0i64) {
+-                            bool:success = _?!npk_cas_i64(art_root_ptr, parent, new_node);
++                            bool:success = raw npk_cas_i64(art_root_ptr, parent, new_node);
+                             if (success) { cas_res = 1i64; }
+                         } else {
+-                            cas_res = _?!art_cas_child(gparent, gparent_key_byte, parent, new_node);
++                            cas_res = raw art_cas_child(gparent, gparent_key_byte, parent, new_node);
+                         }
+                         if (cas_res == 1i64) {
+-                            _?!ebr_retire_or_flush(thread_id, parent);
+-                            _?!ebr_retire_or_flush(thread_id, node);
++                            raw ebr_retire_or_flush(thread_id, parent);
++                            raw ebr_retire_or_flush(thread_id, node);
+                             drop(ebr_unpin(thread_id));
+                             pass(0i64);
+                         } else {
+-                            _?!art_free_node(new_node);
++                            raw art_free_node(new_node);
+                             restart = 1i64;
+                             break;
+                         }
+                     } else {
+-                        int64:cas_res = _?!art_cas_child(parent, parent_key_byte, node, 0i64);
++                        int64:cas_res = raw art_cas_child(parent, parent_key_byte, node, 0i64);
+                         if (cas_res == 1i64) {
+-                            _?!node48_set_slot(parent, parent_key_byte, 0i64);
+-                            _?!art_node_set_num_children(parent, num - 1i64);
+-                            _?!ebr_retire_or_flush(thread_id, node);
++                            raw node48_set_slot(parent, parent_key_byte, 0i64);
++                            raw art_node_set_num_children(parent, num - 1i64);
++                            raw ebr_retire_or_flush(thread_id, node);
+                             drop(ebr_unpin(thread_id));
+                             pass(0i64);
+                         } else {
+@@ -866,21 +866,21 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+                         }
+                     }
+                 } else if (ntype == ART_NODE16) {
+-                    int64:new_node = _?!art_remove_child_copy(parent, parent_key_byte);
++                    int64:new_node = raw art_remove_child_copy(parent, parent_key_byte);
+                     int64:cas_res = 0i64;
+                     if (gparent == 0i64) {
+-                        bool:success = _?!npk_cas_i64(art_root_ptr, parent, new_node);
++                        bool:success = raw npk_cas_i64(art_root_ptr, parent, new_node);
+                         if (success) { cas_res = 1i64; }
+                     } else {
+-                        cas_res = _?!art_cas_child(gparent, gparent_key_byte, parent, new_node);
++                        cas_res = raw art_cas_child(gparent, gparent_key_byte, parent, new_node);
+                     }
+                     if (cas_res == 1i64) {
+-                        _?!ebr_retire_or_flush(thread_id, parent);
+-                        _?!ebr_retire_or_flush(thread_id, node);
++                        raw ebr_retire_or_flush(thread_id, parent);
++                        raw ebr_retire_or_flush(thread_id, node);
+                         drop(ebr_unpin(thread_id));
+                         pass(0i64);
+                     } else {
+-                        _?!art_free_node(new_node);
++                        raw art_free_node(new_node);
+                         restart = 1i64;
+                         break;
+                     }
+@@ -892,11 +892,11 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+                         int64:other_kb = 0i64;
+                         int64:i = 0i64;
+                         while (i < 4i64) {
+-                            int64:c = _?!node4_get_child(parent, i);
++                            int64:c = raw node4_get_child(parent, i);
+                             if (c != 0i64) {
+                                 if (c != node) {
+                                     other_child = c;
+-                                    other_kb = _?!node4_get_key(parent, i);
++                                    other_kb = raw node4_get_key(parent, i);
+                                 }
+                             }
+                             i = i + 1i64;
+@@ -906,14 +906,14 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+                             // If it's a leaf, just point grandparent to it
+                             int64:cas_res = 0i64;
+                             if (gparent == 0i64) {
+-                                bool:success = _?!npk_cas_i64(art_root_ptr, parent, other_child);
++                                bool:success = raw npk_cas_i64(art_root_ptr, parent, other_child);
+                                 if (success) { cas_res = 1i64; }
+                             } else {
+-                                cas_res = _?!art_cas_child(gparent, gparent_key_byte, parent, other_child);
++                                cas_res = raw art_cas_child(gparent, gparent_key_byte, parent, other_child);
+                             }
+                             if (cas_res == 1i64) {
+-                                _?!ebr_retire_or_flush(thread_id, parent);
+-                                _?!ebr_retire_or_flush(thread_id, node);
++                                raw ebr_retire_or_flush(thread_id, parent);
++                                raw ebr_retire_or_flush(thread_id, node);
+                                 drop(ebr_unpin(thread_id));
+                                 pass(0i64);
+                             } else {
+@@ -922,66 +922,66 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+                             }
+                         } else {
+                             // It's an internal node, we must merge prefix. Copy other_child.
+-                            int64:new_child = _?!art_copy_node(other_child);
++                            int64:new_child = raw art_copy_node(other_child);
+                             // new prefix length = parent.plen + 1 + other_child.plen
+-                            int64:p1 = _?!art_node_prefix_len(parent);
+-                            int64:p2 = _?!art_node_prefix_len(other_child);
++                            int64:p1 = raw art_node_prefix_len(parent);
++                            int64:p2 = raw art_node_prefix_len(other_child);
+                             int64:nplen = p1 + 1i64 + p2;
+                             if (nplen > 10i64) { nplen = 10i64; }
+                             
+-                            _?!art_node_set_prefix_len(new_child, p1 + 1i64 + p2);
++                            raw art_node_set_prefix_len(new_child, p1 + 1i64 + p2);
+                             int64:i2 = 0i64;
+                             while (i2 < p1) {
+-                                _?!art_node_set_prefix_byte(new_child, i2, _?!art_node_prefix_byte(parent, i2));
++                                raw art_node_set_prefix_byte(new_child, i2, raw _art_node_prefix_byte(parent, i2));
+                                 i2 = i2 + 1i64;
+                             }
+                             if (p1 < 10i64) {
+-                                _?!art_node_set_prefix_byte(new_child, p1, other_kb);
++                                raw art_node_set_prefix_byte(new_child, p1, other_kb);
+                             }
+                             int64:i3 = 0i64;
+                             while (i3 < p2) {
+                                 if ((p1 + 1i64 + i3) < 10i64) {
+-                                    _?!art_node_set_prefix_byte(new_child, p1 + 1i64 + i3, _?!art_node_prefix_byte(other_child, i3));
++                                    raw art_node_set_prefix_byte(new_child, p1 + 1i64 + i3, raw _art_node_prefix_byte(other_child, i3));
+                                 }
+                                 i3 = i3 + 1i64;
+                             }
+                             
+                             int64:cas_res = 0i64;
+                             if (gparent == 0i64) {
+-                                bool:success = _?!npk_cas_i64(art_root_ptr, parent, new_child);
++                                bool:success = raw npk_cas_i64(art_root_ptr, parent, new_child);
+                                 if (success) { cas_res = 1i64; }
+                             } else {
+-                                cas_res = _?!art_cas_child(gparent, gparent_key_byte, parent, new_child);
++                                cas_res = raw art_cas_child(gparent, gparent_key_byte, parent, new_child);
+                             }
+                             if (cas_res == 1i64) {
+-                                _?!ebr_retire_or_flush(thread_id, parent);
+-                                _?!ebr_retire_or_flush(thread_id, node);
+-                                _?!ebr_retire_or_flush(thread_id, other_child);
++                                raw ebr_retire_or_flush(thread_id, parent);
++                                raw ebr_retire_or_flush(thread_id, node);
++                                raw ebr_retire_or_flush(thread_id, other_child);
+                                 drop(ebr_unpin(thread_id));
+                                 pass(0i64);
+                             } else {
+-                                _?!art_free_node(new_child);
++                                raw art_free_node(new_child);
+                                 restart = 1i64;
+                                 break;
+                             }
+                         }
+                     } else {
+                         // Num > 2, just copy without child
+-                        int64:new_node = _?!art_remove_child_copy(parent, parent_key_byte);
++                        int64:new_node = raw art_remove_child_copy(parent, parent_key_byte);
+                         int64:cas_res = 0i64;
+                         if (gparent == 0i64) {
+-                            bool:success = _?!npk_cas_i64(art_root_ptr, parent, new_node);
++                            bool:success = raw npk_cas_i64(art_root_ptr, parent, new_node);
+                             if (success) { cas_res = 1i64; }
+                         } else {
+-                            cas_res = _?!art_cas_child(gparent, gparent_key_byte, parent, new_node);
++                            cas_res = raw art_cas_child(gparent, gparent_key_byte, parent, new_node);
+                         }
+                         if (cas_res == 1i64) {
+-                            _?!ebr_retire_or_flush(thread_id, parent);
+-                            _?!ebr_retire_or_flush(thread_id, node);
++                            raw ebr_retire_or_flush(thread_id, parent);
++                            raw ebr_retire_or_flush(thread_id, node);
+                             drop(ebr_unpin(thread_id));
+                             pass(0i64);
+                         } else {
+-                            _?!art_free_node(new_node);
++                            raw art_free_node(new_node);
+                             restart = 1i64;
+                             break;
+                         }
+@@ -989,8 +989,8 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+                 }
+             }
+ 
+-            int64:p2 = _?!art_check_prefix(node, key_ptr, key_len, depth);
+-            int64:plen = _?!art_node_prefix_len(node);
++            int64:p2 = raw art_check_prefix(node, key_ptr, key_len, depth);
++            int64:plen = raw art_node_prefix_len(node);
+             if (p2 != plen) { drop(ebr_unpin(thread_id)); pass(ERR_ART_KEY_NOT_FOUND); }
+ 
+             depth = depth + plen;
+@@ -999,7 +999,7 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+                 key_byte = npk_mem_read_byte(key_ptr, depth);
+             }
+             
+-            int64:next_child = _?!art_find_child(node, key_byte);
++            int64:next_child = raw art_find_child(node, key_byte);
+             if (next_child == 0i64) { drop(ebr_unpin(thread_id)); pass(ERR_ART_KEY_NOT_FOUND); }
+ 
+             gparent = parent;
+@@ -1018,7 +1018,7 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
+ pub func:art_delete = int64(int64:thread_id, int64:key_ptr, int64:key_len)
+ {
+     drop(art_lock());
+-    int64:res = _?!art_delete_internal(thread_id, key_ptr, key_len);
++    int64:res = raw art_delete_internal(thread_id, key_ptr, key_len);
+     drop(art_unlock());
+     pass(res);
+ };
+@@ -1026,51 +1026,52 @@ pub func:art_delete = int64(int64:thread_id, int64:key_ptr, int64:key_len)
+ func:art_destroy_node = NIL(int64:node) {
+     if (node == 0i64) { pass(NIL); }
+     if (raw art_is_leaf(node)) {
+-        _?!art_free_node(node);
++        raw art_free_node(node);
+         pass(NIL);
+     }
+     
+-    int64:ntype = _?!art_node_type(node);
++    int64:ntype = raw art_node_type(node);
+     if (ntype == ART_NODE4) {
+         int64:i = 0i64;
+         while (i < 4i64) {
+-            int64:child = _?!node4_get_child(node, i);
+-            if (child != 0i64) { _?!art_destroy_node(child); }
++            int64:child = raw node4_get_child(node, i);
++            if (child != 0i64) { raw art_destroy_node(child); }
+             i = i + 1i64;
+         }
+     }
+     if (ntype == ART_NODE16) {
+         int64:i = 0i64;
+         while (i < 16i64) {
+-            int64:child = _?!node16_get_child(node, i);
+-            if (child != 0i64) { _?!art_destroy_node(child); }
++            int64:child = raw node16_get_child(node, i);
++            if (child != 0i64) { raw art_destroy_node(child); }
+             i = i + 1i64;
+         }
+     }
+     if (ntype == ART_NODE48) {
+         int64:i = 1i64;
+         while (i <= 48i64) {
+-            int64:child = _?!node48_get_child(node, i);
+-            if (child != 0i64) { _?!art_destroy_node(child); }
++            int64:child = raw node48_get_child(node, i);
++            if (child != 0i64) { raw art_destroy_node(child); }
+             i = i + 1i64;
+         }
+     }
+     if (ntype == ART_NODE256) {
+         int64:i = 0i64;
+         while (i < 256i64) {
+-            int64:child = _?!node256_get_child(node, i);
+-            if (child != 0i64) { _?!art_destroy_node(child); }
++            int64:child = raw node256_get_child(node, i);
++            if (child != 0i64) { raw art_destroy_node(child); }
+             i = i + 1i64;
+         }
+     }
+-    _?!art_free_node(node);
++    raw art_free_node(node);
+     pass(NIL);
+ };
+ pub func:art_destroy = NIL() {
+     int64:root = npk_mem_read_int64(art_root_ptr, 0i64);
+     if (root != 0i64) {
+-        _?!art_destroy_node(root);
++        raw art_destroy_node(root);
+         drop(npk_mem_write_int64(art_root_ptr, 0i64, 0i64));
+     }
+     pass(NIL);
+ };
++
+diff --git a/src/index/art_alloc.npk b/src/index/art_alloc.npk
+index 275ddf2..247d90a 100644
+--- a/src/index/art_alloc.npk
++++ b/src/index/art_alloc.npk
+@@ -83,3 +83,4 @@ pub func:art_leaf_val_ptr = int64(int64:leaf) {
+     int64:klen = npk_mem_read_int64(leaf, LEAF_KEY_LEN_OFFSET);
+     pass(leaf + LEAF_DATA_OFFSET + klen);
+ };
++
+diff --git a/src/index/art_iter.npk b/src/index/art_iter.npk
+index 0267ec9..8ac302a 100644
+--- a/src/index/art_iter.npk
++++ b/src/index/art_iter.npk
+@@ -104,7 +104,7 @@ pub func:art_iter_create_range = int64(int64:start_ptr, int64:start_len, int64:e
+     drop(npk_mem_write_int64(iter, ITER_END_KEY_LEN,   end_len));
+     drop(npk_mem_write_int64(iter, ITER_DONE, 0i64));
+ 
+-    int64:root = _?!art_get_root();
++    int64:root = raw art_get_root();
+     if (root != 0i64) {
+         drop(iter_stack_push(iter, root, 0i64));
+     } else {
+@@ -128,10 +128,10 @@ pub func:art_iter_free = NIL(int64:iter) {
+ };
+ 
+ pub func:art_node_get_nth_child = int64(int64:node, int64:n) {
+-    int64:num = _?!art_node_num_children(node);
++    int64:num = raw art_node_num_children(node);
+     if (n >= num) { pass(0i64); }
+     
+-    int64:ntype = _?!art_node_type(node);
++    int64:ntype = raw art_node_type(node);
+     int64:result = npk_core_alloc(16i64);
+     
+     if (ntype == ART_NODE4) {
+@@ -140,8 +140,8 @@ pub func:art_node_get_nth_child = int64(int64:node, int64:n) {
+         
+         int64:i = 0i64;
+         while (i < num) {
+-            int64:kb = _?!node4_get_key(node, i);
+-            int64:child = _?!node4_get_child(node, i);
++            int64:kb = raw node4_get_key(node, i);
++            int64:child = raw node4_get_child(node, i);
+             if (kb < c0) { c3 = c2; v3 = v2; c2 = c1; v2 = v1; c1 = c0; v1 = v0; c0 = kb; v0 = child; }
+             else { if (kb < c1) { c3 = c2; v3 = v2; c2 = c1; v2 = v1; c1 = kb; v1 = child; }
+             else { if (kb < c2) { c3 = c2; v3 = v2; c2 = kb; v2 = child; }
+@@ -168,10 +168,10 @@ pub func:art_node_get_nth_child = int64(int64:node, int64:n) {
+         while (kb_iter < 256i64) {
+             int64:j = 0i64;
+             while (j < num) {
+-                int64:kb = _?!node16_get_key(node, j);
++                int64:kb = raw node16_get_key(node, j);
+                 if (kb == kb_iter) {
+                     if (count == n) {
+-                        int64:child = _?!node16_get_child(node, j);
++                        int64:child = raw node16_get_child(node, j);
+                         drop(npk_mem_write_int64(result, 0i64, child));
+                         drop(npk_mem_write_int64(result, 8i64, kb));
+                         pass(result);
+@@ -187,10 +187,10 @@ pub func:art_node_get_nth_child = int64(int64:node, int64:n) {
+         int64:count = 0i64;
+         int64:i = 0i64;
+         while (i < 256i64) {
+-            int64:slot = _?!node48_get_slot(node, i);
++            int64:slot = raw node48_get_slot(node, i);
+             if (slot != 0i64) {
+                 if (count == n) {
+-                    int64:child = _?!node48_get_child(node, slot);
++                    int64:child = raw node48_get_child(node, slot);
+                     drop(npk_mem_write_int64(result, 0i64, child));
+                     drop(npk_mem_write_int64(result, 8i64, i));
+                     pass(result);
+@@ -204,7 +204,7 @@ pub func:art_node_get_nth_child = int64(int64:node, int64:n) {
+         int64:count = 0i64;
+         int64:i = 0i64;
+         while (i < 256i64) {
+-            int64:child = _?!node256_get_child(node, i);
++            int64:child = raw node256_get_child(node, i);
+             if (child != 0i64) {
+                 if (count == n) {
+                     drop(npk_mem_write_int64(result, 0i64, child));
+@@ -246,7 +246,7 @@ pub func:art_iter_next = int64(int64:iter) {
+     int64:end_len = npk_mem_read_int64(iter, ITER_END_KEY_LEN);
+     
+     while (true) {
+-        int64:frame_ptr = _?!iter_stack_peek(iter);
++        int64:frame_ptr = raw iter_stack_peek(iter);
+         if (frame_ptr == 0i64) {
+             drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+             pass(0i64);
+@@ -256,10 +256,10 @@ pub func:art_iter_next = int64(int64:iter) {
+         int64:child_idx = npk_mem_read_int64(frame_ptr, FRAME_CHILD_IDX);
+         
+         if (raw art_is_leaf(node_ptr)) {
+-            _?!iter_stack_pop(iter);
++            raw iter_stack_pop(iter);
+             
+             int64:lkptr = node_ptr + LEAF_DATA_OFFSET;
+-            int64:lklen = _?!art_leaf_key_len(node_ptr);
++            int64:lklen = raw art_leaf_key_len(node_ptr);
+             
+             int64:valid = 1i64;
+             if (start_ptr != 0i64) {
+@@ -278,15 +278,15 @@ pub func:art_iter_next = int64(int64:iter) {
+             }
+             // If valid == 0, we skipped this leaf (it's before start_key), continue loop
+         } else {
+-            int64:child_res = _?!art_node_get_nth_child(node_ptr, child_idx);
++            int64:child_res = raw art_node_get_nth_child(node_ptr, child_idx);
+             if (child_res == 0i64) {
+-                _?!iter_stack_pop(iter);
++                raw iter_stack_pop(iter);
+             } else {
+                 int64:child = npk_mem_read_int64(child_res, 0i64);
+                 drop(npk_core_dalloc(child_res));
+                 
+                 drop(npk_mem_write_int64(frame_ptr, FRAME_CHILD_IDX, child_idx + 1i64));
+-                _?!iter_stack_push(iter, child, 0i64);
++                raw iter_stack_push(iter, child, 0i64);
+             }
+         }
+     }
+@@ -314,22 +314,22 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
+     drop(npk_mem_write_int64(iter, ITER_DONE, 0i64));
+ 
+     if (prefix_len == 0i64) {
+-        int64:root = _?!art_get_root();
++        int64:root = raw art_get_root();
+         if (root != 0i64) {
+-            _?!iter_stack_push(iter, root, 0i64);
++            raw iter_stack_push(iter, root, 0i64);
+         } else {
+             drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+         }
+         pass(iter);
+     }
+ 
+-    int64:node = _?!art_get_root();
++    int64:node = raw art_get_root();
+     int64:depth = 0i64;
+     
+     while (node != 0i64) {
+         if (raw art_is_leaf(node)) {
+             int64:lkptr = node + LEAF_DATA_OFFSET;
+-            int64:lklen = _?!art_leaf_key_len(node);
++            int64:lklen = raw art_leaf_key_len(node);
+             
+             int64:valid = 1i64;
+             if (lklen < prefix_len) {
+@@ -346,15 +346,15 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
+                 }
+             }
+             if (valid == 1i64) {
+-                _?!iter_stack_push(iter, node, 0i64);
++                raw iter_stack_push(iter, node, 0i64);
+             } else {
+                 drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+             }
+             pass(iter);
+         }
+         
+-        int64:p2 = _?!art_check_prefix(node, prefix_ptr, prefix_len, depth);
+-        int64:plen = _?!art_node_prefix_len(node);
++        int64:p2 = raw art_check_prefix(node, prefix_ptr, prefix_len, depth);
++        int64:plen = raw art_node_prefix_len(node);
+         
+         int64:cmp_len = plen;
+         if (prefix_len - depth < cmp_len) {
+@@ -367,7 +367,7 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
+         
+         depth = depth + plen;
+         if (depth >= prefix_len) {
+-            _?!iter_stack_push(iter, node, 0i64);
++            raw iter_stack_push(iter, node, 0i64);
+             pass(iter);
+         }
+         
+@@ -375,7 +375,7 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
+         int64:b = npk_mem_read_byte(prefix_ptr, depth);
+         key_byte = (b) => int64;
+         
+-        int64:next_child = _?!art_find_child(node, key_byte);
++        int64:next_child = raw art_find_child(node, key_byte);
+         if (next_child == 0i64) {
+             drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+             pass(iter);
+@@ -387,3 +387,4 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
+     drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
+     pass(iter);
+ };
++
+diff --git a/src/index/art_location.npk b/src/index/art_location.npk
+index 4683d5a..204db41 100644
+--- a/src/index/art_location.npk
++++ b/src/index/art_location.npk
+@@ -74,6 +74,7 @@ pub func:location_encode_in_memtable = int64() {
+ pub func:location_verify_parity = NIL(int64:loc_buf)
+     requires loc_buf != 0i64
+ {
+-    prove _?!location_is_tombstone(loc_buf) == 0i64 || _?!location_is_in_memtable(loc_buf) == 0i64;
++    prove raw location_is_tombstone(loc_buf)?! == 0i64 || location_is_in_memtable(loc_buf) == 0i64;
+     pass(NIL);
+ };
++
+diff --git a/src/index/art_node.npk b/src/index/art_node.npk
+index 9f34624..7426d55 100644
+--- a/src/index/art_node.npk
++++ b/src/index/art_node.npk
+@@ -92,7 +92,7 @@ pub func:art_node_lock = NIL(int64:node) {
+         int64:t = hdr & 255i64;
+         if ((t & 128i64) == 0i64) {
+             int64:new_hdr = hdr | 128i64;
+-            bool:res = _?!npk_cas_i64(node, hdr, new_hdr);
++            bool:res = raw npk_cas_i64(node, hdr, new_hdr);
+             if (res) { restart = 0i64; }
+         }
+     }
+@@ -104,7 +104,7 @@ pub func:art_node_unlock = NIL(int64:node) {
+     while (restart == 1i64) {
+         int64:hdr = npk_mem_read_int64(node, 0i64);
+         int64:new_hdr = hdr & (0xFFFFFFFFFFFFFF7Fi64); // clear bit 7
+-        bool:res = _?!npk_cas_i64(node, hdr, new_hdr);
++        bool:res = raw npk_cas_i64(node, hdr, new_hdr);
+         if (res) { restart = 0i64; }
+     }
+     pass(NIL);
+@@ -121,7 +121,7 @@ pub func:art_node_mark_obsolete = NIL(int64:node) {
+     while (restart == 1i64) {
+         int64:hdr = npk_mem_read_int64(node, 0i64);
+         int64:new_hdr = hdr | 64i64;
+-        bool:res = _?!npk_cas_i64(node, hdr, new_hdr);
++        bool:res = raw npk_cas_i64(node, hdr, new_hdr);
+         if (res) { restart = 0i64; }
+     }
+     pass(NIL);
+@@ -181,3 +181,4 @@ Rules<int64>:valid_node48_offset  = { $ >= 0i64, $ < 732i64 };
+ Rules<int64>:valid_node256_offset = { $ >= 0i64, $ < 2132i64 };
+ 
+ pub Rules<int64>:valid_node4_slot = { $ >= 0i64, $ < NODE4_MAX_KEYS };
++
+diff --git a/src/index/art_node16.npk b/src/index/art_node16.npk
+index caf8b52..63ccdf3 100644
+--- a/src/index/art_node16.npk
++++ b/src/index/art_node16.npk
+@@ -23,10 +23,10 @@ pub func:node16_set_child = NIL(int64:node, int64:i, int64:child) {
+ };
+ 
+ pub func:node16_find_child = int64(int64:node, int64:key_byte) {
+-    int64:count = _?!art_node_num_children(node);
++    int64:count = raw art_node_num_children(node);
+     int64:i = 0i64;
+     while (i < count) {
+-        int64:kb = _?!node16_get_key(node, i);
++        int64:kb = raw node16_get_key(node, i);
+         if (kb == key_byte) {
+             pass(raw node16_get_child(node, i));
+         }
+@@ -36,7 +36,7 @@ pub func:node16_find_child = int64(int64:node, int64:key_byte) {
+ };
+ 
+ pub func:node16_remove_child = int64(int64:node, int64:key_byte) {
+-    int64:count = _?!art_node_num_children(node);
++    int64:count = raw art_node_num_children(node);
+     int64:i = 0i64;
+     int64:found = -1i64;
+     while (i < count) {
+@@ -49,22 +49,23 @@ pub func:node16_remove_child = int64(int64:node, int64:key_byte) {
+     
+     if (found == -1i64) { pass(0i64); }
+     
+-    int64:child = _?!node16_get_child(node, found);
++    int64:child = raw node16_get_child(node, found);
+     
+     // Shift elements left
+     i = found;
+     while (i < (count - 1i64)) {
+-        _?!node16_set_key(node, i, _?!node16_get_key(node, i + 1i64));
+-        _?!node16_set_child(node, i, _?!node16_get_child(node, i + 1i64));
++        raw node16_set_key(node, i, raw _node16_get_key(node, i + 1i64));
++        raw node16_set_child(node, i, raw _node16_get_child(node, i + 1i64));
+         i = i + 1i64;
+     }
+     
+     // Zero the last slot
+-    _?!node16_set_key(node, count - 1i64, 0i64);
+-    _?!node16_set_child(node, count - 1i64, 0i64);
++    raw node16_set_key(node, count - 1i64, 0i64);
++    raw node16_set_child(node, count - 1i64, 0i64);
+     
+     // Decrement count
+-    _?!art_node_set_num_children(node, count - 1i64);
++    raw art_node_set_num_children(node, count - 1i64);
+     
+     pass(child);
+ };
++
+diff --git a/src/index/art_node256.npk b/src/index/art_node256.npk
+index 6902440..0b2c894 100644
+--- a/src/index/art_node256.npk
++++ b/src/index/art_node256.npk
+@@ -15,13 +15,14 @@ pub func:node256_set_child = NIL(int64:node, int64:byte_val, int64:child) {
+ };
+ 
+ pub func:node256_remove_child = int64(int64:node, int64:key_byte) {
+-    int64:child = _?!node256_get_child(node, key_byte);
++    int64:child = raw node256_get_child(node, key_byte);
+     if (child == 0i64) { pass(0i64); }
+     
+-    _?!node256_set_child(node, key_byte, 0i64);
++    raw node256_set_child(node, key_byte, 0i64);
+     
+-    int64:count = _?!art_node_num_children(node);
+-    _?!art_node_set_num_children(node, count - 1i64);
++    int64:count = raw art_node_num_children(node);
++    raw art_node_set_num_children(node, count - 1i64);
+     
+     pass(child);
+ };
++
+diff --git a/src/index/art_node4.npk b/src/index/art_node4.npk
+index 5d0c3ba..e67c9a3 100644
+--- a/src/index/art_node4.npk
++++ b/src/index/art_node4.npk
+@@ -23,10 +23,10 @@ pub func:node4_set_child = NIL(int64:node, limit<valid_node4_slot> int64:i, int6
+ };
+ 
+ pub func:node4_find_child = int64(int64:node, int64:key_byte) {
+-    int64:count = _?!art_node_num_children(node);
++    int64:count = raw art_node_num_children(node);
+     int64:i = 0i64;
+     while (i < count) {
+-        int64:kb = _?!node4_get_key(node, i);
++        int64:kb = raw node4_get_key(node, i);
+         if (kb == key_byte) {
+             pass(raw node4_get_child(node, i));
+         }
+@@ -36,7 +36,7 @@ pub func:node4_find_child = int64(int64:node, int64:key_byte) {
+ };
+ 
+ pub func:node4_remove_child = int64(int64:node, int64:key_byte) {
+-    int64:count = _?!art_node_num_children(node);
++    int64:count = raw art_node_num_children(node);
+     int64:i = 0i64;
+     int64:found = -1i64;
+     while (i < count) {
+@@ -49,22 +49,23 @@ pub func:node4_remove_child = int64(int64:node, int64:key_byte) {
+     
+     if (found == -1i64) { pass(0i64); }
+     
+-    int64:child = _?!node4_get_child(node, found);
++    int64:child = raw node4_get_child(node, found);
+     
+     // Shift elements left
+     i = found;
+     while (i < (count - 1i64)) {
+-        _?!node4_set_key(node, i, _?!node4_get_key(node, i + 1i64));
+-        _?!node4_set_child(node, i, _?!node4_get_child(node, i + 1i64));
++        raw node4_set_key(node, i, raw _node4_get_key(node, i + 1i64));
++        raw node4_set_child(node, i, raw _node4_get_child(node, i + 1i64));
+         i = i + 1i64;
+     }
+     
+     // Zero the last slot
+-    _?!node4_set_key(node, count - 1i64, 0i64);
+-    _?!node4_set_child(node, count - 1i64, 0i64);
++    raw node4_set_key(node, count - 1i64, 0i64);
++    raw node4_set_child(node, count - 1i64, 0i64);
+     
+     // Decrement count
+-    _?!art_node_set_num_children(node, count - 1i64);
++    raw art_node_set_num_children(node, count - 1i64);
+     
+     pass(child);
+ };
++
+diff --git a/src/index/art_node48.npk b/src/index/art_node48.npk
+index 9cb9753..e701b78 100644
+--- a/src/index/art_node48.npk
++++ b/src/index/art_node48.npk
+@@ -28,7 +28,7 @@ pub func:node48_add_child = NIL(int64:node, int64:key_byte, int64:child) {
+     int64:i = 0i64;
+     int64:empty_slot = 0i64;
+     while (i < 48i64) {
+-        int64:c = _?!node48_get_child(node, (i + 1i64));
++        int64:c = raw node48_get_child(node, (i + 1i64));
+         if (c == 0i64) {
+             empty_slot = i + 1i64;
+             break;
+@@ -37,16 +37,16 @@ pub func:node48_add_child = NIL(int64:node, int64:key_byte, int64:child) {
+     }
+     
+     if (empty_slot != 0i64) {
+-        _?!node48_set_slot(node, key_byte, empty_slot);
+-        _?!node48_set_child(node, empty_slot, child);
+-        int64:count = _?!art_node_num_children(node);
+-        _?!art_node_set_num_children(node, count + 1i64);
++        raw node48_set_slot(node, key_byte, empty_slot);
++        raw node48_set_child(node, empty_slot, child);
++        int64:count = raw art_node_num_children(node);
++        raw art_node_set_num_children(node, count + 1i64);
+     }
+     pass(NIL);
+ };
+ 
+ pub func:node48_find_child = int64(int64:node, int64:key_byte) {
+-    int64:slot = _?!node48_get_slot(node, key_byte);
++    int64:slot = raw node48_get_slot(node, key_byte);
+     if (slot != 0i64) {
+         pass(raw node48_get_child(node, slot));
+     }
+@@ -56,13 +56,14 @@ pub func:node48_find_child = int64(int64:node, int64:key_byte) {
+ pub func:node48_remove_child = int64(int64:node, int64:key_byte)
+     requires node != 0i64
+ {
+-    int64:slot = _?!node48_get_slot(node, key_byte);
++    int64:slot = raw node48_get_slot(node, key_byte);
+     if (slot == 0i64) { pass(0i64); }
+     
+-    _?!node48_set_child(node, slot, 0i64);
+-    _?!node48_set_slot(node, key_byte, 0i64);
++    raw node48_set_child(node, slot, 0i64);
++    raw node48_set_slot(node, key_byte, 0i64);
+     
+-    int64:num = _?!art_node_num_children(node);
+-    _?!art_node_set_num_children(node, num - 1i64);
++    int64:num = raw art_node_num_children(node);
++    raw art_node_set_num_children(node, num - 1i64);
+     pass(0i64);
+ };
++
+diff --git a/src/index/art_node_header.npk b/src/index/art_node_header.npk
+index 0f087d6..5aa5f65 100644
+--- a/src/index/art_node_header.npk
++++ b/src/index/art_node_header.npk
+@@ -48,3 +48,4 @@ pub func:art_is_leaf = bool(int64:node) {
+     }
+     pass((npk_mem_read_byte(node, ART_HDR_TYPE) => int8) == ART_LEAF);
+ };
++
+diff --git a/src/main.npk b/src/main.npk
+index 8ec9b4e..ae9a8bc 100644
+--- a/src/main.npk
++++ b/src/main.npk
+@@ -20,7 +20,7 @@ func:main = int32(int32:argc, wild any->:argv) {
+     println("NPKDB v0.3.11 starting...");
+     
+     string:cfg_path = "npkdb.toml";
+-    int32:res = _?!config_init(cfg_path);
++    int32:res = raw config_init(cfg_path);
+     if (res != 0i32) {
+         println("Failed to load config from " + cfg_path);
+         exit(1i32);
+@@ -31,19 +31,19 @@ func:main = int32(int32:argc, wild any->:argv) {
+     global_insert_counter = npk_shim_atomic_int64_create(0i64);
+     
+     // Initialize storage engine
+-    global_wp = _?!wp_init("data/", "wal.log", @compaction_worker_shim, "group_commit");
++    global_wp = raw wp_init("data/", "wal.log", @compaction_worker_shim, "group_commit");
+     if (global_wp == 0i64) {
+         println("Failed to initialize storage engine!");
+         exit(1i32);
+     }
+     
+-    global_arena = _?!hnsw_arena_create(10000i64, 1i16);
++    global_arena = raw hnsw_arena_create(10000i64, 1i16);
+     global_vec_buf = npk_core_alloc(10000i64 * 128i64 * 8i64);
+-    global_graph = _?!hnsw_graph_create(global_arena, global_vec_buf, 128i64, 16i32, 32i32, 100i32, 0.5f64);
++    global_graph = raw hnsw_graph_create(global_arena, global_vec_buf, 128i64, 16i32, 32i32, 100i32, 0.5f64);
+     global_doc_store = npk_core_alloc(10000i64 * 8i64);
+ 
+     
+-    int32:server_res = _?!server_start();
++    int32:server_res = raw server_start();
+     if (server_res != 0i32) {
+         println("Server exited with error.");
+         exit(1i32);
+@@ -51,3 +51,4 @@ func:main = int32(int32:argc, wild any->:argv) {
+     
+     exit(0);
+ };
++
+diff --git a/src/network/controllers.npk b/src/network/controllers.npk
+index ce0fdae..1fc4552 100644
+--- a/src/network/controllers.npk
++++ b/src/network/controllers.npk
+@@ -25,7 +25,7 @@ use "atomic.npk".*;
+ pub func:controller_create_collection = int32(int64:client_fd, Request:req) {
+     // Dummy implementation for 0.3.9
+     string:res = "{\"status\": \"ok\", \"message\": \"collection created\"}";
+-    _?!Server.send_typed(client_fd, 200i64, "application/json", res);
++    raw Server.send_typed(client_fd, 200i64, "application/json", res);
+     pass(0i32);
+ };
+ 
+@@ -54,15 +54,15 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
+     // Parse json payload
+     Result<NpkJsonVal>:v_res = parse_json_raw(arena, req.body_ptr, req.body_len);
+     if (v_res.is_error) {
+-        int64:status = _?!format_error_status(ERR_JSON_PARSE_FAIL);
+-        string:err_json = _?!format_error_json(ERR_JSON_PARSE_FAIL);
+-        _?!Server.send_typed(client_fd, status, "application/json", err_json);
++        int64:status = raw format_error_status(ERR_JSON_PARSE_FAIL);
++        string:err_json = raw format_error_json(ERR_JSON_PARSE_FAIL);
++        raw Server.send_typed(client_fd, status, "application/json", err_json);
+         pass(ERR_JSON_PARSE_FAIL);
+     }
+ 
+     NpkJsonVal:v = v_res.value;
+     if (v.type != JSON_OBJ) {
+-        _?!Server.send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Expected object\"}");
++        raw Server.send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Expected object\"}");
+         pass(400i32);
+     }
+ 
+@@ -86,7 +86,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
+                 if (len > 0i64 && len < 1000i64) {
+                     int64:data_ptr = npk_mem_read_int64(str_ptr, 8i64);
+                     if (data_ptr != 0i64) {
+-                        string:k_str = _?!npk_mem_read_string(data_ptr, len);
++                        string:k_str = raw npk_mem_read_string(data_ptr, len);
+                         if (k_str == "docs") {
+                             int64:val_ptr = npk_mem_read_int64(vals_ptr, i * 8i64);
+                             int64:v_type = npk_mem_read_byte(val_ptr, 0i64) => int64;
+@@ -107,7 +107,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
+                                     int64:ctr = npk_shim_atomic_int64_fetch_add(global_insert_counter, 1i64, 5i32);
+                                     if (ctr >= 10000i64) {
+                                         drop(npk_shim_atomic_int64_fetch_add(global_insert_counter, -1i64, 5i32));
+-                                        _?!Server.send_typed(client_fd, 507i64, "application/json", "{\"error\":\"Database capacity reached\"}");
++                                        raw Server.send_typed(client_fd, 507i64, "application/json", "{\"error\":\"Database capacity reached\"}");
+                                         pass(0i32);
+                                     }
+                                     string:tmp1 = string_concat(collection_name, "_");
+@@ -123,7 +123,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
+                                         // removed defer doc_buf
+                                         int64:doc_len = npk_mem_read_int64(len_out, 0i64);
+                                         
+-                                                                                _?!wp_put(global_wp, key, doc_buf, doc_len);
++                                                                                raw wp_put(global_wp, key, doc_buf, doc_len);
+                                         
+                                         // 3b. Extract vector and insert into graph
+                                         int64:vec_offset = ctr * 128i64 * 8i64;
+@@ -180,11 +180,11 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
+                                             drop(npk_mem_write_int64(global_doc_store, ctr * 8i64, persistent_doc));
+                                             
+                                             drop(nitpick_libc_rwlock_wrlock(global_catalog_lock));
+-                                            int64:local_visited = _?!hnsw_visited_create(10000i64);
++                                            int64:local_visited = raw hnsw_visited_create(10000i64);
+                                             int64:local_rand = npk_core_alloc(8i64);
+                                             defer { _?npk_core_dalloc(local_rand); }
+                                             drop(npk_mem_write_int64(local_rand, 0i64, ctr)); // Seed with counter
+-                                            _?!hnsw_insert(global_graph, vec_offset, local_rand, local_visited);
++                                            raw hnsw_insert(global_graph, vec_offset, local_rand, local_visited);
+                                             drop(hnsw_visited_destroy(local_visited));
+                                             drop(nitpick_libc_rwlock_unlock(global_catalog_lock));
+                                         }
+@@ -208,7 +208,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
+     }
+     
+     // Success
+-    _?!Server.send_typed(client_fd, 200i64, "application/json", "{\"status\":\"ok\"}");
++    raw Server.send_typed(client_fd, 200i64, "application/json", "{\"status\":\"ok\"}");
+     pass(0i32);
+ };
+ 
+@@ -220,17 +220,17 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
+     // Parse json payload
+     Result<NpkJsonVal>:v_res = parse_json_raw(arena, req.body_ptr, req.body_len);
+     if (v_res.is_error) {
+-        int64:status = _?!format_error_status(ERR_JSON_PARSE_FAIL);
+-        string:err_json = _?!format_error_json(ERR_JSON_PARSE_FAIL);
+-        _?!Server.send_typed(client_fd, status, "application/json", err_json);
++        int64:status = raw format_error_status(ERR_JSON_PARSE_FAIL);
++        string:err_json = raw format_error_json(ERR_JSON_PARSE_FAIL);
++        raw Server.send_typed(client_fd, status, "application/json", err_json);
+         pass(ERR_JSON_PARSE_FAIL);
+     }
+     
+     NpkJsonVal:v = v_res.value;
+     if (v.type != JSON_OBJ) {
+-        int64:status = _?!format_error_status(ERR_QUERY_PARSE_FAILED);
+-        string:err_json = _?!format_error_json(ERR_QUERY_PARSE_FAILED);
+-        _?!Server.send_typed(client_fd, status, "application/json", err_json);
++        int64:status = raw format_error_status(ERR_QUERY_PARSE_FAILED);
++        string:err_json = raw format_error_json(ERR_QUERY_PARSE_FAILED);
++        raw Server.send_typed(client_fd, status, "application/json", err_json);
+         pass(ERR_QUERY_PARSE_FAILED);
+     }
+     
+@@ -299,7 +299,7 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
+     }
+     
+     if (has_query_vector == false) {
+-        _?!Server.send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Missing query_vector\"}");
++        raw Server.send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Missing query_vector\"}");
+         pass(ERR_QUERY_PARSE_FAILED);
+     }
+     
+@@ -315,7 +315,7 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
+         ep_gen = hnsw_node_get_generation(ep_node_ptr) ? 0i32;
+     }
+     
+-    int64:visited_set = _?!hnsw_visited_create(10000i64);
++    int64:visited_set = raw hnsw_visited_create(10000i64);
+     defer { _?hnsw_visited_destroy(visited_set); }
+     
+     int64:res_pq = hnsw_search_layer(
+@@ -333,7 +333,7 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
+     
+     
+     if (res_pq == 0i64) {
+-        _?!Server.send_typed(client_fd, 200i64, "application/json", "{\"status\": \"ok\", \"results\": []}");
++        raw Server.send_typed(client_fd, 200i64, "application/json", "{\"status\": \"ok\", \"results\": []}");
+         pass(0i32);
+     }
+     
+@@ -368,6 +368,7 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
+     final_json = string_concat(final_json, json);
+     final_json = string_concat(final_json, "]}");
+     
+-    _?!Server.send_typed(client_fd, 200i64, "application/json", final_json);
++    raw Server.send_typed(client_fd, 200i64, "application/json", final_json);
+     pass(0i32);
+ };
++
+diff --git a/src/network/errors.npk b/src/network/errors.npk
+index ce8c457..ffcf5f3 100644
+--- a/src/network/errors.npk
++++ b/src/network/errors.npk
+@@ -46,3 +46,4 @@ pub func:format_error_status = int64(int32:err_code) {
+     // Default 500 Internal Server Error
+     pass(500i64);
+ };
++
+diff --git a/src/network/http_worker.npk b/src/network/http_worker.npk
+index 371a352..c260bdb 100644
+--- a/src/network/http_worker.npk
++++ b/src/network/http_worker.npk
+@@ -16,13 +16,13 @@ extern func:nitpick_libc_thread_spawn = int64(wild ?*:func, int64:arg);
+ 
+ 
+ pub func:http_worker_loop = int64(int64:arg_handle) {
+-    int64:thread_id = _?!Thread.current_id();
++    int64:thread_id = raw Thread.current_id();
+     println(string_concat(string_concat("HTTP Worker started (ID: ", string_from_int(thread_id)), ")"));
+     
+     int64:ch = arg_handle;
+     
+     till(1000000000, 1) { // practically infinite
+-        int64:client_fd = _?!Channel.recv(ch);
++        int64:client_fd = raw Channel.recv(ch);
+         if (client_fd < 0i64) {
+             break;
+         }
+@@ -36,12 +36,12 @@ pub func:http_worker_loop = int64(int64:arg_handle) {
+         drop(sys(SETSOCKOPT, client_fd, 1i64, 20i64, tv_ptr, 16i64));
+         drop(npk_core_dalloc(((tv) => int64)));
+         
+-        Request:req = _?!Server.read_req(client_fd);
++        Request:req = raw Server.read_req(client_fd);
+         drop(route_request(client_fd, req));
+         if (req.buf_addr != 0i64) {
+             drop(npk_core_dalloc(req.buf_addr));
+         }
+-        _?!Server.close_cli(client_fd);
++        raw Server.close_cli(client_fd);
+     }
+     
+     pass 0i64;
+@@ -50,3 +50,4 @@ pub func:http_worker_loop = int64(int64:arg_handle) {
+ pub func:http_worker_start = int64(int64:ch, ?->:worker_fn) {
+     pass nitpick_libc_thread_spawn(worker_fn, ch);
+ };
++
+diff --git a/src/network/router.npk b/src/network/router.npk
+index dbe260c..bd86667 100644
+--- a/src/network/router.npk
++++ b/src/network/router.npk
+@@ -21,7 +21,7 @@ pub func:route_request = int32(int64:client_fd, Request:req) {
+             int64:d_idx = string_index_of(suffix, "/docs");
+             if (d_idx > 0i64) {
+                 string:col_name = string_substring(suffix, 0i64, d_idx);
+-                int32:res = _?!controller_insert(client_fd, req, col_name);
++                int32:res = raw controller_insert(client_fd, req, col_name);
+                 pass(res);
+             }
+         }
+@@ -29,6 +29,7 @@ pub func:route_request = int32(int64:client_fd, Request:req) {
+     
+     // Not found
+     string:err_json = "{\"error\": \"not found: method=" + method + " path=" + path + "\"}";
+-    _?!Server.send_typed(client_fd, 404i64, "application/json", err_json);
++    raw Server.send_typed(client_fd, 404i64, "application/json", err_json);
+     pass(0i32);
+ };
++
+diff --git a/src/network/server.npk b/src/network/server.npk
+index 1e41570..611b94a 100644
+--- a/src/network/server.npk
++++ b/src/network/server.npk
+@@ -11,10 +11,11 @@ use "router.npk".*;
+ use "../../libn/src/syscall/syscall_numbers.npk".*;
+ 
+ use "http_worker.npk".*;
++extern func:http_worker_loop = int64(int64:arg_handle);
+ pub int64:global_http_channel = 0i64; // Handle to the buffered channel for sockets
+ 
+ pub func:server_start = int32() {
+-    int64:cfg_ptr = _?!config_get();
++    int64:cfg_ptr = raw config_get();
+     if (cfg_ptr == 0i64) {
+         println("server_start: global config is null!");
+         pass(ERR_CONFIG_LOAD_FAILED);
+@@ -29,8 +30,8 @@ pub func:server_start = int32() {
+     println(string_concat(string_concat("Initializing HTTP server with ", string_from_int(workers)), " workers..."));
+     
+     // Create a buffered channel for incoming client sockets
+-    // Capacity 4096 (can buffer 4096 simultaneous connections waiting to be serviced)
+-    int64:ch = _?!Channel.create(4096i32);
++    // Capacity raw 4096 (can buffer 4096 simultaneous connections waiting to be serviced)
++    int64:ch = Channel.create(4096i32);
+     global_http_channel = ch;
+     
+ 
+@@ -43,7 +44,7 @@ pub func:server_start = int32() {
+     
+     // Start TCP Listener
+     int32:port = npk_mem_read_int32(cfg_ptr, CFG_HTTP_PORT);
+-    int64:server_fd = _?!Server.bind_and_listen("0.0.0.0", ((port) => int64), 1024i64);
++    int64:server_fd = raw Server.bind_and_listen("0.0.0.0", ((port) => int64), 1024i64);
+     if (server_fd < 0i64) {
+         println(string_concat("Failed to bind and listen on port ", string_from_int(((port) => int64))));
+         pass(ERR_SERVER_BIND_FAILED);
+@@ -53,10 +54,10 @@ pub func:server_start = int32() {
+     
+     // Accept loop (runs on main thread)
+     till(1000000000, 1) {
+-        int64:client_fd = _?!Server.accept_client(server_fd);
++        int64:client_fd = raw Server.accept_client(server_fd);
+         if (client_fd >= 0i64) {
+             // Push to channel
+-            _?!Channel.send(ch, client_fd);
++            raw Channel.send(ch, client_fd);
+         } else {
+             // Accept failed or server closed
+             break;
+@@ -65,3 +66,4 @@ pub func:server_start = int32() {
+     
+     pass(0i32);
+ };
++
+diff --git a/src/page/page.npk b/src/page/page.npk
+index c2af01d..5e6063e 100644
+--- a/src/page/page.npk
++++ b/src/page/page.npk
+@@ -102,7 +102,7 @@ pub func:slot_write = NIL(int64:buf, int64:slot_index, int64:tuple_offset, int64
+     pass(NIL);
+ };
+ 
+-// Read _?!tuple bytes from the page into a new buffer
++// Read raw tuple bytes from the page into a new buffer
+ pub func:page_read_tuple = int64(int64:buf, int64:slot_index) {
+     int64:count = (page_get_slot_count(buf) ? 0i32) => int64;
+     if (slot_index < 0i64 || slot_index >= count) {
+@@ -278,3 +278,4 @@ pub func:page_defragment = int64(int64:buf) {
+     int64:free_after = page_free_space(buf) ? 0i64;
+     pass(free_after - free_before);
+ };
++
+diff --git a/src/page/page_header.npk b/src/page/page_header.npk
+index 9997549..0102413 100644
+--- a/src/page/page_header.npk
++++ b/src/page/page_header.npk
+@@ -24,3 +24,4 @@ pub fixed int64:HDR_OFF_TUPLE_END   = 16i64;
+ pub fixed int64:HDR_OFF_SLOT_COUNT  = 20i64;
+ pub fixed int64:HDR_OFF_FLAGS       = 24i64;
+ pub fixed int64:HDR_OFF_RESERVED    = 28i64;
++
+diff --git a/src/query/ast_types.npk b/src/query/ast_types.npk
+index 9f0925b..c17865d 100644
+--- a/src/query/ast_types.npk
++++ b/src/query/ast_types.npk
+@@ -17,7 +17,7 @@ pub struct:npk_ast_node = {
+     int64:path;             // offset 8, int8->:path
+     NpkJsonVal:target;      // offset 16 (16 bytes)
+     uint32:child_count;     // offset 32
+-    int64:children;         // offset 36/40? Nitpick aligns fields. Target is at 16, child_count at 32, children at 40 if size is 48, or children at 36 if packed. Wait, let's use getters/setters instead of _?!struct if we use Bump Allocator. Let's just use the struct definition and `@cast_unchecked`!
++    int64:children;         // offset 36/40? Nitpick aligns fields. Target is at 16, child_count at 32, children at 40 if size is 48, or children at 36 if packed. Wait, let's use getters/setters instead of raw struct if we use Bump Allocator. Let's just use the struct definition and `@cast_unchecked`!
+ };
+ 
+ pub func:ast_node_make = int64(int64:arena_ptr) {
+@@ -25,3 +25,4 @@ pub func:ast_node_make = int64(int64:arena_ptr) {
+     // This is just a placeholder type. 
+     pass(0i64);
+ };
++
+diff --git a/src/query/evaluator.npk b/src/query/evaluator.npk
+index bf83500..0221fe7 100644
+--- a/src/query/evaluator.npk
++++ b/src/query/evaluator.npk
+@@ -119,7 +119,7 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
+         
+         // Leaf Nodes
+         int64:path = npk_mem_read_int64(node, 8i64);
+-        NpkJsonVal:actual = _?!eval_path(path, doc_ptr);
++        NpkJsonVal:actual = raw eval_path(path, doc_ptr);
+         
+         NpkJsonVal:target = NpkJsonVal {
+             type: npk_mem_read_byte(node, 16i64) => int8,
+@@ -188,3 +188,4 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
+     
+     pass(last_result == 1i64);
+ };
++
+diff --git a/src/query/filter_parser.npk b/src/query/filter_parser.npk
+index 0caea05..4d7dee8 100644
+--- a/src/query/filter_parser.npk
++++ b/src/query/filter_parser.npk
+@@ -65,7 +65,7 @@ pub func:ast_arena_destroy = NIL(int64:arena_ptr) {
+ };
+ 
+ func:streq = bool(int64:a_ptr, string:b) {
+-    string:a_str = npk_mem_read_string(a_ptr, 1024i64);
++    string:a_str = raw npk_mem_read_string(a_ptr, 1024i64);
+     pass(a_str == b);
+ };
+ 
+@@ -74,7 +74,7 @@ pub Rules<int32>:ValidAstackDepth = { $ >= 1, $ <= 128 };
+ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidAstackDepth> int32:depth) {
+     if (depth >= 128i32) { pass(0i64); } // Guard to guarantee depth + 1i32 <= 128 for recursive call
+ 
+-    NpkJsonVal->:query = (query_raw_ptr) => NpkJsonVal-;
++    NpkJsonVal->:query = @cast_unchecked<NpkJsonVal->>(query_raw_ptr);
+     if (query->type != JSON_OBJ) {
+         pass(0i64); // Invalid filter root
+     }
+@@ -83,8 +83,8 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
+     int64:count = npk_mem_read_int32(obj_ptr, 0i64) => int64;
+     if (count == 0i64) { pass(0i64); }
+     
+-    int64:keys_ptr = npk_mem_read_int64(obj_ptr, 8i64);
+-    int64:vals_ptr = npk_mem_read_int64(obj_ptr, 16i64);
++    int64:keys_ptr = raw npk_mem_read_int64(obj_ptr, 8i64);
++    int64:vals_ptr = raw npk_mem_read_int64(obj_ptr, 16i64);
+     
+     // For simplicity, handle 1 key at the top level
+     int64:key0_ptr = npk_mem_read_int64(keys_ptr, 0i64);
+@@ -104,11 +104,11 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
+     
+     int64:k0_str_ptr = npk_mem_read_int64(k0_elem.payload, 8i64);
+     
+-    int64:node_ptr = _?!ast_arena_alloc(arena_ptr, AST_NODE_SIZE);
++    int64:node_ptr = raw ast_arena_alloc(arena_ptr, AST_NODE_SIZE);
+     if (node_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
+     
+     // Check if it's an operator
+-    if (raw streq(k0_str_ptr, "$and") || _?!streq(k0_str_ptr, "$or")) {
++    if (raw streq(k0_str_ptr, "$and") || raw streq(k0_str_ptr, "$or")) {
+         if (raw streq(k0_str_ptr, "$and")) {
+             drop(npk_mem_write_byte(node_ptr, 0i64, AST_OP_AND => int64));
+         } else {
+@@ -123,7 +123,7 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
+         
+         drop(npk_mem_write_int32(node_ptr, 32i64, (arr_count) => int32));
+         
+-        int64:children_ptr = _?!ast_arena_alloc(arena_ptr, arr_count * 8i64);
++        int64:children_ptr = raw ast_arena_alloc(arena_ptr, arr_count * 8i64);
+         if (children_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
+         if (children_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
+         drop(npk_mem_write_int64(node_ptr, 36i64, children_ptr)); // aligned at 36 vs 40? Let's use 40! Wait, struct alignment. I'll use 40 for children just to be safe with 8-byte alignment
+@@ -137,7 +137,7 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
+                 payload: npk_mem_read_int64(child_val_ptr, 8i64)
+             };
+             
+-            int64:child_node = _?!parse_filter(arena_ptr, (@child_elem) => int64, depth + 1i32);
++            int64:child_node = raw parse_filter(arena_ptr, @cast_unchecked<int64>(@child_elem), depth + 1i32);
+             drop(npk_mem_write_int64(children_ptr, i * 8i64, child_node));
+             i = i + 1i64;
+         }
+@@ -211,3 +211,4 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
+     
+     pass(node_ptr);
+ };
++
+diff --git a/src/query/path_eval.npk b/src/query/path_eval.npk
+index 8f7894a..7e84577 100644
+--- a/src/query/path_eval.npk
++++ b/src/query/path_eval.npk
+@@ -35,7 +35,7 @@ pub func:eval_path = NpkJsonVal(int64:path_ptr, int64:doc_raw_ptr) {
+         pass(raw json_make_null());
+     }
+     
+-    int64:seg_len = _?!path_segment_len(path_ptr);
++    int64:seg_len = raw path_segment_len(path_ptr);
+     if (seg_len == 0i64) {
+         pass(raw json_make_null());
+     }
+@@ -97,3 +97,4 @@ pub func:eval_path = NpkJsonVal(int64:path_ptr, int64:doc_raw_ptr) {
+     
+     pass(raw json_make_null());
+ };
++
+diff --git a/src/storage/compaction.npk b/src/storage/compaction.npk
+index ed67d39..8743490 100644
+--- a/src/storage/compaction.npk
++++ b/src/storage/compaction.npk
+@@ -230,7 +230,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
+         // Actually, we can just manually build it.
+         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
+         int64:d_len = npk_mem_read_int64(lm, 8i64);
+-        string:dir = _?!npk_mem_read_string(d_ptr, d_len);
++        string:dir = raw npk_mem_read_string(d_ptr, d_len);
+         
+         string:fid_str = string_from_int(fid);
+         while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
+@@ -364,7 +364,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
+         
+         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
+         int64:d_len = npk_mem_read_int64(lm, 8i64);
+-        string:dir = _?!npk_mem_read_string(d_ptr, d_len);
++        string:dir = raw npk_mem_read_string(d_ptr, d_len);
+         string:fid_str = string_from_int(fid);
+         while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
+         string:p1 = dir + "/L";
+@@ -384,7 +384,7 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
+         
+         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
+         int64:d_len = npk_mem_read_int64(lm, 8i64);
+-        string:dir = _?!npk_mem_read_string(d_ptr, d_len);
++        string:dir = raw npk_mem_read_string(d_ptr, d_len);
+         string:fid_str = string_from_int(fid);
+         while (string_length(fid_str) < 6i64) { fid_str = "0" + fid_str; }
+         string:p1 = dir + "/L";
+@@ -433,3 +433,4 @@ pub func:maybe_compact = int64(int64:lm) {
+     }
+     pass(0i64);
+ };
++
+diff --git a/src/storage/compaction_worker.npk b/src/storage/compaction_worker.npk
+index 30a0f12..3f11719 100644
+--- a/src/storage/compaction_worker.npk
++++ b/src/storage/compaction_worker.npk
+@@ -106,3 +106,4 @@ pub func:compaction_signal_shutdown = int64(int64:channel) {
+     }
+     pass(1i64);
+ };
++
+diff --git a/src/storage/flush.npk b/src/storage/flush.npk
+index 222cd19..7d24ca5 100644
+--- a/src/storage/flush.npk
++++ b/src/storage/flush.npk
+@@ -59,3 +59,4 @@ pub func:flush_memtable = int64(int64:mt, int64:lm) {
+     
+     pass(0i64);
+ };
++
+diff --git a/src/storage/level_manager.npk b/src/storage/level_manager.npk
+index dd8a066..29666c0 100644
+--- a/src/storage/level_manager.npk
++++ b/src/storage/level_manager.npk
+@@ -106,10 +106,10 @@ pub func:lm_add_sstable = NIL(int64:lm, int64:level, int64:file_id, string:min_k
+         int64:max_ptr = npk_core_alloc(8i64 + max_len);
+         
+         drop(npk_mem_write_int64(min_ptr, 0i64, min_len));
+-        _?!npk_mem_write_string(min_ptr + 8i64, min_key);
++        raw npk_mem_write_string(min_ptr + 8i64, min_key);
+         
+         drop(npk_mem_write_int64(max_ptr, 0i64, max_len));
+-        _?!npk_mem_write_string(max_ptr + 8i64, max_key);
++        raw npk_mem_write_string(max_ptr + 8i64, max_key);
+         
+         drop(npk_mem_write_int64(ent_ptr, 0i64, file_id));
+         drop(npk_mem_write_int64(ent_ptr, 8i64, min_ptr));
+@@ -180,7 +180,7 @@ pub func:lm_next_sstable_path = string(int64:lm, int64:level) {
+     
+     int64:d_ptr = npk_mem_read_int64(lm, 0i64);
+     int64:d_len = npk_mem_read_int64(lm, 8i64);
+-    string:dir = _?!npk_mem_read_string(d_ptr, d_len);
++    string:dir = raw npk_mem_read_string(d_ptr, d_len);
+     
+     string:fid_str = string_from_int(fid);
+     while (string_length(fid_str) < 6i64) {
+@@ -259,3 +259,4 @@ pub func:lm_get_sstable_max_key = string(int64:lm, int64:level, int64:file_id) {
+     }
+     pass("");
+ };
++
+diff --git a/src/storage/lsm_tree.npk b/src/storage/lsm_tree.npk
+index 1cc2c2f..612f360 100644
+--- a/src/storage/lsm_tree.npk
++++ b/src/storage/lsm_tree.npk
+@@ -3,3 +3,4 @@
+ extern "C" {
+     opaque struct:LsmTree;
+ }
++
+diff --git a/src/storage/memtable.npk b/src/storage/memtable.npk
+index 64bf4e3..973aeaa 100644
+--- a/src/storage/memtable.npk
++++ b/src/storage/memtable.npk
+@@ -101,3 +101,4 @@ pub func:mt_first = int64(int64:mt) {
+     int64:sl_head = npk_mem_read_int64(mt, MT_OFF_HEAD);
+     pass(sl_first(sl_head) ? 0i64);
+ };
++
+diff --git a/src/storage/record_types.npk b/src/storage/record_types.npk
+index 0da4a9f..7a88f1a 100644
+--- a/src/storage/record_types.npk
++++ b/src/storage/record_types.npk
+@@ -13,3 +13,4 @@ pub struct:npk_record = {
+     limit<valid_json_len> uint32:json_len;
+     wild int8->:json_data;
+ };
++
+diff --git a/src/storage/skiplist.npk b/src/storage/skiplist.npk
+index f632f45..dc37652 100644
+--- a/src/storage/skiplist.npk
++++ b/src/storage/skiplist.npk
+@@ -54,7 +54,7 @@ pub func:sl_node_alloc = int64(string:key, int64:val_ptr, int64:val_len, int64:l
+     int64:key_data_ptr = 0i64;
+     if (key_len > 0i64) {
+         key_data_ptr = node + size;
+-        _?!npk_mem_write_string(key_data_ptr, key);
++        raw npk_mem_write_string(key_data_ptr, key);
+     }
+     
+     drop(npk_mem_write_int64(node, 0i64, key_data_ptr));
+@@ -293,3 +293,4 @@ pub func:sl_first = int64(int64:sl) {
+ pub func:sl_next = int64(int64:node) {
+     pass(sl_node_forward(node, 0i64) ? 0i64);
+ };
++
+diff --git a/src/storage/sstable.npk b/src/storage/sstable.npk
+index 42ce2f9..517abe9 100644
+--- a/src/storage/sstable.npk
++++ b/src/storage/sstable.npk
+@@ -56,7 +56,7 @@ pub func:sstable_serialize_record = int64(string:key, int64:val_ptr, int64:val_l
+     }
+     
+     drop(npk_mem_write_int32(buf, 1i64, ((key_len) => int32)));
+-    _?!npk_mem_write_string(buf + 5i64, key);
++    raw npk_mem_write_string(buf + 5i64, key);
+     
+     int64:v_offset = 5i64 + key_len;
+     
+@@ -155,7 +155,7 @@ pub func:sstable_write = int64(string:path, int64:mt) {
+             
+             int64:last_k_len = string_length(last_key);
+             int64:last_k_ptr = npk_core_alloc(last_k_len);
+-            _?!npk_mem_write_string(last_k_ptr, last_key);
++            raw npk_mem_write_string(last_k_ptr, last_key);
+             
+             drop(npk_mem_write_int64(k_ptrs, block_count * 8i64, last_k_ptr));
+             drop(npk_mem_write_int64(k_lens, block_count * 8i64, last_k_len));
+@@ -183,7 +183,7 @@ pub func:sstable_write = int64(string:path, int64:mt) {
+         
+         int64:last_k_len = string_length(last_key);
+         int64:last_k_ptr = npk_core_alloc(last_k_len);
+-        _?!npk_mem_write_string(last_k_ptr, last_key);
++        raw npk_mem_write_string(last_k_ptr, last_key);
+         
+         drop(npk_mem_write_int64(k_ptrs, block_count * 8i64, last_k_ptr));
+         drop(npk_mem_write_int64(k_lens, block_count * 8i64, last_k_len));
+@@ -355,7 +355,7 @@ pub func:sstable_find_block = int64(int64:reader, string:key) {
+         
+         int64:tup_ptr = npk_mem_offset(index_page, tup_off);
+         int64:k_len = npk_mem_read_int32(tup_ptr, 0i64) => int64;
+-        string:last_k = _?!npk_mem_read_string(tup_ptr + 4i64, k_len);
++        string:last_k = raw npk_mem_read_string(tup_ptr + 4i64, k_len);
+         
+         if (last_k >= key) {
+             found = mid;
+@@ -540,3 +540,4 @@ pub func:sstable_iter_destroy = NIL(int64:iter) {
+     }
+     pass(NIL);
+ };
++
+diff --git a/src/storage/wal.npk b/src/storage/wal.npk
+index bff7155..135c30b 100644
+--- a/src/storage/wal.npk
++++ b/src/storage/wal.npk
+@@ -103,7 +103,7 @@ pub func:wal_append_put = int64(int64:wal_fd, string:key, int64:value_ptr, int64
+     
+     // Offset 4: key
+     if (key_len > 0i64) {
+-        _?!npk_mem_write_string(payload + 4i64, key);
++        raw npk_mem_write_string(payload + 4i64, key);
+     }
+     
+     // Offset 4+key_len: value_len
+@@ -128,7 +128,7 @@ pub func:wal_append_delete = int64(int64:wal_fd, string:key, int64:seq)
+     drop(npk_mem_write_int32(payload, 0i64, ((key_len) => int32)));
+     
+     if (key_len > 0i64) {
+-        _?!npk_mem_write_string(payload + 4i64, key);
++        raw npk_mem_write_string(payload + 4i64, key);
+     }
+     
+     int64:res = wal_append(wal_fd, WAL_RECORD_DELETE, seq, payload, payload_len) ? 0i64;
+@@ -251,7 +251,7 @@ pub func:wal_batch_append_put = int64(int64:wal_fd, string:key, int64:value_ptr,
+     int64:payload = npk_core_alloc(payload_len);
+     
+     drop(npk_mem_write_int32(payload, 0i64, ((key_len) => int32)));
+-    if (key_len > 0i64) { _?!npk_mem_write_string(payload + 4i64, key); }
++    if (key_len > 0i64) { raw npk_mem_write_string(payload + 4i64, key); }
+     drop(npk_mem_write_int32(payload, 4i64 + key_len, ((value_len) => int32)));
+     if (value_len > 0i64) { drop(npk_mem_copy(payload + 8i64 + key_len, value_ptr, value_len)); }
+     
+@@ -266,7 +266,7 @@ pub func:wal_batch_append_delete = int64(int64:wal_fd, string:key, int64:seq) {
+     int64:payload = npk_core_alloc(payload_len);
+     
+     drop(npk_mem_write_int32(payload, 0i64, ((key_len) => int32)));
+-    if (key_len > 0i64) { _?!npk_mem_write_string(payload + 4i64, key); }
++    if (key_len > 0i64) { raw npk_mem_write_string(payload + 4i64, key); }
+     
+     int64:res = wal_batch_append(wal_fd, WAL_RECORD_DELETE, seq, payload, payload_len) ? 0i64;
+     drop(npk_core_dalloc(payload));
+@@ -380,11 +380,11 @@ pub func:wal_replay = int64(string:wal_path, int64:active_mt) {
+         
+         int64:rec_len = npk_mem_read_int32(rec, 4i64) => int64;
+         
+-        int32:r_type = _?!wal_record_type(rec);
++        int32:r_type = raw wal_record_type(rec);
+         int64:r_seq = (raw wal_record_seq(rec)) => int64;
+-        string:r_key = _?!wal_record_key(rec);
+-        int64:r_val = _?!wal_record_value_ptr(rec);
+-        int64:r_vlen = _?!wal_record_value_len(rec);
++        string:r_key = raw wal_record_key(rec);
++        int64:r_val = raw wal_record_value_ptr(rec);
++        int64:r_vlen = raw wal_record_value_len(rec);
+         
+         if (active_mt != 0i64) {
+             if (r_type == 1i32) { // WAL_RECORD_PUT
+@@ -392,9 +392,9 @@ pub func:wal_replay = int64(string:wal_path, int64:active_mt) {
+                 if (r_vlen > 0i64) {
+                     drop(npk_mem_copy(new_val, r_val, r_vlen));
+                 }
+-                _?!mt_put(active_mt, r_key, new_val, r_vlen);
++                raw mt_put(active_mt, r_key, new_val, r_vlen);
+             } else if (r_type == 2i32) { // WAL_RECORD_DELETE
+-                _?!mt_delete(active_mt, r_key);
++                raw mt_delete(active_mt, r_key);
+             }
+         }
+         
+@@ -414,3 +414,4 @@ pub func:wal_truncate = int64(string:path) {
+     drop(sys(CLOSE, fd_res.value));
+     pass(0i64);
+ };
++
+diff --git a/src/storage/write_path.npk b/src/storage/write_path.npk
+index 84d0062..e1fa0f4 100644
+--- a/src/storage/write_path.npk
++++ b/src/storage/write_path.npk
+@@ -96,7 +96,7 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
+         
+         int64:lm = npk_mem_read_int64(wp, WP_OFF_LM);
+         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
+-        string:before_flush = _?!npk_mem_read_string(d_ptr, 11i64);
++        string:before_flush = raw npk_mem_read_string(d_ptr, 11i64);
+         println("d_ptr before flush: " + before_flush);
+         drop(flush_memtable(npk_mem_read_int64(wp, WP_OFF_FROZEN), lm));
+         drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, 0i64));
+@@ -249,3 +249,4 @@ pub func:wp_flush_wal = NIL(int64:wp) {
+     drop(nitpick_libc_rwlock_unlock(lock));
+     pass(NIL);
+ };
++
+diff --git a/src/util/bloom.npk b/src/util/bloom.npk
+index 1b68b14..7720a18 100644
+--- a/src/util/bloom.npk
++++ b/src/util/bloom.npk
+@@ -5,7 +5,7 @@ pub func:bloom_hash1 = int64(string:key) {
+     int64:h = 0i64;
+     int64:len = string_length(key);
+     int64:buf = npk_core_alloc(len);
+-    _?!npk_mem_write_string(buf, key);
++    raw npk_mem_write_string(buf, key);
+     
+     int64:i = 0i64;
+     while (i < len && i < 8i64) {
+@@ -31,7 +31,7 @@ pub func:bloom_hash2 = int64(string:key) {
+     int64:h = -3750763034362895579i64; // 0xcbf29ce484222325
+     int64:len = string_length(key);
+     int64:buf = npk_core_alloc(len);
+-    _?!npk_mem_write_string(buf, key);
++    raw npk_mem_write_string(buf, key);
+     
+     int64:i = 0i64;
+     while (i < len) {
+@@ -176,3 +176,4 @@ pub func:bloom_deserialize = int64(int64:data_ptr, int64:data_len) {
+     
+     pass(bloom);
+ };
++
+diff --git a/src/util/config.npk b/src/util/config.npk
+index 4f0e805..f8a6bf4 100644
+--- a/src/util/config.npk
++++ b/src/util/config.npk
+@@ -37,10 +37,10 @@ pub func:config_init = int32(string:toml_path) {
+     drop(npk_mem_write_byte(buf, bytes_read, 0i64));
+     
+     // Create string
+-    string:toml_str = _?!npk_mem_read_string(buf, bytes_read + 1i64);
++    string:toml_str = raw npk_mem_read_string(buf, bytes_read + 1i64);
+     
+     // Parse
+-    int32:n = _?!Toml.parse(toml_str);
++    int32:n = raw Toml.parse(toml_str);
+     drop(npk_core_dalloc(buf));
+     
+     if (n < 0i32) {
+@@ -52,19 +52,19 @@ pub func:config_init = int32(string:toml_path) {
+     
+     // Get values or default
+     int32:port = 8080i32;
+-    int64:p = _?!Toml.get_int("server.http_port");
++    int64:p = raw Toml.get_int("server.http_port");
+     if (p > 0i64) { port = (p) => int32; }
+     
+-    int64:threads = _?!Toml.get_int("server.max_threads");
++    int64:threads = raw Toml.get_int("server.max_threads");
+     if (threads <= 0i64) { threads = 4i64; }
+     
+-    int64:flush = _?!Toml.get_int("storage.memtable_flush_bytes");
++    int64:flush = raw Toml.get_int("storage.memtable_flush_bytes");
+     if (flush <= 0i64) { flush = 1048576i64; } // default 1MB
+     
+-    int64:hm = _?!Toml.get_int("vector.hnsw_m");
++    int64:hm = raw Toml.get_int("vector.hnsw_m");
+     if (hm <= 0i64) { hm = 16i64; }
+     
+-    int64:efc = _?!Toml.get_int("vector.hnsw_ef_construction");
++    int64:efc = raw Toml.get_int("vector.hnsw_ef_construction");
+     if (efc <= 0i64) { efc = 200i64; }
+     
+     // Populate
+@@ -88,6 +88,7 @@ pub func:config_shutdown = NIL() {
+         drop(npk_core_dalloc(global_npk_config));
+         global_npk_config = 0i64;
+     }
+-    _?!Toml.clear();
++    raw Toml.clear();
+     pass(NIL);
+ };
++
+diff --git a/src/util/constants.npk b/src/util/constants.npk
+index 46efca9..07bc474 100644
+--- a/src/util/constants.npk
++++ b/src/util/constants.npk
+@@ -44,3 +44,4 @@ pub fixed int64:EBR_LIMBO_MAX_DEPTH = 10000i64;    // Max limbo list entries bef
+ // Server
+ pub fixed int64:DEFAULT_PORT        = 7373i64;
+ pub fixed int64:DEFAULT_BACKLOG     = 128i64;
++
+diff --git a/src/util/crc32.npk b/src/util/crc32.npk
+index 51c40a9..bf0247b 100644
+--- a/src/util/crc32.npk
++++ b/src/util/crc32.npk
+@@ -46,3 +46,4 @@ pub func:crc32_compute = int64(int64:buf, int64:len) {
+     
+     pass(crc ^ 4294967295i64);
+ };
++
+diff --git a/src/util/error_codes.npk b/src/util/error_codes.npk
+index f19cd0b..9701157 100644
+--- a/src/util/error_codes.npk
++++ b/src/util/error_codes.npk
+@@ -43,3 +43,4 @@ pub fixed int32:ERR_SERVER_ACCEPT_FAILED = 401i32;
+ 
+ // Concurrency errors (500-599)
+ pub fixed int32:ERR_EBR_LIMBO_OVERFLOW   = 500i32;
++
+diff --git a/src/util/failsafe.npk b/src/util/failsafe.npk
+index 872201d..333d2a3 100644
+--- a/src/util/failsafe.npk
++++ b/src/util/failsafe.npk
+@@ -26,3 +26,4 @@ pub func:failsafe = int32(tbb32:err) {
+     
+     exit(1i32);
+ };
++
+diff --git a/src/util/mem_primitives.npk b/src/util/mem_primitives.npk
+index af848b3..056d456 100644
+--- a/src/util/mem_primitives.npk
++++ b/src/util/mem_primitives.npk
+@@ -17,13 +17,15 @@ extern "nitpick_libc_mem" {
+     func:nitpick_libc_mem_calloc  = int64(int64:count, int64:size);
+     func:nitpick_libc_mem_realloc = int64(int64:ptr, int64:size);
+     func:npk_core_dalloc    = void(int64:ptr);
++    func:npk_mem_write_string = int64(int64:ptr, string:s);
++    func:npk_mem_read_string = string(int64:ptr, int64:max_len);
+ }
+ pub func:npk_mem_write_int32 = int64(int64:ptr, int64:offset, int32:val) {
+     int64:v = val => int64;
+     drop(npk_mem_write_byte(ptr, offset, v & 255i64));
+-    drop(npk_mem_write_byte(ptr, offset + 1i64, (v >> 8) & 255i64));
+-    drop(npk_mem_write_byte(ptr, offset + 2i64, (v >> 16) & 255i64));
+-    drop(npk_mem_write_byte(ptr, offset + 3i64, (v >> 24) & 255i64));
++    drop(npk_mem_write_byte(ptr, offset + 1i64, (v >> 8i64) & 255i64));
++    drop(npk_mem_write_byte(ptr, offset + 2i64, (v >> 16i64) & 255i64));
++    drop(npk_mem_write_byte(ptr, offset + 3i64, (v >> 24i64) & 255i64));
+     pass(0i64);
+ };
+ 
+@@ -40,41 +42,10 @@ pub func:npk_mem_write_int16 = int64(int64:ptr, int64:offset, int16:val) {
+     pass(0i64);
+ };
+ 
+-pub func:npk_mem_write_string = int64(int64:ptr, string:s) {
+-    int64:len = string_length(s);
+-    if (len > 0i64) {
+-        int64:cstr = string_to_cstr(s);
+-        drop(npk_mem_copy(ptr, cstr, len));
+-    }
+-    pass(len);
+-};
+-
+-pub func:npk_mem_read_string = string(int64:ptr, int64:max_len) {
+-    if (ptr == 0i64) { pass(""); }
+-    if (max_len <= 0i64) { pass(""); }
+-    
+-    int64:len = 0i64;
+-    while (len < max_len) {
+-        int64:b = npk_mem_read_byte(ptr, len);
+-        if (b == 0i64) { break; }
+-        len = len + 1i64;
+-    }
+-    
+-    int64:buf = npk_core_alloc(len + 1i64);
+-    if (len > 0i64) {
+-        drop(npk_mem_copy(buf, ptr, len));
+-    }
+-    drop(npk_mem_write_byte(buf, len, 0i64));
+-    
+-    string:s = string_from_cstr(buf);
+-    drop(npk_core_dalloc(buf));
+-    
+-    pass(s);
+-};
+ 
+ pub func:npk_mem_read_int8 = int8(int8->:buf_arg, int64:pos) {
+     int8->:local_buf = buf_arg;
+-    int64:ptr = <-(@local_buf => int64->);
++    int64:ptr = @cast_unchecked<int64>(local_buf);
+     int64:val = npk_mem_read_byte(ptr, pos);
+     pass(val => int8);
+ };
+@@ -88,3 +59,20 @@ pub func:atomic_load_seqcst = int64(int64:atomic_ptr) {
+     int64:val = asm!!!<int64>("x86_64", "movq ($1), $0", "=r,r,~{memory}", atomic_ptr);
+     pass(val);
+ };
++
++pub func:npk_mem_write_string = int64(int64:ptr, string:s) {
++    int64:len = string_length(s);
++    int64:i = 0i64;
++    while (i < len) {
++        int64:c = raw str_byte_at(s, i);
++        drop(npk_mem_write_byte(ptr, i, c));
++        i = i + 1i64;
++    }
++    pass len;
++};
++
++
++pub func:atomic_store_seqcst = int64(int64:atomic_ptr, int64:val) {
++    pass(npk_mem_write_int64(atomic_ptr, 0i64, val));
++};
++
+diff --git a/src/util/min_heap.npk b/src/util/min_heap.npk
+index f54e7a9..9ce6ca2 100644
+--- a/src/util/min_heap.npk
++++ b/src/util/min_heap.npk
+@@ -176,3 +176,4 @@ pub func:heap_pop = NIL(int64:heap) {
+     
+     pass(NIL);
+ };
++
+diff --git a/src/vector/distance.npk b/src/vector/distance.npk
+index f0d6fd1..564766b 100644
+--- a/src/vector/distance.npk
++++ b/src/vector/distance.npk
+@@ -250,3 +250,4 @@ pub func:ip_simd_pub = tfp64(wild tfp64->:a, wild tfp64->:b, limit<valid_dim> in
+ pub func:cosine_simd_pub = tfp64(wild tfp64->:a, wild tfp64->:b, limit<valid_dim> int64:dim) {
+     pass(cosine_simd(a, b, dim));
+ };
++
+diff --git a/src/vector/distance_bench.npk b/src/vector/distance_bench.npk
+index 312d94e..8d4d823 100644
+--- a/src/vector/distance_bench.npk
++++ b/src/vector/distance_bench.npk
+@@ -28,7 +28,7 @@ pub fixed int64:TIMESPEC_NSEC_OFF   = 8i64;
+ // ts_buf: pointer to a zeroed 16-byte buffer allocated by the caller.
+ //         After return, tv_sec is at offset 0 and tv_nsec at offset 8.
+ //
+-// Returns NIL or fails with a _?!syscall error code cast to tbb8.
++// Returns NIL or fails with a raw syscall error code cast to tbb8.
+ // ──────────────────────────────────────────────────────────────────────────
+ pub func:bench_now = NIL(int64:ts_buf)
+ {
+@@ -283,3 +283,4 @@ pub func:bench_run_ip = NIL(int64:a_ptr, int64:b_ptr,
+     }
+     pass(NIL);
+ };
++
+diff --git a/src/vector/distance_types.npk b/src/vector/distance_types.npk
+index f4af808..7b7580d 100644
+--- a/src/vector/distance_types.npk
++++ b/src/vector/distance_types.npk
+@@ -23,3 +23,4 @@ pub fixed int64:SIMD_F64_WIDTH  = 8i64;
+ // ── Validation rules ─────────────────────────────────────────────────────────
+ // Valid dimension range: 1 ≤ dim ≤ HNSW_DIM.
+ // Used as: limit<valid_dim> int64:dim in kernel signatures.
++
+diff --git a/src/vector/hnsw_arena.npk b/src/vector/hnsw_arena.npk
+index 646c072..e4e8632 100644
+--- a/src/vector/hnsw_arena.npk
++++ b/src/vector/hnsw_arena.npk
+@@ -1,6 +1,6 @@
+ // hnsw_arena.npk — Generational arena allocator for HnswNode
+ //
+-// Arena struct header layout: 56 bytes accessed via _?!int64 pointer.
++// Arena struct header layout: 56 bytes accessed via raw int64 pointer.
+ 
+ use "../util/error_codes.npk".*;
+ use "../util/mem_primitives.npk".*;
+@@ -101,9 +101,9 @@ pub func:hnsw_arena_create = int64(int64:capacity, int16:arena_id)
+ 
+ pub func:hnsw_arena_destroy = NIL(int64:arena)
+     requires (arena != 0i64) {
+-    int64:node_buf = hnsw_hnsw_arena_get_node_buf(arena)  ? 0i64;
+-    int64:gen_buf = hnsw_arena_get_gen_buf(arena)   ? 0i64;
+-    int64:free_buf = hnsw_arena_get_free_buf(arena)  ? 0i64;
++    int64:node_buf = hnsw_hnsw_arena_get_node_buf(arena)  ? 0i64 ?! 0i64;
++    int64:gen_buf = hnsw_arena_get_gen_buf(arena)   ? 0i64 ?! 0i64;
++    int64:free_buf = hnsw_arena_get_free_buf(arena)  ? 0i64 ?! 0i64;
+ 
+     if (free_buf != 0i64) { drop(npk_core_dalloc(free_buf)); }
+     if (gen_buf  != 0i64) { drop(npk_core_dalloc(gen_buf)); }
+@@ -115,25 +115,25 @@ pub func:hnsw_arena_destroy = NIL(int64:arena)
+ 
+ pub func:hnsw_arena_alloc_node = int64(int64:arena, int64:out_slot_idx_ptr, int64:out_generation_ptr)
+     requires (arena != 0i64), (out_slot_idx_ptr != 0i64), (out_generation_ptr != 0i64) {
+-    int64:free_top = hnsw_arena_get_free_top(arena)  ? 0i64;
++    int64:free_top = hnsw_arena_get_free_top(arena)  ? 0i64 ?! 0i64;
+ 
+     if (free_top == 0i64) {
+         fail((ERR_HNSW_OOM) => tbb32);
+     }
+ 
+     int64:new_top  = free_top - 1i64;
+-    int64:free_buf = hnsw_arena_get_free_buf(arena)  ? 0i64;
++    int64:free_buf = hnsw_arena_get_free_buf(arena)  ? 0i64 ?! 0i64;
+     int64:slot_idx = npk_mem_read_int64(free_buf, new_top * 8i64);
+ 
+     drop(npk_mem_write_int64(arena, HNSW_ARENA_OFF_FREE_TOP, new_top));
+ 
+-    int64:gen_buf = hnsw_arena_get_gen_buf(arena)  ? 0i64;
++    int64:gen_buf = hnsw_arena_get_gen_buf(arena)  ? 0i64 ?! 0i64;
+     int32:generation = npk_mem_read_int32(gen_buf, slot_idx * 4i64);
+ 
+-    int64:used = hnsw_arena_get_used(arena)  ? 0i64;
++    int64:used = hnsw_arena_get_used(arena)  ? 0i64 ?! 0i64;
+     drop(npk_mem_write_int64(arena, HNSW_ARENA_OFF_USED, used + 1i64));
+ 
+-    int64:node_buf = hnsw_hnsw_arena_get_node_buf(arena)  ? 0i64;
++    int64:node_buf = hnsw_hnsw_arena_get_node_buf(arena)  ? 0i64 ?! 0i64;
+     int64:node_base = node_buf + slot_idx * HNSW_NODE_SIZE;
+     int64:k = 0i64;
+     when (k < HNSW_NODE_SIZE) {
+@@ -149,14 +149,14 @@ pub func:hnsw_arena_alloc_node = int64(int64:arena, int64:out_slot_idx_ptr, int6
+ 
+ pub func:hnsw_arena_free_node = int64(int64:arena, int32:handle_slot_idx, int32:handle_generation)
+     requires (arena != 0i64), (handle_slot_idx >= 0i32), (handle_generation > 0i32) {
+-    int64:capacity = hnsw_arena_get_capacity(arena)  ? 0i64;
++    int64:capacity = hnsw_arena_get_capacity(arena)  ? 0i64 ?! 0i64;
+     int64:slot     = ((handle_slot_idx) => int64);
+ 
+     if (slot >= capacity) {
+         fail((ERR_HNSW_STALE_HANDLE) => tbb32);
+     }
+ 
+-    int64:gen_buf = hnsw_arena_get_gen_buf(arena)   ? 0i64;
++    int64:gen_buf = hnsw_arena_get_gen_buf(arena)   ? 0i64 ?! 0i64;
+     int32:live_gen   = npk_mem_read_int32(gen_buf, slot * 4i64);
+     if (handle_generation != live_gen) {
+         fail((ERR_HNSW_STALE_HANDLE) => tbb32);
+@@ -166,12 +166,12 @@ pub func:hnsw_arena_free_node = int64(int64:arena, int32:handle_slot_idx, int32:
+     if (new_gen == 0i32) { new_gen = 1i32; }
+     drop(npk_mem_write_int32(gen_buf, slot * 4i64, new_gen));
+ 
+-    int64:free_top = hnsw_arena_get_free_top(arena)  ? 0i64;
+-    int64:free_buf = hnsw_arena_get_free_buf(arena)  ? 0i64;
++    int64:free_top = hnsw_arena_get_free_top(arena)  ? 0i64 ?! 0i64;
++    int64:free_buf = hnsw_arena_get_free_buf(arena)  ? 0i64 ?! 0i64;
+     drop(npk_mem_write_int64(free_buf, free_top * 8i64, slot));
+     drop(npk_mem_write_int64(arena, HNSW_ARENA_OFF_FREE_TOP, free_top + 1i64));
+ 
+-    int64:used = hnsw_arena_get_used(arena)  ? 0i64;
++    int64:used = hnsw_arena_get_used(arena)  ? 0i64 ?! 0i64;
+     if (used > 0i64) {
+         drop(npk_mem_write_int64(arena, HNSW_ARENA_OFF_USED, used - 1i64));
+     }
+@@ -185,33 +185,33 @@ pub func:hnsw_arena_get_node = int64(int64:arena, int32:handle_slot_idx, int32:h
+         fail((ERR_HNSW_STALE_HANDLE) => tbb32);
+     }
+ 
+-    int64:capacity = hnsw_arena_get_capacity(arena)  ? 0i64;
++    int64:capacity = hnsw_arena_get_capacity(arena)  ? 0i64 ?! 0i64;
+     int64:slot     = ((handle_slot_idx) => int64);
+ 
+     if (slot >= capacity) {
+         fail((ERR_HNSW_STALE_HANDLE) => tbb32);
+     }
+ 
+-    int64:gen_buf = hnsw_arena_get_gen_buf(arena)  ? 0i64;
++    int64:gen_buf = hnsw_arena_get_gen_buf(arena)  ? 0i64 ?! 0i64;
+     int32:live_gen = npk_mem_read_int32(gen_buf, slot * 4i64);
+     if (handle_generation != live_gen) {
+         fail((ERR_HNSW_STALE_HANDLE) => tbb32);
+     }
+ 
+-    int64:node_buf = hnsw_hnsw_arena_get_node_buf(arena)  ? 0i64;
++    int64:node_buf = hnsw_hnsw_arena_get_node_buf(arena)  ? 0i64 ?! 0i64;
+     pass(node_buf + slot * HNSW_NODE_SIZE);
+ };
+ 
+ pub func:hnsw_hnsw_arena_get_node_unchecked = int64(int64:arena, int32:handle_slot_idx)
+     requires (arena != 0i64), (handle_slot_idx >= 0i32) {
+-    int64:capacity = hnsw_arena_get_capacity(arena)  ? 0i64;
++    int64:capacity = hnsw_arena_get_capacity(arena)  ? 0i64 ?! 0i64;
+     int64:slot     = ((handle_slot_idx) => int64);
+ 
+     if (slot >= capacity) {
+         fail((ERR_HNSW_STALE_HANDLE) => tbb32);
+     }
+ 
+-    int64:node_buf = hnsw_hnsw_arena_get_node_buf(arena)  ? 0i64;
++    int64:node_buf = hnsw_hnsw_arena_get_node_buf(arena)  ? 0i64 ?! 0i64;
+     pass(node_buf + slot * HNSW_NODE_SIZE);
+ };
+ 
+@@ -243,3 +243,4 @@ pub func:handle_decode = NIL(int64:in_buf, int64:out_slot_idx_ptr, int64:out_gen
+ pub func:handle_is_null = bool(int32:generation) {
+     pass(generation == 0i32);
+ };
++
+diff --git a/src/vector/hnsw_filter.npk b/src/vector/hnsw_filter.npk
+index 2a65b0d..2571a72 100644
+--- a/src/vector/hnsw_filter.npk
++++ b/src/vector/hnsw_filter.npk
+@@ -30,9 +30,9 @@ pub func:hnsw_traversal_filter_check = bool(
+     requires num_vectors > 0i64
+ {
+     int64:node_ptr = hnsw_arena_get_node(arena, candidate.slot, candidate.generation)
+-        ? { pass(false); };  // Stale handle: treat as filtered-out.
++        ? { pass(false) ?! 0i64; };  // Stale handle: treat as filtered-out.
+ 
+-    int64:vec_id = hnsw_node_get_vector_offset(node_ptr) ? 0i64; // Using get_vector_offset
++    int64:vec_id = hnsw_node_get_vector_offset(node_ptr) ? 0i64 ?! 0i64; // Using get_vector_offset
+ 
+     if (vec_id < 0i64 || vec_id >= num_vectors) {
+         exit 1i32; // Assuming fail doesn't exist, we use exit
+@@ -42,3 +42,4 @@ pub func:hnsw_traversal_filter_check = bool(
+ 
+     pass(filter_eval(filter_fn_ptr, vec_id, num_vectors) ? false);
+ };
++
+diff --git a/src/vector/hnsw_graph.npk b/src/vector/hnsw_graph.npk
+index e57e6f6..5f58257 100644
+--- a/src/vector/hnsw_graph.npk
++++ b/src/vector/hnsw_graph.npk
+@@ -103,14 +103,15 @@ pub func:hnsw_graph_get_mL = float64(int64:graph) requires (graph != 0i64) {
+ pub func:hnsw_graph_distance = tfp64(int64:graph, int64:vec1_offset, int64:vec2_offset)
+     requires (graph != 0i64) {
+     
+-    int64:vec_buf = hnsw_graph_get_vector_buf(graph)  ? 0i64;
+-    int64:dim = hnsw_graph_get_vector_dim(graph)  ? 0i64;
++    int64:vec_buf = hnsw_graph_get_vector_buf(graph)  ? 0i64 ?! 0i64;
++    int64:dim = hnsw_graph_get_vector_dim(graph)  ? 0i64 ?! 0i64;
+     
+     int64:ptr1 = vec_buf + vec1_offset;
+     int64:ptr2 = vec_buf + vec2_offset;
+     
+-    wild tfp64->:t1 = ptr1 => wild tfp64->;
+-    wild tfp64->:t2 = ptr2 => wild tfp64->;
++    wild tfp64->:t1 = @cast_unchecked<tfp64->>(ptr1);
++    wild tfp64->:t2 = @cast_unchecked<tfp64->>(ptr2);
+     
+     pass(l2sq_simd_pub(t1, t2, dim));
+ };
++
+diff --git a/src/vector/hnsw_insert.npk b/src/vector/hnsw_insert.npk
+index 2808237..6ad52b3 100644
+--- a/src/vector/hnsw_insert.npk
++++ b/src/vector/hnsw_insert.npk
+@@ -20,7 +20,7 @@ use "distance.npk".*;
+ pub func:hnsw_random_layer = int32(int64:graph, int64:rand_state_ptr) 
+     requires (graph != 0i64), (rand_state_ptr != 0i64) {
+     
+-    float64:mL = hnsw_graph_get_mL(graph)  ? 0.0f64;
++    float64:mL = hnsw_graph_get_mL(graph)  ? 0.0f64 ?! 0.0f64;
+     int32:max_layer_limit = 3i32; // HNSW_MAX_LAYERS - 1
+ 
+     uint64:s = ((npk_mem_read_int64(rand_state_ptr, 0i64) => uint64));
+@@ -49,50 +49,50 @@ pub func:hnsw_select_neighbors = int64(
+     int32:M
+ ) requires (graph != 0i64), (W_pq != 0i64), (M > 0i32) {
+ 
+-    int64:size = hnsw_pq_get_size(W_pq)  ? 0i64;
++    int64:size = hnsw_pq_get_size(W_pq)  ? 0i64 ?! 0i64;
+     if (size == 0i64) {
+         pass(hnsw_pq_create(((M) => int64), 1i64) ? 0i64);
+     }
+ 
+-    int64:min_heap = hnsw_pq_create(size, 0i64)  ? 0i64;
++    int64:min_heap = hnsw_pq_create(size, 0i64)  ? 0i64 ?! 0i64;
+     int64:C = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
+     
+     when ((hnsw_pq_get_size(W_pq) ? 0i64) > 0i64) {
+         drop(hnsw_pq_pop(W_pq, C));
+         tfp64:dist = hnsw_pq_get_dist(C)  ? 0.0tf;
+-        int32:slot = hnsw_pq_get_slot(C)  ? 0i32;
+-        int32:gen = hnsw_pq_get_gen(C)   ? 0i32;
++        int32:slot = hnsw_pq_get_slot(C)  ? 0i32 ?! 0i32;
++        int32:gen = hnsw_pq_get_gen(C)   ? 0i32 ?! 0i32;
+         drop(hnsw_pq_push(min_heap, dist, slot, gen));
+     }
+ 
+-    int64:R = hnsw_pq_create(((M) => int64), 1i64)  ? 0i64;
+-    int64:arena = hnsw_graph_get_arena(graph)  ? 0i64;
++    int64:R = hnsw_pq_create(((M) => int64), 1i64)  ? 0i64 ?! 0i64;
++    int64:arena = hnsw_graph_get_arena(graph)  ? 0i64 ?! 0i64;
+ 
+     when ((hnsw_pq_get_size(min_heap) ? 0i64) > 0i64) {
+         drop(hnsw_pq_pop(min_heap, C));
+         tfp64:c_dist = hnsw_pq_get_dist(C)  ? 0.0tf;
+-        int32:c_slot = hnsw_pq_get_slot(C)  ? 0i32;
+-        int32:c_gen = hnsw_pq_get_gen(C)   ? 0i32;
++        int32:c_slot = hnsw_pq_get_slot(C)  ? 0i32 ?! 0i32;
++        int32:c_gen = hnsw_pq_get_gen(C)   ? 0i32 ?! 0i32;
+ 
+-        int64:r_size = hnsw_pq_get_size(R)  ? 0i64;
++        int64:r_size = hnsw_pq_get_size(R)  ? 0i64 ?! 0i64;
+         if (r_size >= ((M) => int64)) { break; }
+ 
+-        int64:c_node = hnsw_arena_get_node(arena, c_slot, c_gen)  ? 0i64;
++        int64:c_node = hnsw_arena_get_node(arena, c_slot, c_gen)  ? 0i64 ?! 0i64;
+         if (c_node == 0i64) { continue; }
+-        int64:c_vec = hnsw_node_get_vector_offset(c_node)  ? 0i64;
++        int64:c_vec = hnsw_node_get_vector_offset(c_node)  ? 0i64 ?! 0i64;
+ 
+-        int64:r_elems = hnsw_pq_get_elements(R)  ? 0i64;
++        int64:r_elems = hnsw_pq_get_elements(R)  ? 0i64 ?! 0i64;
+         bool:good = true;
+ 
+         int64:i = 0i64;
+         when (i < r_size) {
+             int64:r_ptr = r_elems + (i * HNSW_PQ_CANDIDATE_SIZE);
+-            int32:r_slot = hnsw_pq_get_slot(r_ptr)  ? 0i32;
+-            int32:r_gen = hnsw_pq_get_gen(r_ptr)  ? 0i32;
++            int32:r_slot = hnsw_pq_get_slot(r_ptr)  ? 0i32 ?! 0i32;
++            int32:r_gen = hnsw_pq_get_gen(r_ptr)  ? 0i32 ?! 0i32;
+ 
+-            int64:r_node = hnsw_arena_get_node(arena, r_slot, r_gen)  ? 0i64;
++            int64:r_node = hnsw_arena_get_node(arena, r_slot, r_gen)  ? 0i64 ?! 0i64;
+             if (r_node != 0i64) {
+-                int64:r_vec = hnsw_node_get_vector_offset(r_node)  ? 0i64;
++                int64:r_vec = hnsw_node_get_vector_offset(r_node)  ? 0i64 ?! 0i64;
+                 tfp64:dist_cr = hnsw_graph_distance(graph, c_vec, r_vec)  ? 0.0tf;
+                 if (dist_cr < c_dist) {
+                     good = false;
+@@ -124,44 +124,44 @@ func:hnsw_shrink_connections = int64(
+     int32:new_gen
+ ) requires (graph != 0i64), (n_node != 0i64) {
+     
+-    int64:W = hnsw_pq_create(((layer_m) => int64) + 1i64, 1i64)  ? 0i64;
+-    int32:num_n = hnsw_node_get_num_neighbors(n_node, layer)  ? 0i32;
++    int64:W = hnsw_pq_create(((layer_m) => int64) + 1i64, 1i64)  ? 0i64 ?! 0i64;
++    int32:num_n = hnsw_node_get_num_neighbors(n_node, layer)  ? 0i32 ?! 0i32;
+ 
+-    int64:n_vec = hnsw_node_get_vector_offset(n_node)  ? 0i64;
++    int64:n_vec = hnsw_node_get_vector_offset(n_node)  ? 0i64 ?! 0i64;
+ 
+     int64:i = 0i64;
+-    int64:arena = hnsw_graph_get_arena(graph)  ? 0i64;
++    int64:arena = hnsw_graph_get_arena(graph)  ? 0i64 ?! 0i64;
+ 
+     when (i < ((num_n) => int64)) {
+-        int32:c_slot = hnsw_node_get_neighbor_slot(n_node, layer, i)  ? 0i32;
+-        int32:c_gen = hnsw_node_get_neighbor_gen(n_node, layer, i)  ? 0i32;
++        int32:c_slot = hnsw_node_get_neighbor_slot(n_node, layer, i)  ? 0i32 ?! 0i32;
++        int32:c_gen = hnsw_node_get_neighbor_gen(n_node, layer, i)  ? 0i32 ?! 0i32;
+ 
+-        int64:c_node = hnsw_arena_get_node(arena, c_slot, c_gen)  ? 0i64;
++        int64:c_node = hnsw_arena_get_node(arena, c_slot, c_gen)  ? 0i64 ?! 0i64;
+         if (c_node != 0i64) {
+-            int64:c_vec = hnsw_node_get_vector_offset(c_node)  ? 0i64;
++            int64:c_vec = hnsw_node_get_vector_offset(c_node)  ? 0i64 ?! 0i64;
+             tfp64:dist = hnsw_graph_distance(graph, n_vec, c_vec)  ? 0.0tf;
+             drop(hnsw_pq_push(W, dist, c_slot, c_gen));
+         }
+         i = i + 1i64;
+     }
+ 
+-    int64:new_node = hnsw_arena_get_node(arena, new_slot, new_gen)  ? 0i64;
++    int64:new_node = hnsw_arena_get_node(arena, new_slot, new_gen)  ? 0i64 ?! 0i64;
+     if (new_node != 0i64) {
+-        int64:new_vec = hnsw_node_get_vector_offset(new_node)  ? 0i64;
++        int64:new_vec = hnsw_node_get_vector_offset(new_node)  ? 0i64 ?! 0i64;
+         tfp64:dist = hnsw_graph_distance(graph, n_vec, new_vec)  ? 0.0tf;
+         drop(hnsw_pq_push(W, dist, new_slot, new_gen));
+     }
+ 
+-    int64:neighbors = hnsw_select_neighbors(graph, n_vec, W, layer_m)  ? 0i64;
+-    int64:n_size = hnsw_pq_get_size(neighbors)  ? 0i64;
++    int64:neighbors = hnsw_select_neighbors(graph, n_vec, W, layer_m)  ? 0i64 ?! 0i64;
++    int64:n_size = hnsw_pq_get_size(neighbors)  ? 0i64 ?! 0i64;
+ 
+     drop(hnsw_node_set_num_neighbors(n_node, layer, ((n_size) => int32)));
+ 
+     i = 0i64;
+     when (i < n_size) {
+-        int64:ptr = hnsw_pq_get_candidate_ptr(neighbors, i)  ? 0i64;
+-        int32:s = hnsw_pq_get_slot(ptr)  ? 0i32;
+-        int32:g = hnsw_pq_get_gen(ptr)  ? 0i32;
++        int64:ptr = hnsw_pq_get_candidate_ptr(neighbors, i)  ? 0i64 ?! 0i64;
++        int32:s = hnsw_pq_get_slot(ptr)  ? 0i32 ?! 0i32;
++        int32:g = hnsw_pq_get_gen(ptr)  ? 0i32 ?! 0i32;
+         drop(hnsw_node_set_neighbor(n_node, layer, i, s, g, 1i16));
+         i = i + 1i64;
+     }
+@@ -180,10 +180,10 @@ pub func:hnsw_insert = int64(
+     int64:visited_set
+ ) requires (graph != 0i64), (rand_state_ptr != 0i64), (visited_set != 0i64) {
+ 
+-    int64:arena = hnsw_graph_get_arena(graph)  ? 0i64;
++    int64:arena = hnsw_graph_get_arena(graph)  ? 0i64 ?! 0i64;
+ 
+     int64:node_buf = npk_core_alloc(16i64);
+-    int64:alloc_res = hnsw_arena_alloc_node(arena, node_buf, node_buf + 8i64)  ? 0i64;
++    int64:alloc_res = hnsw_arena_alloc_node(arena, node_buf, node_buf + 8i64)  ? 0i64 ?! 0i64;
+     if (alloc_res == -1i64) {
+         drop(npk_core_dalloc(node_buf));
+         pass(-1i64);
+@@ -192,10 +192,10 @@ pub func:hnsw_insert = int64(
+     int32:gen  = npk_mem_read_int32(node_buf, 8i64);
+     drop(npk_core_dalloc(node_buf));
+ 
+-    int64:node_ptr = hnsw_arena_get_node(arena, slot, gen)  ? 0i64;
++    int64:node_ptr = hnsw_arena_get_node(arena, slot, gen)  ? 0i64 ?! 0i64;
+     drop(hnsw_node_set_vector_offset(node_ptr, vec_offset));
+ 
+-    int32:l = hnsw_random_layer(graph, rand_state_ptr)  ? 0i32;
++    int32:l = hnsw_random_layer(graph, rand_state_ptr)  ? 0i32 ?! 0i32;
+     drop(hnsw_node_set_layer(node_ptr, l));
+ 
+     int64:ep_slot_ptr = npk_core_alloc(8i64);
+@@ -213,10 +213,10 @@ pub func:hnsw_insert = int64(
+         pass(0i64);
+     }
+ 
+-    int32:max_layer = hnsw_graph_get_max_layer(graph)  ? 0i32;
+-    int32:M = hnsw_graph_get_M(graph) ? 16i32;
+-    int32:M0 = hnsw_graph_get_M0(graph) ? 32i32;
+-    int32:ef_const = hnsw_graph_get_ef_construction(graph) ? 100i32;
++    int32:max_layer = hnsw_graph_get_max_layer(graph)  ? 0i32 ?! 0i32;
++    int32:M = hnsw_graph_get_M(graph) ? 16i32 ?! 0i32;
++    int32:M0 = hnsw_graph_get_M0(graph) ? 32i32 ?! 0i32;
++    int32:ef_const = hnsw_graph_get_ef_construction(graph) ? 100i32 ?! 0i32;
+ 
+     int32:curr_ep_slot = ep_slot;
+     int32:curr_ep_gen = ep_gen;
+@@ -224,9 +224,9 @@ pub func:hnsw_insert = int64(
+     int32:lc = max_layer;
+     when (lc > l) {
+         drop(hnsw_visited_clear(visited_set));
+-        int64:W = hnsw_search_layer(0i64, graph, vec_offset, curr_ep_slot, curr_ep_gen, 1i32, lc, visited_set, 0i64, 0i64)  ? 0i64;
++        int64:W = hnsw_search_layer(0i64, graph, vec_offset, curr_ep_slot, curr_ep_gen, 1i32, lc, visited_set, 0i64, 0i64)  ? 0i64 ?! 0i64;
+         
+-        int64:size = hnsw_pq_get_size(W)  ? 0i64;
++        int64:size = hnsw_pq_get_size(W)  ? 0i64 ?! 0i64;
+         if (size > 0i64) {
+             int64:C = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
+             drop(hnsw_pq_peek(W, C));
+@@ -243,26 +243,26 @@ pub func:hnsw_insert = int64(
+ 
+     when (lc >= 0i32) {
+         drop(hnsw_visited_clear(visited_set));
+-        int64:W = hnsw_search_layer(0i64, graph, vec_offset, curr_ep_slot, curr_ep_gen, ef_const, lc, visited_set, 0i64, 0i64)  ? 0i64;
++        int64:W = hnsw_search_layer(0i64, graph, vec_offset, curr_ep_slot, curr_ep_gen, ef_const, lc, visited_set, 0i64, 0i64)  ? 0i64 ?! 0i64;
+         
+         int32:layer_m = M;
+         if (lc == 0i32) { layer_m = M0; }
+ 
+-        int64:neighbors = hnsw_select_neighbors(graph, vec_offset, W, layer_m)  ? 0i64;
++        int64:neighbors = hnsw_select_neighbors(graph, vec_offset, W, layer_m)  ? 0i64 ?! 0i64;
+         
+-        int64:n_size = hnsw_pq_get_size(neighbors)  ? 0i64;
++        int64:n_size = hnsw_pq_get_size(neighbors)  ? 0i64 ?! 0i64;
+         drop(hnsw_node_set_num_neighbors(node_ptr, lc, ((n_size) => int32)));
+ 
+         int64:i = 0i64;
+         when (i < n_size) {
+-            int64:ptr = hnsw_pq_get_candidate_ptr(neighbors, i)  ? 0i64;
+-            int32:n_slot = hnsw_pq_get_slot(ptr)  ? 0i32;
+-            int32:n_gen = hnsw_pq_get_gen(ptr)  ? 0i32;
++            int64:ptr = hnsw_pq_get_candidate_ptr(neighbors, i)  ? 0i64 ?! 0i64;
++            int32:n_slot = hnsw_pq_get_slot(ptr)  ? 0i32 ?! 0i32;
++            int32:n_gen = hnsw_pq_get_gen(ptr)  ? 0i32 ?! 0i32;
+             drop(hnsw_node_set_neighbor(node_ptr, lc, i, n_slot, n_gen, 1i16));
+ 
+-            int64:n_node_ptr = hnsw_arena_get_node(arena, n_slot, n_gen)  ? 0i64;
++            int64:n_node_ptr = hnsw_arena_get_node(arena, n_slot, n_gen)  ? 0i64 ?! 0i64;
+             if (n_node_ptr != 0i64) {
+-                int32:n_num = hnsw_node_get_num_neighbors(n_node_ptr, lc)  ? 0i32;
++                int32:n_num = hnsw_node_get_num_neighbors(n_node_ptr, lc)  ? 0i32 ?! 0i32;
+                 if (n_num < layer_m) {
+                     drop(hnsw_node_set_neighbor(n_node_ptr, lc, ((n_num) => int64), slot, gen, 1i16));
+                     drop(hnsw_node_set_num_neighbors(n_node_ptr, lc, n_num + 1i32));
+@@ -278,7 +278,7 @@ pub func:hnsw_insert = int64(
+             int64:min_idx = -1i64;
+             tfp64:min_dist = 999999999.0f32;
+             int64:j = 0i64;
+-            int64:r_elems = hnsw_pq_get_elements(neighbors)  ? 0i64;
++            int64:r_elems = hnsw_pq_get_elements(neighbors)  ? 0i64 ?! 0i64;
+             when (j < n_size) {
+                 int64:r_ptr = r_elems + (j * HNSW_PQ_CANDIDATE_SIZE);
+                 tfp64:d = hnsw_pq_get_dist(r_ptr)  ? 0.0tf;
+@@ -310,3 +310,4 @@ pub func:hnsw_insert = int64(
+     drop(npk_core_dalloc(ep_gen_ptr));
+     pass(0i64);
+ };
++
+diff --git a/src/vector/hnsw_node.npk b/src/vector/hnsw_node.npk
+index 0f62da8..f171817 100644
+--- a/src/vector/hnsw_node.npk
++++ b/src/vector/hnsw_node.npk
+@@ -13,7 +13,7 @@
+ //                  Layer 0 uses slots 0..31. Layer 1 uses slots 32..47.
+ //                  Layer 2 uses slots 48..63. Layer 3 uses slots 64..79.
+ //   Bytes 1000-1007: vector_offset  (int64)  — byte offset into the vector data arena
+-//                                            for this node's _?!embedding bytes
++//                                            for this node's raw embedding bytes
+ //   Total: 1008 bytes = HNSW_NODE_SIZE
+ //
+ // Handle<HnswNode> layout (12 bytes):
+@@ -171,28 +171,28 @@ func:hnsw_neighbor_base = int64(int32:layer, int64:i)
+ // Read slot_idx of neighbor handle at slot i in a layer.
+ pub func:hnsw_node_get_neighbor_slot = int32(int64:node_ptr, int32:layer, int64:i)
+     requires (node_ptr != 0i64), (layer >= 0i32), (((layer) => int64) < HNSW_MAX_LAYERS), (i >= 0i64) {
+-    int64:base = hnsw_neighbor_base(layer, i)  ? 0i64;
++    int64:base = hnsw_neighbor_base(layer, i)  ? 0i64 ?! 0i64;
+     pass(npk_mem_read_int32(node_ptr, base + HNSW_HDL_OFF_SLOT_IDX));
+ };
+ 
+ // Read generation of neighbor handle at slot i in a layer.
+ pub func:hnsw_node_get_neighbor_gen = int32(int64:node_ptr, int32:layer, int64:i)
+     requires (node_ptr != 0i64), (layer >= 0i32), (((layer) => int64) < HNSW_MAX_LAYERS), (i >= 0i64) {
+-    int64:base = hnsw_neighbor_base(layer, i)  ? 0i64;
++    int64:base = hnsw_neighbor_base(layer, i)  ? 0i64 ?! 0i64;
+     pass(npk_mem_read_int32(node_ptr, base + HNSW_HDL_OFF_GENERATION));
+ };
+ 
+ // Read arena_id of neighbor handle at slot i in a layer.
+ pub func:hnsw_node_get_neighbor_arena_id = int16(int64:node_ptr, int32:layer, int64:i)
+     requires (node_ptr != 0i64), (layer >= 0i32), (((layer) => int64) < HNSW_MAX_LAYERS), (i >= 0i64) {
+-    int64:base = hnsw_neighbor_base(layer, i)  ? 0i64;
++    int64:base = hnsw_neighbor_base(layer, i)  ? 0i64 ?! 0i64;
+     pass(npk_mem_read_int16(node_ptr, base + HNSW_HDL_OFF_ARENA_ID));
+ };
+ 
+ // Write all three sub-fields of the neighbor handle at slot i in a layer.
+ pub func:hnsw_node_set_neighbor = NIL(int64:node_ptr, int32:layer, int64:i, int32:slot_idx, int32:generation, int16:arena_id)
+     requires (node_ptr != 0i64), (layer >= 0i32), (((layer) => int64) < HNSW_MAX_LAYERS), (i >= 0i64), (generation > 0i32) {
+-    int64:base = hnsw_neighbor_base(layer, i)  ? 0i64;
++    int64:base = hnsw_neighbor_base(layer, i)  ? 0i64 ?! 0i64;
+     drop(npk_mem_write_int32(node_ptr, base + HNSW_HDL_OFF_SLOT_IDX,   slot_idx));
+     drop(npk_mem_write_int32(node_ptr, base + HNSW_HDL_OFF_GENERATION,  generation));
+     drop(npk_mem_write_int16(node_ptr, base + HNSW_HDL_OFF_ARENA_ID,    arena_id));
+@@ -203,7 +203,7 @@ pub func:hnsw_node_set_neighbor = NIL(int64:node_ptr, int32:layer, int64:i, int3
+ // Zero out the neighbor handle at slot i in a layer.
+ pub func:hnsw_node_clear_neighbor = NIL(int64:node_ptr, int32:layer, int64:i)
+     requires (node_ptr != 0i64), (layer >= 0i32), (((layer) => int64) < HNSW_MAX_LAYERS), (i >= 0i64) {
+-    int64:base = hnsw_neighbor_base(layer, i)  ? 0i64;
++    int64:base = hnsw_neighbor_base(layer, i)  ? 0i64 ?! 0i64;
+     drop(npk_mem_write_int32(node_ptr, base + HNSW_HDL_OFF_SLOT_IDX,   0i32));
+     drop(npk_mem_write_int32(node_ptr, base + HNSW_HDL_OFF_GENERATION,  0i32));
+     drop(npk_mem_write_int16(node_ptr, base + HNSW_HDL_OFF_ARENA_ID,    0i16));
+@@ -214,7 +214,8 @@ pub func:hnsw_node_clear_neighbor = NIL(int64:node_ptr, int32:layer, int64:i)
+ // Check whether the neighbor handle at slot i in a layer is the null handle.
+ pub func:hnsw_neighbor_is_null = bool(int64:node_ptr, int32:layer, int64:i)
+     requires (node_ptr != 0i64), (layer >= 0i32), (((layer) => int64) < HNSW_MAX_LAYERS), (i >= 0i64) {
+-    int64:base = hnsw_neighbor_base(layer, i)  ? 0i64;
++    int64:base = hnsw_neighbor_base(layer, i)  ? 0i64 ?! 0i64;
+     int32:gen  = npk_mem_read_int32(node_ptr, base + HNSW_HDL_OFF_GENERATION);
+     pass(gen == 0i32);
+ };
++
+diff --git a/src/vector/hnsw_pq.npk b/src/vector/hnsw_pq.npk
+index 1f906e4..e924546 100644
+--- a/src/vector/hnsw_pq.npk
++++ b/src/vector/hnsw_pq.npk
+@@ -34,7 +34,7 @@ pub func:hnsw_pq_get_elements = int64(int64:pq) requires (pq != 0i64) {
+ 
+ pub func:hnsw_pq_get_candidate_ptr = int64(int64:pq, int64:index) 
+     requires (pq != 0i64), (index >= 0i64) {
+-    int64:elems = hnsw_pq_get_elements(pq)  ? 0i64;
++    int64:elems = hnsw_pq_get_elements(pq)  ? 0i64 ?! 0i64;
+     pass(elems + (index * HNSW_PQ_CANDIDATE_SIZE));
+ };
+ 
+@@ -63,8 +63,8 @@ func:hnsw_pq_set_candidate = int64(int64:candidate_ptr, tfp64:dist, int32:slot,
+ func:hnsw_pq_copy_candidate = int64(int64:dst_ptr, int64:src_ptr) 
+     requires (dst_ptr != 0i64), (src_ptr != 0i64) {
+     tfp64:dist = hnsw_pq_get_dist(src_ptr) ? 0.0tf;
+-    int32:slot = hnsw_pq_get_slot(src_ptr)  ? 0i32;
+-    int32:gen = hnsw_pq_get_gen(src_ptr)   ? 0i32;
++    int32:slot = hnsw_pq_get_slot(src_ptr)  ? 0i32 ?! 0i32;
++    int32:gen = hnsw_pq_get_gen(src_ptr)   ? 0i32 ?! 0i32;
+     drop(hnsw_pq_set_candidate(dst_ptr, dist, slot, gen));
+     pass(0i64);
+ };
+@@ -73,7 +73,7 @@ func:hnsw_pq_compare = int64(int64:pq, int64:ptr_a, int64:ptr_b)
+     requires (pq != 0i64), (ptr_a != 0i64), (ptr_b != 0i64) {
+     tfp64:dist_a = hnsw_pq_get_dist(ptr_a)  ? 0.0tf;
+     tfp64:dist_b = hnsw_pq_get_dist(ptr_b)  ? 0.0tf;
+-    int64:is_max = hnsw_pq_get_is_max(pq)   ? 0i64;
++    int64:is_max = hnsw_pq_get_is_max(pq)   ? 0i64 ?! 0i64;
+ 
+     // Return 1 if A should be above B in the heap.
+     if (is_max != 0i64) {
+@@ -97,10 +97,10 @@ func:hnsw_pq_sift_up = int64(int64:pq, int64:index) requires (pq != 0i64), (inde
+     int64:temp_ptr = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
+ 
+     when (curr > 0i64) {
+-        int64:curr_ptr = hnsw_pq_get_candidate_ptr(pq, curr)  ? 0i64;
+-        int64:parent_ptr = hnsw_pq_get_candidate_ptr(pq, parent)  ? 0i64;
++        int64:curr_ptr = hnsw_pq_get_candidate_ptr(pq, curr)  ? 0i64 ?! 0i64;
++        int64:parent_ptr = hnsw_pq_get_candidate_ptr(pq, parent)  ? 0i64 ?! 0i64;
+ 
+-        int64:cmp = hnsw_pq_compare(pq, curr_ptr, parent_ptr)  ? 0i64;
++        int64:cmp = hnsw_pq_compare(pq, curr_ptr, parent_ptr)  ? 0i64 ?! 0i64;
+         if (cmp == 0i64) { break; }
+ 
+         drop(hnsw_pq_copy_candidate(temp_ptr, curr_ptr));
+@@ -116,7 +116,7 @@ func:hnsw_pq_sift_up = int64(int64:pq, int64:index) requires (pq != 0i64), (inde
+ };
+ 
+ func:hnsw_pq_sift_down = int64(int64:pq, int64:index) requires (pq != 0i64), (index >= 0i64) {
+-    int64:size = hnsw_pq_get_size(pq)  ? 0i64;
++    int64:size = hnsw_pq_get_size(pq)  ? 0i64 ?! 0i64;
+     int64:curr = index;
+ 
+     int64:temp_ptr = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
+@@ -126,11 +126,11 @@ func:hnsw_pq_sift_down = int64(int64:pq, int64:index) requires (pq != 0i64), (in
+         int64:right = curr * 2i64 + 2i64;
+         int64:best  = curr;
+ 
+-        int64:best_ptr = hnsw_pq_get_candidate_ptr(pq, best)  ? 0i64;
++        int64:best_ptr = hnsw_pq_get_candidate_ptr(pq, best)  ? 0i64 ?! 0i64;
+ 
+         if (left < size) {
+-            int64:left_ptr = hnsw_pq_get_candidate_ptr(pq, left)  ? 0i64;
+-            int64:cmp_left = hnsw_pq_compare(pq, left_ptr, best_ptr)  ? 0i64;
++            int64:left_ptr = hnsw_pq_get_candidate_ptr(pq, left)  ? 0i64 ?! 0i64;
++            int64:cmp_left = hnsw_pq_compare(pq, left_ptr, best_ptr)  ? 0i64 ?! 0i64;
+             if (cmp_left != 0i64) {
+                 best = left;
+                 best_ptr = left_ptr;
+@@ -138,8 +138,8 @@ func:hnsw_pq_sift_down = int64(int64:pq, int64:index) requires (pq != 0i64), (in
+         }
+ 
+         if (right < size) {
+-            int64:right_ptr = hnsw_pq_get_candidate_ptr(pq, right)  ? 0i64;
+-            int64:cmp_right = hnsw_pq_compare(pq, right_ptr, best_ptr)  ? 0i64;
++            int64:right_ptr = hnsw_pq_get_candidate_ptr(pq, right)  ? 0i64 ?! 0i64;
++            int64:cmp_right = hnsw_pq_compare(pq, right_ptr, best_ptr)  ? 0i64 ?! 0i64;
+             if (cmp_right != 0i64) {
+                 best = right;
+                 best_ptr = right_ptr;
+@@ -148,7 +148,7 @@ func:hnsw_pq_sift_down = int64(int64:pq, int64:index) requires (pq != 0i64), (in
+ 
+         if (best == curr) { break; }
+ 
+-        int64:curr_ptr = hnsw_pq_get_candidate_ptr(pq, curr)  ? 0i64;
++        int64:curr_ptr = hnsw_pq_get_candidate_ptr(pq, curr)  ? 0i64 ?! 0i64;
+         drop(hnsw_pq_copy_candidate(temp_ptr, curr_ptr));
+         drop(hnsw_pq_copy_candidate(curr_ptr, best_ptr));
+         drop(hnsw_pq_copy_candidate(best_ptr, temp_ptr));
+@@ -178,21 +178,21 @@ pub func:hnsw_pq_create = int64(int64:capacity, int64:is_max_heap) requires (cap
+ };
+ 
+ pub func:hnsw_pq_destroy = int64(int64:pq) requires (pq != 0i64) {
+-    int64:elems = hnsw_pq_get_elements(pq)  ? 0i64;
++    int64:elems = hnsw_pq_get_elements(pq)  ? 0i64 ?! 0i64;
+     if (elems != 0i64) { drop(npk_core_dalloc(elems)); }
+     drop(npk_core_dalloc(pq));
+     pass(0i64);
+ };
+ 
+ func:hnsw_pq_grow = int64(int64:pq) requires (pq != 0i64) {
+-    int64:old_capacity = hnsw_pq_get_capacity(pq)  ? 0i64;
++    int64:old_capacity = hnsw_pq_get_capacity(pq)  ? 0i64 ?! 0i64;
+     int64:new_capacity = old_capacity * 2i64;
+-    int64:old_elems = hnsw_pq_get_elements(pq)  ? 0i64;
++    int64:old_elems = hnsw_pq_get_elements(pq)  ? 0i64 ?! 0i64;
+     
+     int64:new_elems = npk_core_alloc(new_capacity * HNSW_PQ_CANDIDATE_SIZE);
+     if (new_elems == 0i64) { fail((ERR_HNSW_OOM) => tbb32); }
+     
+-    int64:size = hnsw_pq_get_size(pq)  ? 0i64;
++    int64:size = hnsw_pq_get_size(pq)  ? 0i64 ?! 0i64;
+     if (size > 0i64) {
+         // Nitpick memory primitives don't have npk_mem_copy natively exposed in the core in mem_primitives? 
+         // Wait, mem_primitives.npk HAS npk_mem_copy!
+@@ -207,14 +207,14 @@ func:hnsw_pq_grow = int64(int64:pq) requires (pq != 0i64) {
+ 
+ // Returns 0 on success.
+ pub func:hnsw_pq_push = int64(int64:pq, tfp64:dist, int32:slot, int32:gen) requires (pq != 0i64) {
+-    int64:size = hnsw_pq_get_size(pq)      ? 0i64;
+-    int64:capacity = hnsw_pq_get_capacity(pq)  ? 0i64;
++    int64:size = hnsw_pq_get_size(pq)      ? 0i64 ?! 0i64;
++    int64:capacity = hnsw_pq_get_capacity(pq)  ? 0i64 ?! 0i64;
+ 
+     if (size >= capacity) {
+         drop(hnsw_pq_grow(pq));
+     }
+ 
+-    int64:ptr = hnsw_pq_get_candidate_ptr(pq, size)  ? 0i64;
++    int64:ptr = hnsw_pq_get_candidate_ptr(pq, size)  ? 0i64 ?! 0i64;
+     drop(hnsw_pq_set_candidate(ptr, dist, slot, gen));
+ 
+     drop(npk_mem_write_int64(pq, HNSW_PQ_OFF_SIZE, size + 1i64));
+@@ -226,16 +226,16 @@ pub func:hnsw_pq_push = int64(int64:pq, tfp64:dist, int32:slot, int32:gen) requi
+ // Returns 0 on success, -1 on empty. Root candidate copied to out_candidate_ptr.
+ pub func:hnsw_pq_pop = int64(int64:pq, int64:out_candidate_ptr) 
+     requires (pq != 0i64), (out_candidate_ptr != 0i64) {
+-    int64:size = hnsw_pq_get_size(pq)  ? 0i64;
++    int64:size = hnsw_pq_get_size(pq)  ? 0i64 ?! 0i64;
+ 
+     if (size == 0i64) { pass(-1i64); }
+ 
+-    int64:root_ptr = hnsw_pq_get_candidate_ptr(pq, 0i64)  ? 0i64;
++    int64:root_ptr = hnsw_pq_get_candidate_ptr(pq, 0i64)  ? 0i64 ?! 0i64;
+     drop(hnsw_pq_copy_candidate(out_candidate_ptr, root_ptr));
+ 
+     int64:last_idx = size - 1i64;
+     if (last_idx > 0i64) {
+-        int64:last_ptr = hnsw_pq_get_candidate_ptr(pq, last_idx)  ? 0i64;
++        int64:last_ptr = hnsw_pq_get_candidate_ptr(pq, last_idx)  ? 0i64 ?! 0i64;
+         drop(hnsw_pq_copy_candidate(root_ptr, last_ptr));
+     }
+ 
+@@ -250,12 +250,13 @@ pub func:hnsw_pq_pop = int64(int64:pq, int64:out_candidate_ptr)
+ // Returns 0 on success, -1 on empty. Root candidate copied to out_candidate_ptr.
+ pub func:hnsw_pq_peek = int64(int64:pq, int64:out_candidate_ptr) 
+     requires (pq != 0i64), (out_candidate_ptr != 0i64) {
+-    int64:size = hnsw_pq_get_size(pq)  ? 0i64;
++    int64:size = hnsw_pq_get_size(pq)  ? 0i64 ?! 0i64;
+ 
+     if (size == 0i64) { pass(-1i64); }
+ 
+-    int64:root_ptr = hnsw_pq_get_candidate_ptr(pq, 0i64)  ? 0i64;
++    int64:root_ptr = hnsw_pq_get_candidate_ptr(pq, 0i64)  ? 0i64 ?! 0i64;
+     drop(hnsw_pq_copy_candidate(out_candidate_ptr, root_ptr));
+ 
+     pass(0i64);
+ };
++
+diff --git a/src/vector/hnsw_search.npk b/src/vector/hnsw_search.npk
+index 55c91f8..816f7ed 100644
+--- a/src/vector/hnsw_search.npk
++++ b/src/vector/hnsw_search.npk
+@@ -21,20 +21,20 @@ pub func:hnsw_search_layer = int64(
+     int64:doc_store
+ ) requires (graph != 0i64), (visited_set != 0i64), (ef > 0i32) {
+     
+-    int64:arena = hnsw_graph_get_arena(graph)  ? 0i64;
+-    int64:ep_node_ptr = hnsw_arena_get_node(arena, ep_slot, ep_gen)  ? 0i64;
++    int64:arena = hnsw_graph_get_arena(graph)  ? 0i64 ?! 0i64;
++    int64:ep_node_ptr = hnsw_arena_get_node(arena, ep_slot, ep_gen)  ? 0i64 ?! 0i64;
+     if (ep_node_ptr == 0i64) { fail((ERR_HNSW_STALE_HANDLE) => tbb32); }
+ 
+-    int64:ep_vec_offset = hnsw_node_get_vector_offset(ep_node_ptr)  ? 0i64;
++    int64:ep_vec_offset = hnsw_node_get_vector_offset(ep_node_ptr)  ? 0i64 ?! 0i64;
+     tfp64:ep_dist = hnsw_graph_distance(graph, query_offset, ep_vec_offset)  ? 3.402823466e+38tf;
+ 
+     int64:ef_64 = ((ef) => int64);
+ 
+     // candidates: Min-Heap (capacity = ef initially, dynamically grows if needed)
+-    int64:candidates = hnsw_pq_create(ef_64, 0i64)  ? 0i64;
++    int64:candidates = hnsw_pq_create(ef_64, 0i64)  ? 0i64 ?! 0i64;
+     
+     // W: Max-Heap (closest found so far)
+-    int64:W = hnsw_pq_create(ef_64, 1i64)  ? 0i64;
++    int64:W = hnsw_pq_create(ef_64, 1i64)  ? 0i64 ?! 0i64;
+ 
+     drop(hnsw_pq_push(candidates, ep_dist, ep_slot, ep_gen));
+     bool:ep_match = true;
+@@ -42,7 +42,7 @@ pub func:hnsw_search_layer = int64(
+         if (doc_store != 0i64) {
+             int64:ep_doc_ptr = npk_mem_read_int64(doc_store, ((ep_slot) => int64) * 8i64);
+             if (ep_doc_ptr != 0i64) {
+-                ep_match = _?!evaluate_filter(json_arena, filter_ast, ep_doc_ptr);
++                ep_match = raw evaluate_filter(json_arena, filter_ast, ep_doc_ptr);
+             }
+         }
+     }
+@@ -58,11 +58,11 @@ pub func:hnsw_search_layer = int64(
+     when ((hnsw_pq_get_size(candidates) ? 0i64) > 0i64) {
+         drop(hnsw_pq_pop(candidates, C));
+         tfp64:c_dist = hnsw_pq_get_dist(C)  ? 3.402823466e+38tf;
+-        int32:c_slot = hnsw_pq_get_slot(C)  ? 0i32;
+-        int32:c_gen = hnsw_pq_get_gen(C)   ? 0i32;
++        int32:c_slot = hnsw_pq_get_slot(C)  ? 0i32 ?! 0i32;
++        int32:c_gen = hnsw_pq_get_gen(C)   ? 0i32 ?! 0i32;
+ 
+         tfp64:f_dist = 3.402823466e+38f32; // ~Infinity
+-        int64:w_size = hnsw_pq_get_size(W) ? 0i64;
++        int64:w_size = hnsw_pq_get_size(W) ? 0i64 ?! 0i64;
+         if (w_size > 0i64) {
+             drop(hnsw_pq_peek(W, furthest));
+             f_dist = hnsw_pq_get_dist(furthest)  ? 3.402823466e+38tf;
+@@ -74,28 +74,28 @@ pub func:hnsw_search_layer = int64(
+             }
+         }
+ 
+-        int64:c_node_ptr = hnsw_arena_get_node(arena, c_slot, c_gen)  ? 0i64;
++        int64:c_node_ptr = hnsw_arena_get_node(arena, c_slot, c_gen)  ? 0i64 ?! 0i64;
+         if (c_node_ptr == 0i64) { continue; }
+ 
+-        int32:num_neighbors = hnsw_node_get_num_neighbors(c_node_ptr, layer)  ? 0i32;
++        int32:num_neighbors = hnsw_node_get_num_neighbors(c_node_ptr, layer)  ? 0i32 ?! 0i32;
+         int64:i = 0i64;
+         int64:n_64 = ((num_neighbors) => int64);
+ 
+         when (i < n_64) {
+-            int32:n_slot = hnsw_node_get_neighbor_slot(c_node_ptr, layer, i)  ? 0i32;
+-            int32:n_gen = hnsw_node_get_neighbor_gen(c_node_ptr, layer, i)  ? 0i32;
++            int32:n_slot = hnsw_node_get_neighbor_slot(c_node_ptr, layer, i)  ? 0i32 ?! 0i32;
++            int32:n_gen = hnsw_node_get_neighbor_gen(c_node_ptr, layer, i)  ? 0i32 ?! 0i32;
+ 
+-            int64:is_visited = hnsw_visited_check(visited_set, n_slot)  ? 0i64;
++            int64:is_visited = hnsw_visited_check(visited_set, n_slot)  ? 0i64 ?! 0i64;
+             if (is_visited == 0i64) {
+                 drop(hnsw_visited_mark(visited_set, n_slot));
+ 
+-                int64:n_node_ptr = hnsw_arena_get_node(arena, n_slot, n_gen)  ? 0i64;
++                int64:n_node_ptr = hnsw_arena_get_node(arena, n_slot, n_gen)  ? 0i64 ?! 0i64;
+                 if (n_node_ptr != 0i64) {
+                     if (filter_ast != 0i64) {
+                         if (doc_store != 0i64) {
+                             int64:doc_ptr = npk_mem_read_int64(doc_store, ((n_slot) => int64) * 8i64);
+                             if (doc_ptr != 0i64) {
+-                                bool:match = _?!evaluate_filter(json_arena, filter_ast, doc_ptr);
++                                bool:match = raw evaluate_filter(json_arena, filter_ast, doc_ptr);
+                                 if (match == false) {
+                                     i = i + 1i64;
+                                     continue;
+@@ -104,11 +104,11 @@ pub func:hnsw_search_layer = int64(
+                         }
+                     }
+ 
+-                    int64:n_vec_offset = hnsw_node_get_vector_offset(n_node_ptr)  ? 0i64;
++                    int64:n_vec_offset = hnsw_node_get_vector_offset(n_node_ptr)  ? 0i64 ?! 0i64;
+                     tfp64:n_dist = hnsw_graph_distance(graph, query_offset, n_vec_offset)  ? 3.402823466e+38tf;
+ 
+                     tfp64:f_dist2 = 3.402823466e+38f32;
+-                    int64:w_size2 = hnsw_pq_get_size(W)  ? 0i64;
++                    int64:w_size2 = hnsw_pq_get_size(W)  ? 0i64 ?! 0i64;
+                     if (w_size2 > 0i64) {
+                         drop(hnsw_pq_peek(W, furthest));
+                         f_dist2 = hnsw_pq_get_dist(furthest)  ? 3.402823466e+38tf;
+@@ -136,3 +136,4 @@ pub func:hnsw_search_layer = int64(
+ 
+     pass(W);
+ };
++
+diff --git a/src/vector/hnsw_visited.npk b/src/vector/hnsw_visited.npk
+index e516d4e..e73c19d 100644
+--- a/src/vector/hnsw_visited.npk
++++ b/src/vector/hnsw_visited.npk
+@@ -66,3 +66,4 @@ pub func:hnsw_visited_check = int64(int64:visited, int32:slot_idx)
+     if (val == curr32) { pass(1i64); }
+     pass(0i64);
+ };
++

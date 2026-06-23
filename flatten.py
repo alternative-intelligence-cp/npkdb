@@ -7,7 +7,7 @@ current_line = 1
 
 def process_file(f):
     global current_line
-    f = os.path.normpath(f)
+    f = os.path.abspath(f)
     if f in visited:
         return
     visited.add(f)
@@ -23,10 +23,15 @@ def process_file(f):
             m = re.match(r'use\s+"([^"]+)"\.\*;', line_content)
             if m:
                 target = m.group(1)
-                # If absolute? Nitpick uses relative to current file.
-                target_path = os.path.normpath(os.path.join(base_dir, target))
-                if target == "unsafe.npk" and not os.path.exists(target_path):
-                    target_path = "src/util/unsafe.npk"
+                if target.startswith("stdlib/"):
+                    target_path = os.path.abspath(os.path.join("/home/randy/Workspace/REPOS/nitpick", target))
+                else:
+                    target_path = os.path.abspath(os.path.join(base_dir, target))
+                    
+                if not os.path.exists(target_path):
+                    stdlib_path = os.path.abspath(os.path.join("/home/randy/Workspace/REPOS/nitpick/stdlib", target))
+                    if os.path.exists(stdlib_path):
+                        target_path = stdlib_path
                 process_file(target_path)
                 continue
             
@@ -34,9 +39,10 @@ def process_file(f):
             line_map[current_line] = (f, orig_line)
             current_line += 1
 
-process_file("tests/test_hnsw_graph/main.npk")
+process_file("src/main.npk")
 
 with open("build/flattened.npk", "w") as fp:
+    fp.write('use "unsafe.npk".*;\n')
     fp.writelines(lines)
 
 import json

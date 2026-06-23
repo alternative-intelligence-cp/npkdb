@@ -17,7 +17,7 @@ pub fixed int64:SEQLOCK_MAX_RETRIES   = 1000i64;  // Max reader retries before f
 // Allocate and initialize a seqlock (seq = 0, even, no write in progress).
 pub func:seqlock_alloc = int64() {
     int64:ptr = npk_core_alloc(SEQLOCK_SIZE);
-    if (ptr == 0i64) { fail(ERR_ART_CAS_FAILED => tbb8); }
+    if (ptr == 0i64) { fail(@cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
     // Write initial seq = 0 using atomic store
     drop(atomic_store_seqcst(ptr + SEQLOCK_OFF_SEQ, 0i64));
     pass(ptr);
@@ -39,12 +39,12 @@ pub func:seqlock_free = NIL(int64:seqlock_ptr) {
     pass(NIL);
 };
 
-// Acquire write lock: increments seq to odd (signals write in progress).
+// Acquire write lock: increments seq to raw odd (signals write in progress).
 // Spins until seq is even (no other writer) before incrementing.
 // Returns the pre-write sequence number (for bookkeeping).
 pub func:seqlock_write_begin = int64(int64:seqlock_ptr)
     requires seqlock_ptr != 0i64
-    ensures raw atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ) % 2i64 == 1i64
+    ensures atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ) % 2i64 == 1i64
 {
     when (true) {
         int64:seq = raw atomic_load_seqcst(seqlock_ptr + SEQLOCK_OFF_SEQ);
@@ -58,7 +58,7 @@ pub func:seqlock_write_begin = int64(int64:seqlock_ptr)
             }
         }
         // Another writer is active; spin-wait with thread_yield
-        drop(thread_yield());
+        drop(Thread.yield());
     }
     pass(0i64);  // Unreachable but satisfies type checker
 };
@@ -84,7 +84,7 @@ pub func:seqlock_read_begin = int64(int64:seqlock_ptr)
         if (seq % 2i64 == 0i64) {
             pass(seq);  // Even — safe to start reading
         }
-        drop(thread_yield());  // Writer active — wait
+        drop(Thread.yield());  // Writer active — wait
     }
     pass(0i64);  // Unreachable
 };
@@ -114,16 +114,16 @@ pub func:seqlock_read_copy = int64(int64:seqlock_ptr, int64:data_ptr,
 {
     int64:retries = 0i64;
     when (retries < SEQLOCK_MAX_RETRIES) {
-        int64:seq = seqlock_read_begin(seqlock_ptr) ?! 0i64;
+        int64:seq = seqlock_read_begin(seqlock_ptr) ? 0i64;
         // Copy data into local buffer
         drop(npk_mem_copy(out_ptr, data_ptr, data_len));
         // Validate
-        if (seqlock_read_validate(seqlock_ptr, seq) ?! false) {
+        if (seqlock_read_validate(seqlock_ptr, seq) ? false) {
             pass(0i64);
         }
         retries = retries + 1i64;
     }
-    fail(ERR_ART_CAS_FAILED => tbb8);
+    fail(@cast_unchecked<tbb8>(ERR_ART_CAS_FAILED));
 };
 
 // Write a small metadata block protected by a seqlock.
@@ -141,3 +141,5 @@ pub func:seqlock_write_copy = NIL(int64:seqlock_ptr, int64:data_ptr,
     drop(seqlock_write_end(seqlock_ptr));
     pass(NIL);
 };
+
+

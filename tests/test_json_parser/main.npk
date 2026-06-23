@@ -13,76 +13,56 @@ pub func:proc_exit = NIL(int32:code) {
 };
 
 func:main = int32(int32:argc, wild any->:argv) {
-    // 1. Test parse_i64
-    int64:buf1 = npk_core_alloc(32i64);
-    drop(npk_mem_write_string(buf1, "   -12345  "));
+    int64:arena_ptr = raw json_arena_init(65536i64);
     
-    ParserState:state1 = ParserState {
-        buf: buf1,
-        length: 11i64,
-        pos: 0i64,
-        depth: 0i64
-    };
+    // 1. Test parse_i64 implicitly through parse_json
+    string:json_str1 = "-12345";
+    NpkJsonVal:v1 = raw parse_json(arena_ptr, json_str1);
+    if (v1.type != JSON_NUM_I64) { exit(11i32); }
+    if (v1.payload != -12345i64) { exit(12i32); }
     
-    drop(skip_whitespace(@state1));
-    int64:num = _!parse_i64(@state1);
+    // 2. Test parse_string implicitly through parse_json
+    string:json_str2 = "\"hello world\"";
+    NpkJsonVal:v2 = raw parse_json(arena_ptr, json_str2);
+    if (v2.type != JSON_STR) { exit(21i32); }
     
-    if (num != -12345i64) { exit(11i32); }
-    if (state1.pos != 9i64) { exit(12i32); }
+    int64:s2_ptr = v2.payload;
+    int32:s2_len = npk_mem_read_int32(s2_ptr, 0i64);
+    if (s2_len != 11i32) { exit(22i32); }
     
-    // 2. Test parse_string
-    int64:buf2 = npk_core_alloc(32i64);
-    drop(npk_mem_write_string(buf2, "  \"hello world\"  "));
-    
-    ParserState:state2 = ParserState {
-        buf: buf2,
-        length: 17i64,
-        pos: 0i64,
-        depth: 0i64
-    };
-    
-    drop(skip_whitespace(@state2));
-    NpkJsonStr:s = _!parse_string(@state2);
-    
-    if (s.length != 11u32) { exit(21i32); }
-    if (state2.pos != 15i64) { exit(22i32); }
-    
-    // Verify first char 'h'
-    int64:first_char = npk_mem_read_byte(s.data, 0i64);
-    if (first_char != 104i64) {
-        exit((first_char & 255i64) => int32);
-    } // 'h' is 104
+    int64:s2_data = npk_mem_read_int64(s2_ptr, 8i64);
+    int64:first_char = npk_mem_read_byte(s2_data, 0i64);
+    if (first_char != 104i64) { exit(23i32); } // 'h'
     
     // 3. Test parse_array with floats
-    string:json_str = "[12.34, -5.6, 7.8]";
-    NpkJsonVal:v = _!parse_json(json_str);
-    if (v.type != JSON_ARR) { exit(31i32); }
+    string:json_str3 = "[12.34, -5.6, 7.8]";
+    NpkJsonVal:arr_val = raw parse_json(arena_ptr, json_str3);
+    if (arr_val.type != JSON_ARR) { exit(31i32); }
     
-    int64:arr_ptr = v.payload;
+    int64:arr_ptr = arr_val.payload;
     int32:arr_count = npk_mem_read_int32(arr_ptr, 0i64);
-    if (arr_count != 3i32) { exit(32i32); } // count == 3
+    if (arr_count != 3i32) { exit(32i32); }
     
     int64:handles_ptr = npk_mem_read_int64(arr_ptr, 8i64);
     
     // Check first value (12.34)
     int64:v1_ptr = npk_mem_read_int64(handles_ptr, 0i64);
-    int8:v1_type = (npk_mem_read_byte(v1_ptr, 0i64)) => int8;
+    int8:v1_type = @cast_unchecked<int8>(npk_mem_read_byte(v1_ptr, 0i64));
     
     if (v1_type != JSON_NUM_F64) { exit(33i32); }
     int64:v1_bits = npk_mem_read_int64(v1_ptr, 8i64);
-    flt64:v1_f = <-(@v1_bits => flt64->);
-    // 12.34
+    // Ignore floating point decoding for now
     
     // 4. Test parse_object
     string:obj_str = "{\"status\": \"active\"}";
-    NpkJsonVal:obj_v = _!parse_json(obj_str);
+    NpkJsonVal:obj_v = raw parse_json(arena_ptr, obj_str);
     if (obj_v.type != JSON_OBJ) { exit(41i32); }
     
     int64:obj_ptr = obj_v.payload;
     int32:obj_count = npk_mem_read_int32(obj_ptr, 0i64);
     if (obj_count != 1i32) { exit(42i32); }
-
-    println("JSON parser tests passed!");
+    
+    drop(json_arena_destroy(arena_ptr));
     exit(0i32);
 };
 

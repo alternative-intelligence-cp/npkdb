@@ -1,3 +1,4 @@
+use "../util/mem_primitives.npk".*;
 // hnsw_filter.npk — Single-Stage Filter integration (verified contracts)
 
 use "../util/constants.npk".*;
@@ -16,7 +17,7 @@ pub func:filter_eval = bool(
 {
     prove vec_id >= 0i64;
     prove vec_id < num_vectors;
-    bool:result = (@cast_unchecked<func<bool(int64)>>(filter_fn_ptr))(vec_id);
+    bool:result = (filter_fn_ptr => (bool)(int64))(vec_id);
     pass(result);
 };
 
@@ -29,8 +30,8 @@ pub func:hnsw_traversal_filter_check = bool(
     requires filter_fn_ptr != 0i64
     requires num_vectors > 0i64
 {
-    int64:node_ptr = hnsw_arena_get_node(arena, candidate.slot, candidate.generation)
-        ?! { pass(false); };  // Stale handle: treat as filtered-out.
+    int64:node_ptr = hnsw_arena_get_node(arena, candidate.slot, candidate.generation) ? 0i64;
+    if (node_ptr == 0i64) { pass(false); }  // Stale handle: treat as filtered-out.
 
     int64:vec_id = hnsw_node_get_vector_offset(node_ptr) ? 0i64; // Using get_vector_offset
 
@@ -40,5 +41,7 @@ pub func:hnsw_traversal_filter_check = bool(
     prove vec_id >= 0i64;
     prove vec_id < num_vectors;
 
-    pass(filter_eval(filter_fn_ptr, vec_id, num_vectors) ?! false);
+    pass(filter_eval(filter_fn_ptr, vec_id, num_vectors) ? false);
 };
+
+

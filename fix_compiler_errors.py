@@ -6,7 +6,7 @@ import os
 with open("build/line_map.json", "r") as fp:
     line_map = json.load(fp)
 
-cmd = "export PATH=\"/home/randy/Workspace/REPOS/nitpick/build:$PATH\" && npkc build/flattened.npk -o build/test_hnsw_graph 2>&1"
+cmd = "export PATH=\"/home/randy/Workspace/REPOS/nitpick/build:$PATH\" && npkc build/flattened.npk -o build/npkdb 2>&1"
 res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
 output = res.stdout
 

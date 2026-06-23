@@ -54,17 +54,19 @@ pub func:node4_remove_child = int64(int64:node, int64:key_byte) {
     // Shift elements left
     i = found;
     while (i < (count - 1i64)) {
-        drop(raw node4_set_key(node, i, raw node4_get_key(node, i + 1i64)));
-        drop(raw node4_set_child(node, i, raw node4_get_child(node, i + 1i64)));
+        raw node4_set_key(node, i, raw node4_get_key(node, i + 1i64));
+        raw node4_set_child(node, i, raw node4_get_child(node, i + 1i64));
         i = i + 1i64;
     }
     
     // Zero the last slot
-    drop(raw node4_set_key(node, count - 1i64, 0i64));
-    drop(raw node4_set_child(node, count - 1i64, 0i64));
+    raw node4_set_key(node, count - 1i64, 0i64);
+    raw node4_set_child(node, count - 1i64, 0i64);
     
     // Decrement count
-    drop(raw art_node_set_num_children(node, count - 1i64));
+    raw art_node_set_num_children(node, count - 1i64);
     
     pass(child);
 };
+
+

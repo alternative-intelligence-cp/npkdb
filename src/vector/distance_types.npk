@@ -1,3 +1,4 @@
+use "../util/mem_primitives.npk".*;
 // distance_types.npk — Distance metric identifiers, dimensionality constants,
 //                       and dimension validity rules for NPKDB vector kernels.
 //
@@ -23,3 +24,5 @@ pub fixed int64:SIMD_F64_WIDTH  = 8i64;
 // ── Validation rules ─────────────────────────────────────────────────────────
 // Valid dimension range: 1 ≤ dim ≤ HNSW_DIM.
 // Used as: limit<valid_dim> int64:dim in kernel signatures.
+
+

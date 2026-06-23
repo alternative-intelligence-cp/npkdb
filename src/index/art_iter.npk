@@ -256,7 +256,7 @@ pub func:art_iter_next = int64(int64:iter) {
         int64:child_idx = npk_mem_read_int64(frame_ptr, FRAME_CHILD_IDX);
         
         if (raw art_is_leaf(node_ptr)) {
-            drop(raw iter_stack_pop(iter));
+            raw iter_stack_pop(iter);
             
             int64:lkptr = node_ptr + LEAF_DATA_OFFSET;
             int64:lklen = raw art_leaf_key_len(node_ptr);
@@ -280,13 +280,13 @@ pub func:art_iter_next = int64(int64:iter) {
         } else {
             int64:child_res = raw art_node_get_nth_child(node_ptr, child_idx);
             if (child_res == 0i64) {
-                drop(raw iter_stack_pop(iter));
+                raw iter_stack_pop(iter);
             } else {
                 int64:child = npk_mem_read_int64(child_res, 0i64);
                 drop(npk_core_dalloc(child_res));
                 
                 drop(npk_mem_write_int64(frame_ptr, FRAME_CHILD_IDX, child_idx + 1i64));
-                drop(raw iter_stack_push(iter, child, 0i64));
+                raw iter_stack_push(iter, child, 0i64);
             }
         }
     }
@@ -316,7 +316,7 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
     if (prefix_len == 0i64) {
         int64:root = raw art_get_root();
         if (root != 0i64) {
-            drop(raw iter_stack_push(iter, root, 0i64));
+            raw iter_stack_push(iter, root, 0i64);
         } else {
             drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
         }
@@ -346,7 +346,7 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
                 }
             }
             if (valid == 1i64) {
-                drop(raw iter_stack_push(iter, node, 0i64));
+                raw iter_stack_push(iter, node, 0i64);
             } else {
                 drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
             }
@@ -367,13 +367,13 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
         
         depth = depth + plen;
         if (depth >= prefix_len) {
-            drop(raw iter_stack_push(iter, node, 0i64));
+            raw iter_stack_push(iter, node, 0i64);
             pass(iter);
         }
         
         int64:key_byte = 0i64;
         int64:b = npk_mem_read_byte(prefix_ptr, depth);
-        key_byte = @cast_unchecked<int64>(b);
+        key_byte = @cast_unchecked<int64>((b));
         
         int64:next_child = raw art_find_child(node, key_byte);
         if (next_child == 0i64) {
@@ -387,3 +387,5 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
     drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
     pass(iter);
 };
+
+

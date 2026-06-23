@@ -15,7 +15,7 @@ int64:sl_prng_state = 0i64;
 
 func:sl_seed_prng = NIL() {
     if (sl_prng_state == 0i64) {
-        int64:ns = libc_monotonic_ns() ?! 123456789i64;
+        int64:ns = libc_monotonic_ns() ? 123456789i64;
         sl_prng_state = ns;
     }
     pass(NIL);
@@ -54,7 +54,7 @@ pub func:sl_node_alloc = int64(string:key, int64:val_ptr, int64:val_len, int64:l
     int64:key_data_ptr = 0i64;
     if (key_len > 0i64) {
         key_data_ptr = node + size;
-        drop(raw npk_mem_write_string(key_data_ptr, key));
+        npk_mem_write_string(key_data_ptr, key);
     }
     
     drop(npk_mem_write_int64(node, 0i64, key_data_ptr));
@@ -89,7 +89,7 @@ pub func:sl_node_key = string(int64:node) {
     int64:key_ptr = npk_mem_read_int64(node, 0i64);
     int64:key_len = npk_mem_read_int64(node, 8i64);
     if (key_ptr == 0i64 || key_len == 0i64) { pass(""); }
-    pass(raw npk_mem_read_string(key_ptr, key_len));
+    pass(npk_mem_read_string(key_ptr, key_len));
 };
 
 pub func:sl_node_val_ptr = int64(int64:node) {
@@ -133,7 +133,7 @@ pub fixed int64:SL_STRUCT_SIZE = 24i64;
 
 pub func:sl_create = int64() {
     int64:sl = npk_core_alloc(SL_STRUCT_SIZE);
-    int64:head = sl_node_alloc("", 0i64, 0i64, SKIPLIST_MAX_LEVEL) ?! 0i64;
+    int64:head = sl_node_alloc("", 0i64, 0i64, SKIPLIST_MAX_LEVEL) ? 0i64;
     drop(npk_mem_write_int64(sl, SL_OFF_HEAD, head));
     drop(npk_mem_write_int64(sl, SL_OFF_COUNT, 0i64));
     drop(npk_mem_write_int64(sl, SL_OFF_MEMORY, SKIPLIST_NODE_HEADER_SIZE + (SKIPLIST_MAX_LEVEL * 8i64)));
@@ -143,7 +143,7 @@ pub func:sl_create = int64() {
 pub func:sl_destroy = NIL(int64:sl) {
     int64:curr = npk_mem_read_int64(sl, SL_OFF_HEAD);
     while (curr != 0i64) {
-        int64:nxt = sl_node_forward(curr, 0i64) ?! 0i64;
+        int64:nxt = sl_node_forward(curr, 0i64) ? 0i64;
         drop(sl_node_free(curr));
         curr = nxt;
     }
@@ -172,9 +172,9 @@ pub func:sl_insert = int64(int64:sl, string:key, int64:val_ptr, int64:val_len) {
     
     while (lvl >= 0i64) {
         while (1i64 == 1i64) {
-            int64:fwd = sl_node_forward(curr, lvl) ?! 0i64;
+            int64:fwd = sl_node_forward(curr, lvl) ? 0i64;
             if (fwd == 0i64) { break; }
-            string:fwd_key = sl_node_key(fwd) ?! "";
+            string:fwd_key = sl_node_key(fwd) ? "";
             if (fwd_key >= key) { break; } // Nitpick string compare
             curr = fwd;
         }
@@ -182,12 +182,12 @@ pub func:sl_insert = int64(int64:sl, string:key, int64:val_ptr, int64:val_len) {
         lvl = lvl - 1i64;
     }
     
-    int64:cand = sl_node_forward(curr, 0i64) ?! 0i64;
+    int64:cand = sl_node_forward(curr, 0i64) ? 0i64;
     if (cand != 0i64) {
-        string:cand_key = sl_node_key(cand) ?! "";
+        string:cand_key = sl_node_key(cand) ? "";
         if (cand_key == key) {
-            int64:old_val_len = sl_node_val_len(cand) ?! 0i64;
-            int64:old_val_ptr = sl_node_val_ptr(cand) ?! 0i64;
+            int64:old_val_len = sl_node_val_len(cand) ? 0i64;
+            int64:old_val_ptr = sl_node_val_ptr(cand) ? 0i64;
             if (old_val_ptr != 0i64) {
                 drop(npk_core_dalloc(old_val_ptr));
             }
@@ -204,13 +204,13 @@ pub func:sl_insert = int64(int64:sl, string:key, int64:val_ptr, int64:val_len) {
     }
     
     // Insert new
-    int64:new_lvl = sl_random_level() ?! 1i64;
-    int64:new_node = sl_node_alloc(key, val_ptr, val_len, new_lvl) ?! 0i64;
+    int64:new_lvl = sl_random_level() ? 1i64;
+    int64:new_node = sl_node_alloc(key, val_ptr, val_len, new_lvl) ? 0i64;
     
     int64:i = 0i64;
     while (i < new_lvl) {
         int64:u_node = npk_mem_read_int64(upd_buf, i * 8i64);
-        int64:u_fwd = sl_node_forward(u_node, i) ?! 0i64;
+        int64:u_fwd = sl_node_forward(u_node, i) ? 0i64;
         drop(sl_node_set_forward(new_node, i, u_fwd));
         drop(sl_node_set_forward(u_node, i, new_node));
         i = i + 1i64;
@@ -234,20 +234,20 @@ pub func:sl_search = int64(int64:sl, string:key) {
     
     while (lvl >= 0i64) {
         while (1i64 == 1i64) {
-            int64:fwd = sl_node_forward(curr, lvl) ?! 0i64;
+            int64:fwd = sl_node_forward(curr, lvl) ? 0i64;
             if (fwd == 0i64) { break; }
-            string:fwd_key = sl_node_key(fwd) ?! "";
+            string:fwd_key = sl_node_key(fwd) ? "";
             if (fwd_key >= key) { break; }
             curr = fwd;
         }
         lvl = lvl - 1i64;
     }
     
-    int64:cand = sl_node_forward(curr, 0i64) ?! 0i64;
+    int64:cand = sl_node_forward(curr, 0i64) ? 0i64;
     if (cand != 0i64) {
-        string:cand_key = sl_node_key(cand) ?! "";
+        string:cand_key = sl_node_key(cand) ? "";
         if (cand_key == key) {
-            int64:is_del = sl_node_is_deleted(cand) ?! 0i64;
+            int64:is_del = sl_node_is_deleted(cand) ? 0i64;
             if (is_del == 0i64) {
                 pass(cand);
             }
@@ -266,18 +266,18 @@ pub func:sl_delete = int64(int64:sl, string:key) {
     
     while (lvl >= 0i64) {
         while (1i64 == 1i64) {
-            int64:fwd = sl_node_forward(curr, lvl) ?! 0i64;
+            int64:fwd = sl_node_forward(curr, lvl) ? 0i64;
             if (fwd == 0i64) { break; }
-            string:fwd_key = sl_node_key(fwd) ?! "";
+            string:fwd_key = sl_node_key(fwd) ? "";
             if (fwd_key >= key) { break; }
             curr = fwd;
         }
         lvl = lvl - 1i64;
     }
     
-    int64:cand = sl_node_forward(curr, 0i64) ?! 0i64;
+    int64:cand = sl_node_forward(curr, 0i64) ? 0i64;
     if (cand != 0i64) {
-        string:cand_key = sl_node_key(cand) ?! "";
+        string:cand_key = sl_node_key(cand) ? "";
         if (cand_key == key) {
             drop(sl_node_set_deleted(cand));
         }
@@ -287,9 +287,11 @@ pub func:sl_delete = int64(int64:sl, string:key) {
 
 pub func:sl_first = int64(int64:sl) {
     int64:head = npk_mem_read_int64(sl, SL_OFF_HEAD);
-    pass(sl_node_forward(head, 0i64) ?! 0i64);
+    pass(sl_node_forward(head, 0i64) ? 0i64);
 };
 
 pub func:sl_next = int64(int64:node) {
-    pass(sl_node_forward(node, 0i64) ?! 0i64);
+    pass(sl_node_forward(node, 0i64) ? 0i64);
 };
+
+

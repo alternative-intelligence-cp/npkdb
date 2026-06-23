@@ -1,4 +1,4 @@
-// art.npk — ART primary key index (single-threaded for now; lock-free in v0.1.6)
+// art.npk — ART primary key index (single-threaded for now; lock-npk_core_dalloc in v0.1.6)
 
 use "../util/error_codes.npk".*;
 use "../util/constants.npk".*;
@@ -123,7 +123,7 @@ pub func:art_update_child = NIL(int64:parent, int64:key_byte, int64:new_child) {
         int64:i = 0i64;
         while (i < num) {
             if (raw node4_get_key(parent, i) == key_byte) {
-                drop(raw node4_set_child(parent, i, new_child));
+                raw node4_set_child(parent, i, new_child);
                 pass(NIL);
             }
             i = i + 1i64;
@@ -134,7 +134,7 @@ pub func:art_update_child = NIL(int64:parent, int64:key_byte, int64:new_child) {
         int64:i = 0i64;
         while (i < num) {
             if (raw node16_get_key(parent, i) == key_byte) {
-                drop(raw node16_set_child(parent, i, new_child));
+                raw node16_set_child(parent, i, new_child);
                 pass(NIL);
             }
             i = i + 1i64;
@@ -142,10 +142,10 @@ pub func:art_update_child = NIL(int64:parent, int64:key_byte, int64:new_child) {
     }
     if (ptype == ART_NODE48) {
         int64:slot = raw node48_get_slot(parent, key_byte);
-        drop(raw node48_set_child(parent, slot, new_child));
+        raw node48_set_child(parent, slot, new_child);
     }
     if (ptype == ART_NODE256) {
-        drop(raw node256_set_child(parent, key_byte, new_child));
+        raw node256_set_child(parent, key_byte, new_child);
     }
     pass(NIL);
 };
@@ -211,29 +211,29 @@ pub func:art_copy_node = int64(int64:node) {
     if (ntype == ART_NODE256) { new_node = raw art_alloc_node256(); }
     
     int64:plen = raw art_node_prefix_len(node);
-    drop(raw art_node_set_prefix_len(new_node, plen));
+    raw art_node_set_prefix_len(new_node, plen);
     int64:i = 0i64;
     while (i < plen) {
-        drop(raw art_node_set_prefix_byte(new_node, i, raw art_node_prefix_byte(node, i)));
+        raw art_node_set_prefix_byte(new_node, i, raw art_node_prefix_byte(node, i));
         i = i + 1i64;
     }
     
     int64:num = raw art_node_num_children(node);
-    drop(raw art_node_set_num_children(new_node, num));
+    raw art_node_set_num_children(new_node, num);
     
     if (ntype == ART_NODE4) {
         i = 0i64;
         while (i < num) {
-            drop(raw node4_set_key(new_node, i, raw node4_get_key(node, i)));
-            drop(raw node4_set_child(new_node, i, raw node4_get_child(node, i)));
+            raw node4_set_key(new_node, i, raw node4_get_key(node, i));
+            raw node4_set_child(new_node, i, raw node4_get_child(node, i));
             i = i + 1i64;
         }
     } else {
         if (ntype == ART_NODE16) {
             i = 0i64;
             while (i < num) {
-                drop(raw node16_set_key(new_node, i, raw node16_get_key(node, i)));
-                drop(raw node16_set_child(new_node, i, raw node16_get_child(node, i)));
+                raw node16_set_key(new_node, i, raw node16_get_key(node, i));
+                raw node16_set_child(new_node, i, raw node16_get_child(node, i));
                 i = i + 1i64;
             }
         } else {
@@ -242,8 +242,8 @@ pub func:art_copy_node = int64(int64:node) {
                 while (k < 256i64) {
                     int64:slot = raw node48_get_slot(node, k);
                     if (slot != 0i64) {
-                        drop(raw node48_set_slot(new_node, k, slot));
-                        drop(raw node48_set_child(new_node, slot, raw node48_get_child(node, slot)));
+                        raw node48_set_slot(new_node, k, slot);
+                        raw node48_set_child(new_node, slot, raw node48_get_child(node, slot));
                     }
                     k = k + 1i64;
                 }
@@ -253,7 +253,7 @@ pub func:art_copy_node = int64(int64:node) {
                     while (k < 256i64) {
                         int64:child = raw node256_get_child(node, k);
                         if (child != 0i64) {
-                            drop(raw node256_set_child(new_node, k, child));
+                            raw node256_set_child(new_node, k, child);
                         }
                         k = k + 1i64;
                     }
@@ -272,57 +272,57 @@ pub func:art_add_child_copy = int64(int64:node, int64:key_byte, int64:child_ptr)
     if (ntype == ART_NODE4) {
         if (num < 4i64) {
             int64:new_node = raw art_copy_node(node);
-            drop(raw node4_set_key(new_node, num, key_byte));
-            drop(raw node4_set_child(new_node, num, child_ptr));
-            drop(raw art_node_set_num_children(new_node, num + 1i64));
+            raw node4_set_key(new_node, num, key_byte);
+            raw node4_set_child(new_node, num, child_ptr);
+            raw art_node_set_num_children(new_node, num + 1i64);
             pass(new_node);
         } else {
             int64:n16 = raw art_alloc_node16();
             int64:plen = raw art_node_prefix_len(node);
-            drop(raw art_node_set_prefix_len(n16, plen));
+            raw art_node_set_prefix_len(n16, plen);
             int64:i = 0i64;
             while (i < plen) {
-                drop(raw art_node_set_prefix_byte(n16, i, raw art_node_prefix_byte(node, i)));
+                raw art_node_set_prefix_byte(n16, i, raw art_node_prefix_byte(node, i));
                 i = i + 1i64;
             }
             i = 0i64;
             while (i < num) {
-                drop(raw node16_set_key(n16, i, raw node4_get_key(node, i)));
-                drop(raw node16_set_child(n16, i, raw node4_get_child(node, i)));
+                raw node16_set_key(n16, i, raw node4_get_key(node, i));
+                raw node16_set_child(n16, i, raw node4_get_child(node, i));
                 i = i + 1i64;
             }
-            drop(raw node16_set_key(n16, num, key_byte));
-            drop(raw node16_set_child(n16, num, child_ptr));
-            drop(raw art_node_set_num_children(n16, num + 1i64));
+            raw node16_set_key(n16, num, key_byte);
+            raw node16_set_child(n16, num, child_ptr);
+            raw art_node_set_num_children(n16, num + 1i64);
             pass(n16);
         }
     } else {
         if (ntype == ART_NODE16) {
             if (num < 16i64) {
                 int64:new_node = raw art_copy_node(node);
-                drop(raw node16_set_key(new_node, num, key_byte));
-                drop(raw node16_set_child(new_node, num, child_ptr));
-                drop(raw art_node_set_num_children(new_node, num + 1i64));
+                raw node16_set_key(new_node, num, key_byte);
+                raw node16_set_child(new_node, num, child_ptr);
+                raw art_node_set_num_children(new_node, num + 1i64);
                 pass(new_node);
             } else {
                 int64:n48 = raw art_alloc_node48();
                 int64:plen = raw art_node_prefix_len(node);
-                drop(raw art_node_set_prefix_len(n48, plen));
+                raw art_node_set_prefix_len(n48, plen);
                 int64:i = 0i64;
                 while (i < plen) {
-                    drop(raw art_node_set_prefix_byte(n48, i, raw art_node_prefix_byte(node, i)));
+                    raw art_node_set_prefix_byte(n48, i, raw art_node_prefix_byte(node, i));
                     i = i + 1i64;
                 }
                 i = 0i64;
                 while (i < num) {
                     int64:kb = raw node16_get_key(node, i);
-                    drop(raw node48_set_slot(n48, kb, i + 1i64));
-                    drop(raw node48_set_child(n48, i + 1i64, raw node16_get_child(node, i)));
+                    raw node48_set_slot(n48, kb, i + 1i64);
+                    raw node48_set_child(n48, i + 1i64, raw node16_get_child(node, i));
                     i = i + 1i64;
                 }
-                drop(raw node48_set_slot(n48, key_byte, num + 1i64));
-                drop(raw node48_set_child(n48, num + 1i64, child_ptr));
-                drop(raw art_node_set_num_children(n48, num + 1i64));
+                raw node48_set_slot(n48, key_byte, num + 1i64);
+                raw node48_set_child(n48, num + 1i64, child_ptr);
+                raw art_node_set_num_children(n48, num + 1i64);
                 pass(n48);
             }
         } else {
@@ -338,36 +338,36 @@ pub func:art_add_child_copy = int64(int64:node, int64:key_byte, int64:child_ptr)
                         }
                         i = i + 1i64;
                     }
-                    drop(raw node48_set_slot(new_node, key_byte, empty_slot));
-                    drop(raw node48_set_child(new_node, empty_slot, child_ptr));
-                    drop(raw art_node_set_num_children(new_node, num + 1i64));
+                    raw node48_set_slot(new_node, key_byte, empty_slot);
+                    raw node48_set_child(new_node, empty_slot, child_ptr);
+                    raw art_node_set_num_children(new_node, num + 1i64);
                     pass(new_node);
                 } else {
                     int64:n256 = raw art_alloc_node256();
                     int64:plen = raw art_node_prefix_len(node);
-                    drop(raw art_node_set_prefix_len(n256, plen));
+                    raw art_node_set_prefix_len(n256, plen);
                     int64:i = 0i64;
                     while (i < plen) {
-                        drop(raw art_node_set_prefix_byte(n256, i, raw art_node_prefix_byte(node, i)));
+                        raw art_node_set_prefix_byte(n256, i, raw art_node_prefix_byte(node, i));
                         i = i + 1i64;
                     }
                     int64:k = 0i64;
                     while (k < 256i64) {
                         int64:slot = raw node48_get_slot(node, k);
                         if (slot != 0i64) {
-                            drop(raw node256_set_child(n256, k, raw node48_get_child(node, slot)));
+                            raw node256_set_child(n256, k, raw node48_get_child(node, slot));
                         }
                         k = k + 1i64;
                     }
-                    drop(raw node256_set_child(n256, key_byte, child_ptr));
-                    drop(raw art_node_set_num_children(n256, num + 1i64));
+                    raw node256_set_child(n256, key_byte, child_ptr);
+                    raw art_node_set_num_children(n256, num + 1i64);
                     pass(n256);
                 }
             } else {
                 if (ntype == ART_NODE256) {
                     int64:new_node = raw art_copy_node(node);
-                    drop(raw node256_set_child(new_node, key_byte, child_ptr));
-                    drop(raw art_node_set_num_children(new_node, num + 1i64));
+                    raw node256_set_child(new_node, key_byte, child_ptr);
+                    raw art_node_set_num_children(new_node, num + 1i64);
                     pass(new_node);
                 }
             }
@@ -394,7 +394,7 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                 drop(ebr_unpin(thread_id));
                 pass(0i64);
             } else {
-                drop(raw art_free_node(new_leaf));
+                raw art_free_node(new_leaf);
                 restart = 1i64;
                 continue;
             }
@@ -419,22 +419,22 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                     if (parent == 0i64) {
                         bool:success = raw npk_cas_i64(art_root_ptr, node, new_leaf);
                         if (success) {
-                            drop(raw ebr_retire_or_flush(thread_id, node));
+                            raw ebr_retire_or_flush(thread_id, node);
                             drop(ebr_unpin(thread_id));
                             pass(1i64);
                         } else {
-                            drop(raw art_free_node(new_leaf));
+                            raw art_free_node(new_leaf);
                             restart = 1i64;
                             break; // restart
                         }
                     } else {
                         int64:cas_res = raw art_cas_child(parent, parent_key_byte, node, new_leaf);
                         if (cas_res == 1i64) {
-                            drop(raw ebr_retire_or_flush(thread_id, node));
+                            raw ebr_retire_or_flush(thread_id, node);
                             drop(ebr_unpin(thread_id));
                             pass(1i64);
                         } else {
-                            drop(raw art_free_node(new_leaf));
+                            raw art_free_node(new_leaf);
                             restart = 1i64;
                             break; // restart
                         }
@@ -454,25 +454,25 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                 
                 // Create a Node4 to hold both leaves
                 int64:n4 = raw art_alloc_node4();
-                drop(raw art_node_set_prefix_len(n4, p));
+                raw art_node_set_prefix_len(n4, p);
                 int64:i = 0i64;
                 while (i < p) {
-                    drop(raw art_node_set_prefix_byte(n4, i, npk_mem_read_byte(key_ptr, depth + i)));
+                    raw art_node_set_prefix_byte(n4, i, npk_mem_read_byte(key_ptr, depth + i));
                     i = i + 1i64;
                 }
                 
                 int64:b_exist = 0i64;
                 if ((depth + p) < lklen) { b_exist = npk_mem_read_byte(lkptr, depth + p); }
-                drop(raw node4_set_key(n4, 0i64, b_exist));
-                drop(raw node4_set_child(n4, 0i64, node));
+                raw node4_set_key(n4, 0i64, b_exist);
+                raw node4_set_child(n4, 0i64, node);
                 
                 int64:b_new = 0i64;
                 if ((depth + p) < key_len) { b_new = npk_mem_read_byte(key_ptr, depth + p); }
                 int64:new_leaf2 = raw art_alloc_leaf(key_ptr, key_len, val_ptr, val_len);
-                drop(raw node4_set_key(n4, 1i64, b_new));
-                drop(raw node4_set_child(n4, 1i64, new_leaf2));
+                raw node4_set_key(n4, 1i64, b_new);
+                raw node4_set_child(n4, 1i64, new_leaf2);
                 
-                drop(raw art_node_set_num_children(n4, 2i64));
+                raw art_node_set_num_children(n4, 2i64);
                 
                 if (parent == 0i64) {
                     bool:success = raw npk_cas_i64(art_root_ptr, node, n4);
@@ -480,8 +480,8 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                         drop(ebr_unpin(thread_id));
                         pass(0i64);
                     } else {
-                        drop(raw art_free_node(new_leaf2));
-                        drop(raw art_free_node(n4));
+                        raw art_free_node(new_leaf2);
+                        raw art_free_node(n4);
                         restart = 1i64;
                         break;
                     }
@@ -491,8 +491,8 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                         drop(ebr_unpin(thread_id));
                         pass(0i64);
                     } else {
-                        drop(raw art_free_node(new_leaf2));
-                        drop(raw art_free_node(n4));
+                        raw art_free_node(new_leaf2);
+                        raw art_free_node(n4);
                         restart = 1i64;
                         break;
                     }
@@ -505,16 +505,16 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                 // Prefix mismatch at internal node -> split node!
                 int64:n4 = raw art_alloc_node4();
                 
-                drop(raw art_node_set_prefix_len(n4, p2));
+                raw art_node_set_prefix_len(n4, p2);
                 int64:i = 0i64;
                 while (i < p2) {
-                    drop(raw art_node_set_prefix_byte(n4, i, raw art_node_prefix_byte(node, i)));
+                    raw art_node_set_prefix_byte(n4, i, raw art_node_prefix_byte(node, i));
                     i = i + 1i64;
                 }
                 
                 int64:b_exist = raw art_node_prefix_byte(node, p2);
-                drop(raw node4_set_key(n4, 0i64, b_exist));
-                drop(raw node4_set_child(n4, 0i64, node));
+                raw node4_set_key(n4, 0i64, b_exist);
+                raw node4_set_child(n4, 0i64, node);
                 
                 // But wait, we cannot mutate `node` in place! We must COPY `node`!
                 // Wait! Splitting a prefix requires mutating the old node's prefix_len and prefix bytes!
@@ -524,47 +524,47 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                 int64:node_copy = raw art_copy_node(node);
                 
                 int64:new_plen = plen - p2 - 1i64;
-                drop(raw art_node_set_prefix_len(node_copy, new_plen));
+                raw art_node_set_prefix_len(node_copy, new_plen);
                 i = 0i64;
                 while (i < new_plen) {
-                    drop(raw art_node_set_prefix_byte(node_copy, i, raw art_node_prefix_byte(node, p2 + 1i64 + i)));
+                    raw art_node_set_prefix_byte(node_copy, i, raw art_node_prefix_byte(node, p2 + 1i64 + i));
                     i = i + 1i64;
                 }
-                drop(raw node4_set_child(n4, 0i64, node_copy));
+                raw node4_set_child(n4, 0i64, node_copy);
                 
                 int64:b_new = 0i64;
                 if ((depth + p2) < key_len) {
                     b_new = npk_mem_read_byte(key_ptr, depth + p2);
                 }
                 int64:new_leaf2 = raw art_alloc_leaf(key_ptr, key_len, val_ptr, val_len);
-                drop(raw node4_set_key(n4, 1i64, b_new));
-                drop(raw node4_set_child(n4, 1i64, new_leaf2));
+                raw node4_set_key(n4, 1i64, b_new);
+                raw node4_set_child(n4, 1i64, new_leaf2);
                 
-                drop(raw art_node_set_num_children(n4, 2i64));
+                raw art_node_set_num_children(n4, 2i64);
                 
                 if (parent == 0i64) {
                     bool:success = raw npk_cas_i64(art_root_ptr, node, n4);
                     if (success) {
-                        drop(raw ebr_retire_or_flush(thread_id, node));
+                        raw ebr_retire_or_flush(thread_id, node);
                         drop(ebr_unpin(thread_id));
                         pass(0i64);
                     } else {
-                        drop(raw art_free_node(new_leaf2));
-                        drop(raw art_free_node(node_copy));
-                        drop(raw art_free_node(n4));
+                        raw art_free_node(new_leaf2);
+                        raw art_free_node(node_copy);
+                        raw art_free_node(n4);
                         restart = 1i64;
                         break;
                     }
                 } else {
                     int64:cas_res = raw art_cas_child(parent, parent_key_byte, node, n4);
                     if (cas_res == 1i64) {
-                        drop(raw ebr_retire_or_flush(thread_id, node));
+                        raw ebr_retire_or_flush(thread_id, node);
                         drop(ebr_unpin(thread_id));
                         pass(0i64);
                     } else {
-                        drop(raw art_free_node(new_leaf2));
-                        drop(raw art_free_node(node_copy));
-                        drop(raw art_free_node(n4));
+                        raw art_free_node(new_leaf2);
+                        raw art_free_node(node_copy);
+                        raw art_free_node(n4);
                         restart = 1i64;
                         break;
                     }
@@ -588,24 +588,24 @@ pub func:art_insert_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                 if (parent == 0i64) {
                     bool:success = raw npk_cas_i64(art_root_ptr, node, new_node);
                     if (success) {
-                        drop(raw ebr_retire_or_flush(thread_id, node));
+                        raw ebr_retire_or_flush(thread_id, node);
                         drop(ebr_unpin(thread_id));
                         pass(0i64);
                     } else {
-                        drop(raw art_free_node(new_leaf));
-                        drop(raw art_free_node(new_node));
+                        raw art_free_node(new_leaf);
+                        raw art_free_node(new_node);
                         restart = 1i64;
                         break;
                     }
                 } else {
                     int64:cas_res = raw art_cas_child(parent, parent_key_byte, node, new_node);
                     if (cas_res == 1i64) {
-                        drop(raw ebr_retire_or_flush(thread_id, node));
+                        raw ebr_retire_or_flush(thread_id, node);
                         drop(ebr_unpin(thread_id));
                         pass(0i64);
                     } else {
-                        drop(raw art_free_node(new_leaf));
-                        drop(raw art_free_node(new_node));
+                        raw art_free_node(new_leaf);
+                        raw art_free_node(new_node);
                         restart = 1i64;
                         break;
                     }
@@ -641,65 +641,65 @@ pub func:art_remove_child_copy = int64(int64:node, int64:key_byte) {
 
     if (ntype == ART_NODE4) {
         int64:n4 = raw art_alloc_node4();
-        drop(raw art_node_set_prefix_len(n4, plen));
-        while (i < plen) { drop(raw art_node_set_prefix_byte(n4, i, raw art_node_prefix_byte(node, i))); i = i + 1i64; }
+        raw art_node_set_prefix_len(n4, plen);
+        while (i < plen) { raw art_node_set_prefix_byte(n4, i, raw art_node_prefix_byte(node, i)); i = i + 1i64; }
 
         i = 0i64;
         int64:idx = 0i64;
         while (i < num) {
             int64:kb = raw node4_get_key(node, i);
             if (kb != key_byte) {
-                drop(raw node4_set_key(n4, idx, kb));
-                drop(raw node4_set_child(n4, idx, raw node4_get_child(node, i)));
+                raw node4_set_key(n4, idx, kb);
+                raw node4_set_child(n4, idx, raw node4_get_child(node, i));
                 idx = idx + 1i64;
             }
             i = i + 1i64;
         }
-        drop(raw art_node_set_num_children(n4, num - 1i64));
+        raw art_node_set_num_children(n4, num - 1i64);
         pass(n4);
     } else if (ntype == ART_NODE16) {
         if (num <= 4i64) {
             int64:n4 = raw art_alloc_node4();
-            drop(raw art_node_set_prefix_len(n4, plen));
-            while (i < plen) { drop(raw art_node_set_prefix_byte(n4, i, raw art_node_prefix_byte(node, i))); i = i + 1i64; }
+            raw art_node_set_prefix_len(n4, plen);
+            while (i < plen) { raw art_node_set_prefix_byte(n4, i, raw art_node_prefix_byte(node, i)); i = i + 1i64; }
 
             i = 0i64;
             int64:idx = 0i64;
             while (i < num) {
                 int64:kb = raw node16_get_key(node, i);
                 if (kb != key_byte) {
-                    drop(raw node4_set_key(n4, idx, kb));
-                    drop(raw node4_set_child(n4, idx, raw node16_get_child(node, i)));
+                    raw node4_set_key(n4, idx, kb);
+                    raw node4_set_child(n4, idx, raw node16_get_child(node, i));
                     idx = idx + 1i64;
                 }
                 i = i + 1i64;
             }
-            drop(raw art_node_set_num_children(n4, num - 1i64));
+            raw art_node_set_num_children(n4, num - 1i64);
             pass(n4);
         } else {
             int64:n16 = raw art_alloc_node16();
-            drop(raw art_node_set_prefix_len(n16, plen));
-            while (i < plen) { drop(raw art_node_set_prefix_byte(n16, i, raw art_node_prefix_byte(node, i))); i = i + 1i64; }
+            raw art_node_set_prefix_len(n16, plen);
+            while (i < plen) { raw art_node_set_prefix_byte(n16, i, raw art_node_prefix_byte(node, i)); i = i + 1i64; }
 
             i = 0i64;
             int64:idx = 0i64;
             while (i < num) {
                 int64:kb = raw node16_get_key(node, i);
                 if (kb != key_byte) {
-                    drop(raw node16_set_key(n16, idx, kb));
-                    drop(raw node16_set_child(n16, idx, raw node16_get_child(node, i)));
+                    raw node16_set_key(n16, idx, kb);
+                    raw node16_set_child(n16, idx, raw node16_get_child(node, i));
                     idx = idx + 1i64;
                 }
                 i = i + 1i64;
             }
-            drop(raw art_node_set_num_children(n16, num - 1i64));
+            raw art_node_set_num_children(n16, num - 1i64);
             pass(n16);
         }
     } else if (ntype == ART_NODE48) {
         if (num <= 12i64) {
             int64:n16 = raw art_alloc_node16();
-            drop(raw art_node_set_prefix_len(n16, plen));
-            while (i < plen) { drop(raw art_node_set_prefix_byte(n16, i, raw art_node_prefix_byte(node, i))); i = i + 1i64; }
+            raw art_node_set_prefix_len(n16, plen);
+            while (i < plen) { raw art_node_set_prefix_byte(n16, i, raw art_node_prefix_byte(node, i)); i = i + 1i64; }
 
             i = 0i64;
             int64:idx = 0i64;
@@ -707,21 +707,21 @@ pub func:art_remove_child_copy = int64(int64:node, int64:key_byte) {
                 int64:slot = raw node48_get_slot(node, i);
                 if (slot != 0i64) {
                     if (i != key_byte) {
-                        drop(raw node16_set_key(n16, idx, i));
-                        drop(raw node16_set_child(n16, idx, raw node48_get_child(node, slot)));
+                        raw node16_set_key(n16, idx, i);
+                        raw node16_set_child(n16, idx, raw node48_get_child(node, slot));
                         idx = idx + 1i64;
                     }
                 }
                 i = i + 1i64;
             }
-            drop(raw art_node_set_num_children(n16, num - 1i64));
+            raw art_node_set_num_children(n16, num - 1i64);
             pass(n16);
         }
     } else if (ntype == ART_NODE256) {
         if (num <= 48i64) {
             int64:n48 = raw art_alloc_node48();
-            drop(raw art_node_set_prefix_len(n48, plen));
-            while (i < plen) { drop(raw art_node_set_prefix_byte(n48, i, raw art_node_prefix_byte(node, i))); i = i + 1i64; }
+            raw art_node_set_prefix_len(n48, plen);
+            while (i < plen) { raw art_node_set_prefix_byte(n48, i, raw art_node_prefix_byte(node, i)); i = i + 1i64; }
 
             i = 0i64;
             int64:idx = 1i64;
@@ -729,14 +729,14 @@ pub func:art_remove_child_copy = int64(int64:node, int64:key_byte) {
                 int64:child = raw node256_get_child(node, i);
                 if (child != 0i64) {
                     if (i != key_byte) {
-                        drop(raw node48_set_slot(n48, i, idx));
-                        drop(raw node48_set_child(n48, idx, child));
+                        raw node48_set_slot(n48, i, idx);
+                        raw node48_set_child(n48, idx, child);
                         idx = idx + 1i64;
                     }
                 }
                 i = i + 1i64;
             }
-            drop(raw art_node_set_num_children(n48, num - 1i64));
+            raw art_node_set_num_children(n48, num - 1i64);
             pass(n48);
         }
     }
@@ -766,7 +766,7 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                 if (npk_mem_compare(lkptr, key_ptr, key_len) == 0i64) {
                     bool:success = raw npk_cas_i64(art_root_ptr, root, 0i64);
                     if (success) {
-                        drop(raw ebr_retire_or_flush(thread_id, root));
+                        raw ebr_retire_or_flush(thread_id, root);
                         drop(ebr_unpin(thread_id));
                         pass(0i64);
                     } else {
@@ -811,20 +811,20 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                             cas_res = raw art_cas_child(gparent, gparent_key_byte, parent, new_node);
                         }
                         if (cas_res == 1i64) {
-                            drop(raw ebr_retire_or_flush(thread_id, parent));
-                            drop(raw ebr_retire_or_flush(thread_id, node));
+                            raw ebr_retire_or_flush(thread_id, parent);
+                            raw ebr_retire_or_flush(thread_id, node);
                             drop(ebr_unpin(thread_id));
                             pass(0i64);
                         } else {
-                            drop(raw art_free_node(new_node));
+                            raw art_free_node(new_node);
                             restart = 1i64;
                             break;
                         }
                     } else {
                         int64:cas_res = raw art_cas_child(parent, parent_key_byte, node, 0i64);
                         if (cas_res == 1i64) {
-                            drop(raw art_node_set_num_children(parent, num - 1i64));
-                            drop(raw ebr_retire_or_flush(thread_id, node));
+                            raw art_node_set_num_children(parent, num - 1i64);
+                            raw ebr_retire_or_flush(thread_id, node);
                             drop(ebr_unpin(thread_id));
                             pass(0i64);
                         } else {
@@ -843,21 +843,21 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                             cas_res = raw art_cas_child(gparent, gparent_key_byte, parent, new_node);
                         }
                         if (cas_res == 1i64) {
-                            drop(raw ebr_retire_or_flush(thread_id, parent));
-                            drop(raw ebr_retire_or_flush(thread_id, node));
+                            raw ebr_retire_or_flush(thread_id, parent);
+                            raw ebr_retire_or_flush(thread_id, node);
                             drop(ebr_unpin(thread_id));
                             pass(0i64);
                         } else {
-                            drop(raw art_free_node(new_node));
+                            raw art_free_node(new_node);
                             restart = 1i64;
                             break;
                         }
                     } else {
                         int64:cas_res = raw art_cas_child(parent, parent_key_byte, node, 0i64);
                         if (cas_res == 1i64) {
-                            drop(raw node48_set_slot(parent, parent_key_byte, 0i64));
-                            drop(raw art_node_set_num_children(parent, num - 1i64));
-                            drop(raw ebr_retire_or_flush(thread_id, node));
+                            raw node48_set_slot(parent, parent_key_byte, 0i64);
+                            raw art_node_set_num_children(parent, num - 1i64);
+                            raw ebr_retire_or_flush(thread_id, node);
                             drop(ebr_unpin(thread_id));
                             pass(0i64);
                         } else {
@@ -875,12 +875,12 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                         cas_res = raw art_cas_child(gparent, gparent_key_byte, parent, new_node);
                     }
                     if (cas_res == 1i64) {
-                        drop(raw ebr_retire_or_flush(thread_id, parent));
-                        drop(raw ebr_retire_or_flush(thread_id, node));
+                        raw ebr_retire_or_flush(thread_id, parent);
+                        raw ebr_retire_or_flush(thread_id, node);
                         drop(ebr_unpin(thread_id));
                         pass(0i64);
                     } else {
-                        drop(raw art_free_node(new_node));
+                        raw art_free_node(new_node);
                         restart = 1i64;
                         break;
                     }
@@ -912,8 +912,8 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                                 cas_res = raw art_cas_child(gparent, gparent_key_byte, parent, other_child);
                             }
                             if (cas_res == 1i64) {
-                                drop(raw ebr_retire_or_flush(thread_id, parent));
-                                drop(raw ebr_retire_or_flush(thread_id, node));
+                                raw ebr_retire_or_flush(thread_id, parent);
+                                raw ebr_retire_or_flush(thread_id, node);
                                 drop(ebr_unpin(thread_id));
                                 pass(0i64);
                             } else {
@@ -929,19 +929,19 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                             int64:nplen = p1 + 1i64 + p2;
                             if (nplen > 10i64) { nplen = 10i64; }
                             
-                            drop(raw art_node_set_prefix_len(new_child, p1 + 1i64 + p2));
+                            raw art_node_set_prefix_len(new_child, p1 + 1i64 + p2);
                             int64:i2 = 0i64;
                             while (i2 < p1) {
-                                drop(raw art_node_set_prefix_byte(new_child, i2, raw art_node_prefix_byte(parent, i2)));
+                                raw art_node_set_prefix_byte(new_child, i2, raw art_node_prefix_byte(parent, i2));
                                 i2 = i2 + 1i64;
                             }
                             if (p1 < 10i64) {
-                                drop(raw art_node_set_prefix_byte(new_child, p1, other_kb));
+                                raw art_node_set_prefix_byte(new_child, p1, other_kb);
                             }
                             int64:i3 = 0i64;
                             while (i3 < p2) {
                                 if ((p1 + 1i64 + i3) < 10i64) {
-                                    drop(raw art_node_set_prefix_byte(new_child, p1 + 1i64 + i3, raw art_node_prefix_byte(other_child, i3)));
+                                    raw art_node_set_prefix_byte(new_child, p1 + 1i64 + i3, raw art_node_prefix_byte(other_child, i3));
                                 }
                                 i3 = i3 + 1i64;
                             }
@@ -954,13 +954,13 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                                 cas_res = raw art_cas_child(gparent, gparent_key_byte, parent, new_child);
                             }
                             if (cas_res == 1i64) {
-                                drop(raw ebr_retire_or_flush(thread_id, parent));
-                                drop(raw ebr_retire_or_flush(thread_id, node));
-                                drop(raw ebr_retire_or_flush(thread_id, other_child));
+                                raw ebr_retire_or_flush(thread_id, parent);
+                                raw ebr_retire_or_flush(thread_id, node);
+                                raw ebr_retire_or_flush(thread_id, other_child);
                                 drop(ebr_unpin(thread_id));
                                 pass(0i64);
                             } else {
-                                drop(raw art_free_node(new_child));
+                                raw art_free_node(new_child);
                                 restart = 1i64;
                                 break;
                             }
@@ -976,12 +976,12 @@ pub func:art_delete_internal = int64(int64:thread_id, int64:key_ptr, int64:key_l
                             cas_res = raw art_cas_child(gparent, gparent_key_byte, parent, new_node);
                         }
                         if (cas_res == 1i64) {
-                            drop(raw ebr_retire_or_flush(thread_id, parent));
-                            drop(raw ebr_retire_or_flush(thread_id, node));
+                            raw ebr_retire_or_flush(thread_id, parent);
+                            raw ebr_retire_or_flush(thread_id, node);
                             drop(ebr_unpin(thread_id));
                             pass(0i64);
                         } else {
-                            drop(raw art_free_node(new_node));
+                            raw art_free_node(new_node);
                             restart = 1i64;
                             break;
                         }
@@ -1026,7 +1026,7 @@ pub func:art_delete = int64(int64:thread_id, int64:key_ptr, int64:key_len)
 func:art_destroy_node = NIL(int64:node) {
     if (node == 0i64) { pass(NIL); }
     if (raw art_is_leaf(node)) {
-        drop(raw art_free_node(node));
+        raw art_free_node(node);
         pass(NIL);
     }
     
@@ -1035,7 +1035,7 @@ func:art_destroy_node = NIL(int64:node) {
         int64:i = 0i64;
         while (i < 4i64) {
             int64:child = raw node4_get_child(node, i);
-            if (child != 0i64) { drop(raw art_destroy_node(child)); }
+            if (child != 0i64) { raw art_destroy_node(child); }
             i = i + 1i64;
         }
     }
@@ -1043,7 +1043,7 @@ func:art_destroy_node = NIL(int64:node) {
         int64:i = 0i64;
         while (i < 16i64) {
             int64:child = raw node16_get_child(node, i);
-            if (child != 0i64) { drop(raw art_destroy_node(child)); }
+            if (child != 0i64) { raw art_destroy_node(child); }
             i = i + 1i64;
         }
     }
@@ -1051,7 +1051,7 @@ func:art_destroy_node = NIL(int64:node) {
         int64:i = 1i64;
         while (i <= 48i64) {
             int64:child = raw node48_get_child(node, i);
-            if (child != 0i64) { drop(raw art_destroy_node(child)); }
+            if (child != 0i64) { raw art_destroy_node(child); }
             i = i + 1i64;
         }
     }
@@ -1059,18 +1059,20 @@ func:art_destroy_node = NIL(int64:node) {
         int64:i = 0i64;
         while (i < 256i64) {
             int64:child = raw node256_get_child(node, i);
-            if (child != 0i64) { drop(raw art_destroy_node(child)); }
+            if (child != 0i64) { raw art_destroy_node(child); }
             i = i + 1i64;
         }
     }
-    drop(raw art_free_node(node));
+    raw art_free_node(node);
     pass(NIL);
 };
 pub func:art_destroy = NIL() {
     int64:root = npk_mem_read_int64(art_root_ptr, 0i64);
     if (root != 0i64) {
-        drop(raw art_destroy_node(root));
+        raw art_destroy_node(root);
         drop(npk_mem_write_int64(art_root_ptr, 0i64, 0i64));
     }
     pass(NIL);
 };
+
+

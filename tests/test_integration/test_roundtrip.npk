@@ -67,7 +67,7 @@ func:db_get = string(int64:wp, string:key) {
             if (is_del1 == 1i64) { pass(""); }
             int64:val_len1 = raw sl_node_val_len(node);
             int64:vptr1 = raw sl_node_val_ptr(node);
-            pass(raw npk_mem_read_string(vptr1, val_len1));
+            pass(npk_mem_read_string(vptr1, val_len1));
         }
     }
     
@@ -80,7 +80,7 @@ func:db_get = string(int64:wp, string:key) {
             if (is_del2 == 1i64) { pass(""); }
             int64:val_len2 = raw sl_node_val_len(node);
             int64:vptr2 = raw sl_node_val_ptr(node);
-            pass(raw npk_mem_read_string(vptr2, val_len2));
+            pass(npk_mem_read_string(vptr2, val_len2));
         }
     }
     
@@ -122,7 +122,7 @@ func:db_get = string(int64:wp, string:key) {
                         }
                         int64:val_len_r = raw sst_rec_val_len(rec);
                         int64:vptr3 = raw sst_rec_val_ptr(rec);
-                        string:val_str = raw npk_mem_read_string(vptr3, val_len_r);
+                        string:val_str = npk_mem_read_string(vptr3, val_len_r);
                         drop(sst_rec_free(rec));
                         if (sstables != 0i64) { drop(npk_core_dalloc(sstables)); }
                         pass(val_str);
@@ -148,9 +148,9 @@ pub func:main = int32() {
     drop(sys(MKDIR, data_dir, 493i64)); // 0755
     
     int64:v1_ptr = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(v1_ptr, "v1"));
+    drop(npk_mem_write_string(v1_ptr, "v1"));
     int64:v2_ptr = npk_core_alloc(10i64);
-    drop(raw npk_mem_write_string(v2_ptr, "v2"));
+    drop(npk_mem_write_string(v2_ptr, "v2"));
     
     // T01
     Result<int64>:wp_res = wp_init(data_dir, wal_path, @bg_worker_shim, "per_write");
@@ -186,7 +186,7 @@ pub func:main = int32() {
     
     // T03
     int64:v_large_ptr = npk_core_alloc(1000000i64); // 1MB
-    drop(raw npk_mem_write_string(v_large_ptr, "large_val"));
+    drop(npk_mem_write_string(v_large_ptr, "large_val"));
     
     j = 0i64;
     while (j < 5i64) {

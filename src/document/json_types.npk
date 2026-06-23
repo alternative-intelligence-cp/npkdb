@@ -31,7 +31,7 @@ pub func:json_make_i64 = NpkJsonVal(int64:val) {
 };
 
 pub func:json_make_f64 = NpkJsonVal(flt64:val) {
-    int64:bits = <-(@val => int64->);
+    int64:bits = @cast_unchecked<int64>(val);
     NpkJsonVal:v = NpkJsonVal{ type: JSON_NUM_F64, payload: bits };
     pass(v);
 };
@@ -43,11 +43,13 @@ pub struct:NpkJsonStr = {
 
 pub struct:NpkJsonArr = {
     uint32:count;
-    int64->:handles;
+    int64:handles;
 };
 
 pub struct:NpkJsonObj = {
     uint32:count;
-    int64->:keys;
-    int64->:values;
+    int64:keys;
+    int64:values;
 };
+
+

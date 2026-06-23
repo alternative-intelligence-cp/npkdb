@@ -11,5 +11,7 @@ pub struct:npk_record = {
     wild tfp64->:vector_data;
     
     limit<valid_json_len> uint32:json_len;
-    wild int8->:json_data;
+    wild int8:json_data;
 };
+
+
