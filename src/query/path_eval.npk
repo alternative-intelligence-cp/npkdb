@@ -7,13 +7,13 @@ use "../document/json_types.npk".*;
 func:streq_len = bool(int64:a_ptr, int64:b_ptr, int64:len) {
     int64:i = 0i64;
     while (i < len) {
-        int8:ca = npk_mem_read_byte(a_ptr, i) => int8;
-        int8:cb = npk_mem_read_byte(b_ptr, i) => int8;
+        int8:ca = @cast_unchecked<int8>(npk_mem_read_byte(a_ptr, i));
+        int8:cb = @cast_unchecked<int8>(npk_mem_read_byte(b_ptr, i));
         if (ca != cb) { pass(false); }
         i = i + 1i64;
     }
     // Also check that `a` ends there
-    int8:ca_end = npk_mem_read_byte(a_ptr, len) => int8;
+    int8:ca_end = @cast_unchecked<int8>(npk_mem_read_byte(a_ptr, len));
     pass(ca_end == 0i8);
 };
 
@@ -21,7 +21,7 @@ func:streq_len = bool(int64:a_ptr, int64:b_ptr, int64:len) {
 func:path_segment_len = int64(int64:path_ptr) {
     int64:len = 0i64;
     while (true) {
-        int8:c = npk_mem_read_byte(path_ptr, len) => int8;
+        int8:c = @cast_unchecked<int8>(npk_mem_read_byte(path_ptr, len));
         if (c == 0i8) { break; }
         if (c == 46i8) { break; } // '.' is 46
         len = len + 1i64;
@@ -30,22 +30,26 @@ func:path_segment_len = int64(int64:path_ptr) {
 };
 
 pub func:eval_path = NpkJsonVal(int64:path_ptr, int64:doc_raw_ptr) {
-    NpkJsonVal->:doc = (doc_raw_ptr) => NpkJsonVal->;
+    if (doc_raw_ptr == 0i64) {
+        pass(raw json_make_null());
+    }
+
     if (path_ptr == 0i64) {
         pass(raw json_make_null());
     }
     
-    int64:seg_len = _?!path_segment_len(path_ptr);
+    int64:seg_len = raw path_segment_len(path_ptr);
     if (seg_len == 0i64) {
         pass(raw json_make_null());
     }
     
-    if (doc->type != JSON_OBJ) {
+    int8:doc_type = @cast_unchecked<int8>(npk_mem_read_byte(doc_raw_ptr, 0i64));
+    if (doc_type != JSON_OBJ) {
         pass(raw json_make_null());
     }
     
-    int64:obj_ptr = doc->payload;
-    int64:count = npk_mem_read_int32(obj_ptr, 0i64) => int64;
+    int64:obj_ptr = npk_mem_read_int64(doc_raw_ptr, 8i64);
+    int64:count = @cast_unchecked<int64>(npk_mem_read_int32(obj_ptr, 0i64));
     int64:keys_ptr = npk_mem_read_int64(obj_ptr, 8i64);
     int64:vals_ptr = npk_mem_read_int64(obj_ptr, 16i64);
     
@@ -54,11 +58,11 @@ pub func:eval_path = NpkJsonVal(int64:path_ptr, int64:doc_raw_ptr) {
         int64:k_ptr = npk_mem_read_int64(keys_ptr, i * 8i64);
         int64:v_ptr = npk_mem_read_int64(vals_ptr, i * 8i64);
         
-        int8:k_type = npk_mem_read_byte(k_ptr, 0i64) => int8;
+        int8:k_type = @cast_unchecked<int8>(npk_mem_read_byte(k_ptr, 0i64));
         int64:k_payload = npk_mem_read_int64(k_ptr, 8i64);
         
         if (k_type == JSON_STR) {
-            int64:k_len = npk_mem_read_int32(k_payload, 0i64) => int64;
+            int64:k_len = @cast_unchecked<int64>(npk_mem_read_int32(k_payload, 0i64));
             if (k_len == seg_len) {
                 int64:k_str_data = npk_mem_read_int64(k_payload, 8i64);
                 
@@ -66,26 +70,26 @@ pub func:eval_path = NpkJsonVal(int64:path_ptr, int64:doc_raw_ptr) {
                 int64:j = 0i64;
                 bool:match = true;
                 while (j < seg_len) {
-                    int8:c_path = npk_mem_read_byte(path_ptr, j) => int8;
-                    int8:c_key  = npk_mem_read_byte(k_str_data, j) => int8;
+                    int8:c_path = @cast_unchecked<int8>(npk_mem_read_byte(path_ptr, j));
+                    int8:c_key  = @cast_unchecked<int8>(npk_mem_read_byte(k_str_data, j));
                     if (c_path != c_key) { match = false; break; }
                     j = j + 1i64;
                 }
                 
                 if (match == true) {
                     NpkJsonVal:v_elem = NpkJsonVal {
-                        type: npk_mem_read_byte(v_ptr, 0i64) => int8,
+                        type: @cast_unchecked<int8>(npk_mem_read_byte(v_ptr, 0i64)),
                         payload: npk_mem_read_int64(v_ptr, 8i64)
                     };
                     
-                    int8:nxt = npk_mem_read_byte(path_ptr, seg_len) => int8;
+                    int8:nxt = @cast_unchecked<int8>(npk_mem_read_byte(path_ptr, seg_len));
                     if (nxt == 0i8) {
                         // End of path, found target
                         pass(v_elem);
                     } else {
                         if (nxt == 46i8) {
                             // Dot, recurse
-                            pass(raw eval_path(path_ptr + seg_len + 1i64, (@v_elem) => int64));
+                            pass(raw eval_path(path_ptr + seg_len + 1i64, @cast_unchecked<int64>(@v_elem)));
                         }
                     }
                 }
@@ -97,3 +101,5 @@ pub func:eval_path = NpkJsonVal(int64:path_ptr, int64:doc_raw_ptr) {
     
     pass(raw json_make_null());
 };
+
+

@@ -1,24 +1,21 @@
+import os
 import re
 
-with open("tests/test_distance/main.npk", "r") as f:
-    code = f.read()
+with open("/home/randy/.gemini/antigravity-ide/brain/0dfd17ae-e1cb-446d-99e7-351f4487e296/compilation_4.md", "r") as f:
+    content = f.read()
 
-# Remove defers
-code = re.sub(r'\s*defer \{ drop\(my_free\([ab]_ptr\)\); \}', '', code)
+# We need to find `## `src/path/to/file.npk``
+# and then the ```nitpick block.
 
-# Put back drop(my_free)
-code = re.sub(r'drop\(assert_lt\(diff, EPSILON\)\);', r'drop(assert_lt(diff, EPSILON));\n        drop(my_free(a_ptr));\n        drop(my_free(b_ptr));', code)
-code = re.sub(r'drop\(assert_eq\(res_val, EXPECTED_[^\)]+\)\);', r'\g<0>\n        drop(my_free(a_ptr));\n        drop(my_free(b_ptr));', code)
+pattern = re.compile(r'## `([^`]+)`\s*```[a-z]*\s*(.*?)```', re.DOTALL)
+matches = pattern.findall(content)
 
-# Fix double frees if any
-code = re.sub(r'(drop\(my_free\([ab]_ptr\)\);\n\s*){2,}', r'\1', code)
+count = 0
+for filename, code in matches:
+    if filename.startswith('src/'):
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        with open(filename, "w") as f:
+            f.write(code)
+        count += 1
 
-# Restore drop(failsafe)
-code = re.sub(r'exit \d+i32;', r'drop(failsafe(@cast_unchecked<tbb32>(1i32)));', code)
-
-# Restore assert(res.is_error)
-code = re.sub(r'if \(res\.is_error == false\) \{ drop\(failsafe\(@cast_unchecked<tbb32>\(1i32\)\)\); \}', r'assert(res.is_error);', code)
-code = re.sub(r'if \(err != NIL == false\) \{ drop\(failsafe\(@cast_unchecked<tbb32>\(1i32\)\)\); \}', r'assert(err != NIL);', code)
-
-with open("tests/test_distance/main.npk", "w") as f:
-    f.write(code)
+print(f"Restored {count} files from compilation_4.md")

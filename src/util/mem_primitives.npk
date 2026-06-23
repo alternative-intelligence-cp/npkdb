@@ -9,17 +9,24 @@ extern "nitpick_libc_mem" {
     func:npk_mem_write_int64   = int64(int64:ptr, int64:offset, int64:val);
     func:npk_mem_copy          = int64(int64:dst, int64:src, int64:n);
     func:npk_mem_set           = int64(int64:dst, int64:val, int64:n);
+}
+
+extern "nitpick_libc_mem" {
     func:npk_mem_compare       = int64(int64:a, int64:b, int64:n);
     func:npk_mem_offset        = int64(int64:ptr, int64:offset);
     func:npk_mem_ptr_size      = int64();
-
     func:npk_core_alloc  = int64(int64:size);
     func:nitpick_libc_mem_calloc  = int64(int64:count, int64:size);
     func:nitpick_libc_mem_realloc = int64(int64:ptr, int64:size);
     func:npk_core_dalloc    = void(int64:ptr);
 }
+
+extern "nitpick_libc_mem" {
+    func:npk_mem_write_string = int64(int64:ptr, string:s);
+    func:npk_mem_read_string = string(int64:ptr, int64:max_len);
+}
 pub func:npk_mem_write_int32 = int64(int64:ptr, int64:offset, int32:val) {
-    int64:v = val => int64;
+    int64:v = @cast_unchecked<int64>(val);
     drop(npk_mem_write_byte(ptr, offset, v & 255i64));
     drop(npk_mem_write_byte(ptr, offset + 1i64, (v >> 8) & 255i64));
     drop(npk_mem_write_byte(ptr, offset + 2i64, (v >> 16) & 255i64));
@@ -30,53 +37,23 @@ pub func:npk_mem_write_int32 = int64(int64:ptr, int64:offset, int32:val) {
 pub func:npk_mem_read_int16 = int16(int64:ptr, int64:offset) {
     int64:b0 = npk_mem_read_byte(ptr, offset);
     int64:b1 = npk_mem_read_byte(ptr, offset + 1i64);
-    pass(((b1 << 8i64) | b0) => int16);
+    pass(@cast_unchecked<int16>(((b1 << 8i64) | b0)));
 };
 
 pub func:npk_mem_write_int16 = int64(int64:ptr, int64:offset, int16:val) {
-    int64:v = val => int64;
+    int64:v = @cast_unchecked<int64>(val);
     drop(npk_mem_write_byte(ptr, offset, v & 255i64));
     drop(npk_mem_write_byte(ptr, offset + 1i64, (v >> 8i64) & 255i64));
     pass(0i64);
 };
 
-pub func:npk_mem_write_string = int64(int64:ptr, string:s) {
-    int64:len = string_length(s);
-    if (len > 0i64) {
-        int64:cstr = string_to_cstr(s);
-        drop(npk_mem_copy(ptr, cstr, len));
-    }
-    pass(len);
-};
 
-pub func:npk_mem_read_string = string(int64:ptr, int64:max_len) {
-    if (ptr == 0i64) { pass(""); }
-    if (max_len <= 0i64) { pass(""); }
-    
-    int64:len = 0i64;
-    while (len < max_len) {
-        int64:b = npk_mem_read_byte(ptr, len);
-        if (b == 0i64) { break; }
-        len = len + 1i64;
-    }
-    
-    int64:buf = npk_core_alloc(len + 1i64);
-    if (len > 0i64) {
-        drop(npk_mem_copy(buf, ptr, len));
-    }
-    drop(npk_mem_write_byte(buf, len, 0i64));
-    
-    string:s = string_from_cstr(buf);
-    drop(npk_core_dalloc(buf));
-    
-    pass(s);
-};
 
 pub func:npk_mem_read_int8 = int8(int8->:buf_arg, int64:pos) {
     int8->:local_buf = buf_arg;
-    int64:ptr = <-(@local_buf => int64->);
+    int64:ptr = <-(@cast_unchecked<int64->>(@local_buf));
     int64:val = npk_mem_read_byte(ptr, pos);
-    pass(val => int8);
+    pass(@cast_unchecked<int8>(val));
 };
 
 pub func:npk_cas_i64 = bool(int64:atomic_ptr, int64:expected, int64:desired) {
@@ -88,3 +65,6 @@ pub func:atomic_load_seqcst = int64(int64:atomic_ptr) {
     int64:val = asm!!!<int64>("x86_64", "movq ($1), $0", "=r,r,~{memory}", atomic_ptr);
     pass(val);
 };
+
+
+pub func:free = NIL(int64:ptr) { drop(npk_core_dalloc(ptr)); pass(NIL); };

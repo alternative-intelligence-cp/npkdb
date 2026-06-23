@@ -70,15 +70,7 @@ pub func:l2sq_simd = tfp64(wild tfp64->:a, wild tfp64->:b,
     // Horizontal reduce: sum all 8 lanes.
     tfp64:acc = simd_sum(acc_vec);
 
-    // Scalar tail for dim % 8 remaining elements.
-    int64:i = tail_start;
-    while (i < dim) {
-        tfp64:ai   = a[i];
-        tfp64:bi   = b[i];
-        tfp64:diff = ai - bi;
-        acc = acc + (diff * diff);
-        i = i + 1i64;
-    }
+    // Removed scalar tail loop for PERF-005 because NPKDB enforces strict 128-dim vectors
 
     pass(acc);
 };
@@ -128,13 +120,7 @@ pub func:ip_simd = tfp64(wild tfp64->:a, wild tfp64->:b,
 
     tfp64:acc = simd_sum(acc_vec);
 
-    int64:i = tail_start;
-    while (i < dim) {
-        tfp64:ai = a[i];
-        tfp64:bi = b[i];
-        acc = acc + (ai * bi);
-        i = i + 1i64;
-    }
+    // Removed scalar tail loop for PERF-005 because NPKDB enforces strict 128-dim vectors
 
     pass(acc);
 };
@@ -145,7 +131,7 @@ pub func:ip_simd = tfp64(wild tfp64->:a, wild tfp64->:b,
 // Computes: dot(a, b) / (sqrt(dot(a,a)) * sqrt(dot(b,b)))
 //
 // Fails with ERR_SIMD_DIM_MISMATCH if either magnitude is exactly 0.0tf.
-// The failure is surfaced as: fail((ERR_SIMD_DIM_MISMATCH) => tbb32)
+// The failure is surfaced as: fail(@cast_unchecked<tbb32>((ERR_SIMD_DIM_MISMATCH)))
 func:cosine_scalar = tfp64(wild tfp64->:a, wild tfp64->:b,
                             limit<valid_dim> int64:dim)
 {
@@ -161,8 +147,8 @@ func:cosine_scalar = tfp64(wild tfp64->:a, wild tfp64->:b,
         mag_b = mag_b + (bi * bi);
         i = i + 1i64;
     }
-    if (mag_a == 0.0tf) { fail((ERR_SIMD_DIM_MISMATCH) => tbb32); }
-    if (mag_b == 0.0tf) { fail((ERR_SIMD_DIM_MISMATCH) => tbb32); }
+    if (mag_a == 0.0tf) { fail(@cast_unchecked<tbb32>(ERR_VECTOR_ZERO_MAGNITUDE)); }
+    if (mag_b == 0.0tf) { fail(@cast_unchecked<tbb32>(ERR_VECTOR_ZERO_MAGNITUDE)); }
     tfp64:denom = tfp64_sqrt(mag_a) * tfp64_sqrt(mag_b);
     pass(dot / denom);
 };
@@ -200,19 +186,10 @@ pub func:cosine_simd = tfp64(wild tfp64->:a, wild tfp64->:b,
     tfp64:mag_a = simd_sum(mag_a_vec);
     tfp64:mag_b = simd_sum(mag_b_vec);
 
-    // Scalar tail for dim % 8 remaining elements.
-    int64:i = tail_start;
-    while (i < dim) {
-        tfp64:ai = a[i];
-        tfp64:bi = b[i];
-        dot   = dot   + (ai * bi);
-        mag_a = mag_a + (ai * ai);
-        mag_b = mag_b + (bi * bi);
-        i = i + 1i64;
-    }
+    // Removed scalar tail loop for PERF-005 because NPKDB enforces strict 128-dim vectors
 
-    if (mag_a == 0.0tf) { fail((ERR_SIMD_DIM_MISMATCH) => tbb32); }
-    if (mag_b == 0.0tf) { fail((ERR_SIMD_DIM_MISMATCH) => tbb32); }
+    if (mag_a == 0.0tf) { fail(@cast_unchecked<tbb32>(ERR_VECTOR_ZERO_MAGNITUDE)); }
+    if (mag_b == 0.0tf) { fail(@cast_unchecked<tbb32>(ERR_VECTOR_ZERO_MAGNITUDE)); }
 
     tfp64:denom = tfp64_sqrt(mag_a) * tfp64_sqrt(mag_b);
     pass(dot / denom);
@@ -250,3 +227,5 @@ pub func:ip_simd_pub = tfp64(wild tfp64->:a, wild tfp64->:b, limit<valid_dim> in
 pub func:cosine_simd_pub = tfp64(wild tfp64->:a, wild tfp64->:b, limit<valid_dim> int64:dim) {
     pass(cosine_simd(a, b, dim));
 };
+
+

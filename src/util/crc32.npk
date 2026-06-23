@@ -46,3 +46,5 @@ pub func:crc32_compute = int64(int64:buf, int64:len) {
     
     pass(crc ^ 4294967295i64);
 };
+
+

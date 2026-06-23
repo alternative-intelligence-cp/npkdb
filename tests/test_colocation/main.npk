@@ -53,7 +53,7 @@ func:main = int32(int32:argc, wild any->:argv) {
     
     // 4. Assert layout
     // Format: [Vector Length (u32)][Vector Data (tfp64...)][JSON Length (u32)][JSON Data (int8...)]
-    int64:read_dim = npk_mem_read_int32(record_buf, 0i64) => int64;
+    int64:read_dim = npk_mem_read_int32@cast_unchecked<int64>(record_buf, 0i64);
     if (read_dim != vec_dim) {
         println("Dim mismatch!");
         exit(1i32);
@@ -72,7 +72,7 @@ func:main = int32(int32:argc, wild any->:argv) {
     }
     
     int64:json_len_off = 4i64 + (vec_dim * 8i64);
-    int64:read_json_len = npk_mem_read_int32(record_buf, json_len_off) => int64;
+    int64:read_json_len = npk_mem_read_int32@cast_unchecked<int64>(record_buf, json_len_off);
     if (read_json_len <= 0i64) {
         println("JSON len invalid!");
         exit(4i32);

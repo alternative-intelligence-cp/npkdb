@@ -39,7 +39,7 @@ func:main = int32() {
     drop(wal_append_put(fd, "k3", v_ptr, 5i64, wal_next_seq() ?! 0i64));
     drop(wal_close(fd));
     
-    int64:rep1 = wal_replay(path) ?! -1i64;
+    int64:rep1 = wal_replay(path, 0i64) ?! -1i64;
     drop(check(rep1 == 3i64, "T01 Write 3 PUT records, replay count = 3"));
 
     // T02
@@ -50,7 +50,7 @@ func:main = int32() {
     drop(wal_append_delete(fd, "k1", wal_next_seq() ?! 0i64));
     drop(wal_close(fd));
 
-    int64:rep2 = wal_replay(path) ?! -1i64;
+    int64:rep2 = wal_replay(path, 0i64) ?! -1i64;
     drop(check(rep2 == 3i64, "T02 Write 2 PUTs + 1 DELETE, replay count = 3"));
 
     // T03
@@ -61,7 +61,7 @@ func:main = int32() {
     drop(wal_append_put(fd, "k2", v_ptr, 5i64, wal_next_seq() ?! 0i64));
     drop(wal_close(fd));
 
-    int64:rep3 = wal_replay(path) ?! -1i64;
+    int64:rep3 = wal_replay(path, 0i64) ?! -1i64;
     drop(check(rep3 == 3i64, "T03 Write 1 PUT + 1 CHECKPOINT + 1 PUT, replay count = 3"));
 
     // T04, T05, T06, T07
@@ -98,12 +98,12 @@ func:main = int32() {
     drop(sys(UNLINK, path));
     fd = wal_open(path) ?! -1i64;
     drop(wal_close(fd));
-    int64:rep8 = wal_replay(path) ?! -1i64;
+    int64:rep8 = wal_replay(path, 0i64) ?! -1i64;
     drop(check(rep8 == 0i64, "T08 Empty WAL file -> replay returns 0"));
 
     // T09
     drop(sys(UNLINK, path));
-    int64:rep9 = wal_replay(path) ?! -1i64;
+    int64:rep9 = wal_replay(path, 0i64) ?! -1i64;
     drop(check(rep9 == 0i64, "T09 Non-existent WAL file -> replay returns 0"));
 
     // T10 Corrupt WAL (truncate mid-record)
@@ -124,7 +124,7 @@ func:main = int32() {
     drop(sys(WRITE, t10_fd, t10_buf, t10_len - 5i64));
     drop(sys(CLOSE, t10_fd));
     
-    int64:rep10 = wal_replay(path) ?! -1i64;
+    int64:rep10 = wal_replay(path, 0i64) ?! -1i64;
     drop(check(rep10 == 2i64, "T10 Corrupt WAL (truncate mid-record) -> replay stops"));
 
     // T11 Corrupt WAL (flip CRC)
@@ -145,7 +145,7 @@ func:main = int32() {
     drop(sys(WRITE, t10_fd, t10_buf, t10_len));
     drop(sys(CLOSE, t10_fd));
     
-    int64:rep11 = wal_replay(path) ?! -1i64;
+    int64:rep11 = wal_replay(path, 0i64) ?! -1i64;
     drop(check(rep11 == 0i64, "T11 Corrupt WAL (flip CRC) -> replay detects and stops"));
 
     drop(npk_core_dalloc(t10_buf));
@@ -160,7 +160,7 @@ func:main = int32() {
     drop(npk_core_dalloc(t12_buf));
 
     // T13
-    int64:rep13 = wal_replay(path) ?! -1i64;
+    int64:rep13 = wal_replay(path, 0i64) ?! -1i64;
     drop(check(rep13 == 0i64, "T13 Replay after truncate -> 0 records"));
     
     drop(sys(UNLINK, path));

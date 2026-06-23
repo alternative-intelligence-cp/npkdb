@@ -54,7 +54,7 @@ pub func:sl_node_alloc = int64(string:key, int64:val_ptr, int64:val_len, int64:l
     int64:key_data_ptr = 0i64;
     if (key_len > 0i64) {
         key_data_ptr = node + size;
-        _?!npk_mem_write_string(key_data_ptr, key);
+        npk_mem_write_string(key_data_ptr, key);
     }
     
     drop(npk_mem_write_int64(node, 0i64, key_data_ptr));
@@ -89,7 +89,7 @@ pub func:sl_node_key = string(int64:node) {
     int64:key_ptr = npk_mem_read_int64(node, 0i64);
     int64:key_len = npk_mem_read_int64(node, 8i64);
     if (key_ptr == 0i64 || key_len == 0i64) { pass(""); }
-    pass(raw npk_mem_read_string(key_ptr, key_len));
+    pass(npk_mem_read_string(key_ptr, key_len));
 };
 
 pub func:sl_node_val_ptr = int64(int64:node) {
@@ -293,3 +293,5 @@ pub func:sl_first = int64(int64:sl) {
 pub func:sl_next = int64(int64:node) {
     pass(sl_node_forward(node, 0i64) ? 0i64);
 };
+
+

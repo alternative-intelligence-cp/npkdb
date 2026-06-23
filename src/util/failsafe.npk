@@ -3,26 +3,23 @@
 
 extern "C" {
     func:_exit = void(int32:code);
+    func:proc_exit = NIL(int32:code);
+    func:write = int64(int32:fd, string:buf, int64:count);
 }
-
-pub func:proc_exit = NIL(int32:code) {
-    _exit(code);
-    pass(NIL);
-};
 
 pub int32:g_db_lock_fd = -1i32;
 
 pub func:failsafe = int32(tbb32:err) {
     // 1. Log to stderr (fd 2) using direct syscall
     string:msg = "NPKDB FATAL ERROR: Catastrophic failure. Shutting down.\n";
-    int64:ptr = string_to_cstr(msg);
-    int64:len = string_length(msg);
-    drop(sys(WRITE, 2i64, ptr, len)); // sys_write
+    drop(write(2i32, msg, 56i64));
     
     // 2. Attempt to unlock POSIX directory lock
     if (g_db_lock_fd >= 0i32) {
-        drop(sys(FLOCK, g_db_lock_fd => int64, 8i64)); // sys_flock(fd, LOCK_UN)
+        drop(sys(FLOCK, @cast_unchecked<int64>(g_db_lock_fd), 8i64)); // sys_flock(fd, LOCK_UN)
     }
     
     exit(1i32);
 };
+
+

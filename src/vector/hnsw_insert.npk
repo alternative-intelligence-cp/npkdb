@@ -1,3 +1,4 @@
+use "../util/mem_primitives.npk".*;
 // hnsw_insert.npk
 // HNSW Vector Insertion Logic
 
@@ -20,21 +21,21 @@ use "distance.npk".*;
 pub func:hnsw_random_layer = int32(int64:graph, int64:rand_state_ptr) 
     requires (graph != 0i64), (rand_state_ptr != 0i64) {
     
-    float64:mL = hnsw_graph_get_mL(graph)  ? 0.0f64;
+    float64:mL = raw hnsw_graph_get_mL(graph) ;
     int32:max_layer_limit = 3i32; // HNSW_MAX_LAYERS - 1
 
-    uint64:s = ((npk_mem_read_int64(rand_state_ptr, 0i64) => uint64));
-    uint64:next_s = rand_next(s) ? 0u64;
+    uint64:s = ((@cast_unchecked<uint64>(npk_mem_read_int64(rand_state_ptr, 0i64))));
+    uint64:next_s = raw rand_next(s);
     if (next_s == 0u64) { next_s = 1u64; }
-    drop(npk_mem_write_int64(rand_state_ptr, 0i64, ((next_s) => int64)));
+    drop(npk_mem_write_int64(rand_state_ptr, 0i64, (@cast_unchecked<int64>((next_s)))));
 
-    int64:r_int = ((next_s) => int64) % 1000000i64;
+    int64:r_int = (@cast_unchecked<int64>((next_s))) % 1000000i64;
     if (r_int < 0i64) { r_int = -r_int; }
     if (r_int == 0i64) { r_int = 1i64; }
 
-    float64:unif = ((r_int) => float64) / 1000000.0f64;
+    float64:unif = (@cast_unchecked<float64>((r_int))) / 1000000.0f64;
     float64:l_val = -log(unif) * mL;
-    int32:l = ((floor(l_val) => int32));
+    int32:l = ((@cast_unchecked<int32>(floor(l_val))));
 
     if (l > max_layer_limit) { pass(max_layer_limit); }
     pass(l);
@@ -49,51 +50,51 @@ pub func:hnsw_select_neighbors = int64(
     int32:M
 ) requires (graph != 0i64), (W_pq != 0i64), (M > 0i32) {
 
-    int64:size = hnsw_pq_get_size(W_pq)  ? 0i64;
+    int64:size = raw hnsw_pq_get_size(W_pq) ;
     if (size == 0i64) {
-        pass(hnsw_pq_create(((M) => int64), 1i64) ? 0i64);
+        pass(raw hnsw_pq_create((@cast_unchecked<int64>((M))), 1i64));
     }
 
-    int64:min_heap = hnsw_pq_create(size, 0i64)  ? 0i64;
+    int64:min_heap = raw hnsw_pq_create(size, 0i64) ;
     int64:C = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
     
-    when ((hnsw_pq_get_size(W_pq) ? 0i64) > 0i64) {
+    when ((raw hnsw_pq_get_size(W_pq)) > 0i64) {
         drop(hnsw_pq_pop(W_pq, C));
-        tfp64:dist = hnsw_pq_get_dist(C)  ? 0.0tf;
-        int32:slot = hnsw_pq_get_slot(C)  ? 0i32;
-        int32:gen = hnsw_pq_get_gen(C)   ? 0i32;
+        tfp64:dist = raw hnsw_pq_get_dist(C);
+        int32:slot = raw hnsw_pq_get_slot(C) ;
+        int32:gen = raw hnsw_pq_get_gen(C) ;
         drop(hnsw_pq_push(min_heap, dist, slot, gen));
     }
 
-    int64:R = hnsw_pq_create(((M) => int64), 1i64)  ? 0i64;
-    int64:arena = hnsw_graph_get_arena(graph)  ? 0i64;
+    int64:R = raw hnsw_pq_create((@cast_unchecked<int64>((M))), 1i64) ;
+    int64:arena = raw hnsw_graph_get_arena(graph) ;
 
-    when ((hnsw_pq_get_size(min_heap) ? 0i64) > 0i64) {
+    when ((raw hnsw_pq_get_size(min_heap)) > 0i64) {
         drop(hnsw_pq_pop(min_heap, C));
-        tfp64:c_dist = hnsw_pq_get_dist(C)  ? 0.0tf;
-        int32:c_slot = hnsw_pq_get_slot(C)  ? 0i32;
-        int32:c_gen = hnsw_pq_get_gen(C)   ? 0i32;
+        tfp64:c_dist = raw hnsw_pq_get_dist(C);
+        int32:c_slot = raw hnsw_pq_get_slot(C) ;
+        int32:c_gen = raw hnsw_pq_get_gen(C) ;
 
-        int64:r_size = hnsw_pq_get_size(R)  ? 0i64;
-        if (r_size >= ((M) => int64)) { break; }
+        int64:r_size = raw hnsw_pq_get_size(R) ;
+        if (r_size >= (@cast_unchecked<int64>((M)))) { break; }
 
-        int64:c_node = hnsw_arena_get_node(arena, c_slot, c_gen)  ? 0i64;
+        int64:c_node = raw hnsw_arena_get_node(arena, c_slot, c_gen) ;
         if (c_node == 0i64) { continue; }
-        int64:c_vec = hnsw_node_get_vector_offset(c_node)  ? 0i64;
+        int64:c_vec = raw hnsw_node_get_vector_offset(c_node) ;
 
-        int64:r_elems = hnsw_pq_get_elements(R)  ? 0i64;
+        int64:r_elems = raw hnsw_pq_get_elements(R) ;
         bool:good = true;
 
         int64:i = 0i64;
         when (i < r_size) {
             int64:r_ptr = r_elems + (i * HNSW_PQ_CANDIDATE_SIZE);
-            int32:r_slot = hnsw_pq_get_slot(r_ptr)  ? 0i32;
-            int32:r_gen = hnsw_pq_get_gen(r_ptr)  ? 0i32;
+            int32:r_slot = raw hnsw_pq_get_slot(r_ptr) ;
+            int32:r_gen = raw hnsw_pq_get_gen(r_ptr) ;
 
-            int64:r_node = hnsw_arena_get_node(arena, r_slot, r_gen)  ? 0i64;
+            int64:r_node = raw hnsw_arena_get_node(arena, r_slot, r_gen) ;
             if (r_node != 0i64) {
-                int64:r_vec = hnsw_node_get_vector_offset(r_node)  ? 0i64;
-                tfp64:dist_cr = hnsw_graph_distance(graph, c_vec, r_vec)  ? 0.0tf;
+                int64:r_vec = raw hnsw_node_get_vector_offset(r_node) ;
+                tfp64:dist_cr = raw hnsw_graph_distance(graph, c_vec, r_vec);
                 if (dist_cr < c_dist) {
                     good = false;
                     break;
@@ -124,44 +125,44 @@ func:hnsw_shrink_connections = int64(
     int32:new_gen
 ) requires (graph != 0i64), (n_node != 0i64) {
     
-    int64:W = hnsw_pq_create(((layer_m) => int64) + 1i64, 1i64)  ? 0i64;
-    int32:num_n = hnsw_node_get_num_neighbors(n_node, layer)  ? 0i32;
+    int64:W = raw hnsw_pq_create((@cast_unchecked<int64>((layer_m))) + 1i64, 1i64) ;
+    int32:num_n = raw hnsw_node_get_num_neighbors(n_node, layer) ;
 
-    int64:n_vec = hnsw_node_get_vector_offset(n_node)  ? 0i64;
+    int64:n_vec = raw hnsw_node_get_vector_offset(n_node) ;
 
     int64:i = 0i64;
-    int64:arena = hnsw_graph_get_arena(graph)  ? 0i64;
+    int64:arena = raw hnsw_graph_get_arena(graph) ;
 
-    when (i < ((num_n) => int64)) {
-        int32:c_slot = hnsw_node_get_neighbor_slot(n_node, layer, i)  ? 0i32;
-        int32:c_gen = hnsw_node_get_neighbor_gen(n_node, layer, i)  ? 0i32;
+    when (i < (@cast_unchecked<int64>((num_n)))) {
+        int32:c_slot = raw hnsw_node_get_neighbor_slot(n_node, layer, i) ;
+        int32:c_gen = raw hnsw_node_get_neighbor_gen(n_node, layer, i) ;
 
-        int64:c_node = hnsw_arena_get_node(arena, c_slot, c_gen)  ? 0i64;
+        int64:c_node = raw hnsw_arena_get_node(arena, c_slot, c_gen) ;
         if (c_node != 0i64) {
-            int64:c_vec = hnsw_node_get_vector_offset(c_node)  ? 0i64;
-            tfp64:dist = hnsw_graph_distance(graph, n_vec, c_vec)  ? 0.0tf;
+            int64:c_vec = raw hnsw_node_get_vector_offset(c_node) ;
+            tfp64:dist = raw hnsw_graph_distance(graph, n_vec, c_vec);
             drop(hnsw_pq_push(W, dist, c_slot, c_gen));
         }
         i = i + 1i64;
     }
 
-    int64:new_node = hnsw_arena_get_node(arena, new_slot, new_gen)  ? 0i64;
+    int64:new_node = raw hnsw_arena_get_node(arena, new_slot, new_gen) ;
     if (new_node != 0i64) {
-        int64:new_vec = hnsw_node_get_vector_offset(new_node)  ? 0i64;
-        tfp64:dist = hnsw_graph_distance(graph, n_vec, new_vec)  ? 0.0tf;
+        int64:new_vec = raw hnsw_node_get_vector_offset(new_node) ;
+        tfp64:dist = raw hnsw_graph_distance(graph, n_vec, new_vec);
         drop(hnsw_pq_push(W, dist, new_slot, new_gen));
     }
 
-    int64:neighbors = hnsw_select_neighbors(graph, n_vec, W, layer_m)  ? 0i64;
-    int64:n_size = hnsw_pq_get_size(neighbors)  ? 0i64;
+    int64:neighbors = raw hnsw_select_neighbors(graph, n_vec, W, layer_m) ;
+    int64:n_size = raw hnsw_pq_get_size(neighbors) ;
 
-    drop(hnsw_node_set_num_neighbors(n_node, layer, ((n_size) => int32)));
+    drop(hnsw_node_set_num_neighbors(n_node, layer, (@cast_unchecked<int32>((n_size)))));
 
     i = 0i64;
     when (i < n_size) {
-        int64:ptr = hnsw_pq_get_candidate_ptr(neighbors, i)  ? 0i64;
-        int32:s = hnsw_pq_get_slot(ptr)  ? 0i32;
-        int32:g = hnsw_pq_get_gen(ptr)  ? 0i32;
+        int64:ptr = raw hnsw_pq_get_candidate_ptr(neighbors, i) ;
+        int32:s = raw hnsw_pq_get_slot(ptr) ;
+        int32:g = raw hnsw_pq_get_gen(ptr) ;
         drop(hnsw_node_set_neighbor(n_node, layer, i, s, g, 1i16));
         i = i + 1i64;
     }
@@ -180,28 +181,28 @@ pub func:hnsw_insert = int64(
     int64:visited_set
 ) requires (graph != 0i64), (rand_state_ptr != 0i64), (visited_set != 0i64) {
 
-    int64:arena = hnsw_graph_get_arena(graph)  ? 0i64;
+    int64:arena = raw hnsw_graph_get_arena(graph) ;
 
     int64:node_buf = npk_core_alloc(16i64);
-    int64:alloc_res = hnsw_arena_alloc_node(arena, node_buf, node_buf + 8i64)  ? 0i64;
+    int64:alloc_res = raw hnsw_arena_alloc_node(arena, node_buf, node_buf + 8i64) ;
     if (alloc_res == -1i64) {
         drop(npk_core_dalloc(node_buf));
         pass(-1i64);
     }
-    int32:slot = ((npk_mem_read_int64(node_buf, 0i64) => int32));
+    int32:slot = ((@cast_unchecked<int32>(npk_mem_read_int64(node_buf, 0i64))));
     int32:gen  = npk_mem_read_int32(node_buf, 8i64);
     drop(npk_core_dalloc(node_buf));
 
-    int64:node_ptr = hnsw_arena_get_node(arena, slot, gen)  ? 0i64;
+    int64:node_ptr = raw hnsw_arena_get_node(arena, slot, gen) ;
     drop(hnsw_node_set_vector_offset(node_ptr, vec_offset));
 
-    int32:l = hnsw_random_layer(graph, rand_state_ptr)  ? 0i32;
+    int32:l = raw hnsw_random_layer(graph, rand_state_ptr) ;
     drop(hnsw_node_set_layer(node_ptr, l));
 
     int64:ep_slot_ptr = npk_core_alloc(8i64);
     int64:ep_gen_ptr = npk_core_alloc(8i64);
 
-    drop(hnsw_graph_get_ep(graph, ep_slot_ptr, ep_gen_ptr));
+    drop(raw hnsw_graph_get_ep(graph, ep_slot_ptr, ep_gen_ptr));
     int32:ep_slot = npk_mem_read_int32(ep_slot_ptr, 0i64);
     int32:ep_gen  = npk_mem_read_int32(ep_gen_ptr, 0i64);
 
@@ -213,10 +214,10 @@ pub func:hnsw_insert = int64(
         pass(0i64);
     }
 
-    int32:max_layer = hnsw_graph_get_max_layer(graph)  ? 0i32;
-    int32:M = hnsw_graph_get_M(graph) ? 16i32;
-    int32:M0 = hnsw_graph_get_M0(graph) ? 32i32;
-    int32:ef_const = hnsw_graph_get_ef_construction(graph) ? 100i32;
+    int32:max_layer = raw hnsw_graph_get_max_layer(graph) ;
+    int32:M = raw hnsw_graph_get_M(graph) ;
+    int32:M0 = raw hnsw_graph_get_M0(graph) ;
+    int32:ef_const = raw hnsw_graph_get_ef_construction(graph) ;
 
     int32:curr_ep_slot = ep_slot;
     int32:curr_ep_gen = ep_gen;
@@ -224,14 +225,14 @@ pub func:hnsw_insert = int64(
     int32:lc = max_layer;
     when (lc > l) {
         drop(hnsw_visited_clear(visited_set));
-        int64:W = hnsw_search_layer(0i64, graph, vec_offset, curr_ep_slot, curr_ep_gen, 1i32, lc, visited_set, 0i64, 0i64)  ? 0i64;
+        int64:W = raw hnsw_search_layer(0i64, graph, vec_offset, curr_ep_slot, curr_ep_gen, 1i32, lc, visited_set, 0i64, 0i64) ;
         
-        int64:size = hnsw_pq_get_size(W)  ? 0i64;
+        int64:size = raw hnsw_pq_get_size(W) ;
         if (size > 0i64) {
             int64:C = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
             drop(hnsw_pq_peek(W, C));
-            curr_ep_slot = hnsw_pq_get_slot(C) ? curr_ep_slot;
-            curr_ep_gen  = hnsw_pq_get_gen(C)  ? curr_ep_gen;
+            curr_ep_slot = raw hnsw_pq_get_slot(C) ;
+            curr_ep_gen  = raw hnsw_pq_get_gen(C)  ;
             drop(npk_core_dalloc(C));
         }
         drop(hnsw_pq_destroy(W));
@@ -243,28 +244,28 @@ pub func:hnsw_insert = int64(
 
     when (lc >= 0i32) {
         drop(hnsw_visited_clear(visited_set));
-        int64:W = hnsw_search_layer(0i64, graph, vec_offset, curr_ep_slot, curr_ep_gen, ef_const, lc, visited_set, 0i64, 0i64)  ? 0i64;
+        int64:W = raw hnsw_search_layer(0i64, graph, vec_offset, curr_ep_slot, curr_ep_gen, ef_const, lc, visited_set, 0i64, 0i64) ;
         
         int32:layer_m = M;
         if (lc == 0i32) { layer_m = M0; }
 
-        int64:neighbors = hnsw_select_neighbors(graph, vec_offset, W, layer_m)  ? 0i64;
+        int64:neighbors = raw hnsw_select_neighbors(graph, vec_offset, W, layer_m) ;
         
-        int64:n_size = hnsw_pq_get_size(neighbors)  ? 0i64;
-        drop(hnsw_node_set_num_neighbors(node_ptr, lc, ((n_size) => int32)));
+        int64:n_size = raw hnsw_pq_get_size(neighbors) ;
+        drop(hnsw_node_set_num_neighbors(node_ptr, lc, (@cast_unchecked<int32>((n_size)))));
 
         int64:i = 0i64;
         when (i < n_size) {
-            int64:ptr = hnsw_pq_get_candidate_ptr(neighbors, i)  ? 0i64;
-            int32:n_slot = hnsw_pq_get_slot(ptr)  ? 0i32;
-            int32:n_gen = hnsw_pq_get_gen(ptr)  ? 0i32;
+            int64:ptr = raw hnsw_pq_get_candidate_ptr(neighbors, i) ;
+            int32:n_slot = raw hnsw_pq_get_slot(ptr) ;
+            int32:n_gen = raw hnsw_pq_get_gen(ptr) ;
             drop(hnsw_node_set_neighbor(node_ptr, lc, i, n_slot, n_gen, 1i16));
 
-            int64:n_node_ptr = hnsw_arena_get_node(arena, n_slot, n_gen)  ? 0i64;
+            int64:n_node_ptr = raw hnsw_arena_get_node(arena, n_slot, n_gen) ;
             if (n_node_ptr != 0i64) {
-                int32:n_num = hnsw_node_get_num_neighbors(n_node_ptr, lc)  ? 0i32;
+                int32:n_num = raw hnsw_node_get_num_neighbors(n_node_ptr, lc) ;
                 if (n_num < layer_m) {
-                    drop(hnsw_node_set_neighbor(n_node_ptr, lc, ((n_num) => int64), slot, gen, 1i16));
+                    drop(hnsw_node_set_neighbor(n_node_ptr, lc, (@cast_unchecked<int64>((n_num))), slot, gen, 1i16));
                     drop(hnsw_node_set_num_neighbors(n_node_ptr, lc, n_num + 1i32));
                 } else {
                     drop(hnsw_shrink_connections(graph, n_node_ptr, n_slot, n_gen, lc, layer_m, slot, gen));
@@ -278,10 +279,10 @@ pub func:hnsw_insert = int64(
             int64:min_idx = -1i64;
             tfp64:min_dist = 999999999.0f32;
             int64:j = 0i64;
-            int64:r_elems = hnsw_pq_get_elements(neighbors)  ? 0i64;
+            int64:r_elems = raw hnsw_pq_get_elements(neighbors) ;
             when (j < n_size) {
                 int64:r_ptr = r_elems + (j * HNSW_PQ_CANDIDATE_SIZE);
-                tfp64:d = hnsw_pq_get_dist(r_ptr)  ? 0.0tf;
+                tfp64:d = raw hnsw_pq_get_dist(r_ptr);
                 if (d < min_dist) {
                     min_dist = d;
                     min_idx = j;
@@ -290,8 +291,8 @@ pub func:hnsw_insert = int64(
             }
             if (min_idx != -1i64) {
                 int64:r_ptr = r_elems + (min_idx * HNSW_PQ_CANDIDATE_SIZE);
-                curr_ep_slot = hnsw_pq_get_slot(r_ptr) ? curr_ep_slot;
-                curr_ep_gen  = hnsw_pq_get_gen(r_ptr)  ? curr_ep_gen;
+                curr_ep_slot = raw hnsw_pq_get_slot(r_ptr) ;
+                curr_ep_gen  = raw hnsw_pq_get_gen(r_ptr)  ;
             }
         }
 
@@ -310,3 +311,5 @@ pub func:hnsw_insert = int64(
     drop(npk_core_dalloc(ep_gen_ptr));
     pass(0i64);
 };
+
+

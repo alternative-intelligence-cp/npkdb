@@ -50,7 +50,7 @@ func:main = int32(int32:argc, wild any->:argv) {
     // Verify first char 'h'
     int64:first_char = npk_mem_read_byte(s.data, 0i64);
     if (first_char != 104i64) {
-        exit((first_char & 255i64) => int32);
+        exit@cast_unchecked<int32>((first_char & 255i64));
     } // 'h' is 104
     
     // 3. Test parse_array with floats
@@ -66,7 +66,7 @@ func:main = int32(int32:argc, wild any->:argv) {
     
     // Check first value (12.34)
     int64:v1_ptr = npk_mem_read_int64(handles_ptr, 0i64);
-    int8:v1_type = (npk_mem_read_byte(v1_ptr, 0i64)) => int8;
+    int8:v1_type = @cast_unchecked<int8>(npk_mem_read_byte(v1_ptr, 0i64));
     
     if (v1_type != JSON_NUM_F64) { exit(33i32); }
     int64:v1_bits = npk_mem_read_int64(v1_ptr, 8i64);

@@ -1,0 +1,164 @@
+src/storage/memtable.npk:41:        pass(@cast_unchecked<int64>(ERR_PAGE_FULL)); // We map ERR_MEMTABLE_FULL to ERR_PAGE_FULL or we can just return a non-zero error.
+src/storage/memtable.npk:54:        pass(@cast_unchecked<int64>(ERR_PAGE_FULL));
+src/storage/memtable.npk:71:    if (mem >= @cast_unchecked<int64>(MEMTABLE_SIZE_LIMIT)) {
+src/storage/sstable.npk:53:        drop(npk_mem_write_byte(buf, 0i64, @cast_unchecked<int64>(RECORD_FLAG_TOMBSTONE)));
+src/storage/sstable.npk:55:        drop(npk_mem_write_byte(buf, 0i64, @cast_unchecked<int64>(RECORD_FLAG_LIVE)));
+src/storage/sstable.npk:344:    int64:count = @cast_unchecked<int64>(count32);
+src/storage/sstable.npk:357:        int64:k_len = @cast_unchecked<int64>(npk_mem_read_int32(tup_ptr, 0i64));
+src/storage/sstable.npk:371:        int64:kl = @cast_unchecked<int64>(npk_mem_read_int32(t_ptr, 0i64));
+src/storage/sstable.npk:398:    int64:key_len = @cast_unchecked<int64>(npk_mem_read_int32(tup_ptr, 1i64));
+src/storage/sstable.npk:409:    if (flag == @cast_unchecked<int64>(RECORD_FLAG_TOMBSTONE)) {
+src/storage/sstable.npk:414:        int64:val_len = @cast_unchecked<int64>(npk_mem_read_int32(tup_ptr, v_off));
+src/storage/sstable.npk:466:    int64:count = @cast_unchecked<int64>(count32);
+src/storage/sstable.npk:512:        int64:count = @cast_unchecked<int64>(count32);
+src/storage/wal.npk:305:    int64:crc32_stored_signed = @cast_unchecked<int64>(npk_mem_read_int32(hdr_buf, 0i64));
+src/storage/wal.npk:307:    int64:record_length = @cast_unchecked<int64>(npk_mem_read_int32(hdr_buf, 4i64));
+src/storage/wal.npk:350:    int64:key_len = @cast_unchecked<int64>(npk_mem_read_int32(record_buf, 16i64));
+src/storage/wal.npk:356:    int64:key_len = @cast_unchecked<int64>(npk_mem_read_int32(record_buf, 16i64));
+src/storage/wal.npk:361:    int64:key_len = @cast_unchecked<int64>(npk_mem_read_int32(record_buf, 16i64));
+src/storage/wal.npk:362:    pass(@cast_unchecked<int64>(npk_mem_read_int32(record_buf, 20i64 + key_len)));
+src/storage/wal.npk:381:        int64:rec_len = @cast_unchecked<int64>(npk_mem_read_int32(rec, 4i64));
+src/storage/wal.npk:384:        int64:r_seq = @cast_unchecked<int64>((raw wal_record_seq(rec)));
+src/page/page.npk:71:    int64:free_off = @cast_unchecked<int64>((page_get_free_offset(buf) ? 0i32));
+src/page/page.npk:72:    int64:tup_end  = @cast_unchecked<int64>((page_get_tuple_end(buf) ? 0i32));
+src/page/page.npk:107:    int64:count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+src/page/page.npk:143:    int64:count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+src/page/page.npk:158:    int64:count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+src/page/page.npk:183:    int64:tend = @cast_unchecked<int64>((page_get_tuple_end(buf) ? 0i32));
+src/page/page.npk:191:    int64:scnt = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+src/page/page.npk:194:    int64:foff = @cast_unchecked<int64>((page_get_free_offset(buf) ? 0i32));
+src/page/page.npk:204:    int64:count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+src/page/page.npk:222:    int64:count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+src/page/page.npk:264:    int64:orig_count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+src/util/failsafe.npk:24:        drop(sys(FLOCK, @cast_unchecked<int64>(g_db_lock_fd), 8i64)); // sys_flock(fd, LOCK_UN)
+src/util/mem_primitives.npk:22:    int64:v = @cast_unchecked<int64>(val);
+src/util/mem_primitives.npk:37:    int64:v = @cast_unchecked<int64>(val);
+src/document/json_serializer.npk:33:    drop(npk_mem_write_byte(buf->data, buf->cursor, @cast_unchecked<int64>(val->type)));
+src/document/json_serializer.npk:56:                        int64:len = @cast_unchecked<int64>(npk_mem_read_int32(str_ptr, 0i64)); // uint32:length is at offset 0
+src/document/json_serializer.npk:69:                            int64:count = @cast_unchecked<int64>(npk_mem_read_int32(arr_ptr, 0i64));
+src/document/json_serializer.npk:89:                                int64:count = @cast_unchecked<int64>(npk_mem_read_int32(obj_ptr, 0i64));
+src/document/json_serializer.npk:209:        int64:len = @cast_unchecked<int64>(npk_mem_read_int32(buf, cursor));
+src/document/json_serializer.npk:233:        int64:count = @cast_unchecked<int64>(npk_mem_read_int32(buf, cursor));
+src/document/json_serializer.npk:255:        int64:count = @cast_unchecked<int64>(npk_mem_read_int32(buf, cursor));
+src/document/json_parser.npk:90:            int64:digit = @cast_unchecked<int64>((c - 48i8));
+src/document/json_parser.npk:136:            acc = (acc * 10i64) + (@cast_unchecked<int64>((c - 48i8)));
+src/document/json_parser.npk:183:            drop(npk_mem_write_byte(v_ptr, 0i64, @cast_unchecked<int64>(v.type)));
+src/document/json_parser.npk:242:            drop(npk_mem_write_byte(v_ptr, 0i64, @cast_unchecked<int64>(v.type)));
+src/network/errors.npk:28:    string:res = "{\"error\": {\"code\": " + string_from_int(@cast_unchecked<int64>(err_code)) + ", \"message\": \"" + msg + "\"}}";
+src/network/controllers.npk:71:    int64:count = @cast_unchecked<int64>(npk_mem_read_int32(obj_ptr, 0i64));
+src/network/controllers.npk:81:        int64:k_type = @cast_unchecked<int64>(npk_mem_read_byte(key_ptr, 0i64));
+src/network/controllers.npk:82:        if (k_type == @cast_unchecked<int64>(JSON_STR)) {
+src/network/controllers.npk:85:                int64:len = @cast_unchecked<int64>(npk_mem_read_int32(str_ptr, 0i64));
+src/network/controllers.npk:92:                            int64:v_type = @cast_unchecked<int64>(npk_mem_read_byte(val_ptr, 0i64));
+src/network/controllers.npk:93:                            if (v_type == @cast_unchecked<int64>(JSON_ARR)) {
+src/network/controllers.npk:95:                                int64:arr_cnt = @cast_unchecked<int64>(npk_mem_read_int32(arr_ptr, 0i64));
+src/network/controllers.npk:133:                                        int64:obj_count = @cast_unchecked<int64>((npk_mem_read_int32(elem_ptr, 0i64)));
+src/network/controllers.npk:139:                                            int64:k_type = @cast_unchecked<int64>((npk_mem_read_byte(k_ptr, 0i64)));
+src/network/controllers.npk:140:                                            if (k_type == @cast_unchecked<int64>((JSON_STR))) {
+src/network/controllers.npk:142:                                                int64:s_len = @cast_unchecked<int64>((npk_mem_read_int32(str_p, 0i64)));
+src/network/controllers.npk:146:                                                    int64:vt = @cast_unchecked<int64>((npk_mem_read_byte(v_ptr, 0i64)));
+src/network/controllers.npk:147:                                                    if (vt == @cast_unchecked<int64>((JSON_ARR))) {
+src/network/controllers.npk:149:                                                        int64:a_cnt = @cast_unchecked<int64>((npk_mem_read_int32(a_ptr, 0i64)));
+src/network/controllers.npk:155:                                                            int64:vet = @cast_unchecked<int64>((npk_mem_read_byte(ve_ptr, 0i64)));
+src/network/controllers.npk:157:                                                            if (vet == @cast_unchecked<int64>((JSON_NUM_F64))) {
+src/network/controllers.npk:161:                                                            if (vet == @cast_unchecked<int64>((JSON_NUM_I64))) {
+src/network/controllers.npk:166:                                                            drop(npk_mem_write_int64(global_vec_buf, vec_offset + vi * 8i64, @cast_unchecked<int64>((val))));
+src/network/controllers.npk:245:    int64:obj_count = @cast_unchecked<int64>((npk_mem_read_int32(v.payload, 0i64)));
+src/network/controllers.npk:251:        int64:k_type = @cast_unchecked<int64>((npk_mem_read_byte(k_ptr, 0i64)));
+src/network/controllers.npk:252:        if (k_type == @cast_unchecked<int64>((JSON_STR))) {
+src/network/controllers.npk:254:            int64:s_len = @cast_unchecked<int64>((npk_mem_read_int32(str_p, 0i64)));
+src/network/controllers.npk:259:                int64:f_type = @cast_unchecked<int64>((npk_mem_read_byte(v_ptr, 0i64)));
+src/network/controllers.npk:260:                if (f_type == @cast_unchecked<int64>((JSON_OBJ))) {
+src/network/controllers.npk:262:                    filter_ast = parse_filter(arena, @cast_unchecked<int64>(@f_val), 1i32) ? 0i64;
+src/network/controllers.npk:266:                int64:vt = @cast_unchecked<int64>((npk_mem_read_byte(v_ptr, 0i64)));
+src/network/controllers.npk:267:                if (vt == @cast_unchecked<int64>((JSON_NUM_I64))) {
+src/network/controllers.npk:272:                int64:vt = @cast_unchecked<int64>((npk_mem_read_byte(v_ptr, 0i64)));
+src/network/controllers.npk:273:                if (vt == @cast_unchecked<int64>((JSON_ARR))) {
+src/network/controllers.npk:275:                    int64:a_cnt = @cast_unchecked<int64>((npk_mem_read_int32(a_ptr, 0i64)));
+src/network/controllers.npk:280:                        int64:vet = @cast_unchecked<int64>((npk_mem_read_byte(ve_ptr, 0i64)));
+src/network/controllers.npk:282:                        if (vet == @cast_unchecked<int64>((JSON_NUM_F64))) {
+src/network/controllers.npk:286:                        if (vet == @cast_unchecked<int64>((JSON_NUM_I64))) {
+src/network/controllers.npk:291:                        drop(npk_mem_write_int64(q_vec, vi * 8i64, @cast_unchecked<int64>((val))));
+src/network/controllers.npk:356:        int64:slot64 = @cast_unchecked<int64>(slot);
+src/network/server.npk:26:        workers = (((raw @cast_unchecked<int64>(Thread.hardware_concurrency()))) * 2i64);
+src/network/server.npk:47:    int64:server_fd = raw Server.bind_and_listen("0.0.0.0", (@cast_unchecked<int64>((port))), 1024i64);
+src/network/server.npk:49:        println(string_concat("Failed to bind and listen on port ", string_from_int((@cast_unchecked<int64>((port))))));
+src/network/server.npk:53:    println(string_concat("Server listening on port ", string_from_int((@cast_unchecked<int64>((port))))));
+src/vector/hnsw_visited.npk:50:    int64:slot64 = (@cast_unchecked<int64>((slot_idx)));
+src/vector/hnsw_visited.npk:63:    int64:slot64 = (@cast_unchecked<int64>((slot_idx)));
+src/vector/hnsw_graph.npk:35:    drop(npk_mem_write_int64(graph, HNSW_GRAPH_OFF_ML, (@cast_unchecked<int64>((mL)))));
+src/vector/hnsw_search.npk:32:    int64:ef_64 = (@cast_unchecked<int64>((ef)));
+src/vector/hnsw_search.npk:44:            int64:ep_doc_ptr = npk_mem_read_int64(doc_store, (@cast_unchecked<int64>((ep_slot))) * 8i64);
+src/vector/hnsw_search.npk:83:        int64:n_64 = (@cast_unchecked<int64>((num_neighbors)));
+src/vector/hnsw_search.npk:97:                            int64:doc_ptr = npk_mem_read_int64(doc_store, (@cast_unchecked<int64>((n_slot))) * 8i64);
+src/vector/hnsw_arena.npk:153:    int64:slot     = (@cast_unchecked<int64>((handle_slot_idx)));
+src/vector/hnsw_arena.npk:189:    int64:slot     = (@cast_unchecked<int64>((handle_slot_idx)));
+src/vector/hnsw_arena.npk:208:    int64:slot     = (@cast_unchecked<int64>((handle_slot_idx)));
+src/vector/hnsw_arena.npk:220:    int64:word0 = (@cast_unchecked<int64>((slot_idx))) | ((@cast_unchecked<int64>((generation))) << 32i64);
+src/vector/hnsw_arena.npk:221:    int64:word1 = (@cast_unchecked<int64>((arena_id))) & 0xFFFFi64;
+src/vector/hnsw_node.npk:104:    requires (node_ptr != 0i64), (layer >= 0i32), ((@cast_unchecked<int64>((layer))) < HNSW_MAX_LAYERS) {
+src/vector/hnsw_node.npk:105:    int64:layer64 = (@cast_unchecked<int64>((layer)));
+src/vector/hnsw_node.npk:111:    requires (node_ptr != 0i64), (layer >= 0i32), ((@cast_unchecked<int64>((layer))) < HNSW_MAX_LAYERS), (count >= 0i32) {
+src/vector/hnsw_node.npk:112:    int64:layer64 = (@cast_unchecked<int64>((layer)));
+src/vector/hnsw_node.npk:123:    requires (node_ptr != 0i64), (layer >= 0i32), ((@cast_unchecked<int64>((layer))) < HNSW_MAX_LAYERS) {
+src/vector/hnsw_node.npk:124:    int64:layer64 = (@cast_unchecked<int64>((layer)));
+src/vector/hnsw_node.npk:130:    requires (node_ptr != 0i64), (layer >= 0i32), ((@cast_unchecked<int64>((layer))) < HNSW_MAX_LAYERS), (max >= 0i32) {
+src/vector/hnsw_node.npk:131:    int64:layer64 = (@cast_unchecked<int64>((layer)));
+src/vector/hnsw_node.npk:159:    requires (layer >= 0i32), ((@cast_unchecked<int64>((layer))) < HNSW_MAX_LAYERS), (i >= 0i64) {
+src/vector/hnsw_node.npk:173:    requires (node_ptr != 0i64), (layer >= 0i32), ((@cast_unchecked<int64>((layer))) < HNSW_MAX_LAYERS), (i >= 0i64) {
+src/vector/hnsw_node.npk:180:    requires (node_ptr != 0i64), (layer >= 0i32), ((@cast_unchecked<int64>((layer))) < HNSW_MAX_LAYERS), (i >= 0i64) {
+src/vector/hnsw_node.npk:187:    requires (node_ptr != 0i64), (layer >= 0i32), ((@cast_unchecked<int64>((layer))) < HNSW_MAX_LAYERS), (i >= 0i64) {
+src/vector/hnsw_node.npk:194:    requires (node_ptr != 0i64), (layer >= 0i32), ((@cast_unchecked<int64>((layer))) < HNSW_MAX_LAYERS), (i >= 0i64), (generation > 0i32) {
+src/vector/hnsw_node.npk:205:    requires (node_ptr != 0i64), (layer >= 0i32), ((@cast_unchecked<int64>((layer))) < HNSW_MAX_LAYERS), (i >= 0i64) {
+src/vector/hnsw_node.npk:216:    requires (node_ptr != 0i64), (layer >= 0i32), ((@cast_unchecked<int64>((layer))) < HNSW_MAX_LAYERS), (i >= 0i64) {
+src/vector/hnsw_insert.npk:30:    drop(npk_mem_write_int64(rand_state_ptr, 0i64, (@cast_unchecked<int64>((next_s)))));
+src/vector/hnsw_insert.npk:32:    int64:r_int = (@cast_unchecked<int64>((next_s))) % 1000000i64;
+src/vector/hnsw_insert.npk:55:        pass(raw hnsw_pq_create((@cast_unchecked<int64>((M))), 1i64));
+src/vector/hnsw_insert.npk:69:    int64:R = raw hnsw_pq_create((@cast_unchecked<int64>((M))), 1i64) ;
+src/vector/hnsw_insert.npk:79:        if (r_size >= (@cast_unchecked<int64>((M)))) { break; }
+src/vector/hnsw_insert.npk:128:    int64:W = raw hnsw_pq_create((@cast_unchecked<int64>((layer_m))) + 1i64, 1i64) ;
+src/vector/hnsw_insert.npk:136:    when (i < (@cast_unchecked<int64>((num_n)))) {
+src/vector/hnsw_insert.npk:268:                    drop(hnsw_node_set_neighbor(n_node_ptr, lc, (@cast_unchecked<int64>((n_num))), slot, gen, 1i16));
+src/index/art_iter.npk:376:        key_byte = @cast_unchecked<int64>((b));
+src/index/art_alloc.npk:11:    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (@cast_unchecked<int64>(ART_NODE4))));
+src/index/art_alloc.npk:21:    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (@cast_unchecked<int64>(ART_NODE16))));
+src/index/art_alloc.npk:31:    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (@cast_unchecked<int64>(ART_NODE48))));
+src/index/art_alloc.npk:41:    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (@cast_unchecked<int64>(ART_NODE256))));
+src/index/art_alloc.npk:52:    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (@cast_unchecked<int64>(ART_LEAF))));
+src/index/art_node_header.npk:14:    drop(npk_mem_write_byte(node, ART_HDR_NUM_CHILDREN, (@cast_unchecked<int64>(count))));
+src/index/art_node_header.npk:41:    drop(npk_mem_write_byte(node, ART_HDR_PREFIX + i, (@cast_unchecked<int64>(b))));
+src/index/art_location.npk:18:    int64:buf = @cast_unchecked<int64>(npk_core_alloc(LOCATION_SIZE));
+src/index/art_node48.npk:6:    int64:idx_off = NODE48_INDEX_OFFSET + (@cast_unchecked<int64>(byte_val));
+src/index/art_node48.npk:7:    pass(@cast_unchecked<int64>(npk_mem_read_byte(node, idx_off)));
+src/query/path_eval.npk:48:    int64:count = @cast_unchecked<int64>(npk_mem_read_int32(obj_ptr, 0i64));
+src/query/path_eval.npk:61:            int64:k_len = @cast_unchecked<int64>(npk_mem_read_int32(k_payload, 0i64));
+src/query/path_eval.npk:88:                            pass(raw eval_path(path_ptr + seg_len + 1i64, @cast_unchecked<int64>(@v_elem)));
+src/query/evaluator.npk:27:    int64:doc_ptr = @cast_unchecked<int64>(@doc);
+src/query/evaluator.npk:48:        int64:op = @cast_unchecked<int64>(npk_mem_read_byte(node, 0i64));
+src/query/evaluator.npk:50:        if (op == (@cast_unchecked<int64>(AST_OP_AND))) {
+src/query/evaluator.npk:51:            int64:count = @cast_unchecked<int64>(npk_mem_read_int32(node, 32i64));
+src/query/evaluator.npk:85:        if (op == (@cast_unchecked<int64>(AST_OP_OR))) {
+src/query/evaluator.npk:86:            int64:count = @cast_unchecked<int64>(npk_mem_read_int32(node, 32i64));
+src/query/evaluator.npk:134:        if (op == (@cast_unchecked<int64>(AST_OP_EQ))) {
+src/query/evaluator.npk:144:                int64:a_len = @cast_unchecked<int64>(npk_mem_read_int32(actual.payload, 0i64));
+src/query/evaluator.npk:145:                int64:t_len = @cast_unchecked<int64>(npk_mem_read_int32(target.payload, 0i64));
+src/query/evaluator.npk:160:        if (op == (@cast_unchecked<int64>(AST_OP_GT))) {
+src/query/evaluator.npk:173:        if (op == (@cast_unchecked<int64>(AST_OP_LT))) {
+src/query/filter_parser.npk:83:    int64:count = @cast_unchecked<int64>(npk_mem_read_int32(obj_ptr, 0i64));
+src/query/filter_parser.npk:113:            drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_AND)));
+src/query/filter_parser.npk:115:            drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_OR)));
+src/query/filter_parser.npk:121:        int64:arr_count = @cast_unchecked<int64>(npk_mem_read_int32(arr_ptr, 0i64));
+src/query/filter_parser.npk:140:            int64:child_node = raw parse_filter(arena_ptr, @cast_unchecked<int64>(@child_elem), depth + 1i32);
+src/query/filter_parser.npk:151:            int64:icount = @cast_unchecked<int64>(npk_mem_read_int32(inner_obj_ptr, 0i64));
+src/query/filter_parser.npk:172:                        drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_EQ))); 
+src/query/filter_parser.npk:175:                            drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_GT))); 
+src/query/filter_parser.npk:178:                                drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_LT))); 
+src/query/filter_parser.npk:181:                                    drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_IN))); 
+src/query/filter_parser.npk:183:                                    drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_EQ))); 
+src/query/filter_parser.npk:190:                    drop(npk_mem_write_byte(node_ptr, 16i64, @cast_unchecked<int64>(iv0_elem.type)));
+src/query/filter_parser.npk:194:                    drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_EQ)));
+src/query/filter_parser.npk:195:                    drop(npk_mem_write_byte(node_ptr, 16i64, @cast_unchecked<int64>(v0_elem.type)));
+src/query/filter_parser.npk:200:                drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_EQ)));
+src/query/filter_parser.npk:201:                drop(npk_mem_write_byte(node_ptr, 16i64, @cast_unchecked<int64>(v0_elem.type)));
+src/query/filter_parser.npk:206:            drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_EQ)));
+src/query/filter_parser.npk:207:            drop(npk_mem_write_byte(node_ptr, 16i64, @cast_unchecked<int64>(v0_elem.type)));

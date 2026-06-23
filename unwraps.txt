@@ -1,0 +1,3 @@
+28:src/query/evaluator.npk:21 - Cannot silently unwrap Result<int64> into 'doc_arena' of type 'int64'. Declare as Result<int64> and check .is_error, or use 'raw expr' to explicitly assert the call cannot fail.
+42:src/vector/hnsw_search.npk:62 - Cannot silently unwrap Result<int32> into 'c_slot' of type 'int32'. Declare as Result<int32> and check .is_error, or use 'raw expr' to explicitly assert the call cannot fail.
+43:src/vector/hnsw_search.npk:63 - Cannot silently unwrap Result<int32> into 'c_gen' of type 'int32'. Declare as Result<int32> and check .is_error, or use 'raw expr' to explicitly assert the call cannot fail.

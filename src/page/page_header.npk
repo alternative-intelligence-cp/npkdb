@@ -3,7 +3,7 @@
 // Physical layout (32 bytes):
 //   Offset  0: page_id       (int64, 8 bytes) — unique page identifier
 //   Offset  8: checksum      (uint32, 4 bytes) — CRC32 of page contents (bytes 12–8191)
-//   Offset 12: free_offset   (int32, 4 bytes) — byte offset where free space begins (after last slot)
+//   Offset 12: free_offset   (int32, 4 bytes) — byte offset where npk_core_dalloc space begins (after last slot)
 //   Offset 16: tuple_end     (int32, 4 bytes) — byte offset where tuple region ends (grows backward from 8191)
 //   Offset 20: slot_count    (int32, 4 bytes) — number of active slots
 //   Offset 24: flags         (int32, 4 bytes) — page type flags (0=data, 1=index, 2=overflow)
@@ -24,3 +24,5 @@ pub fixed int64:HDR_OFF_TUPLE_END   = 16i64;
 pub fixed int64:HDR_OFF_SLOT_COUNT  = 20i64;
 pub fixed int64:HDR_OFF_FLAGS       = 24i64;
 pub fixed int64:HDR_OFF_RESERVED    = 28i64;
+
+

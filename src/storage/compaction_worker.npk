@@ -36,7 +36,7 @@ pub func:compaction_worker_loop = int64(int64:ctx) {
     int64:running = 1i64;
     
     while (running == 1i64) {
-        int64:msg = Channel.recv(ch) ? -1i64;
+        int64:msg = raw Channel.recv(ch);
         
         if (msg == COMPACT_SHUTDOWN) {
             break;
@@ -50,9 +50,9 @@ pub func:compaction_worker_loop = int64(int64:ctx) {
         drop(Thread.yield());
     }
     
-    // Do NOT free the context here; wp_shutdown will free it to avoid use-after-free
-    // if shutdown is called while thread is starting. Actually, the thread can free it
-    // because wp_shutdown won't use it after joining. Let's let wp_shutdown free it.
+    // Do NOT npk_core_dalloc the context here; wp_shutdown will npk_core_dalloc it to avoid use-after-npk_core_dalloc
+    // if shutdown is called while thread is starting. Actually, the thread can npk_core_dalloc it
+    // because wp_shutdown won't use it after joining. Let's let wp_shutdown npk_core_dalloc it.
     
     pass(0i64);
 };
@@ -62,9 +62,9 @@ pub func:compaction_worker_loop = int64(int64:ctx) {
 // Return struct:
 // 0: channel handle
 // 8: thread handle
-// 16: worker ctx (to free later)
+// 16: worker ctx (to npk_core_dalloc later)
 pub func:compaction_worker_start = int64(int64:lm, (int64)(int64):worker_fn) {
-    int64:ch = Channel.create(16i32) ? 0i64;
+    int64:ch = raw Channel.create(16i32);
     if (ch <= 0i64) { pass(0i64); }
     
     int64:ctx = npk_core_alloc(CTX_SIZE);
@@ -106,3 +106,5 @@ pub func:compaction_signal_shutdown = int64(int64:channel) {
     }
     pass(1i64);
 };
+
+

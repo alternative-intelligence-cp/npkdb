@@ -1,3 +1,4 @@
+
 // controllers.npk — HTTP API Controllers
 use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
 use "../document/json_parser.npk".*;
@@ -25,7 +26,7 @@ use "atomic.npk".*;
 pub func:controller_create_collection = int32(int64:client_fd, Request:req) {
     // Dummy implementation for 0.3.9
     string:res = "{\"status\": \"ok\", \"message\": \"collection created\"}";
-    _?!Server.send_typed(client_fd, 200i64, "application/json", res);
+    _?!raw Server.send_typed(client_fd, 200i64, "application/json", res);
     pass(0i32);
 };
 
@@ -46,29 +47,32 @@ pub int64:global_vec_buf = 0i64;
 pub int64:global_doc_store = 0i64;
 
 
-pub func:controller_insert = int32(int64:client_fd, Request:req, string:collection_name) {
-    int64:arena = json_arena_init(1048576i64); // 1 MB limit
-    if (arena == 0i64) { pass(ERR_JSON_PARSE_FAIL); }
+pub func:controller_insert = int32(int64:client_fd, Request:req, string:collection_name, int64:ebr_tid) {
+    Result<int64>:arena_res = json_arena_init(1048576i64);
+    if (arena_res.is_error) { pass(ERR_JSON_PARSE_FAIL); }
+    int64:arena = raw arena_res;
     defer { _?json_arena_destroy(arena); }
 
     // Parse json payload
     Result<NpkJsonVal>:v_res = parse_json_raw(arena, req.body_ptr, req.body_len);
     if (v_res.is_error) {
-        int64:status = _?!format_error_status(ERR_JSON_PARSE_FAIL);
-        string:err_json = _?!format_error_json(ERR_JSON_PARSE_FAIL);
-        _?!Server.send_typed(client_fd, status, "application/json", err_json);
+        int64:status = _?!raw format_error_status(ERR_JSON_PARSE_FAIL);
+        string:err_json = _?!raw format_error_json(ERR_JSON_PARSE_FAIL);
+        _?!raw Server.send_typed(client_fd, status, "application/json", err_json);
         pass(ERR_JSON_PARSE_FAIL);
     }
+    NpkJsonVal:v = raw v_res;
+    NpkJsonVal:v = raw v_res;
 
     NpkJsonVal:v = v_res.value;
     if (v.type != JSON_OBJ) {
-        _?!Server.send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Expected object\"}");
+        _?!raw Server.send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Expected object\"}");
         pass(400i32);
     }
 
     int64:obj_ptr = v.payload;
     if (obj_ptr == 0i64) { pass(NIL); }
-    int64:count = npk_mem_read_int32(obj_ptr, 0i64) => int64;
+    int64:count = @cast_unchecked<int64>(npk_mem_read_int32(obj_ptr, 0i64));
     int64:keys_ptr = npk_mem_read_int64(obj_ptr, 8i64);
     int64:vals_ptr = npk_mem_read_int64(obj_ptr, 16i64);
     
@@ -78,28 +82,28 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
         int64:key_ptr = npk_mem_read_int64(keys_ptr, i * 8i64);
         if (key_ptr == 0i64) { i = i + 1i64; continue; }
         
-        int64:k_type = npk_mem_read_byte(key_ptr, 0i64) => int64;
-        if (k_type == JSON_STR => int64) {
+        int64:k_type = @cast_unchecked<int64>(npk_mem_read_byte(key_ptr, 0i64));
+        if (k_type == @cast_unchecked<int64>(JSON_STR)) {
             int64:str_ptr = npk_mem_read_int64(key_ptr, 8i64);
             if (str_ptr != 0i64) {
-                int64:len = npk_mem_read_int32(str_ptr, 0i64) => int64;
+                int64:len = @cast_unchecked<int64>(npk_mem_read_int32(str_ptr, 0i64));
                 if (len > 0i64 && len < 1000i64) {
                     int64:data_ptr = npk_mem_read_int64(str_ptr, 8i64);
                     if (data_ptr != 0i64) {
                         string:k_str = _?!npk_mem_read_string(data_ptr, len);
                         if (k_str == "docs") {
                             int64:val_ptr = npk_mem_read_int64(vals_ptr, i * 8i64);
-                            int64:v_type = npk_mem_read_byte(val_ptr, 0i64) => int64;
-                            if (v_type == JSON_ARR => int64) {
+                            int64:v_type = @cast_unchecked<int64>(npk_mem_read_byte(val_ptr, 0i64));
+                            if (v_type == @cast_unchecked<int64>(JSON_ARR)) {
                                 int64:arr_ptr = npk_mem_read_int64(val_ptr, 8i64);
-                                int64:arr_cnt = npk_mem_read_int32(arr_ptr, 0i64) => int64;
+                                int64:arr_cnt = @cast_unchecked<int64>(npk_mem_read_int32(arr_ptr, 0i64));
                                 int64:arr_h_ptr = npk_mem_read_int64(arr_ptr, 8i64);
                                 
                                 int64:j = 0i64;
                                 while (j < arr_cnt) {
                                     int64:elem_ptr = npk_mem_read_int64(arr_h_ptr, j * 8i64);
                                     NpkJsonVal:elem = NpkJsonVal {
-                                        type: npk_mem_read_byte(elem_ptr, 0i64) => int8,
+                                        type: @cast_unchecked<int8>(npk_mem_read_byte(elem_ptr, 0i64)),
                                         payload: npk_mem_read_int64(elem_ptr, 8i64)
                                     };
                                     
@@ -107,7 +111,7 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
                                     int64:ctr = npk_shim_atomic_int64_fetch_add(global_insert_counter, 1i64, 5i32);
                                     if (ctr >= 10000i64) {
                                         drop(npk_shim_atomic_int64_fetch_add(global_insert_counter, -1i64, 5i32));
-                                        _?!Server.send_typed(client_fd, 507i64, "application/json", "{\"error\":\"Database capacity reached\"}");
+                                        _?!raw Server.send_typed(client_fd, 507i64, "application/json", "{\"error\":\"Database capacity reached\"}");
                                         pass(0i32);
                                     }
                                     string:tmp1 = string_concat(collection_name, "_");
@@ -130,40 +134,40 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
                                         bool:has_vector = false;
                                         int64:obj_keys = npk_mem_read_int64(elem_ptr, 8i64);
                                         int64:obj_vals = npk_mem_read_int64(elem_ptr, 16i64);
-                                        int64:obj_count = (npk_mem_read_int32(elem_ptr, 0i64)) => int64;
+                                        int64:obj_count = @cast_unchecked<int64>((npk_mem_read_int32(elem_ptr, 0i64)));
                                         
                                         int64:v_idx = 0i64;
                                         while (v_idx < obj_count) {
                                             int64:k_ptr = npk_mem_read_int64(obj_keys, v_idx * 8i64);
                                             int64:v_ptr = npk_mem_read_int64(obj_vals, v_idx * 8i64);
-                                            int64:k_type = (npk_mem_read_byte(k_ptr, 0i64)) => int64;
-                                            if (k_type == (JSON_STR) => int64) {
+                                            int64:k_type = @cast_unchecked<int64>((npk_mem_read_byte(k_ptr, 0i64)));
+                                            if (k_type == @cast_unchecked<int64>((JSON_STR))) {
                                                 int64:str_p = npk_mem_read_int64(k_ptr, 8i64);
-                                                int64:s_len = (npk_mem_read_int32(str_p, 0i64)) => int64;
+                                                int64:s_len = @cast_unchecked<int64>((npk_mem_read_int32(str_p, 0i64)));
                                                 int64:d_ptr = npk_mem_read_int64(str_p, 8i64);
                                                 string:ks = raw npk_mem_read_string(d_ptr, s_len);
                                                 if (ks == "vector") {
-                                                    int64:vt = (npk_mem_read_byte(v_ptr, 0i64)) => int64;
-                                                    if (vt == (JSON_ARR) => int64) {
+                                                    int64:vt = @cast_unchecked<int64>((npk_mem_read_byte(v_ptr, 0i64)));
+                                                    if (vt == @cast_unchecked<int64>((JSON_ARR))) {
                                                         int64:a_ptr = npk_mem_read_int64(v_ptr, 8i64);
-                                                        int64:a_cnt = (npk_mem_read_int32(a_ptr, 0i64)) => int64;
+                                                        int64:a_cnt = @cast_unchecked<int64>((npk_mem_read_int32(a_ptr, 0i64)));
                                                         int64:a_h = npk_mem_read_int64(a_ptr, 8i64);
                                                         int64:vi = 0i64;
                                                         _?npk_mem_set(global_vec_buf + vec_offset, 0i64, 128i64 * 8i64);
                                                         while (vi < a_cnt && vi < 128i64) {
                                                             int64:ve_ptr = npk_mem_read_int64(a_h, vi * 8i64);
-                                                            int64:vet = (npk_mem_read_byte(ve_ptr, 0i64)) => int64;
+                                                            int64:vet = @cast_unchecked<int64>((npk_mem_read_byte(ve_ptr, 0i64)));
                                                             tfp64:val = 0.0tf;
-                                                            if (vet == (JSON_NUM_F64) => int64) {
+                                                            if (vet == @cast_unchecked<int64>((JSON_NUM_F64))) {
                                                                 int64:bits = npk_mem_read_int64(ve_ptr, 8i64);
-                                                                val = (bits) => tfp64;
+                                                                val = @cast_unchecked<tfp64>((bits));
                                                             }
-                                                            if (vet == (JSON_NUM_I64) => int64) {
+                                                            if (vet == @cast_unchecked<int64>((JSON_NUM_I64))) {
                                                                 int64:val_i = npk_mem_read_int64(ve_ptr, 8i64);
-                                                                float64:val_f = (val_i) => float64;
-                                                                val = (val_f) => tfp64;
+                                                                float64:val_f = @cast_unchecked<float64>((val_i));
+                                                                val = @cast_unchecked<tfp64>((val_f));
                                                             }
-                                                            drop(npk_mem_write_int64(global_vec_buf, vec_offset + vi * 8i64, (val) => int64));
+                                                            drop(npk_mem_write_int64(global_vec_buf, vec_offset + vi * 8i64, @cast_unchecked<int64>((val))));
                                                             vi = vi + 1i64;
                                                         }
                                                         has_vector = true;
@@ -173,20 +177,36 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
                                             v_idx = v_idx + 1i64;
                                         }
                                         
+                                        int64:loc_buf = raw location_encode_in_memtable();
+                                        int64:key_cstr = string_to_cstr(key);
+                                        int64:key_len = string_length(key);
+                                        raw art_insert(ebr_tid, key_cstr, key_len, loc_buf, LOCATION_SIZE);
+                                        drop(npk_core_dalloc(key_cstr));
+                                        
+                                        int64:loc_buf = raw location_encode_in_memtable();
+                                        int64:key_cstr = string_to_cstr(key);
+                                        int64:key_len = string_length(key);
+                                        raw art_insert(ebr_tid, key_cstr, key_len, loc_buf, LOCATION_SIZE);
+                                        drop(npk_core_dalloc(key_cstr));
+                                        
+                                        int64:loc_buf = raw location_encode_in_memtable();
+                                        int64:key_cstr = string_to_cstr(key);
+                                        int64:key_len = string_length(key);
+                                        raw art_insert(ebr_tid, key_cstr, key_len, loc_buf, LOCATION_SIZE);
+                                        drop(npk_core_dalloc(key_cstr));
+                                        
                                         if (has_vector) {
                                             // Store doc in global doc_store
                                             int64:persistent_doc = npk_core_alloc(doc_len);
                                             drop(npk_mem_copy(persistent_doc, doc_buf, doc_len));
                                             drop(npk_mem_write_int64(global_doc_store, ctr * 8i64, persistent_doc));
                                             
-                                            drop(nitpick_libc_rwlock_wrlock(global_catalog_lock));
-                                            int64:local_visited = _?!hnsw_visited_create(10000i64);
+                                            int64:local_visited = _?!raw hnsw_visited_create(10000i64);
                                             int64:local_rand = npk_core_alloc(8i64);
                                             defer { _?npk_core_dalloc(local_rand); }
                                             drop(npk_mem_write_int64(local_rand, 0i64, ctr)); // Seed with counter
                                             _?!hnsw_insert(global_graph, vec_offset, local_rand, local_visited);
                                             drop(hnsw_visited_destroy(local_visited));
-                                            drop(nitpick_libc_rwlock_unlock(global_catalog_lock));
                                         }
                                                                             }
                                     
@@ -208,29 +228,32 @@ pub func:controller_insert = int32(int64:client_fd, Request:req, string:collecti
     }
     
     // Success
-    _?!Server.send_typed(client_fd, 200i64, "application/json", "{\"status\":\"ok\"}");
+    _?!raw Server.send_typed(client_fd, 200i64, "application/json", "{\"status\":\"ok\"}");
     pass(0i32);
 };
 
-pub func:controller_search = int32(int64:client_fd, Request:req) {
-    int64:arena = json_arena_init(1048576i64); // 1 MB limit
-    if (arena == 0i64) { pass(ERR_JSON_PARSE_FAIL); }
+pub func:controller_search = int32(int64:client_fd, Request:req, int64:ebr_tid) {
+    Result<int64>:arena_res = json_arena_init(1048576i64);
+    if (arena_res.is_error) { pass(ERR_JSON_PARSE_FAIL); }
+    int64:arena = raw arena_res;
     defer { _?json_arena_destroy(arena); }
 
     // Parse json payload
     Result<NpkJsonVal>:v_res = parse_json_raw(arena, req.body_ptr, req.body_len);
     if (v_res.is_error) {
-        int64:status = _?!format_error_status(ERR_JSON_PARSE_FAIL);
-        string:err_json = _?!format_error_json(ERR_JSON_PARSE_FAIL);
-        _?!Server.send_typed(client_fd, status, "application/json", err_json);
+        int64:status = _?!raw format_error_status(ERR_JSON_PARSE_FAIL);
+        string:err_json = _?!raw format_error_json(ERR_JSON_PARSE_FAIL);
+        _?!raw Server.send_typed(client_fd, status, "application/json", err_json);
         pass(ERR_JSON_PARSE_FAIL);
     }
+    NpkJsonVal:v = raw v_res;
+    NpkJsonVal:v = raw v_res;
     
     NpkJsonVal:v = v_res.value;
     if (v.type != JSON_OBJ) {
-        int64:status = _?!format_error_status(ERR_QUERY_PARSE_FAILED);
-        string:err_json = _?!format_error_json(ERR_QUERY_PARSE_FAILED);
-        _?!Server.send_typed(client_fd, status, "application/json", err_json);
+        int64:status = _?!raw format_error_status(ERR_QUERY_PARSE_FAILED);
+        string:err_json = _?!raw format_error_json(ERR_QUERY_PARSE_FAILED);
+        _?!raw Server.send_typed(client_fd, status, "application/json", err_json);
         pass(ERR_QUERY_PARSE_FAILED);
     }
     
@@ -242,53 +265,53 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
     
     int64:obj_keys = npk_mem_read_int64(v.payload, 8i64);
     int64:obj_vals = npk_mem_read_int64(v.payload, 16i64);
-    int64:obj_count = (npk_mem_read_int32(v.payload, 0i64)) => int64;
+    int64:obj_count = @cast_unchecked<int64>((npk_mem_read_int32(v.payload, 0i64)));
     
     int64:i = 0i64;
     while (i < obj_count) {
         int64:k_ptr = npk_mem_read_int64(obj_keys, i * 8i64);
         int64:v_ptr = npk_mem_read_int64(obj_vals, i * 8i64);
-        int64:k_type = (npk_mem_read_byte(k_ptr, 0i64)) => int64;
-        if (k_type == (JSON_STR) => int64) {
+        int64:k_type = @cast_unchecked<int64>((npk_mem_read_byte(k_ptr, 0i64)));
+        if (k_type == @cast_unchecked<int64>((JSON_STR))) {
             int64:str_p = npk_mem_read_int64(k_ptr, 8i64);
-            int64:s_len = (npk_mem_read_int32(str_p, 0i64)) => int64;
+            int64:s_len = @cast_unchecked<int64>((npk_mem_read_int32(str_p, 0i64)));
             int64:d_ptr = npk_mem_read_int64(str_p, 8i64);
             string:ks = raw npk_mem_read_string(d_ptr, s_len);
             
             if (ks == "filter") {
-                int64:f_type = (npk_mem_read_byte(v_ptr, 0i64)) => int64;
-                if (f_type == (JSON_OBJ) => int64) {
+                int64:f_type = @cast_unchecked<int64>((npk_mem_read_byte(v_ptr, 0i64)));
+                if (f_type == @cast_unchecked<int64>((JSON_OBJ))) {
                     NpkJsonVal:f_val = NpkJsonVal{ type: JSON_OBJ, payload: npk_mem_read_int64(v_ptr, 8i64) };
-                    filter_ast = parse_filter(arena, (@f_val) => int64, 1i32) ? 0i64;
+                    filter_ast = parse_filter(arena, @cast_unchecked<int64>((@f_val)), 1i32) ? 0i64;
                 }
             }
             if (ks == "k") {
-                int64:vt = (npk_mem_read_byte(v_ptr, 0i64)) => int64;
-                if (vt == (JSON_NUM_I64) => int64) {
+                int64:vt = @cast_unchecked<int64>((npk_mem_read_byte(v_ptr, 0i64)));
+                if (vt == @cast_unchecked<int64>((JSON_NUM_I64))) {
                     k = npk_mem_read_int64(v_ptr, 8i64);
                 }
             }
             if (ks == "query_vector") {
-                int64:vt = (npk_mem_read_byte(v_ptr, 0i64)) => int64;
-                if (vt == (JSON_ARR) => int64) {
+                int64:vt = @cast_unchecked<int64>((npk_mem_read_byte(v_ptr, 0i64)));
+                if (vt == @cast_unchecked<int64>((JSON_ARR))) {
                     int64:a_ptr = npk_mem_read_int64(v_ptr, 8i64);
-                    int64:a_cnt = (npk_mem_read_int32(a_ptr, 0i64)) => int64;
+                    int64:a_cnt = @cast_unchecked<int64>((npk_mem_read_int32(a_ptr, 0i64)));
                     int64:a_h = npk_mem_read_int64(a_ptr, 8i64);
                     int64:vi = 0i64;
                     while (vi < a_cnt && vi < 128i64) {
                         int64:ve_ptr = npk_mem_read_int64(a_h, vi * 8i64);
-                        int64:vet = (npk_mem_read_byte(ve_ptr, 0i64)) => int64;
+                        int64:vet = @cast_unchecked<int64>((npk_mem_read_byte(ve_ptr, 0i64)));
                         tfp64:val = 0.0tf;
-                        if (vet == (JSON_NUM_F64) => int64) {
+                        if (vet == @cast_unchecked<int64>((JSON_NUM_F64))) {
                             int64:bits = npk_mem_read_int64(ve_ptr, 8i64);
-                            val = (bits) => tfp64;
+                            val = @cast_unchecked<tfp64>((bits));
                         }
-                        if (vet == (JSON_NUM_I64) => int64) {
+                        if (vet == @cast_unchecked<int64>((JSON_NUM_I64))) {
                             int64:val_i = npk_mem_read_int64(ve_ptr, 8i64);
-                            float64:val_f = (val_i) => float64;
-                            val = (val_f) => tfp64;
+                            float64:val_f = @cast_unchecked<float64>((val_i));
+                            val = @cast_unchecked<tfp64>((val_f));
                         }
-                        drop(npk_mem_write_int64(q_vec, vi * 8i64, (val) => int64));
+                        drop(npk_mem_write_int64(q_vec, vi * 8i64, @cast_unchecked<int64>((val))));
                         vi = vi + 1i64;
                     }
                     has_query_vector = true;
@@ -299,14 +322,14 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
     }
     
     if (has_query_vector == false) {
-        _?!Server.send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Missing query_vector\"}");
+        _?!raw Server.send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Missing query_vector\"}");
         pass(ERR_QUERY_PARSE_FAILED);
     }
     
-    drop(nitpick_libc_rwlock_rdlock(global_catalog_lock));
-    defer { _?nitpick_libc_rwlock_unlock(global_catalog_lock); }
     
-    int64:ep_node_ptr = hnsw_graph_get_entry_point(global_graph) ? 0i64;
+    
+    
+    int64:ep_node_ptr = hnsw_graph_get_ep_node_ptr(global_graph) ? 0i64;
     int32:ep_slot = -1i32;
     int32:ep_gen = 0i32;
     
@@ -315,16 +338,16 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
         ep_gen = hnsw_node_get_generation(ep_node_ptr) ? 0i32;
     }
     
-    int64:visited_set = _?!hnsw_visited_create(10000i64);
+    int64:visited_set = _?!raw hnsw_visited_create(10000i64);
     defer { _?hnsw_visited_destroy(visited_set); }
     
-    int64:res_pq = hnsw_search_layer(
+    int64:res_pq = raw hnsw_search_layer(
         arena, 
         global_graph, 
         q_vec, 
         ep_slot, 
         ep_gen, 
-        (k) => int32, 
+        @cast_unchecked<int32>((k)), 
         0i32, 
         visited_set, 
         filter_ast, 
@@ -333,30 +356,43 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
     
     
     if (res_pq == 0i64) {
-        _?!Server.send_typed(client_fd, 200i64, "application/json", "{\"status\": \"ok\", \"results\": []}");
+        _?!raw Server.send_typed(client_fd, 200i64, "application/json", "{\"status\": \"ok\", \"results\": []}");
         pass(0i32);
     }
     
     int64:C = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
     defer { _?npk_core_dalloc(C); }
-    int64:sz = hnsw_pq_get_size(res_pq) ? 0i64;
+    int64:sz = raw hnsw_pq_get_size(res_pq) ? 0i64;
     
-    string:json = "";
+    int64:buf_capacity = 4096i64;
+    SerialBuffer:sbuf = SerialBuffer {
+        data: npk_core_alloc(buf_capacity),
+        capacity: buf_capacity,
+        cursor: 0i64
+    };
+    defer { _?npk_core_dalloc(sbuf.data); }
+    
     int64:count = 0i64;
     
     while (sz > 0i64) {
         drop(hnsw_pq_pop(res_pq, C));
-        tfp64:dist = hnsw_pq_get_dist(C) ? 0.0tf;
-        int32:slot = hnsw_pq_get_slot(C) ? 0i32;
+        tfp64:dist = raw hnsw_pq_get_dist(C) ? 0.0tf;
+        int32:slot = raw hnsw_pq_get_slot(C) ? 0i32;
         
-        int64:slot64 = slot => int64;
-        flt64:dist_f64 = dist => flt64;
-        string:item = `{"document_id": "doc&{slot64}", "distance": &{fmt_float(dist_f64, 4i64)}}`;
+        int64:slot64 = @cast_unchecked<int64>(slot);
+        flt64:dist_f64 = @cast_unchecked<flt64>(dist);
+        string:item = `{"document_id": "doc&{slot64}", "distance": &{raw fmt_float(dist_f64, 4i64)}}`;
         
         if (count > 0i64) {
-            item = string_concat(item, ",");
+            drop(serial_buffer_ensure(@sbuf, 1i64));
+            drop(npk_mem_write_string(sbuf.data + sbuf.cursor, ","));
+            sbuf.cursor = sbuf.cursor + 1i64;
         }
-        json = string_concat(item, json);
+        
+        int64:item_len = string_length(item);
+        drop(serial_buffer_ensure(@sbuf, item_len));
+        drop(npk_mem_write_string(sbuf.data + sbuf.cursor, item));
+        sbuf.cursor = sbuf.cursor + item_len;
         
         sz = sz - 1i64;
         count = count + 1i64;
@@ -365,9 +401,11 @@ pub func:controller_search = int32(int64:client_fd, Request:req) {
     drop(hnsw_pq_destroy(res_pq));
     
     string:final_json = "{\"status\": \"ok\", \"results\": [";
-    final_json = string_concat(final_json, json);
+    string:json_str = npk_mem_read_string(sbuf.data, sbuf.cursor);
+    final_json = string_concat(final_json, json_str);
     final_json = string_concat(final_json, "]}");
     
-    _?!Server.send_typed(client_fd, 200i64, "application/json", final_json);
+    _?!raw Server.send_typed(client_fd, 200i64, "application/json", final_json);
     pass(0i32);
 };
+

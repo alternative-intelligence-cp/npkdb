@@ -17,14 +17,14 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
     astack(2048i64); // Allocate a 2048-slot stack array on the C stack (8 bytes each, 16KB)
 
     // Create a local arena for deserialization to prevent OOM
-    int64:doc_arena = json_arena_init(65536i64);
+    int64:doc_arena = raw json_arena_init(65536i64);
     defer { _?json_arena_destroy(doc_arena); }
 
     int64:cursor_ptr = npk_core_alloc(8i64);
     drop(npk_mem_write_int64(cursor_ptr, 0i64, 0i64));
-    NpkJsonVal:doc = deserialize_value(doc_arena, doc_buf, cursor_ptr);
+    NpkJsonVal:doc = raw deserialize_value(doc_arena, doc_buf, cursor_ptr);
     drop(npk_core_dalloc(cursor_ptr));
-    int64:doc_ptr = (@doc) => int64;
+    int64:doc_ptr = @cast_unchecked<int64>(@doc);
     
     // Push the root task
     // Frame layout (pushed top-to-bottom):
@@ -45,10 +45,10 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
         int64:node = apop();
         stack_size = stack_size - 1i64;
         
-        int64:op = npk_mem_read_byte(node, 0i64) => int64;
+        int64:op = @cast_unchecked<int64>(npk_mem_read_byte(node, 0i64));
         
-        if (op == (AST_OP_AND => int64)) {
-            int64:count = npk_mem_read_int32(node, 32i64) => int64;
+        if (op == (@cast_unchecked<int64>(AST_OP_AND))) {
+            int64:count = @cast_unchecked<int64>(npk_mem_read_int32(node, 32i64));
             
             if (c_idx == 0i64) { 
                 acc = 1i64; 
@@ -82,8 +82,8 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
             }
         }
         
-        if (op == (AST_OP_OR => int64)) {
-            int64:count = npk_mem_read_int32(node, 32i64) => int64;
+        if (op == (@cast_unchecked<int64>(AST_OP_OR))) {
+            int64:count = @cast_unchecked<int64>(npk_mem_read_int32(node, 32i64));
             
             if (c_idx == 0i64) { 
                 acc = 0i64; 
@@ -119,10 +119,10 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
         
         // Leaf Nodes
         int64:path = npk_mem_read_int64(node, 8i64);
-        NpkJsonVal:actual = _?!eval_path(path, doc_ptr);
+        NpkJsonVal:actual = raw eval_path(path, doc_ptr);
         
         NpkJsonVal:target = NpkJsonVal {
-            type: npk_mem_read_byte(node, 16i64) => int8,
+            type: @cast_unchecked<int8>(npk_mem_read_byte(node, 16i64)),
             payload: npk_mem_read_int64(node, 24i64)
         };
         
@@ -131,7 +131,7 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
             continue;
         }
         
-        if (op == (AST_OP_EQ => int64)) {
+        if (op == (@cast_unchecked<int64>(AST_OP_EQ))) {
             if (actual.type != target.type) {
                 last_result = 0i64;
                 continue;
@@ -141,8 +141,8 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
                 continue;
             }
             if (actual.type == JSON_STR) {
-                int64:a_len = npk_mem_read_int32(actual.payload, 0i64) => int64;
-                int64:t_len = npk_mem_read_int32(target.payload, 0i64) => int64;
+                int64:a_len = @cast_unchecked<int64>(npk_mem_read_int32(actual.payload, 0i64));
+                int64:t_len = @cast_unchecked<int64>(npk_mem_read_int32(target.payload, 0i64));
                 if (a_len != t_len) {
                     last_result = 0i64;
                     continue;
@@ -157,7 +157,7 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
             continue;
         }
         
-        if (op == (AST_OP_GT => int64)) {
+        if (op == (@cast_unchecked<int64>(AST_OP_GT))) {
             if (actual.type != target.type) {
                 last_result = 0i64;
                 continue;
@@ -170,7 +170,7 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
             continue;
         }
         
-        if (op == (AST_OP_LT => int64)) {
+        if (op == (@cast_unchecked<int64>(AST_OP_LT))) {
             if (actual.type != target.type) {
                 last_result = 0i64;
                 continue;
@@ -188,3 +188,5 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
     
     pass(last_result == 1i64);
 };
+
+

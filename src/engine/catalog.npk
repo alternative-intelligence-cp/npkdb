@@ -4,6 +4,10 @@ use "sys.npk".*;
 use "../util/mem_primitives.npk".*;
 use "collection.npk".*;
 use "../storage/skiplist.npk".*;
+use "../storage/write_path.npk".*;
+use "../storage/compaction_worker.npk".*;
+use "../vector/hnsw_arena.npk".*;
+use "../vector/hnsw_graph.npk".*;
 
 extern "nitpick_libc_thread" {
     func:nitpick_libc_rwlock_create    = int64();
@@ -16,12 +20,16 @@ pub int64:g_catalog_hash = 0i64;
 pub int64:g_catalog_rwlock = 0i64;
 
 pub func:catalog_init = int32() {
-    g_catalog_hash = sl_create();
-    g_catalog_rwlock = nitpick_libc_rwlock_create();
+    g_catalog_hash = raw sl_create();
+    g_catalog_rwlock = raw nitpick_libc_rwlock_create();
     
-    // Create base data directories
-    _?!sys(MKDIR, "data", 511i64);             // 0777
-    _?!sys(MKDIR, "data/collections", 511i64); // 0777
+    int64:c_data = string_to_cstr("data");
+    raw sys(MKDIR, c_data, 448i64);
+    drop(npk_core_dalloc(c_data));
+
+    int64:c_data_coll = string_to_cstr("data/collections");
+    raw sys(MKDIR, c_data_coll, 448i64);
+    drop(npk_core_dalloc(c_data_coll));
     
     pass(0i32);
 };
@@ -32,12 +40,12 @@ pub func:catalog_create_collection = int64(string:name) {
     int64:i = 0i64;
     int64:bad = 0i64;
     while (i < name_len) {
-        int8:c = (((npk_mem_read_byte(name_ptr, i) => int8)) => int8);
+        int8:c = (@cast_unchecked<int8>(((@cast_unchecked<int8>(npk_mem_read_byte(name_ptr, i))))));
         if (c == 47i8) { bad = 1i64; break; } // '/'
         if (c == 92i8) { bad = 1i64; break; } // '\\'
         if (c == 46i8) {
             if (i + 1i64 < name_len) {
-                int8:next_c = (((npk_mem_read_byte(name_ptr, i + 1i64) => int8)) => int8);
+                int8:next_c = (@cast_unchecked<int8>(((@cast_unchecked<int8>(npk_mem_read_byte(name_ptr, i + 1i64))))));
                 if (next_c == 46i8) { bad = 1i64; break; } // '..'
             }
         }
@@ -51,7 +59,7 @@ pub func:catalog_create_collection = int64(string:name) {
     drop(nitpick_libc_rwlock_wrlock(g_catalog_rwlock));
     
     // Check if exists
-    int64:node = sl_search(g_catalog_hash, name);
+    int64:node = raw raw sl_search(g_catalog_hash, name);
     if (node != 0i64) {
         drop(nitpick_libc_rwlock_unlock(g_catalog_rwlock));
         pass(0i64); // Already exists
@@ -61,13 +69,23 @@ pub func:catalog_create_collection = int64(string:name) {
     string:base_dir = "data/collections/";
     string:full_path = string_concat(base_dir, name);
     
-    _?!sys(MKDIR, full_path, 511i64);
+    int64:c_full_path = string_to_cstr(full_path);
+    raw sys(MKDIR, c_full_path, 448i64);
+    drop(npk_core_dalloc(c_full_path));
     
     int64:coll_ptr = npk_core_alloc(24i64);
     Collection->:coll = @cast_unchecked<Collection->>(coll_ptr);
     coll->name = name;
-    coll->storage = @cast_unchecked<Handle<LsmTree> >(0i64);
-    coll->vector_index = @cast_unchecked<Handle<HnswGraph> >(0i64);
+    
+    string:wal_path = string_concat(full_path, "/wal.log");
+    string:dir_path = string_concat(full_path, "/");
+    int64:wp = raw wp_init(dir_path, wal_path, @compaction_worker_loop, "group_commit");
+    coll->storage = @cast_unchecked<Handle<LsmTree> >(wp);
+    
+    int64:arena = raw hnsw_arena_create();
+    int64:vec_buf = npk_core_alloc(80000000i64);
+    int64:graph = raw hnsw_graph_create(arena, vec_buf, 128i64, 16i32, 32i32, 100i32, 0.5f64);
+    coll->vector_index = @cast_unchecked<Handle<HnswGraph> >(graph);
     
     drop(sl_insert(g_catalog_hash, name, coll_ptr, 0i64));
     
@@ -78,11 +96,13 @@ pub func:catalog_create_collection = int64(string:name) {
 
 pub func:catalog_get_collection = int64(string:name) {
     drop(nitpick_libc_rwlock_rdlock(g_catalog_rwlock));
-    int64:node = sl_search(g_catalog_hash, name);
+    int64:node = raw raw sl_search(g_catalog_hash, name);
     int64:coll = 0i64;
     if (node != 0i64) {
-        coll = sl_node_val_ptr(node);
+        coll = raw raw sl_node_val_ptr(node);
     }
     drop(nitpick_libc_rwlock_unlock(g_catalog_rwlock));
     pass(coll);
 };
+
+

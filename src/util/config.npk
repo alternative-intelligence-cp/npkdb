@@ -16,7 +16,9 @@ pub int64:CFG_HNSW_M = 24i64; // int64
 pub int64:CFG_HNSW_EF_CONSTRUCTION = 32i64; // int64
 
 pub func:config_init = int32(string:toml_path) {
-    int64:fd = sys(OPEN, toml_path, 0i64, 0i64) ? -1i64;
+    int64:c_toml_path = string_to_cstr(toml_path);
+    int64:fd = sys(OPEN, c_toml_path, 0i64, 0i64) ? -1i64;
+    drop(npk_core_dalloc(c_toml_path));
     if (fd < 0i64) {
         println("config_init: sys(OPEN) failed on " + toml_path);
         pass(ERR_CONFIG_LOAD_FAILED);
@@ -37,10 +39,10 @@ pub func:config_init = int32(string:toml_path) {
     drop(npk_mem_write_byte(buf, bytes_read, 0i64));
     
     // Create string
-    string:toml_str = _?!npk_mem_read_string(buf, bytes_read + 1i64);
+    string:toml_str = npk_mem_read_string(buf, bytes_read + 1i64);
     
     // Parse
-    int32:n = _?!Toml.parse(toml_str);
+    int32:n = raw Toml.parse(toml_str);
     drop(npk_core_dalloc(buf));
     
     if (n < 0i32) {
@@ -52,19 +54,19 @@ pub func:config_init = int32(string:toml_path) {
     
     // Get values or default
     int32:port = 8080i32;
-    int64:p = _?!Toml.get_int("server.http_port");
-    if (p > 0i64) { port = (p) => int32; }
+    int64:p = raw Toml.get_int("server.http_port");
+    if (p > 0i64) { port = @cast_unchecked<int32>((p)); }
     
-    int64:threads = _?!Toml.get_int("server.max_threads");
+    int64:threads = raw Toml.get_int("server.max_threads");
     if (threads <= 0i64) { threads = 4i64; }
     
-    int64:flush = _?!Toml.get_int("storage.memtable_flush_bytes");
+    int64:flush = raw Toml.get_int("storage.memtable_flush_bytes");
     if (flush <= 0i64) { flush = 1048576i64; } // default 1MB
     
-    int64:hm = _?!Toml.get_int("vector.hnsw_m");
+    int64:hm = raw Toml.get_int("vector.hnsw_m");
     if (hm <= 0i64) { hm = 16i64; }
     
-    int64:efc = _?!Toml.get_int("vector.hnsw_ef_construction");
+    int64:efc = raw Toml.get_int("vector.hnsw_ef_construction");
     if (efc <= 0i64) { efc = 200i64; }
     
     // Populate
@@ -88,6 +90,7 @@ pub func:config_shutdown = NIL() {
         drop(npk_core_dalloc(global_npk_config));
         global_npk_config = 0i64;
     }
-    _?!Toml.clear();
+    raw Toml.clear();
     pass(NIL);
 };
+

@@ -1,7 +1,6 @@
 use "constants.npk".*;
 use "error_codes.npk".*;
-
-
+use "mem_primitives.npk".*;
 use "../storage/sstable.npk".*;
 
 pub fixed int64:HEAP_STRUCT_SIZE = 24i64;
@@ -176,3 +175,5 @@ pub func:heap_pop = NIL(int64:heap) {
     
     pass(NIL);
 };
+
+

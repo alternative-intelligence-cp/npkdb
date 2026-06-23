@@ -36,7 +36,7 @@ extern "nitpick_libc_thread" {
 
 pub int64:global_wp = 0i64;
 
-pub func:wp_init = int64(string:data_dir, string:wal_path, ?->:worker_fn, string:sync_mode) {
+pub func:wp_init = int64(string:data_dir, string:wal_path, (int64)(int64):worker_fn, string:sync_mode) {
     int64:wp = npk_core_alloc(WP_STATE_SIZE);
     
     drop(flush_ensure_dirs(data_dir));
@@ -96,10 +96,10 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
         
         int64:lm = npk_mem_read_int64(wp, WP_OFF_LM);
         int64:d_ptr = npk_mem_read_int64(lm, 0i64);
-        string:before_flush = _?!npk_mem_read_string(d_ptr, 11i64);
+        string:before_flush = npk_mem_read_string(d_ptr, 11i64);
         println("d_ptr before flush: " + before_flush);
-        drop(flush_memtable(npk_mem_read_int64(wp, WP_OFF_FROZEN), lm));
-        drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, 0i64));
+        int64:flushed_mt = npk_mem_read_int64(wp, WP_OFF_FROZEN);
+        drop(flush_memtable(flushed_mt, lm));
         
         int64:l0_count = lm_count_at_level(lm, 0i64) ? 0i64;
         if (l0_count >= LM_L0_COMPACTION_THRESHOLD) {
@@ -116,6 +116,9 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
             l0_count = lm_count_at_level(lm, 0i64) ? 0i64;
         }
         drop(nitpick_libc_rwlock_wrlock(lock));
+        if (npk_mem_read_int64(wp, WP_OFF_FROZEN) == flushed_mt) {
+            drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, 0i64));
+        }
         active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
     }
     
@@ -249,3 +252,5 @@ pub func:wp_flush_wal = NIL(int64:wp) {
     drop(nitpick_libc_rwlock_unlock(lock));
     pass(NIL);
 };
+
+

@@ -4,44 +4,484 @@ use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
 use "../../src/document/json_parser.npk".*;
 use "../../src/document/json_types.npk".*;
 use "../../src/util/error_codes.npk".*;
+use "errors.npk".*;
+use "../storage/write_path.npk".*;
+use "../storage/wal.npk".*;
+use "../../src/document/json_serializer.npk".*;
+use "../query/ast_types.npk".*;
+use "../query/filter_parser.npk".*;
+use "../query/path_eval.npk".*;
+use "fmt.npk".*;
+use "../vector/distance_types.npk".*;
+use "../vector/hnsw_pq.npk".*;
+use "../vector/hnsw_node.npk".*;
+use "../vector/hnsw_arena.npk".*;
+use "../vector/hnsw_graph.npk".*;
+use "../vector/hnsw_visited.npk".*;
+use "../vector/hnsw_search.npk".*;
+use "../vector/hnsw_insert.npk".*;
+use "rwlock.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+use "../storage/thread.npk".*;
+use "../engine/catalog.npk".*;
+use "../index/art.npk".*;
 
 pub func:controller_create_collection = int32(int64:client_fd, Request:req) {
-    // Dummy implementation for 0.3.9
+    int64:arena = json_arena_init(1048576i64);
+    defer { _?json_arena_destroy(arena); }
+    Result<NpkJsonVal>:v_res = parse_json_raw(arena, req.body_ptr, req.body_len);
+    if (!v_res.is_error) {
+        NpkJsonVal:v = v_res.value;
+        if (v.type == JSON_OBJ) {
+            int64:obj_keys = npk_mem_read_int64(v.payload, 8i64);
+            int64:obj_vals = npk_mem_read_int64(v.payload, 16i64);
+            int64:obj_count = (npk_mem_read_int32(v.payload, 0i64)) => int64;
+            int64:v_idx = 0i64;
+            while (v_idx < obj_count) {
+                int64:k_ptr = npk_mem_read_int64(obj_keys, v_idx * 8i64);
+                int64:v_ptr = npk_mem_read_int64(obj_vals, v_idx * 8i64);
+                int64:k_type = (npk_mem_read_byte(k_ptr, 0i64)) => int64;
+                if @cast_unchecked<int64>(k_type == (JSON_STR)) {
+                    int64:str_p = npk_mem_read_int64(k_ptr, 8i64);
+                    int64:s_len = (npk_mem_read_int32(str_p, 0i64)) => int64;
+                    int64:d_ptr = npk_mem_read_int64(str_p, 8i64);
+                    string:ks = npk_mem_read_string(d_ptr, s_len);
+                    if (ks == "name") {
+                        int64:vt = (npk_mem_read_byte(v_ptr, 0i64)) => int64;
+                        if @cast_unchecked<int64>(vt == (JSON_STR)) {
+                            int64:vstr_p = npk_mem_read_int64(v_ptr, 8i64);
+                            int64:vs_len = (npk_mem_read_int32(vstr_p, 0i64)) => int64;
+                            int64:vd_ptr = npk_mem_read_int64(vstr_p, 8i64);
+                            string:cname = npk_mem_read_string(vd_ptr, vs_len);
+                            drop(raw catalog_create_collection(cname));
+                        }
+                    }
+                }
+                v_idx = v_idx + 1i64;
+            }
+        }
+    }
     string:res = "{\"status\": \"ok\", \"message\": \"collection created\"}";
-    drop(send_typed(client_fd, 200i64, "application/json", res));
+    raw send_typed(client_fd, 200i64, "application/json", res);
     pass(0i32);
 };
 
+extern "nitpick_libc_thread" {
+    func:nitpick_libc_rwlock_create    = int64();
+    func:nitpick_libc_rwlock_wrlock    = int32(int64:handle);
+    func:nitpick_libc_rwlock_rdlock    = int32(int64:handle);
+    func:nitpick_libc_rwlock_unlock    = int32(int64:handle);
+    func:npk_shim_atomic_int64_create  = int64(int64:initial);
+    func:npk_shim_atomic_int64_fetch_add = int64(int64:handle, int64:value, int32:order);
+}
+
+pub int64:global_catalog_lock = 0i64;
+pub int64:global_insert_counter = 0i64;
+pub int64:global_graph = 0i64;
+pub int64:global_arena = 0i64;
+pub int64:global_vec_buf = 0i64;
+pub int64:global_doc_store = 0i64;
+
+
 pub func:controller_insert = int32(int64:client_fd, Request:req, string:collection_name) {
+    int64:arena = json_arena_init(1048576i64); // 1 MB limit
+    if (arena == 0i64) { pass(ERR_JSON_PARSE_FAIL); }
+    defer { _?json_arena_destroy(arena); }
+
     // Parse json payload
-    Result<NpkJsonVal>:v_res = parse_json(req.body);
+    Result<NpkJsonVal>:v_res = parse_json_raw(arena, req.body_ptr, req.body_len);
     if (v_res.is_error) {
-        drop(send_typed(client_fd, 400i64, "application/json", "{\"error\": \"invalid json\"}"));
+        int64:status = raw raw format_error_status(ERR_JSON_PARSE_FAIL);
+        string:err_json = raw raw format_error_json(ERR_JSON_PARSE_FAIL);
+        raw send_typed(client_fd, status, "application/json", err_json);
         pass(ERR_JSON_PARSE_FAIL);
     }
+
+    NpkJsonVal:v = v_res.value;
+    if (v.type != JSON_OBJ) {
+        raw send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Expected object\"}");
+        pass(400i32);
+    }
+
+    int64:obj_ptr = v.payload;
+    if (obj_ptr == 0i64) { pass(NIL); }
+    int64:count = npk_mem_read_int32@cast_unchecked<int64>(obj_ptr, 0i64);
+    int64:keys_ptr = npk_mem_read_int64(obj_ptr, 8i64);
+    int64:vals_ptr = npk_mem_read_int64(obj_ptr, 16i64);
     
-    // In future releases, this will translate JSON to npk_record and insert into WAL
-    string:res = "{\"status\": \"ok\", \"message\": \"inserted into " + collection_name + "\"}";
-    drop(send_typed(client_fd, 200i64, "application/json", res));
+    int64:i = 0i64;
+    while (i < count) {
+        if (keys_ptr == 0i64) { break; }
+        int64:key_ptr = npk_mem_read_int64(keys_ptr, i * 8i64);
+        if (key_ptr == 0i64) { i = i + 1i64; continue; }
+        
+        int64:k_type = npk_mem_read_byte@cast_unchecked<int64>(key_ptr, 0i64);
+        if @cast_unchecked<int64>(k_type == JSON_STR ) {
+            int64:str_ptr = npk_mem_read_int64(key_ptr, 8i64);
+            if (str_ptr != 0i64) {
+                int64:len = npk_mem_read_int32@cast_unchecked<int64>(str_ptr, 0i64);
+                if (len > 0i64 && len < 1000i64) {
+                    int64:data_ptr = npk_mem_read_int64(str_ptr, 8i64);
+                    if (data_ptr != 0i64) {
+                        string:k_str = npk_mem_read_string(data_ptr, len);
+                        if (k_str == "docs") {
+                            int64:val_ptr = npk_mem_read_int64(vals_ptr, i * 8i64);
+                            int64:v_type = npk_mem_read_byte@cast_unchecked<int64>(val_ptr, 0i64);
+                            if @cast_unchecked<int64>(v_type == JSON_ARR ) {
+                                int64:arr_ptr = npk_mem_read_int64(val_ptr, 8i64);
+                                int64:arr_cnt = npk_mem_read_int32@cast_unchecked<int64>(arr_ptr, 0i64);
+                                int64:arr_h_ptr = npk_mem_read_int64(arr_ptr, 8i64);
+                                
+                                int64:j = 0i64;
+                                while (j < arr_cnt) {
+                                    int64:elem_ptr = npk_mem_read_int64(arr_h_ptr, j * 8i64);
+                                    NpkJsonVal:elem = NpkJsonVal {
+                                        type: npk_mem_read_byte@cast_unchecked<int8>(elem_ptr, 0i64),
+                                        payload: npk_mem_read_int64(elem_ptr, 8i64)
+                                    };
+                                    
+                                    int64:coll = raw catalog_get_collection(collection_name);
+                                    if (coll == 0i64) {
+                                        drop(raw catalog_create_collection(collection_name));
+                                        coll = raw catalog_get_collection(collection_name);
+                                    }
+                                    Collection->:coll_struct = @cast_unchecked<Collection->>(coll);
+                                    int64:target_wp = @cast_unchecked<int64>(coll_struct->storage);
+                                    int64:target_graph = @cast_unchecked<int64>(coll_struct->vector_index);
+                                    int64:target_vec_buf = hnsw_graph_get_vector_buf(target_graph);
+                                    
+                                    int64:ctr = 0i64;
+                                    when (true) {
+                                        ctr = raw raw atomic_load_seqcst(global_insert_counter);
+                                        if (ctr >= 10000i64) {
+                                            raw send_typed(client_fd, 507i64, "application/json", "{\"error\":\"Database capacity reached\"}");
+                                            pass(0i32);
+                                        }
+                                        if (raw raw npk_cas_i64(global_insert_counter, ctr, ctr + 1i64)) {
+                                            break;
+                                        }
+                                        drop(Thread.yield());
+                                    }
+                                    string:tmp1 = string_concat(collection_name, "_");
+                                    string:tmp2 = string_from_int(ctr);
+                                    string:key = string_concat(tmp1, tmp2);
+                                    
+                                    int64:len_out = npk_core_alloc(8i64);
+                                    defer { drop(npk_core_dalloc(len_out)); }
+                                    Result<int64>:buf_res = serialize_document(@elem, len_out);
+                                    if (!buf_res.is_error) {
+                                        int64:doc_buf = buf_res.value;
+                                        defer { drop(npk_core_dalloc(doc_buf)); }
+                                        // removed defer doc_buf
+                                        int64:doc_len = npk_mem_read_int64(len_out, 0i64);
+                                        
+                                        raw wp_put(target_wp, key, doc_buf, doc_len);
+                                        
+                                        int64:key_cstr = string_to_cstr(key);
+                                        int64:key_len = string_length(key);
+                                        raw art_insert(0i64, key_cstr, key_len, doc_buf, doc_len);
+                                        drop(npk_core_dalloc(key_cstr));
+                                        
+                                        // 3b. Extract vector and insert into graph
+                                        int64:vec_offset = ctr * 128i64 * 8i64;
+                                        bool:has_vector = false;
+                                        int64:obj_keys = npk_mem_read_int64(elem_ptr, 8i64);
+                                        int64:obj_vals = npk_mem_read_int64(elem_ptr, 16i64);
+                                        int64:obj_count = (npk_mem_read_int32(elem_ptr, 0i64)) => int64;
+                                        
+                                        int64:v_idx = 0i64;
+                                        while (v_idx < obj_count) {
+                                            int64:k_ptr = npk_mem_read_int64(obj_keys, v_idx * 8i64);
+                                            int64:v_ptr = npk_mem_read_int64(obj_vals, v_idx * 8i64);
+                                            int64:k_type = (npk_mem_read_byte(k_ptr, 0i64)) => int64;
+                                            if @cast_unchecked<int64>(k_type == (JSON_STR)) {
+                                                int64:str_p = npk_mem_read_int64(k_ptr, 8i64);
+                                                int64:s_len = (npk_mem_read_int32(str_p, 0i64)) => int64;
+                                                int64:d_ptr = npk_mem_read_int64(str_p, 8i64);
+                                                string:ks = npk_mem_read_string(d_ptr, s_len);
+                                                if (ks == "vector") {
+                                                    int64:vt = (npk_mem_read_byte(v_ptr, 0i64)) => int64;
+                                                    if @cast_unchecked<int64>(vt == (JSON_ARR)) {
+                                                        int64:a_ptr = npk_mem_read_int64(v_ptr, 8i64);
+                                                        int64:a_cnt = (npk_mem_read_int32(a_ptr, 0i64)) => int64;
+                                                        int64:a_h = npk_mem_read_int64(a_ptr, 8i64);
+                                                        int64:vi = 0i64;
+                                                        _?npk_mem_set(target_vec_buf + vec_offset, 0i64, 128i64 * 8i64);
+                                                        while (vi < a_cnt && vi < 128i64) {
+                                                            int64:ve_ptr = npk_mem_read_int64(a_h, vi * 8i64);
+                                                            int64:vet = (npk_mem_read_byte(ve_ptr, 0i64)) => int64;
+                                                            tfp64:val = 0.0tf;
+                                                            if @cast_unchecked<int64>(vet == (JSON_NUM_F64)) {
+                                                                int64:bits = npk_mem_read_int64(ve_ptr, 8i64);
+                                                                val = <-(@bits => tfp64->);
+                                                            }
+                                                            if @cast_unchecked<int64>(vet == (JSON_NUM_I64)) {
+                                                                int64:val_i = npk_mem_read_int64(ve_ptr, 8i64);
+                                                                float64:val_f = @cast_unchecked<float64>(val_i);
+                                                                val = (val_f) => tfp64;
+                                                            }
+                                                            drop@cast_unchecked<int64>(npk_mem_write_int64(target_vec_buf, vec_offset + vi * 8i64, (val)));
+                                                            vi = vi + 1i64;
+                                                        }
+                                                        has_vector = true;
+                                                    }
+                                                }
+                                            }
+                                            v_idx = v_idx + 1i64;
+                                        }
+                                        
+                                        if (has_vector) {
+                                            // Store doc in global doc_store
+                                            int64:persistent_doc = npk_core_alloc(doc_len);
+                                            drop(npk_mem_copy(persistent_doc, doc_buf, doc_len));
+                                            drop(npk_mem_write_int64(global_doc_store, ctr * 8i64, persistent_doc));
+                                            
+                                            drop(nitpick_libc_rwlock_wrlock(global_catalog_lock));
+                                            int64:local_visited = raw raw hnsw_visited_create(10000i64);
+                                            int64:local_rand = npk_core_alloc(8i64);
+                                            defer { drop(npk_core_dalloc(local_rand)); }
+                                            drop(npk_mem_write_int64(local_rand, 0i64, ctr)); // Seed with counter
+                                            raw hnsw_insert(target_graph, vec_offset, local_rand, local_visited);
+                                            drop(hnsw_visited_destroy(local_visited));
+                                            drop(nitpick_libc_rwlock_unlock(global_catalog_lock));
+                                        }
+                                                                            }
+                                    
+                                    j = j + 1i64;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        i = i + 1i64;
+    }
+    
+    // Explicit flush for group commit batching
+    int64:sync_mode = npk_mem_read_int64(global_wp, 48i64);
+    if (sync_mode == 1i64) {
+        _?wp_flush_wal(global_wp);
+    }
+    
+    // Success
+    raw send_typed(client_fd, 200i64, "application/json", "{\"status\":\"ok\"}");
     pass(0i32);
 };
 
 pub func:controller_search = int32(int64:client_fd, Request:req) {
+    int64:arena = json_arena_init(1048576i64); // 1 MB limit
+    if (arena == 0i64) { pass(ERR_JSON_PARSE_FAIL); }
+    defer { _?json_arena_destroy(arena); }
+
     // Parse json payload
-    Result<NpkJsonVal>:v_res = parse_json(req.body);
+    Result<NpkJsonVal>:v_res = parse_json_raw(arena, req.body_ptr, req.body_len);
     if (v_res.is_error) {
-        drop(send_typed(client_fd, 400i64, "application/json", "{\"error\": \"invalid json\"}"));
+        int64:status = raw raw format_error_status(ERR_JSON_PARSE_FAIL);
+        string:err_json = raw raw format_error_json(ERR_JSON_PARSE_FAIL);
+        raw send_typed(client_fd, status, "application/json", err_json);
         pass(ERR_JSON_PARSE_FAIL);
     }
     
     NpkJsonVal:v = v_res.value;
     if (v.type != JSON_OBJ) {
-        drop(send_typed(client_fd, 400i64, "application/json", "{\"error\": \"expected object payload\"}"));
-        pass(ERR_JSON_PARSE_FAIL);
+        int64:status = raw raw format_error_status(ERR_QUERY_PARSE_FAILED);
+        string:err_json = raw raw format_error_json(ERR_QUERY_PARSE_FAILED);
+        raw send_typed(client_fd, status, "application/json", err_json);
+        pass(ERR_QUERY_PARSE_FAILED);
     }
     
-    // For 0.3.9, we simulate returning some results
-    string:res = "{\"status\": \"ok\", \"results\": [\"doc1\", \"doc2\"]}";
-    drop(send_typed(client_fd, 200i64, "application/json", res));
+    int64:filter_ast = 0i64;
+    bool:has_query_vector = false;
+    int64:q_vec = npk_core_alloc(128i64 * 8i64);
+    defer { drop(npk_core_dalloc(q_vec)); }
+    int64:k = 10i64; // default
+    string:collection_name = "default";
+    string:point_key = "";
+    bool:has_point_key = false;
+    
+    int64:obj_keys = npk_mem_read_int64(v.payload, 8i64);
+    int64:obj_vals = npk_mem_read_int64(v.payload, 16i64);
+    int64:obj_count = (npk_mem_read_int32(v.payload, 0i64)) => int64;
+    
+    int64:i = 0i64;
+    while (i < obj_count) {
+        int64:k_ptr = npk_mem_read_int64(obj_keys, i * 8i64);
+        int64:v_ptr = npk_mem_read_int64(obj_vals, i * 8i64);
+        int64:k_type = (npk_mem_read_byte(k_ptr, 0i64)) => int64;
+        if @cast_unchecked<int64>(k_type == (JSON_STR)) {
+            int64:str_p = npk_mem_read_int64(k_ptr, 8i64);
+            int64:s_len = (npk_mem_read_int32(str_p, 0i64)) => int64;
+            int64:d_ptr = npk_mem_read_int64(str_p, 8i64);
+            string:ks = npk_mem_read_string(d_ptr, s_len);
+            
+            if (ks == "filter") {
+                int64:f_type = (npk_mem_read_byte(v_ptr, 0i64)) => int64;
+                if @cast_unchecked<int64>(f_type == (JSON_OBJ)) {
+                    NpkJsonVal:f_val = NpkJsonVal{ type: JSON_OBJ, payload: npk_mem_read_int64(v_ptr, 8i64) };
+                    filter_ast = parse_filter(arena, @cast_unchecked<int64>(@f_val), 1i32) ? 0i64;
+                }
+            }
+            if (ks == "collection") {
+                int64:vt = (npk_mem_read_byte(v_ptr, 0i64)) => int64;
+                if @cast_unchecked<int64>(vt == (JSON_STR)) {
+                    int64:vstr_p = npk_mem_read_int64(v_ptr, 8i64);
+                    int64:vs_len = (npk_mem_read_int32(vstr_p, 0i64)) => int64;
+                    int64:vd_ptr = npk_mem_read_int64(vstr_p, 8i64);
+                    collection_name = npk_mem_read_string(vd_ptr, vs_len);
+                }
+            }
+            if (ks == "key") {
+                int64:vt = (npk_mem_read_byte(v_ptr, 0i64)) => int64;
+                if @cast_unchecked<int64>(vt == (JSON_STR)) {
+                    int64:vstr_p = npk_mem_read_int64(v_ptr, 8i64);
+                    int64:vs_len = (npk_mem_read_int32(vstr_p, 0i64)) => int64;
+                    int64:vd_ptr = npk_mem_read_int64(vstr_p, 8i64);
+                    point_key = npk_mem_read_string(vd_ptr, vs_len);
+                    has_point_key = true;
+                }
+            }
+            if (ks == "k") {
+                int64:vt = (npk_mem_read_byte(v_ptr, 0i64)) => int64;
+                if @cast_unchecked<int64>(vt == (JSON_NUM_I64)) {
+                    k = npk_mem_read_int64(v_ptr, 8i64);
+                }
+            }
+            if (ks == "query_vector") {
+                int64:vt = (npk_mem_read_byte(v_ptr, 0i64)) => int64;
+                if @cast_unchecked<int64>(vt == (JSON_ARR)) {
+                    int64:a_ptr = npk_mem_read_int64(v_ptr, 8i64);
+                    int64:a_cnt = (npk_mem_read_int32(a_ptr, 0i64)) => int64;
+                    int64:a_h = npk_mem_read_int64(a_ptr, 8i64);
+                    int64:vi = 0i64;
+                    while (vi < a_cnt && vi < 128i64) {
+                        int64:ve_ptr = npk_mem_read_int64(a_h, vi * 8i64);
+                        int64:vet = (npk_mem_read_byte(ve_ptr, 0i64)) => int64;
+                        tfp64:val = 0.0tf;
+                        if @cast_unchecked<int64>(vet == (JSON_NUM_F64)) {
+                            int64:bits = npk_mem_read_int64(ve_ptr, 8i64);
+                            val = <-(@bits => tfp64->);
+                        }
+                        if @cast_unchecked<int64>(vet == (JSON_NUM_I64)) {
+                            int64:val_i = npk_mem_read_int64(ve_ptr, 8i64);
+                            float64:val_f = @cast_unchecked<float64>(val_i);
+                            val = (val_f) => tfp64;
+                        }
+                        drop@cast_unchecked<int64>(npk_mem_write_int64(q_vec, vi * 8i64, (val)));
+                        vi = vi + 1i64;
+                    }
+                    has_query_vector = true;
+                }
+            }
+        }
+        i = i + 1i64;
+    }
+    
+    if (has_point_key) {
+        int64:key_len = string_length(point_key);
+        int64:key_cstr = string_to_cstr(point_key);
+        int64:art_node = raw art_search(0i64, key_cstr, key_len);
+        drop(npk_core_dalloc(key_cstr));
+        
+        if (art_node != 0i64) {
+            int64:val_ptr = raw art_leaf_val_ptr(art_node);
+            int64:val_len = raw art_leaf_val_len(art_node);
+            string:doc_str = npk_mem_read_string(val_ptr, val_len);
+            string:resp_json = string_concat("{\"status\":\"ok\",\"docs\":[", doc_str);
+            resp_json = string_concat(resp_json, "]}");
+            raw send_typed(client_fd, 200i64, "application/json", resp_json);
+            pass(0i32);
+        } else {
+            raw send_typed(client_fd, 404i64, "application/json", "{\"error\":\"key not found\"}");
+            pass(0i32);
+        }
+    }
+    
+    if (has_query_vector == false) {
+        raw send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Missing query_vector\"}");
+        pass(ERR_QUERY_PARSE_FAILED);
+    }
+    
+    int64:coll = raw catalog_get_collection(collection_name);
+    if (coll == 0i64) {
+        raw send_typed(client_fd, 404i64, "application/json", "{\"error\":\"collection not found\"}");
+        pass(0i32);
+    }
+    Collection->:coll_struct = @cast_unchecked<Collection->>(coll);
+    int64:target_graph = @cast_unchecked<int64>(coll_struct->vector_index);
+    
+    drop(nitpick_libc_rwlock_rdlock(global_catalog_lock));
+    defer { _?nitpick_libc_rwlock_unlock(global_catalog_lock); }
+    
+    int32:ep_slot = -1i32;
+    int32:ep_gen = 0i32;
+    int64:ep_slot_ptr = npk_core_alloc(4i64);
+    int64:ep_gen_ptr = npk_core_alloc(4i64);
+    if (ep_slot_ptr != 0i64 && ep_gen_ptr != 0i64) {
+        drop(hnsw_graph_get_ep(target_graph, ep_slot_ptr, ep_gen_ptr));
+        ep_slot = npk_mem_read_int32(ep_slot_ptr, 0i64);
+        ep_gen = npk_mem_read_int32(ep_gen_ptr, 0i64);
+    }
+    if (ep_slot_ptr != 0i64) { drop(npk_core_dalloc(ep_slot_ptr)); }
+    if (ep_gen_ptr != 0i64) { drop(npk_core_dalloc(ep_gen_ptr)); }
+    
+    int64:visited_set = raw raw hnsw_visited_create(10000i64);
+    defer { _?hnsw_visited_destroy(visited_set); }
+    
+    int64:res_pq = raw raw hnsw_search_layer(
+        arena, 
+        target_graph, 
+        q_vec, 
+        ep_slot, 
+        ep_gen, 
+        @cast_unchecked<int32>(k), 
+        0i32, 
+        visited_set, 
+        filter_ast, 
+        global_doc_store
+    );
+    
+    
+    if (res_pq == 0i64) {
+        raw send_typed(client_fd, 200i64, "application/json", "{\"status\": \"ok\", \"results\": []}");
+        pass(0i32);
+    }
+    
+    int64:C = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
+    defer { drop(npk_core_dalloc(C)); }
+    int64:sz = raw raw hnsw_pq_get_size(res_pq);
+    
+    string:json = "";
+    int64:count = 0i64;
+    
+    while (sz > 0i64) {
+        drop(hnsw_pq_pop(res_pq, C));
+        tfp64:dist = raw raw hnsw_pq_get_dist(C);
+        int32:slot = raw raw hnsw_pq_get_slot(C);
+        int32:gen = raw raw hnsw_pq_get_gen(C);
+        
+        int64:slot64 = @cast_unchecked<int64>(slot);
+        flt64:dist_f64 = dist => flt64;
+        string:dist_str = raw raw fmt_float(dist_f64, 4i64);
+        string:item = `{"document_id": "doc&{slot64}", "distance": &{dist_str}}`;
+        
+        if (count > 0i64) {
+            item = string_concat(item, ",");
+        }
+        json = string_concat(item, json);
+        
+        sz = sz - 1i64;
+        count = count + 1i64;
+    }
+    
+    drop(hnsw_pq_destroy(res_pq));
+    
+    string:final_json = "{\"status\": \"ok\", \"results\": [";
+    final_json = string_concat(final_json, json);
+    final_json = string_concat(final_json, "]}");
+    
+    raw send_typed(client_fd, 200i64, "application/json", final_json);
     pass(0i32);
 };
+
+

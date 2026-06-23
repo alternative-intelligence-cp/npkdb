@@ -27,7 +27,9 @@ pub func:wal_current_seq = int64() {
 pub func:wal_open = int64(string:path) {
     // O_WRONLY(1) + O_CREAT(64) + O_APPEND(1024) = 1089
     // MODE_644 = 420
-    Result<int64>:fd_res = sys(OPEN, path, 1089i64, 420i64);
+    int64:c_path = string_to_cstr(path);
+    Result<int64>:fd_res = sys(OPEN, c_path, 1089i64, 420i64);
+    drop(npk_core_dalloc(c_path));
     if (fd_res.is_error) {
         pass(0i64 - ERR_WAL_OPEN_FAILED);
     }
@@ -63,13 +65,13 @@ func:wal_append = int64(int64:wal_fd, int32:rec_type, int64:seq, int64:payload_p
     int64:buf = npk_core_alloc(total_len);
     
     // Offset 4: length (total record length INCLUDING header)
-    drop(npk_mem_write_int32(buf, 4i64, ((total_len) => int32)));
+    drop(npk_mem_write_int32(buf, 4i64, (@cast_unchecked<int32>((total_len)))));
     
     // Offset 8: record_type
     drop(npk_mem_write_int32(buf, 8i64, rec_type));
     
     // Offset 12: sequence
-    drop(npk_mem_write_int32(buf, 12i64, ((seq) => int32)));
+    drop(npk_mem_write_int32(buf, 12i64, (@cast_unchecked<int32>((seq)))));
     
     // Offset 16: payload
     if (payload_len > 0i64) {
@@ -78,7 +80,7 @@ func:wal_append = int64(int64:wal_fd, int32:rec_type, int64:seq, int64:payload_p
     
     // Offset 0: crc32 over bytes 4..end
     int64:crc = crc32_compute(buf + 4i64, total_len - 4i64) ? 0i64;
-    drop(npk_mem_write_int32(buf, 0i64, ((crc) => int32)));
+    drop(npk_mem_write_int32(buf, 0i64, (@cast_unchecked<int32>((crc)))));
     
     Result<int64>:w_res = sys(WRITE, wal_fd, buf, total_len);
     drop(npk_core_dalloc(buf));
@@ -99,15 +101,15 @@ pub func:wal_append_put = int64(int64:wal_fd, string:key, int64:value_ptr, int64
     int64:payload = npk_core_alloc(payload_len);
     
     // Offset 0: key_len
-    drop(npk_mem_write_int32(payload, 0i64, ((key_len) => int32)));
+    drop(npk_mem_write_int32(payload, 0i64, (@cast_unchecked<int32>((key_len)))));
     
     // Offset 4: key
     if (key_len > 0i64) {
-        _?!npk_mem_write_string(payload + 4i64, key);
+        npk_mem_write_string(payload + 4i64, key);
     }
     
     // Offset 4+key_len: value_len
-    drop(npk_mem_write_int32(payload, 4i64 + key_len, ((value_len) => int32)));
+    drop(npk_mem_write_int32(payload, 4i64 + key_len, (@cast_unchecked<int32>((value_len)))));
     
     // Offset 8+key_len: value
     if (value_len > 0i64) {
@@ -125,10 +127,10 @@ pub func:wal_append_delete = int64(int64:wal_fd, string:key, int64:seq)
     int64:payload_len = 4i64 + key_len;
     int64:payload = npk_core_alloc(payload_len);
     
-    drop(npk_mem_write_int32(payload, 0i64, ((key_len) => int32)));
+    drop(npk_mem_write_int32(payload, 0i64, (@cast_unchecked<int32>((key_len)))));
     
     if (key_len > 0i64) {
-        _?!npk_mem_write_string(payload + 4i64, key);
+        npk_mem_write_string(payload + 4i64, key);
     }
     
     int64:res = wal_append(wal_fd, WAL_RECORD_DELETE, seq, payload, payload_len) ? 0i64;
@@ -227,16 +229,16 @@ func:wal_batch_append = int64(int64:wal_fd, int32:rec_type, int64:seq, int64:pay
     
     int64:write_ptr = buf_ptr + buf_len;
     
-    drop(npk_mem_write_int32(write_ptr, 4i64, ((total_len) => int32)));
+    drop(npk_mem_write_int32(write_ptr, 4i64, (@cast_unchecked<int32>((total_len)))));
     drop(npk_mem_write_int32(write_ptr, 8i64, rec_type));
-    drop(npk_mem_write_int32(write_ptr, 12i64, ((seq) => int32)));
+    drop(npk_mem_write_int32(write_ptr, 12i64, (@cast_unchecked<int32>((seq)))));
     
     if (payload_len > 0i64) {
         drop(npk_mem_copy(write_ptr + 16i64, payload_ptr, payload_len));
     }
     
     int64:crc = crc32_compute(write_ptr + 4i64, total_len - 4i64) ? 0i64;
-    drop(npk_mem_write_int32(write_ptr, 0i64, ((crc) => int32)));
+    drop(npk_mem_write_int32(write_ptr, 0i64, (@cast_unchecked<int32>((crc)))));
     
     drop(npk_mem_write_int64(wal_state_ptr, 8i64, buf_len + total_len));
     int64:record_count = npk_mem_read_int64(wal_state_ptr, 24i64);
@@ -250,9 +252,9 @@ pub func:wal_batch_append_put = int64(int64:wal_fd, string:key, int64:value_ptr,
     int64:payload_len = 4i64 + key_len + 4i64 + value_len;
     int64:payload = npk_core_alloc(payload_len);
     
-    drop(npk_mem_write_int32(payload, 0i64, ((key_len) => int32)));
-    if (key_len > 0i64) { _?!npk_mem_write_string(payload + 4i64, key); }
-    drop(npk_mem_write_int32(payload, 4i64 + key_len, ((value_len) => int32)));
+    drop(npk_mem_write_int32(payload, 0i64, (@cast_unchecked<int32>((key_len)))));
+    if (key_len > 0i64) { npk_mem_write_string(payload + 4i64, key); }
+    drop(npk_mem_write_int32(payload, 4i64 + key_len, (@cast_unchecked<int32>((value_len)))));
     if (value_len > 0i64) { drop(npk_mem_copy(payload + 8i64 + key_len, value_ptr, value_len)); }
     
     int64:res = wal_batch_append(wal_fd, WAL_RECORD_PUT, seq, payload, payload_len) ? 0i64;
@@ -265,8 +267,8 @@ pub func:wal_batch_append_delete = int64(int64:wal_fd, string:key, int64:seq) {
     int64:payload_len = 4i64 + key_len;
     int64:payload = npk_core_alloc(payload_len);
     
-    drop(npk_mem_write_int32(payload, 0i64, ((key_len) => int32)));
-    if (key_len > 0i64) { _?!npk_mem_write_string(payload + 4i64, key); }
+    drop(npk_mem_write_int32(payload, 0i64, (@cast_unchecked<int32>((key_len)))));
+    if (key_len > 0i64) { npk_mem_write_string(payload + 4i64, key); }
     
     int64:res = wal_batch_append(wal_fd, WAL_RECORD_DELETE, seq, payload, payload_len) ? 0i64;
     drop(npk_core_dalloc(payload));
@@ -278,7 +280,9 @@ pub func:wal_batch_append_delete = int64(int64:wal_fd, string:key, int64:seq) {
 // -----------------------------------------------------------------------------
 
 pub func:wal_open_read = int64(string:path) {
-    Result<int64>:fd_res = sys(OPEN, path, 2i64, 0i64); // O_RDWR = 2
+    int64:c_path = string_to_cstr(path);
+    Result<int64>:fd_res = sys(OPEN, c_path, 2i64, 0i64); // O_RDWR = 2
+    drop(npk_core_dalloc(c_path));
     if (fd_res.is_error) {
         pass(0i64);
     }
@@ -302,9 +306,9 @@ pub func:wal_read_next = int64(int64:wal_fd) {
         pass(-1i64); // Torn write
     }
     
-    int64:crc32_stored_signed = npk_mem_read_int32(hdr_buf, 0i64) => int64;
+    int64:crc32_stored_signed = @cast_unchecked<int64>(npk_mem_read_int32(hdr_buf, 0i64));
     int64:crc32_stored = crc32_stored_signed & 4294967295i64;
-    int64:record_length = npk_mem_read_int32(hdr_buf, 4i64) => int64;
+    int64:record_length = @cast_unchecked<int64>(npk_mem_read_int32(hdr_buf, 4i64));
     
     if (record_length < 16i64) {
         drop(npk_core_dalloc(hdr_buf));
@@ -347,19 +351,19 @@ pub func:wal_record_seq = int32(int64:record_buf) {
 };
 
 pub func:wal_record_key = string(int64:record_buf) {
-    int64:key_len = npk_mem_read_int32(record_buf, 16i64) => int64;
+    int64:key_len = @cast_unchecked<int64>(npk_mem_read_int32(record_buf, 16i64));
     if (key_len <= 0i64) { pass(""); }
-    pass(raw npk_mem_read_string(record_buf + 20i64, key_len));
+    pass(npk_mem_read_string(record_buf + 20i64, key_len));
 };
 
 pub func:wal_record_value_ptr = int64(int64:record_buf) {
-    int64:key_len = npk_mem_read_int32(record_buf, 16i64) => int64;
+    int64:key_len = @cast_unchecked<int64>(npk_mem_read_int32(record_buf, 16i64));
     pass(record_buf + 24i64 + key_len);
 };
 
 pub func:wal_record_value_len = int64(int64:record_buf) {
-    int64:key_len = npk_mem_read_int32(record_buf, 16i64) => int64;
-    pass(npk_mem_read_int32(record_buf, 20i64 + key_len) => int64);
+    int64:key_len = @cast_unchecked<int64>(npk_mem_read_int32(record_buf, 16i64));
+    pass(@cast_unchecked<int64>(npk_mem_read_int32(record_buf, 20i64 + key_len)));
 };
 
 pub func:wal_replay = int64(string:wal_path, int64:active_mt) {
@@ -378,13 +382,13 @@ pub func:wal_replay = int64(string:wal_path, int64:active_mt) {
             break;
         }
         
-        int64:rec_len = npk_mem_read_int32(rec, 4i64) => int64;
+        int64:rec_len = @cast_unchecked<int64>(npk_mem_read_int32(rec, 4i64));
         
-        int32:r_type = _?!wal_record_type(rec);
-        int64:r_seq = (raw wal_record_seq(rec)) => int64;
-        string:r_key = _?!wal_record_key(rec);
-        int64:r_val = _?!wal_record_value_ptr(rec);
-        int64:r_vlen = _?!wal_record_value_len(rec);
+        int32:r_type = raw wal_record_type(rec);
+        int64:r_seq = @cast_unchecked<int64>((raw wal_record_seq(rec)));
+        string:r_key = raw wal_record_key(rec);
+        int64:r_val = raw wal_record_value_ptr(rec);
+        int64:r_vlen = raw wal_record_value_len(rec);
         
         if (active_mt != 0i64) {
             if (r_type == 1i32) { // WAL_RECORD_PUT
@@ -392,9 +396,9 @@ pub func:wal_replay = int64(string:wal_path, int64:active_mt) {
                 if (r_vlen > 0i64) {
                     drop(npk_mem_copy(new_val, r_val, r_vlen));
                 }
-                _?!mt_put(active_mt, r_key, new_val, r_vlen);
+                raw mt_put(active_mt, r_key, new_val, r_vlen);
             } else if (r_type == 2i32) { // WAL_RECORD_DELETE
-                _?!mt_delete(active_mt, r_key);
+                raw mt_delete(active_mt, r_key);
             }
         }
         
@@ -407,10 +411,14 @@ pub func:wal_replay = int64(string:wal_path, int64:active_mt) {
 };
 
 pub func:wal_truncate = int64(string:path) {
-    Result<int64>:fd_res = sys(OPEN, path, 513i64, 420i64); // O_WRONLY | O_TRUNC = 513
+    int64:c_path = string_to_cstr(path);
+    Result<int64>:fd_res = sys(OPEN, c_path, 513i64, 420i64); // O_WRONLY | O_TRUNC = 513
+    drop(npk_core_dalloc(c_path));
     if (fd_res.is_error) {
         pass(-1i64);
     }
     drop(sys(CLOSE, fd_res.value));
     pass(0i64);
 };
+
+

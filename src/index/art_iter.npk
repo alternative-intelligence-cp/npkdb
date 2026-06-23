@@ -104,7 +104,7 @@ pub func:art_iter_create_range = int64(int64:start_ptr, int64:start_len, int64:e
     drop(npk_mem_write_int64(iter, ITER_END_KEY_LEN,   end_len));
     drop(npk_mem_write_int64(iter, ITER_DONE, 0i64));
 
-    int64:root = _?!art_get_root();
+    int64:root = raw art_get_root();
     if (root != 0i64) {
         drop(iter_stack_push(iter, root, 0i64));
     } else {
@@ -128,10 +128,10 @@ pub func:art_iter_free = NIL(int64:iter) {
 };
 
 pub func:art_node_get_nth_child = int64(int64:node, int64:n) {
-    int64:num = _?!art_node_num_children(node);
+    int64:num = raw art_node_num_children(node);
     if (n >= num) { pass(0i64); }
     
-    int64:ntype = _?!art_node_type(node);
+    int64:ntype = raw art_node_type(node);
     int64:result = npk_core_alloc(16i64);
     
     if (ntype == ART_NODE4) {
@@ -140,8 +140,8 @@ pub func:art_node_get_nth_child = int64(int64:node, int64:n) {
         
         int64:i = 0i64;
         while (i < num) {
-            int64:kb = _?!node4_get_key(node, i);
-            int64:child = _?!node4_get_child(node, i);
+            int64:kb = raw node4_get_key(node, i);
+            int64:child = raw node4_get_child(node, i);
             if (kb < c0) { c3 = c2; v3 = v2; c2 = c1; v2 = v1; c1 = c0; v1 = v0; c0 = kb; v0 = child; }
             else { if (kb < c1) { c3 = c2; v3 = v2; c2 = c1; v2 = v1; c1 = kb; v1 = child; }
             else { if (kb < c2) { c3 = c2; v3 = v2; c2 = kb; v2 = child; }
@@ -168,10 +168,10 @@ pub func:art_node_get_nth_child = int64(int64:node, int64:n) {
         while (kb_iter < 256i64) {
             int64:j = 0i64;
             while (j < num) {
-                int64:kb = _?!node16_get_key(node, j);
+                int64:kb = raw node16_get_key(node, j);
                 if (kb == kb_iter) {
                     if (count == n) {
-                        int64:child = _?!node16_get_child(node, j);
+                        int64:child = raw node16_get_child(node, j);
                         drop(npk_mem_write_int64(result, 0i64, child));
                         drop(npk_mem_write_int64(result, 8i64, kb));
                         pass(result);
@@ -187,10 +187,10 @@ pub func:art_node_get_nth_child = int64(int64:node, int64:n) {
         int64:count = 0i64;
         int64:i = 0i64;
         while (i < 256i64) {
-            int64:slot = _?!node48_get_slot(node, i);
+            int64:slot = raw node48_get_slot(node, i);
             if (slot != 0i64) {
                 if (count == n) {
-                    int64:child = _?!node48_get_child(node, slot);
+                    int64:child = raw node48_get_child(node, slot);
                     drop(npk_mem_write_int64(result, 0i64, child));
                     drop(npk_mem_write_int64(result, 8i64, i));
                     pass(result);
@@ -204,7 +204,7 @@ pub func:art_node_get_nth_child = int64(int64:node, int64:n) {
         int64:count = 0i64;
         int64:i = 0i64;
         while (i < 256i64) {
-            int64:child = _?!node256_get_child(node, i);
+            int64:child = raw node256_get_child(node, i);
             if (child != 0i64) {
                 if (count == n) {
                     drop(npk_mem_write_int64(result, 0i64, child));
@@ -246,7 +246,7 @@ pub func:art_iter_next = int64(int64:iter) {
     int64:end_len = npk_mem_read_int64(iter, ITER_END_KEY_LEN);
     
     while (true) {
-        int64:frame_ptr = _?!iter_stack_peek(iter);
+        int64:frame_ptr = raw iter_stack_peek(iter);
         if (frame_ptr == 0i64) {
             drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
             pass(0i64);
@@ -256,10 +256,10 @@ pub func:art_iter_next = int64(int64:iter) {
         int64:child_idx = npk_mem_read_int64(frame_ptr, FRAME_CHILD_IDX);
         
         if (raw art_is_leaf(node_ptr)) {
-            _?!iter_stack_pop(iter);
+            raw iter_stack_pop(iter);
             
             int64:lkptr = node_ptr + LEAF_DATA_OFFSET;
-            int64:lklen = _?!art_leaf_key_len(node_ptr);
+            int64:lklen = raw art_leaf_key_len(node_ptr);
             
             int64:valid = 1i64;
             if (start_ptr != 0i64) {
@@ -278,15 +278,15 @@ pub func:art_iter_next = int64(int64:iter) {
             }
             // If valid == 0, we skipped this leaf (it's before start_key), continue loop
         } else {
-            int64:child_res = _?!art_node_get_nth_child(node_ptr, child_idx);
+            int64:child_res = raw art_node_get_nth_child(node_ptr, child_idx);
             if (child_res == 0i64) {
-                _?!iter_stack_pop(iter);
+                raw iter_stack_pop(iter);
             } else {
                 int64:child = npk_mem_read_int64(child_res, 0i64);
                 drop(npk_core_dalloc(child_res));
                 
                 drop(npk_mem_write_int64(frame_ptr, FRAME_CHILD_IDX, child_idx + 1i64));
-                _?!iter_stack_push(iter, child, 0i64);
+                raw iter_stack_push(iter, child, 0i64);
             }
         }
     }
@@ -314,22 +314,22 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
     drop(npk_mem_write_int64(iter, ITER_DONE, 0i64));
 
     if (prefix_len == 0i64) {
-        int64:root = _?!art_get_root();
+        int64:root = raw art_get_root();
         if (root != 0i64) {
-            _?!iter_stack_push(iter, root, 0i64);
+            raw iter_stack_push(iter, root, 0i64);
         } else {
             drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
         }
         pass(iter);
     }
 
-    int64:node = _?!art_get_root();
+    int64:node = raw art_get_root();
     int64:depth = 0i64;
     
     while (node != 0i64) {
         if (raw art_is_leaf(node)) {
             int64:lkptr = node + LEAF_DATA_OFFSET;
-            int64:lklen = _?!art_leaf_key_len(node);
+            int64:lklen = raw art_leaf_key_len(node);
             
             int64:valid = 1i64;
             if (lklen < prefix_len) {
@@ -346,15 +346,15 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
                 }
             }
             if (valid == 1i64) {
-                _?!iter_stack_push(iter, node, 0i64);
+                raw iter_stack_push(iter, node, 0i64);
             } else {
                 drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
             }
             pass(iter);
         }
         
-        int64:p2 = _?!art_check_prefix(node, prefix_ptr, prefix_len, depth);
-        int64:plen = _?!art_node_prefix_len(node);
+        int64:p2 = raw art_check_prefix(node, prefix_ptr, prefix_len, depth);
+        int64:plen = raw art_node_prefix_len(node);
         
         int64:cmp_len = plen;
         if (prefix_len - depth < cmp_len) {
@@ -367,15 +367,15 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
         
         depth = depth + plen;
         if (depth >= prefix_len) {
-            _?!iter_stack_push(iter, node, 0i64);
+            raw iter_stack_push(iter, node, 0i64);
             pass(iter);
         }
         
         int64:key_byte = 0i64;
         int64:b = npk_mem_read_byte(prefix_ptr, depth);
-        key_byte = (b) => int64;
+        key_byte = @cast_unchecked<int64>((b));
         
-        int64:next_child = _?!art_find_child(node, key_byte);
+        int64:next_child = raw art_find_child(node, key_byte);
         if (next_child == 0i64) {
             drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
             pass(iter);
@@ -387,3 +387,5 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
     drop(npk_mem_write_int64(iter, ITER_DONE, 1i64));
     pass(iter);
 };
+
+

@@ -15,13 +15,15 @@ pub func:node256_set_child = NIL(int64:node, int64:byte_val, int64:child) {
 };
 
 pub func:node256_remove_child = int64(int64:node, int64:key_byte) {
-    int64:child = _?!node256_get_child(node, key_byte);
+    int64:child = raw node256_get_child(node, key_byte);
     if (child == 0i64) { pass(0i64); }
     
-    _?!node256_set_child(node, key_byte, 0i64);
+    raw node256_set_child(node, key_byte, 0i64);
     
-    int64:count = _?!art_node_num_children(node);
-    _?!art_node_set_num_children(node, count - 1i64);
+    int64:count = raw art_node_num_children(node);
+    raw art_node_set_num_children(node, count - 1i64);
     
     pass(child);
 };
+
+

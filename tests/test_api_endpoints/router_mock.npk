@@ -8,6 +8,8 @@ pub func:route_request = int32(int64:client_fd, Request:req) {
     string:method = req.method;
     string:path = req.path;
     
+    println("DEBUG: route_request METHOD=[" + method + "] PATH=[" + path + "]");
+    
     if (method == "POST" && path == "/collections") {
         pass(controller_create_collection(client_fd, req));
     } else if (method == "POST" && path == "/search") {
@@ -20,12 +22,16 @@ pub func:route_request = int32(int64:client_fd, Request:req) {
             int64:d_idx = string_index_of(suffix, "/docs");
             if (d_idx > 0i64) {
                 string:col_name = string_substring(suffix, 0i64, d_idx);
-                pass(controller_insert(client_fd, req, col_name));
+                int32:res = raw controller_insert(client_fd, req, col_name);
+                pass(res);
             }
         }
     }
     
     // Not found
-    drop(send_typed(client_fd, 404i64, "application/json", "{\"error\": \"not found\"}"));
+    string:err_json = "{\"error\": \"not found: method=" + method + " path=" + path + "\"}";
+    send_typed(client_fd, 404i64, "application/json", err_json);
     pass(0i32);
 };
+
+

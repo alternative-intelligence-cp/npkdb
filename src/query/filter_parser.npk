@@ -14,12 +14,12 @@ pub struct:AstArena = {
 
 pub func:ast_arena_init = int64(int64:capacity) {
     int64:arena_ptr = npk_core_alloc(24i64);
-    if (arena_ptr == 0i64) { fail(ERR_EBR_LIMBO_OVERFLOW) => tbb8; } // Generic memory error
+    if (arena_ptr == 0i64) { fail(@cast_unchecked<tbb8>(ERR_EBR_LIMBO_OVERFLOW)); } // Generic memory error
     
     int64:data = npk_core_alloc(capacity);
     if (data == 0i64) {
         drop(npk_core_dalloc(arena_ptr));
-        fail(ERR_EBR_LIMBO_OVERFLOW) => tbb8;
+        fail(@cast_unchecked<tbb8>(ERR_EBR_LIMBO_OVERFLOW));
     }
     
     drop(npk_mem_write_int64(arena_ptr, 0i64, data));
@@ -74,13 +74,13 @@ pub Rules<int32>:ValidAstackDepth = { $ >= 1, $ <= 128 };
 pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidAstackDepth> int32:depth) {
     if (depth >= 128i32) { pass(0i64); } // Guard to guarantee depth + 1i32 <= 128 for recursive call
 
-    NpkJsonVal->:query = (query_raw_ptr) => NpkJsonVal-;
+    NpkJsonVal->:query = @cast_unchecked<NpkJsonVal->>(query_raw_ptr);
     if (query->type != JSON_OBJ) {
         pass(0i64); // Invalid filter root
     }
     
     int64:obj_ptr = query->payload;
-    int64:count = npk_mem_read_int32(obj_ptr, 0i64) => int64;
+    int64:count = @cast_unchecked<int64>(npk_mem_read_int32(obj_ptr, 0i64));
     if (count == 0i64) { pass(0i64); }
     
     int64:keys_ptr = npk_mem_read_int64(obj_ptr, 8i64);
@@ -91,12 +91,12 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
     int64:val0_ptr = npk_mem_read_int64(vals_ptr, 0i64);
     
     NpkJsonVal:k0_elem = NpkJsonVal {
-        type: npk_mem_read_byte(key0_ptr, 0i64) => int8,
+        type: @cast_unchecked<int8>(npk_mem_read_byte(key0_ptr, 0i64)),
         payload: npk_mem_read_int64(key0_ptr, 8i64)
     };
     
     NpkJsonVal:v0_elem = NpkJsonVal {
-        type: npk_mem_read_byte(val0_ptr, 0i64) => int8,
+        type: @cast_unchecked<int8>(npk_mem_read_byte(val0_ptr, 0i64)),
         payload: npk_mem_read_int64(val0_ptr, 8i64)
     };
     
@@ -104,28 +104,28 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
     
     int64:k0_str_ptr = npk_mem_read_int64(k0_elem.payload, 8i64);
     
-    int64:node_ptr = _?!ast_arena_alloc(arena_ptr, AST_NODE_SIZE);
-    if (node_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
+    int64:node_ptr = raw ast_arena_alloc(arena_ptr, AST_NODE_SIZE);
+    if (node_ptr == 0i64) { fail(@cast_unchecked<tbb32>((ERR_JSON_PARSE_FAIL))); }
     
     // Check if it's an operator
-    if (raw streq(k0_str_ptr, "$and") || _?!streq(k0_str_ptr, "$or")) {
+    if (raw streq(k0_str_ptr, "$and") || raw streq(k0_str_ptr, "$or")) {
         if (raw streq(k0_str_ptr, "$and")) {
-            drop(npk_mem_write_byte(node_ptr, 0i64, AST_OP_AND => int64));
+            drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_AND)));
         } else {
-            drop(npk_mem_write_byte(node_ptr, 0i64, AST_OP_OR => int64));
+            drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_OR)));
         }
         
         if (v0_elem.type != JSON_ARR) { pass(0i64); }
         
         int64:arr_ptr = v0_elem.payload;
-        int64:arr_count = npk_mem_read_int32(arr_ptr, 0i64) => int64;
+        int64:arr_count = @cast_unchecked<int64>(npk_mem_read_int32(arr_ptr, 0i64));
         int64:arr_handles = npk_mem_read_int64(arr_ptr, 8i64);
         
-        drop(npk_mem_write_int32(node_ptr, 32i64, (arr_count) => int32));
+        drop(npk_mem_write_int32(node_ptr, 32i64, @cast_unchecked<int32>((arr_count))));
         
-        int64:children_ptr = _?!ast_arena_alloc(arena_ptr, arr_count * 8i64);
-        if (children_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
-        if (children_ptr == 0i64) { fail((ERR_JSON_PARSE_FAIL) => tbb32); }
+        int64:children_ptr = raw ast_arena_alloc(arena_ptr, arr_count * 8i64);
+        if (children_ptr == 0i64) { fail(@cast_unchecked<tbb32>((ERR_JSON_PARSE_FAIL))); }
+        if (children_ptr == 0i64) { fail(@cast_unchecked<tbb32>((ERR_JSON_PARSE_FAIL))); }
         drop(npk_mem_write_int64(node_ptr, 36i64, children_ptr)); // aligned at 36 vs 40? Let's use 40! Wait, struct alignment. I'll use 40 for children just to be safe with 8-byte alignment
         drop(npk_mem_write_int64(node_ptr, 40i64, children_ptr)); // use 40 for children
         
@@ -133,11 +133,11 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
         while (i < arr_count) {
             int64:child_val_ptr = npk_mem_read_int64(arr_handles, i * 8i64);
             NpkJsonVal:child_elem = NpkJsonVal {
-                type: npk_mem_read_byte(child_val_ptr, 0i64) => int8,
+                type: @cast_unchecked<int8>(npk_mem_read_byte(child_val_ptr, 0i64)),
                 payload: npk_mem_read_int64(child_val_ptr, 8i64)
             };
             
-            int64:child_node = _?!parse_filter(arena_ptr, (@child_elem) => int64, depth + 1i32);
+            int64:child_node = raw parse_filter(arena_ptr, @cast_unchecked<int64>(@child_elem), depth + 1i32);
             drop(npk_mem_write_int64(children_ptr, i * 8i64, child_node));
             i = i + 1i64;
         }
@@ -148,7 +148,7 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
         if (v0_elem.type == JSON_OBJ) {
             // Check first key of the inner object
             int64:inner_obj_ptr = v0_elem.payload;
-            int64:icount = npk_mem_read_int32(inner_obj_ptr, 0i64) => int64;
+            int64:icount = @cast_unchecked<int64>(npk_mem_read_int32(inner_obj_ptr, 0i64));
             if (icount > 0i64) {
                 int64:ikeys = npk_mem_read_int64(inner_obj_ptr, 8i64);
                 int64:ivals = npk_mem_read_int64(inner_obj_ptr, 16i64);
@@ -157,11 +157,11 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
                 int64:iv0 = npk_mem_read_int64(ivals, 0i64);
                 
                 NpkJsonVal:ik0_elem = NpkJsonVal {
-                    type: npk_mem_read_byte(ik0, 0i64) => int8,
+                    type: @cast_unchecked<int8>(npk_mem_read_byte(ik0, 0i64)),
                     payload: npk_mem_read_int64(ik0, 8i64)
                 };
                 NpkJsonVal:iv0_elem = NpkJsonVal {
-                    type: npk_mem_read_byte(iv0, 0i64) => int8,
+                    type: @cast_unchecked<int8>(npk_mem_read_byte(iv0, 0i64)),
                     payload: npk_mem_read_int64(iv0, 8i64)
                 };
                 
@@ -169,45 +169,47 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
                     int64:ik0_str_ptr = npk_mem_read_int64(ik0_elem.payload, 8i64);
                     
                     if (raw streq(ik0_str_ptr, "$eq")) { 
-                        drop(npk_mem_write_byte(node_ptr, 0i64, AST_OP_EQ => int64)); 
+                        drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_EQ))); 
                     } else { 
                         if (raw streq(ik0_str_ptr, "$gt")) { 
-                            drop(npk_mem_write_byte(node_ptr, 0i64, AST_OP_GT => int64)); 
+                            drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_GT))); 
                         } else { 
                             if (raw streq(ik0_str_ptr, "$lt")) { 
-                                drop(npk_mem_write_byte(node_ptr, 0i64, AST_OP_LT => int64)); 
+                                drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_LT))); 
                             } else { 
                                 if (raw streq(ik0_str_ptr, "$in")) { 
-                                    drop(npk_mem_write_byte(node_ptr, 0i64, AST_OP_IN => int64)); 
+                                    drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_IN))); 
                                 } else { 
-                                    drop(npk_mem_write_byte(node_ptr, 0i64, AST_OP_EQ => int64)); 
+                                    drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_EQ))); 
                                 }
                             }
                         }
                     }
                     
                     // write target
-                    drop(npk_mem_write_byte(node_ptr, 16i64, iv0_elem.type => int64));
+                    drop(npk_mem_write_byte(node_ptr, 16i64, @cast_unchecked<int64>(iv0_elem.type)));
                     drop(npk_mem_write_int64(node_ptr, 24i64, iv0_elem.payload));
                 } else {
                     // Implicit eq to object
-                    drop(npk_mem_write_byte(node_ptr, 0i64, AST_OP_EQ => int64));
-                    drop(npk_mem_write_byte(node_ptr, 16i64, v0_elem.type => int64));
+                    drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_EQ)));
+                    drop(npk_mem_write_byte(node_ptr, 16i64, @cast_unchecked<int64>(v0_elem.type)));
                     drop(npk_mem_write_int64(node_ptr, 24i64, v0_elem.payload));
                 }
             } else {
                 // empty object, implicit eq
-                drop(npk_mem_write_byte(node_ptr, 0i64, AST_OP_EQ => int64));
-                drop(npk_mem_write_byte(node_ptr, 16i64, v0_elem.type => int64));
+                drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_EQ)));
+                drop(npk_mem_write_byte(node_ptr, 16i64, @cast_unchecked<int64>(v0_elem.type)));
                 drop(npk_mem_write_int64(node_ptr, 24i64, v0_elem.payload));
             }
         } else {
             // Implicit eq
-            drop(npk_mem_write_byte(node_ptr, 0i64, AST_OP_EQ => int64));
-            drop(npk_mem_write_byte(node_ptr, 16i64, v0_elem.type => int64));
+            drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_EQ)));
+            drop(npk_mem_write_byte(node_ptr, 16i64, @cast_unchecked<int64>(v0_elem.type)));
             drop(npk_mem_write_int64(node_ptr, 24i64, v0_elem.payload));
         }
     }
     
     pass(node_ptr);
 };
+
+
