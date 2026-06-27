@@ -1,10 +1,10 @@
 func:foo = int32() {
-    fail(cast_unchecked<tbb32>(101i32));
+    fail(@cast_unchecked<tbb32>(101i32));
 };
 
 pub func:failsafe = int32(tbb32:code) {
     println("Failsafe triggered!");
-    exit(cast_unchecked<int32>(code));
+    exit(@cast_unchecked<int32>(code));
 };
 
 pub func:main = int32() {

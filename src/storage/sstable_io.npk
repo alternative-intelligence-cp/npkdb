@@ -243,6 +243,11 @@ pub func:sstable_builder_add = int64(int64:b, string:key, int64:val_ptr, int64:v
         drop(sstable_builder_flush_current_page(b));
         curr_page = npk_mem_read_int64(b, 16i64);
         ins = page_insert(curr_page, rec, rec_sz) ? -1i64;
+        
+        if (ins == -1i64) {
+            drop(npk_core_dalloc(rec));
+            pass(-1i64);
+        }
     }
     
     drop(npk_core_dalloc(rec));

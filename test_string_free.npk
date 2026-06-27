@@ -1,5 +1,5 @@
 pub func:main = int32() {
     string:s = "hello";
-    dalloc(cast_unchecked<int64>(s));
+    dalloc(@cast_unchecked<int64>(s));
     pass(0i32);
 };

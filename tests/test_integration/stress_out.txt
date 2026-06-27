@@ -1,5 +1,3 @@
 ╔══════════════════════════════════════╗
 ║  Integration: Stress Test            ║
 ╚══════════════════════════════════════╝
-Replayed 0 records from WAL.
-  - Writing 5000 records sequentially...

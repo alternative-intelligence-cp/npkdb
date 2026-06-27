@@ -51,7 +51,12 @@ pub func:sstable_write = int64(string:path, int64:mt) {
         int64:vl = sl_node_val_len(node) ? 0i64;
         int64:is_del = sl_node_is_deleted(node) ? 0i64;
         
-        drop(sstable_builder_add(builder, k, vp, vl, is_del));
+        int64:add_res = sstable_builder_add(builder, k, vp, vl, is_del) ? -1i64;
+        if (add_res == -1i64) {
+            drop(sstable_builder_destroy_abort(builder));
+            drop(sys(CLOSE, fd));
+            pass(-1i64);
+        }
         node = sl_next(node) ? 0i64;
     }
     

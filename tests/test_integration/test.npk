@@ -1,0 +1,5 @@
+extern func:npk_mem_write_string = int64(int64:ptr, string:s);
+pub func:foo = int32() {
+    drop(npk_mem_write_string(0i64, "hello"));
+    pass(0i32);
+};

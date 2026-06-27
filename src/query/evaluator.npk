@@ -36,7 +36,12 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
         int64:c_idx = apop();  
         int64:node = apop();  
         stack_size = stack_size - 1i64;  
-          
+
+        if (node == 0i64) {
+            last_result = 0i64;
+            continue;
+        }
+
         int64:op = @cast_unchecked<int64>(npk_mem_read_byte(node, 0i64));  
           
         if (op == @cast_unchecked<int64>(AST_OP_AND)) {  

@@ -2,14 +2,14 @@ import os
 import subprocess
 
 src_dir = '/home/randy/Workspace/REPOS/npkdb/src'
-out_dir = '/home/randy/Workspace/META/NPKDB/audits/a14'
+out_dir = '/home/randy/Workspace/META/NPKDB/audits/a25'
 out_file = os.path.join(out_dir, 'compilation.md')
 
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
 
 with open(out_file, 'w') as out:
-    out.write('# NPKDB Source Compilation (a14)\n\n')
+    out.write('# NPKDB Source Compilation (a25)\n\n')
     
     for root, dirs, files in os.walk(src_dir):
         files.sort()

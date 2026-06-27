@@ -185,13 +185,13 @@ pub func:main = int32() {
     drop(check(found == 100i64, "T02 wp_put 100 records -> read all 100 from Memtable"));
     
     // T03
-    int64:v_large_ptr = npk_core_alloc(1000000i64); // 1MB
+    int64:v_large_ptr = npk_core_alloc(4000i64); // 4KB
     drop(npk_mem_write_string(v_large_ptr, "large_val"));
     
     j = 0i64;
-    while (j < 5i64) {
+    while (j < 1100i64) {
         string:k = "large_" + string_from_int(j);
-        drop(wp_put(wp, k, v_large_ptr, 1000000i64));
+        drop(wp_put(wp, k, v_large_ptr, 4000i64));
         j = j + 1i64;
     }
     

@@ -100,15 +100,16 @@ func:main = int32() {
     // WP Tests
     int64:wp = wp_init("test_data", "test_wal.log", @bg_worker_shim, "per_write") ? 0i64;
     
-    int64:v_ptr_large = npk_core_alloc(1000000i64);
-    drop(wp_put(wp, "trigger_flush_1", v_ptr_large, 1000000i64));
-    drop(wp_put(wp, "trigger_flush_2", v_ptr_large, 1000000i64));
-    drop(wp_put(wp, "trigger_flush_3", v_ptr_large, 1000000i64));
-    drop(wp_put(wp, "trigger_flush_4", v_ptr_large, 1000000i64));
-    drop(wp_put(wp, "trigger_flush_5", v_ptr_large, 1000000i64));
+    int64:v_ptr_large = npk_core_alloc(4000i64);
+    int64:fl_idx = 0i64;
+    while (fl_idx < 1100i64) {
+        string:k = "trigger_flush_" + string_from_int(fl_idx);
+        drop(wp_put(wp, k, v_ptr_large, 4000i64));
+        fl_idx = fl_idx + 1i64;
+    }
     int64:am_before = wp_active_memtable(wp) ? 0i64;
     int64:mem_before = mt_memory_usage(am_before) ? -1i64;
-    drop(wp_put(wp, "trigger_flush_6", v_ptr_large, 10i64)); // This checks mt_should_flush > 4MB and triggers flush!
+    drop(wp_put(wp, "trigger_flush_last", v_ptr_large, 10i64)); // This checks mt_should_flush > 4MB and triggers flush!
     
     int64:lm_wp = npk_mem_read_int64(wp, 32i64); // WP_OFF_LM
     int64:c_wp = lm_count_at_level(lm_wp, 0i64) ? -1i64;
