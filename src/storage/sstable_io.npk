@@ -1,0 +1,356 @@
+// src/storage/sstable_io.npk
+// Unified serialization and IO for SSTables
+
+use "../page/page.npk".*;
+use "../util/constants.npk".*;
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+use "../util/crc32.npk".*;
+use "../util/bloom.npk".*;
+use "../../libn/src/syscall/syscall_numbers.npk".*;
+
+pub fixed int64:SSTABLE_MAGIC = 22033878037372977i64; // 0x4E504B44423031
+
+
+pub fixed int8:RECORD_FLAG_LIVE      = 0i8;
+pub fixed int8:RECORD_FLAG_TOMBSTONE = 1i8;
+
+pub func:sstable_record_size = int64(string:key, int64:val_len, int64:is_tombstone) {
+    int64:key_len = string_length(key);
+    int64:sz = 1i64 + 4i64 + key_len;
+    if (is_tombstone == 0i64) {
+        sz = sz + 4i64 + val_len;
+    } else {
+        sz = sz + 4i64;
+    }
+    pass(sz);
+};
+
+pub func:sstable_serialize_record = int64(string:key, int64:val_ptr, int64:val_len, int64:is_tombstone) {
+    int64:sz = sstable_record_size(key, val_len, is_tombstone) ? 0i64;
+    int64:buf = npk_core_alloc(sz);
+    int64:key_len = string_length(key);
+    
+    if (is_tombstone == 1i64) {
+        drop(npk_mem_write_byte(buf, 0i64, @cast_unchecked<int64>(RECORD_FLAG_TOMBSTONE)));
+    } else {
+        drop(npk_mem_write_byte(buf, 0i64, @cast_unchecked<int64>(RECORD_FLAG_LIVE)));
+    }
+    
+    drop(npk_mem_write_int32(buf, 1i64, @cast_unchecked<int32>(key_len)));
+    int64:__wraw_key = string_to_cstr(key);
+    drop(npk_mem_copy(buf + 5i64, __wraw_key, string_length(key)));    
+    drop(npk_core_dalloc(__wraw_key));
+    int64:v_offset = 5i64 + key_len;
+    
+    if (is_tombstone == 1i64) {
+        drop(npk_mem_write_int32(buf, v_offset, 0i32));
+    } else {
+        drop(npk_mem_write_int32(buf, v_offset, @cast_unchecked<int32>(val_len)));
+        drop(npk_mem_copy(buf + v_offset + 4i64, val_ptr, val_len));
+    }
+    
+    pass(buf);
+};
+
+pub func:sstable_read_record = int64(int64:page_buf, int64:slot_index) {
+    int64:tup_len = slot_get_tuple_length(page_buf, slot_index) ? 0i64;
+    int64:tup_off = slot_get_tuple_offset(page_buf, slot_index) ? 0i64;
+    if (tup_len == 0i64) { pass(0i64); }
+    
+    int64:tup_ptr = npk_mem_offset(page_buf, tup_off);
+    int64:flag = npk_mem_read_byte(tup_ptr, 0i64);
+    int64:key_len = @cast_unchecked<int64>(npk_mem_read_int32(tup_ptr, 1i64));
+    
+    int64:v_off = 5i64 + key_len;
+    
+    int64:rec = npk_core_alloc(40i64);
+    int64:k_ptr = tup_ptr + 5i64;
+    
+    drop(npk_mem_write_int64(rec, 0i64, k_ptr));
+    drop(npk_mem_write_int64(rec, 8i64, key_len));
+    
+    if (flag == @cast_unchecked<int64>(RECORD_FLAG_TOMBSTONE)) {
+        drop(npk_mem_write_int64(rec, 16i64, 0i64));
+        drop(npk_mem_write_int64(rec, 24i64, 0i64));
+        drop(npk_mem_write_int64(rec, 32i64, 1i64));
+    } else {
+        int64:val_len = @cast_unchecked<int64>(npk_mem_read_int32(tup_ptr, v_off));
+        int64:v_ptr = tup_ptr + v_off + 4i64;
+        drop(npk_mem_write_int64(rec, 16i64, v_ptr));
+        drop(npk_mem_write_int64(rec, 24i64, val_len));
+        drop(npk_mem_write_int64(rec, 32i64, 0i64));
+    }
+    
+    pass(rec);
+};
+
+pub func:sstable_flush_page = int64(int64:fd, int64:page_buf) {
+    int64:offset = sys(LSEEK, fd, 0i64, 1i64) ? -1i64;
+    int64:bw = sys(WRITE, fd, page_buf, PAGE_SIZE) ? -1i64;
+    if (bw < PAGE_SIZE) { pass(-1i64); }
+    pass(offset);
+};
+
+pub func:sstable_build_index = int64(int64:k_ptrs, int64:k_lens, int64:offsets, int64:count) {
+    int64:page = page_alloc() ? 0i64;
+    if (page == 0i64) { pass(0i64); }
+    drop(page_init(page, 0i64));
+    
+    int64:i = 0i64;
+    while (i < count) {
+        int64:k_ptr = npk_mem_read_int64(k_ptrs, i * 8i64);
+        int64:k_len = npk_mem_read_int64(k_lens, i * 8i64);
+        int64:block_num = npk_mem_read_int64(offsets, i * 8i64);
+        
+        int64:rec_sz = 4i64 + k_len + 8i64;
+        int64:rec = npk_core_alloc(rec_sz);
+        drop(npk_mem_write_int32(rec, 0i64, @cast_unchecked<int32>(k_len)));
+        if (k_len > 0i64) {
+            drop(npk_mem_copy(rec + 4i64, k_ptr, k_len));
+        }
+        drop(npk_mem_write_int64(rec, 4i64 + k_len, block_num));
+        
+        int64:ins = page_insert(page, rec, rec_sz) ? -1i64;
+        drop(npk_core_dalloc(rec));
+        
+        i = i + 1i64;
+    }
+    pass(page);
+};
+
+// SSTableBuilder encapsulates the complex logic of writing an SSTable.
+// Layout:
+// 0: fd (int64)
+// 8: bloom (int64)
+// 16: curr_page (int64)
+// 24: k_ptrs (int64)
+// 32: k_lens (int64)
+// 40: b_offs (int64)
+// 48: capacity (int64)
+// 56: block_count (int64)
+// 64: total_keys (int64)
+// 72: has_pending (int64)
+// 80: last_key_ptr (int64)
+// 88: last_key_len (int64)
+
+pub func:sstable_builder_create = int64(int64:fd, int64:bloom_capacity) {
+    int64:b = npk_core_alloc(96i64);
+    drop(npk_mem_write_int64(b, 0i64, fd));
+    
+    int64:bloom = bloom_create(bloom_capacity) ? 0i64;
+    drop(npk_mem_write_int64(b, 8i64, bloom));
+    
+    int64:curr_page = page_alloc() ? 0i64;
+    drop(page_init(curr_page, 0i64));
+    drop(npk_mem_write_int64(b, 16i64, curr_page));
+    
+    int64:capacity = 8000i64;
+    drop(npk_mem_write_int64(b, 24i64, npk_core_alloc(capacity * 8i64)));
+    drop(npk_mem_write_int64(b, 32i64, npk_core_alloc(capacity * 8i64)));
+    drop(npk_mem_write_int64(b, 40i64, npk_core_alloc(capacity * 8i64)));
+    drop(npk_mem_write_int64(b, 48i64, capacity));
+    
+    drop(npk_mem_write_int64(b, 56i64, 0i64)); // block_count
+    drop(npk_mem_write_int64(b, 64i64, 0i64)); // total_keys
+    drop(npk_mem_write_int64(b, 72i64, 0i64)); // has_pending
+    drop(npk_mem_write_int64(b, 80i64, 0i64)); // last_key_ptr
+    drop(npk_mem_write_int64(b, 88i64, 0i64)); // last_key_len
+    pass(b);
+};
+
+pub func:sstable_builder_set_last_key = NIL(int64:b, string:key) {
+    int64:old_ptr = npk_mem_read_int64(b, 80i64);
+    if (old_ptr != 0i64) {
+        drop(npk_core_dalloc(old_ptr));
+    }
+    int64:k_len = string_length(key);
+    int64:new_ptr = npk_core_alloc(k_len);
+    int64:__c_key = string_to_cstr(key);
+    drop(npk_mem_copy(new_ptr, __c_key, k_len));
+    drop(npk_core_dalloc(__c_key));
+    
+    drop(npk_mem_write_int64(b, 80i64, new_ptr));
+    drop(npk_mem_write_int64(b, 88i64, k_len));
+    pass(NIL);
+};
+
+pub func:sstable_builder_flush_current_page = int64(int64:b) {
+    int64:fd = npk_mem_read_int64(b, 0i64);
+    int64:curr_page = npk_mem_read_int64(b, 16i64);
+    int64:block_count = npk_mem_read_int64(b, 56i64);
+    int64:capacity = npk_mem_read_int64(b, 48i64);
+    int64:k_ptrs = npk_mem_read_int64(b, 24i64);
+    int64:k_lens = npk_mem_read_int64(b, 32i64);
+    int64:b_offs = npk_mem_read_int64(b, 40i64);
+    
+    if (block_count >= capacity) {
+        int64:new_cap = capacity * 2i64;
+        int64:new_k_ptrs = npk_core_alloc(new_cap * 8i64);
+        int64:new_k_lens = npk_core_alloc(new_cap * 8i64);
+        int64:new_b_offs = npk_core_alloc(new_cap * 8i64);
+        drop(npk_mem_copy(new_k_ptrs, k_ptrs, capacity * 8i64));
+        drop(npk_mem_copy(new_k_lens, k_lens, capacity * 8i64));
+        drop(npk_mem_copy(new_b_offs, b_offs, capacity * 8i64));
+        drop(npk_core_dalloc(k_ptrs));
+        drop(npk_core_dalloc(k_lens));
+        drop(npk_core_dalloc(b_offs));
+        k_ptrs = new_k_ptrs;
+        k_lens = new_k_lens;
+        b_offs = new_b_offs;
+        capacity = new_cap;
+        drop(npk_mem_write_int64(b, 24i64, k_ptrs));
+        drop(npk_mem_write_int64(b, 32i64, k_lens));
+        drop(npk_mem_write_int64(b, 40i64, b_offs));
+        drop(npk_mem_write_int64(b, 48i64, capacity));
+    }
+    
+    int64:offset = sstable_flush_page(fd, curr_page) ? -1i64;
+    
+    int64:last_k_len = npk_mem_read_int64(b, 88i64);
+    int64:last_k_ptr_src = npk_mem_read_int64(b, 80i64);
+    int64:last_k_ptr_dup = 0i64;
+    if (last_k_len > 0i64) {
+        last_k_ptr_dup = npk_core_alloc(last_k_len);
+        drop(npk_mem_copy(last_k_ptr_dup, last_k_ptr_src, last_k_len));
+    }
+    
+    drop(npk_mem_write_int64(k_ptrs, block_count * 8i64, last_k_ptr_dup));
+    drop(npk_mem_write_int64(k_lens, block_count * 8i64, last_k_len));
+    drop(npk_mem_write_int64(b_offs, block_count * 8i64, offset));
+    
+    block_count = block_count + 1i64;
+    drop(npk_mem_write_int64(b, 56i64, block_count));
+    
+    drop(page_free(curr_page));
+    curr_page = page_alloc() ? 0i64;
+    drop(page_init(curr_page, block_count));
+    drop(npk_mem_write_int64(b, 16i64, curr_page));
+    pass(0i64);
+};
+
+pub func:sstable_builder_add = int64(int64:b, string:key, int64:val_ptr, int64:val_len, int64:is_tombstone) {
+    int64:bloom = npk_mem_read_int64(b, 8i64);
+    drop(bloom_add(bloom, key));
+    
+    int64:rec_sz = sstable_record_size(key, val_len, is_tombstone) ? 0i64;
+    int64:rec = sstable_serialize_record(key, val_ptr, val_len, is_tombstone) ? 0i64;
+    
+    int64:curr_page = npk_mem_read_int64(b, 16i64);
+    int64:ins = page_insert(curr_page, rec, rec_sz) ? -1i64;
+    
+    if (ins == -1i64) {
+        drop(sstable_builder_flush_current_page(b));
+        curr_page = npk_mem_read_int64(b, 16i64);
+        ins = page_insert(curr_page, rec, rec_sz) ? -1i64;
+        
+        if (ins == -1i64) {
+            drop(npk_core_dalloc(rec));
+            pass(-1i64);
+        }
+    }
+    
+    drop(npk_core_dalloc(rec));
+    drop(sstable_builder_set_last_key(b, key));
+    drop(npk_mem_write_int64(b, 72i64, 1i64)); // has_pending
+    int64:tk = npk_mem_read_int64(b, 64i64);
+    drop(npk_mem_write_int64(b, 64i64, tk + 1i64));
+    pass(0i64);
+};
+
+pub func:sstable_builder_finish = int64(int64:b) {
+    int64:fd = npk_mem_read_int64(b, 0i64);
+    int64:has_pending = npk_mem_read_int64(b, 72i64);
+    
+    if (has_pending == 1i64) {
+        drop(sstable_builder_flush_current_page(b));
+    }
+    
+    int64:curr_page = npk_mem_read_int64(b, 16i64);
+    drop(page_free(curr_page));
+    
+    int64:bloom = npk_mem_read_int64(b, 8i64);
+    int64:bloom_buf = bloom_serialize(bloom) ? 0i64;
+    int64:bloom_sz = bloom_serialize_size(bloom) ? 0i64;
+    int64:bloom_offset = sys(LSEEK, fd, 0i64, 1i64) ? -1i64;
+    drop(sys(WRITE, fd, bloom_buf, bloom_sz));
+    drop(npk_core_dalloc(bloom_buf));
+    drop(bloom_destroy(bloom));
+    
+    int64:k_ptrs = npk_mem_read_int64(b, 24i64);
+    int64:k_lens = npk_mem_read_int64(b, 32i64);
+    int64:b_offs = npk_mem_read_int64(b, 40i64);
+    int64:block_count = npk_mem_read_int64(b, 56i64);
+    
+    int64:index_page = sstable_build_index(k_ptrs, k_lens, b_offs, block_count) ? 0i64;
+    int64:index_offset = sstable_flush_page(fd, index_page) ? -1i64;
+    drop(page_free(index_page));
+    
+    int64:i = 0i64;
+    while (i < block_count) {
+        int64:kp = npk_mem_read_int64(k_ptrs, i * 8i64);
+        drop(npk_core_dalloc(kp));
+        i = i + 1i64;
+    }
+    drop(npk_core_dalloc(k_ptrs));
+    drop(npk_core_dalloc(k_lens));
+    drop(npk_core_dalloc(b_offs));
+    
+    int64:total_keys = npk_mem_read_int64(b, 64i64);
+    
+    int64:footer = npk_core_alloc(SSTABLE_FOOTER_SIZE);
+    drop(npk_mem_write_int64(footer, 0i64, block_count));
+    drop(npk_mem_write_int64(footer, 8i64, index_offset));
+    drop(npk_mem_write_int64(footer, 16i64, bloom_offset));
+    drop(npk_mem_write_int64(footer, 24i64, bloom_sz));
+    drop(npk_mem_write_int64(footer, 32i64, total_keys));
+    drop(npk_mem_write_int32(footer, 40i64, 1145192497i32));
+    
+    int64:crc_calc = crc32_compute(footer, 44i64) ? 0i64;
+    drop(npk_mem_write_int32(footer, 44i64, @cast_unchecked<int32>(crc_calc)));
+    
+    drop(sys(WRITE, fd, footer, SSTABLE_FOOTER_SIZE));
+    drop(npk_core_dalloc(footer));
+    
+    int64:total_bytes = sys(LSEEK, fd, 0i64, 1i64) ? -1i64;
+    
+    int64:last_key_ptr = npk_mem_read_int64(b, 80i64);
+    if (last_key_ptr != 0i64) {
+        drop(npk_core_dalloc(last_key_ptr));
+    }
+    drop(npk_core_dalloc(b));
+    pass(total_bytes);
+};
+
+pub func:sstable_builder_destroy_abort = NIL(int64:b) {
+    if (b != 0i64) {
+        int64:curr_page = npk_mem_read_int64(b, 16i64);
+        drop(page_free(curr_page));
+        
+        int64:bloom = npk_mem_read_int64(b, 8i64);
+        drop(bloom_destroy(bloom));
+        
+        int64:k_ptrs = npk_mem_read_int64(b, 24i64);
+        int64:k_lens = npk_mem_read_int64(b, 32i64);
+        int64:b_offs = npk_mem_read_int64(b, 40i64);
+        int64:block_count = npk_mem_read_int64(b, 56i64);
+        
+        int64:i = 0i64;
+        while (i < block_count) {
+            int64:kp = npk_mem_read_int64(k_ptrs, i * 8i64);
+            drop(npk_core_dalloc(kp));
+            i = i + 1i64;
+        }
+        drop(npk_core_dalloc(k_ptrs));
+        drop(npk_core_dalloc(k_lens));
+        drop(npk_core_dalloc(b_offs));
+        
+        int64:last_key_ptr = npk_mem_read_int64(b, 80i64);
+        if (last_key_ptr != 0i64) {
+            drop(npk_core_dalloc(last_key_ptr));
+        }
+        drop(npk_core_dalloc(b));
+    }
+    pass(NIL);
+};
+

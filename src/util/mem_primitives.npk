@@ -2,27 +2,27 @@
 // Wraps the C builtins provided by Nitpick runtime
 
 extern "nitpick_libc_mem" {
-    func:npk_mem_read_byte     = int64(int64:ptr, int64:offset);
-    func:npk_mem_write_byte    = int64(int64:ptr, int64:offset, int64:val);
-    func:npk_mem_read_int32    = int32(int64:ptr, int64:offset);
-    func:npk_mem_read_int64    = int64(int64:ptr, int64:offset);
-    func:npk_mem_write_int64   = int64(int64:ptr, int64:offset, int64:val);
-    func:npk_mem_copy          = int64(int64:dst, int64:src, int64:n);
-    func:npk_mem_set           = int64(int64:dst, int64:val, int64:n);
+    pub func:npk_mem_read_byte     = int64(int64:ptr, int64:offset);
+    pub func:npk_mem_write_byte    = int64(int64:ptr, int64:offset, int64:val);
+    pub func:npk_mem_read_int32    = int32(int64:ptr, int64:offset);
+    pub func:npk_mem_read_int64    = int64(int64:ptr, int64:offset);
+    pub func:npk_mem_write_int64   = int64(int64:ptr, int64:offset, int64:val);
+    pub func:npk_mem_copy          = int64(int64:dst, int64:src, int64:n);
+    pub func:npk_mem_set           = int64(int64:dst, int64:val, int64:n);
 }
 
 extern "nitpick_libc_mem" {
-    func:npk_mem_compare       = int64(int64:a, int64:b, int64:n);
-    func:npk_mem_offset        = int64(int64:ptr, int64:offset);
-    func:npk_mem_ptr_size      = int64();
-    func:npk_core_alloc  = int64(int64:size);
-    func:nitpick_libc_mem_calloc  = int64(int64:count, int64:size);
-    func:nitpick_libc_mem_realloc = int64(int64:ptr, int64:size);
-    func:npk_core_dalloc    = void(int64:ptr);
+    pub func:npk_mem_compare       = int64(int64:a, int64:b, int64:n);
+    pub func:npk_mem_offset        = int64(int64:ptr, int64:offset);
+    pub func:npk_mem_ptr_size      = int64();
+    pub func:npk_core_alloc  = int64(int64:size);
+    pub func:nitpick_libc_mem_calloc  = int64(int64:count, int64:size);
+    pub func:nitpick_libc_mem_realloc = int64(int64:ptr, int64:size);
+    pub func:npk_core_dalloc    = void(int64:ptr);
 }
 
 extern "nitpick_libc_mem" {
-    func:npk_mem_write_string = int64(int64:ptr, string:s);
+    pub func:npk_mem_write_string = int64(int64:ptr, string:s);
     func:npk_mem_read_string = string(int64:ptr, int64:max_len);
 }
 pub func:npk_mem_write_int32 = int64(int64:ptr, int64:offset, int32:val) {
@@ -66,3 +66,16 @@ pub func:atomic_load_seqcst = int64(int64:atomic_ptr) {
 
 
 pub func:free = NIL(int64:ptr) { drop(npk_core_dalloc(ptr)); pass(NIL); };
+
+extern "nitpick_libc_thread" {
+    pub func:nitpick_libc_rwlock_create    = int64();
+    pub func:nitpick_libc_rwlock_wrlock    = int32(int64:l);
+    pub func:nitpick_libc_rwlock_rdlock    = int32(int64:l);
+    pub func:nitpick_libc_rwlock_unlock    = int32(int64:l);
+    pub func:nitpick_libc_rwlock_destroy   = int32(int64:l);
+}
+
+extern "nitpick_libc_thread" {
+    pub func:npk_shim_atomic_int64_create  = int64(int64:initial);
+    pub func:npk_shim_atomic_int64_fetch_add = int64(int64:handle, int64:value, int32:order);
+}

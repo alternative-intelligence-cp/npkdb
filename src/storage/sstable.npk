@@ -4,6 +4,7 @@
 use "../page/page.npk".*;
 use "memtable.npk".*;
 use "skiplist.npk".*;
+use "sstable_io.npk".*;
 use "../util/constants.npk".*;
 use "../util/error_codes.npk".*;
 use "../util/crc32.npk".*;
@@ -21,7 +22,7 @@ pub fixed int64:SSTABLE_MAGIC = 22033878037372977i64; // 0x4E504B44423031
 //   Offset 16: total_keys (int64)
 //   Offset 24: magic (int32)
 //   Offset 28: footer_checksum (int32)
-pub fixed int64:SSTABLE_FOOTER_SIZE = 48i64;
+
 
 // Record flags
 pub fixed int8:RECORD_FLAG_LIVE      = 0i8;
@@ -30,78 +31,6 @@ pub fixed int8:RECORD_FLAG_TOMBSTONE = 1i8;
 // -----------------------------------------------------------------------------
 // Record Serialization
 // -----------------------------------------------------------------------------
-
-pub func:sstable_record_size = int64(string:key, int64:val_len, int64:is_tombstone) {
-    int64:key_len = string_length(key);
-    int64:sz = 1i64 + 4i64 + key_len; // flag(1) + key_len(4) + key(N)
-    
-    if (is_tombstone == 0i64) {
-        sz = sz + 4i64 + val_len; // value_len(4) + value(M)
-    } else {
-        sz = sz + 4i64; // value_len(4) = 0
-    }
-    
-    pass(sz);
-};
-
-pub func:sstable_serialize_record = int64(string:key, int64:val_ptr, int64:val_len, int64:is_tombstone) {
-    int64:sz = sstable_record_size(key, val_len, is_tombstone) ? 0i64;
-    int64:buf = npk_core_alloc(sz);
-    int64:key_len = string_length(key);
-    
-    if (is_tombstone == 1i64) {
-        drop(npk_mem_write_byte(buf, 0i64, @cast_unchecked<int64>(RECORD_FLAG_TOMBSTONE)));
-    } else {
-        drop(npk_mem_write_byte(buf, 0i64, @cast_unchecked<int64>(RECORD_FLAG_LIVE)));
-    }
-    
-    drop(npk_mem_write_int32(buf, 1i64, (@cast_unchecked<int32>((key_len)))));
-    npk_mem_write_string(buf + 5i64, key);
-    
-    int64:v_offset = 5i64 + key_len;
-    
-    if (is_tombstone == 1i64) {
-        drop(npk_mem_write_int32(buf, v_offset, 0i32));
-    } else {
-        drop(npk_mem_write_int32(buf, v_offset, (@cast_unchecked<int32>((val_len)))));
-        drop(npk_mem_copy(buf + v_offset + 4i64, val_ptr, val_len));
-    }
-    
-    pass(buf);
-};
-
-pub func:sstable_flush_page = int64(int64:fd, int64:page_buf) {
-    int64:offset = sys(LSEEK, fd, 0i64, 1i64) ? -1i64;
-    int64:bw = sys(WRITE, fd, page_buf, PAGE_SIZE) ? -1i64;
-    if (bw < PAGE_SIZE) { pass(-1i64); }
-    pass(offset);
-};
-
-pub func:sstable_build_index = int64(int64:k_ptrs, int64:k_lens, int64:offsets, int64:count) {
-    int64:page = page_alloc() ? 0i64;
-    if (page == 0i64) { pass(0i64); }
-    drop(page_init(page, 0i64));
-    
-    int64:i = 0i64;
-    while (i < count) {
-        int64:k_ptr = npk_mem_read_int64(k_ptrs, i * 8i64);
-        int64:k_len = npk_mem_read_int64(k_lens, i * 8i64);
-        int64:block_num = npk_mem_read_int64(offsets, i * 8i64); // actually offset
-        
-        // Serialize index record: key_len(4) + last_key(k_len) + block_offset(8)
-        int64:rec_sz = 4i64 + k_len + 8i64;
-        int64:rec = npk_core_alloc(rec_sz);
-        drop(npk_mem_write_int32(rec, 0i64, (@cast_unchecked<int32>((k_len)))));
-        drop(npk_mem_copy(rec + 4i64, k_ptr, k_len));
-        drop(npk_mem_write_int64(rec, 4i64 + k_len, block_num));
-        
-        int64:ins = page_insert(page, rec, rec_sz) ? -1i64;
-        drop(npk_core_dalloc(rec));
-        
-        i = i + 1i64;
-    }
-    pass(page);
-};
 
 pub func:sstable_write = int64(string:path, int64:mt) {
     int64:c_path = string_to_cstr(path);
@@ -113,146 +42,27 @@ pub func:sstable_write = int64(string:path, int64:mt) {
     }
     
     int64:total_keys_init = mt_count(mt) ? 0i64;
-    int64:bloom = bloom_create(total_keys_init) ? 0i64;
-    if (bloom == 0i64) {
-        println("sstable_write: bloom_create failed");
-        pass(-1i64);
-    }
-    
-    int64:curr_page = page_alloc() ? 0i64;
-    if (curr_page == 0i64) {
-        println("sstable_write: page_alloc failed");
-        pass(-1i64);
-    }
-    drop(page_init(curr_page, 0i64));
-    int64:total_bytes = 0i64;
-    
-    int64:capacity = 8000i64;
-    int64:k_ptrs = npk_core_alloc(capacity * 8i64);
-    int64:k_lens = npk_core_alloc(capacity * 8i64);
-    int64:b_offs = npk_core_alloc(capacity * 8i64);
-    int64:block_count = 0i64;
-    int64:total_keys = 0i64;
-    
-    string:last_key = "";
-    int64:has_pending = 0i64;
+    int64:builder = sstable_builder_create(fd, total_keys_init) ? 0i64;
     
     int64:node = mt_first(mt) ? 0i64;
     while (node != 0i64) {
         string:k = sl_node_key(node) ? "";
-        drop(bloom_add(bloom, k));
-        
         int64:vp = sl_node_val_ptr(node) ? 0i64;
         int64:vl = sl_node_val_len(node) ? 0i64;
         int64:is_del = sl_node_is_deleted(node) ? 0i64;
         
-        int64:rec_sz = sstable_record_size(k, vl, is_del) ? 0i64;
-        int64:rec = sstable_serialize_record(k, vp, vl, is_del) ? 0i64;
-        
-        int64:ins = page_insert(curr_page, rec, rec_sz) ? -1i64;
-        if (ins == -1i64) {
-            if (block_count >= capacity) {
-                int64:new_cap = capacity * 2i64;
-                int64:new_k_ptrs = npk_core_alloc(new_cap * 8i64);
-                int64:new_k_lens = npk_core_alloc(new_cap * 8i64);
-                int64:new_b_offs = npk_core_alloc(new_cap * 8i64);
-                drop(npk_mem_copy(new_k_ptrs, k_ptrs, capacity * 8i64));
-                drop(npk_mem_copy(new_k_lens, k_lens, capacity * 8i64));
-                drop(npk_mem_copy(new_b_offs, b_offs, capacity * 8i64));
-                drop(npk_core_dalloc(k_ptrs));
-                drop(npk_core_dalloc(k_lens));
-                drop(npk_core_dalloc(b_offs));
-                k_ptrs = new_k_ptrs;
-                k_lens = new_k_lens;
-                b_offs = new_b_offs;
-                capacity = new_cap;
-            }
-            // Page full, flush it
-            int64:offset = sstable_flush_page(fd, curr_page) ? -1i64;
-            
-            int64:last_k_len = string_length(last_key);
-            int64:last_k_ptr = npk_core_alloc(last_k_len);
-            npk_mem_write_string(last_k_ptr, last_key);
-            
-            drop(npk_mem_write_int64(k_ptrs, block_count * 8i64, last_k_ptr));
-            drop(npk_mem_write_int64(k_lens, block_count * 8i64, last_k_len));
-            drop(npk_mem_write_int64(b_offs, block_count * 8i64, offset));
-            block_count = block_count + 1i64;
-            
-            // Reset page and retry
-            drop(page_free(curr_page));
-            curr_page = page_alloc() ? 0i64;
-            drop(page_init(curr_page, block_count));
-            ins = page_insert(curr_page, rec, rec_sz) ? -1i64;
+        int64:add_res = sstable_builder_add(builder, k, vp, vl, is_del) ? -1i64;
+        if (add_res == -1i64) {
+            drop(sstable_builder_destroy_abort(builder));
+            drop(sys(CLOSE, fd));
+            pass(-1i64);
         }
-        
-        drop(npk_core_dalloc(rec));
-        last_key = k;
-        has_pending = 1i64;
-        total_keys = total_keys + 1i64;
-        
         node = sl_next(node) ? 0i64;
     }
     
-    // Flush last page if any keys
-    if (has_pending == 1i64) {
-        int64:offset = sstable_flush_page(fd, curr_page) ? -1i64;
-        
-        int64:last_k_len = string_length(last_key);
-        int64:last_k_ptr = npk_core_alloc(last_k_len);
-        npk_mem_write_string(last_k_ptr, last_key);
-        
-        drop(npk_mem_write_int64(k_ptrs, block_count * 8i64, last_k_ptr));
-        drop(npk_mem_write_int64(k_lens, block_count * 8i64, last_k_len));
-        drop(npk_mem_write_int64(b_offs, block_count * 8i64, offset));
-        block_count = block_count + 1i64;
-    }
-    
-    drop(page_free(curr_page));
-    
-    // Serialize and flush Bloom Filter
-    int64:bloom_buf = bloom_serialize(bloom) ? 0i64;
-    int64:bloom_sz = bloom_serialize_size(bloom) ? 0i64;
-    int64:bloom_offset = sys(LSEEK, fd, 0i64, 1i64) ? -1i64; // SEEK_CUR
-    drop(sys(WRITE, fd, bloom_buf, bloom_sz));
-    drop(npk_core_dalloc(bloom_buf));
-    drop(bloom_destroy(bloom));
-    
-    // Build and flush index block
-    int64:index_page = sstable_build_index(k_ptrs, k_lens, b_offs, block_count) ? 0i64;
-    int64:index_offset = sstable_flush_page(fd, index_page) ? -1i64;
-    drop(page_free(index_page));
-    
-    // Clean up key pointers
-    int64:i = 0i64;
-    while (i < block_count) {
-        int64:kp = npk_mem_read_int64(k_ptrs, i * 8i64);
-        drop(npk_core_dalloc(kp));
-        i = i + 1i64;
-    }
-    drop(npk_core_dalloc(k_ptrs));
-    drop(npk_core_dalloc(k_lens));
-    drop(npk_core_dalloc(b_offs));
-    
-    // Write Footer (48 bytes)
-    int64:footer = npk_core_alloc(SSTABLE_FOOTER_SIZE);
-    drop(npk_mem_write_int64(footer, 0i64, block_count));
-    drop(npk_mem_write_int64(footer, 8i64, index_offset));
-    drop(npk_mem_write_int64(footer, 16i64, bloom_offset));
-    drop(npk_mem_write_int64(footer, 24i64, bloom_sz));
-    drop(npk_mem_write_int64(footer, 32i64, total_keys));
-    drop(npk_mem_write_int32(footer, 40i64, 1145192497i32)); // "DB01" -> 0x44423031
-    
-    int64:crc_calc = crc32_compute(footer, 44i64) ? 0i64;
-    drop(npk_mem_write_int32(footer, 44i64, (@cast_unchecked<int32>((crc_calc)))));
-    
-    int64:fw = sys(WRITE, fd, footer, SSTABLE_FOOTER_SIZE) ? -1i64;
-    drop(npk_core_dalloc(footer));
-    
-    total_bytes = sys(LSEEK, fd, 0i64, 1i64) ? -1i64;
+    int64:total_bytes = sstable_builder_finish(builder) ? -1i64;
     drop(sys(FSYNC, fd));
     drop(sys(CLOSE, fd));
-    
     pass(total_bytes);
 };
 
@@ -401,45 +211,6 @@ pub func:sstable_load_block = int64(int64:reader, int64:block_num) {
     pass(base_ptr + blk_off);
 };
 
-// Record struct (40 bytes):
-// 0: key_ptr (int64) - dynamically allocated string copy!
-// 8: key_len (int64)
-// 16: val_ptr (int64) - within page buffer, do not npk_core_dalloc!
-// 24: val_len (int64)
-// 32: is_tombstone (int64)
-pub func:sstable_read_record = int64(int64:page_buf, int64:slot_index) {
-    int64:tup_len = slot_get_tuple_length(page_buf, slot_index) ? 0i64;
-    int64:tup_off = slot_get_tuple_offset(page_buf, slot_index) ? 0i64;
-    if (tup_len == 0i64) { pass(0i64); }
-    
-    int64:tup_ptr = npk_mem_offset(page_buf, tup_off);
-    int64:flag = npk_mem_read_byte(tup_ptr, 0i64);
-    int64:key_len = @cast_unchecked<int64>(npk_mem_read_int32(tup_ptr, 1i64));
-    
-    int64:v_off = 5i64 + key_len;
-    
-    int64:rec = npk_core_alloc(40i64);
-    int64:k_ptr = npk_core_alloc(key_len);
-    drop(npk_mem_copy(k_ptr, tup_ptr + 5i64, key_len));
-    
-    drop(npk_mem_write_int64(rec, 0i64, k_ptr));
-    drop(npk_mem_write_int64(rec, 8i64, key_len));
-    
-    if (flag == @cast_unchecked<int64>(RECORD_FLAG_TOMBSTONE)) {
-        drop(npk_mem_write_int64(rec, 16i64, 0i64));
-        drop(npk_mem_write_int64(rec, 24i64, 0i64));
-        drop(npk_mem_write_int64(rec, 32i64, 1i64));
-    } else {
-        int64:val_len = @cast_unchecked<int64>(npk_mem_read_int32(tup_ptr, v_off));
-        int64:v_ptr = npk_core_alloc(val_len);
-        drop(npk_mem_copy(v_ptr, tup_ptr + v_off + 4i64, val_len));
-        drop(npk_mem_write_int64(rec, 16i64, v_ptr));
-        drop(npk_mem_write_int64(rec, 24i64, val_len));
-        drop(npk_mem_write_int64(rec, 32i64, 0i64));
-    }
-    
-    pass(rec);
-};
 
 pub func:sst_rec_key = string(int64:rec) {
     int64:k_ptr = npk_mem_read_int64(rec, 0i64);
@@ -452,15 +223,6 @@ pub func:sst_rec_is_tombstone = int64(int64:rec) { pass(npk_mem_read_int64(rec, 
 
 pub func:sst_rec_free = NIL(int64:rec) {
     if (rec != 0i64) {
-        int64:k_ptr = npk_mem_read_int64(rec, 0i64);
-        drop(npk_core_dalloc(k_ptr));
-        int64:is_ts = npk_mem_read_int64(rec, 32i64);
-        if (is_ts == 0i64) {
-            int64:v_ptr = npk_mem_read_int64(rec, 16i64);
-            if (v_ptr != 0i64) {
-                drop(npk_core_dalloc(v_ptr));
-            }
-        }
         drop(npk_core_dalloc(rec));
     }
     pass(NIL);

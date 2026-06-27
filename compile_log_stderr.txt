@@ -2171,23 +2171,23 @@
 [DEBUG CODEGEN CALL] Generating call to: exit
 [DEBUG CODEGEN CALL] Generating call to: exit
 [DEBUG CODEGEN CALL] Generating call to: exit
-[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 217, Column 54: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 217, Column 54: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use cast_unchecked<tbb8>(expr) to silence after auditing.[0m
 
-[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 218, Column 54: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 218, Column 54: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use cast_unchecked<tbb8>(expr) to silence after auditing.[0m
 
-[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 37, Column 18: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int64' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 37, Column 18: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int64' to 'tbb8' narrows the integer bit width and may truncate. Use cast_unchecked<tbb8>(expr) to silence after auditing.[0m
 
-[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 101, Column 58: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 101, Column 58: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use cast_unchecked<tbb8>(expr) to silence after auditing.[0m
 
-[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 102, Column 58: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 102, Column 58: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use cast_unchecked<tbb8>(expr) to silence after auditing.[0m
 
-[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 184, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 184, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use cast_unchecked<tbb8>(expr) to silence after auditing.[0m
 
-[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 233, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 233, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use cast_unchecked<tbb8>(expr) to silence after auditing.[0m
 
-[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 282, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 282, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use cast_unchecked<tbb8>(expr) to silence after auditing.[0m
 
-[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 21, Column 21: warning: [NITPICK-063] NITPICK-CAST-LOSSY — explicit cast from 'int64' to 'tfp64' is a lossy conversion through double intermediary. Use @cast_unchecked<tfp64>(expr) to silence after auditing.[0m
+[1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 21, Column 21: warning: [NITPICK-063] NITPICK-CAST-LOSSY — explicit cast from 'int64' to 'tfp64' is a lossy conversion through double intermediary. Use cast_unchecked<tfp64>(expr) to silence after auditing.[0m
 
 [1mtests/test_distance_props/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_read_tfp64' shadows outer declaration (original at line 0, column 0)[0m
 

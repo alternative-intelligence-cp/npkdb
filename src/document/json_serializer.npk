@@ -101,8 +101,8 @@ pub func:serialize_value = NIL(int64:buf, NpkJsonVal:val) {
                                 while (i < count) {
                                     int64:key_ptr = npk_mem_read_int64(keys_ptr, i * 8i64);
                                     NpkJsonVal:k_elem = NpkJsonVal {
-                                        type: @cast_unchecked<int8>(npk_mem_read_byte(key_ptr, 0i64)),
-                                        payload: npk_mem_read_int64(key_ptr, 8i64)
+                                        type: JSON_STR,
+                                        payload: key_ptr
                                     };
                                     drop(serialize_value(buf, k_elem));
                                     

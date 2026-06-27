@@ -170,10 +170,14 @@ pub func:page_used_bytes = int64(int64:buf) {
 
 // Insert a variable-length record into the page.
 pub func:page_insert = int64(int64:buf, int64:data_ptr, int64:data_len)
-    requires buf != 0i64, data_ptr != 0i64, data_len > 0i64, data_len < PAGE_SIZE
+    requires buf != 0i64, data_ptr != 0i64, data_len > 0i64
     ensures (result >= 0i64 || result == ERR_PAGE_FULL) {
     if (data_len <= 0i64) {
         fail(@cast_unchecked<tbb8>(ERR_PAGE_CORRUPT));
+    }
+    // Records larger than a page can never fit — treat as page full
+    if (data_len >= PAGE_SIZE) {
+        fail(@cast_unchecked<tbb8>(ERR_PAGE_FULL));
     }
     int64:is_full = page_is_full(buf, data_len) ? 1i64;
     if (is_full == 1i64) {
@@ -203,6 +207,11 @@ pub func:page_insert = int64(int64:buf, int64:data_ptr, int64:data_len)
 pub func:page_delete = NIL(int64:buf, int64:slot_index) {
     int64:count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
     if (slot_index >= 0i64 && slot_index < count) {
+        int64:offset = slot_get_tuple_offset(buf, slot_index) ? 0i64;
+        int64:len = slot_get_tuple_length(buf, slot_index) ? 0i64;
+        if (offset > 0i64 && len > 0i64) {
+            drop(npk_mem_set(buf + offset, 0i64, len));
+        }
         drop(slot_write(buf, slot_index, 0i64, 0i64));
     }
     pass(NIL);

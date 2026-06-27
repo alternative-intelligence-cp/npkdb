@@ -30,31 +30,31 @@ pub func:main = int32() {
     
     // T01: Enable group commit, append 1 record, batch_should_flush = 0
     drop(sys(UNLINK, wal_path));
-    int64:wal_fd = wal_open(wal_path) ?! -1i64;
-    drop(wal_enable_group_commit(wal_fd));
+    int64:wal_fd = wal_open(wal_path) ? -1i64;
+    int64:wal_state = wal_enable_group_commit(wal_fd) ? 0i64;
     
     int64:v1_ptr = npk_core_alloc(10i64);
     drop(npk_mem_write_string(v1_ptr, "v1"));
     
-    int64:seq = wal_next_seq() ?! 0i64;
-    drop(wal_batch_append_put(wal_fd, "k1", v1_ptr, 2i64, seq) ?! -1i64);
+    int64:seq = wal_next_seq() ? 0i64;
+    drop(wal_batch_append_put(wal_state, wal_fd, "k1", v1_ptr, 2i64, seq) ? -1i64);
     
-    int64:should1 = wal_batch_should_flush(wal_fd) ?! 0i64;
+    int64:should1 = wal_batch_should_flush(wal_fd, wal_state) ? 0i64;
     drop(check(should1 == 0i64, "T01 Enable group commit, append 1 record, batch_should_flush = 0"));
     
-    // T02: Append 32 records, batch_should_flush = 1
+    // T02: Append 999 records, batch_should_flush = 1
     int64:i = 0i64;
-    while (i < 31i64) {
-        seq = wal_next_seq() ?! 0i64;
-        drop(wal_batch_append_put(wal_fd, "kx", v1_ptr, 2i64, seq) ?! -1i64);
+    while (i < 999i64) {
+        seq = wal_next_seq() ? 0i64;
+        drop(wal_batch_append_put(wal_state, wal_fd, "kx", v1_ptr, 2i64, seq) ? -1i64);
         i = i + 1i64;
     }
-    int64:should2 = wal_batch_should_flush(wal_fd) ?! 0i64;
-    drop(check(should2 == 1i64, "T02 Append 32 records, batch_should_flush = 1"));
+    int64:should2 = wal_batch_should_flush(wal_fd, wal_state) ? 0i64;
+    drop(check(should2 == 1i64, "T02 Append 999 records, batch_should_flush = 1"));
     
-    // T03: batch_flush writes all 32 records to disk
-    int64:flush_res = wal_batch_flush(wal_fd) ?! -1i64;
-    drop(wal_close(wal_fd));
+    // T03: batch_flush writes all 1000 records to disk
+    int64:flush_res = wal_batch_flush(wal_fd, wal_state) ? -1i64;
+    drop(wal_close(wal_fd, wal_state));
     
     Result<int64>:check_fd_res = sys(OPEN, wal_path, 0i64, 0i64);
     int64:check_fd = 0i64;
@@ -65,76 +65,76 @@ pub func:main = int32() {
     if (!fsize_res.is_error) { fsize = fsize_res.value; }
     
     drop(sys(CLOSE, check_fd));
-    drop(check(fsize > 0i64, "T03 batch_flush writes all 32 records to disk"));
+    drop(check(fsize > 0i64, "T03 batch_flush writes all 1000 records to disk"));
     
-    // T04: Replay WAL after group commit: all 32 records recovered
-    int64:rep1 = wal_replay(wal_path, 0i64) ?! -1i64;
-    drop(check(rep1 == 32i64, "T04 Replay WAL after group commit: all 32 records recovered"));
+    // T04: Replay WAL after group commit: all 1000 records recovered
+    int64:rep1 = wal_replay(wal_path, 0i64) ? -1i64;
+    drop(check(rep1 == 1000i64, "T04 Replay WAL after group commit: all 1000 records recovered"));
     
     // T05: Append 10 records, force flush, all 10 recovered
     drop(sys(UNLINK, wal_path));
-    int64:wal_fd2 = wal_open(wal_path) ?! -1i64;
-    drop(wal_enable_group_commit(wal_fd2));
+    int64:wal_fd2 = wal_open(wal_path) ? -1i64;
+    int64:wal_state2 = wal_enable_group_commit(wal_fd2) ? 0i64;
     
     i = 0i64;
     while (i < 10i64) {
-        seq = wal_next_seq() ?! 0i64;
-        drop(wal_batch_append_put(wal_fd2, "ky", v1_ptr, 2i64, seq) ?! -1i64);
+        seq = wal_next_seq() ? 0i64;
+        drop(wal_batch_append_put(wal_state2, wal_fd2, "ky", v1_ptr, 2i64, seq) ? -1i64);
         i = i + 1i64;
     }
-    drop(wal_batch_flush(wal_fd2) ?! -1i64);
-    drop(wal_close(wal_fd2));
+    drop(wal_batch_flush(wal_fd2, wal_state2) ? -1i64);
+    drop(wal_close(wal_fd2, wal_state2));
     
-    int64:rep2 = wal_replay(wal_path, 0i64) ?! -1i64;
+    int64:rep2 = wal_replay(wal_path, 0i64) ? -1i64;
     drop(check(rep2 == 10i64, "T05 Append 10 records, force flush, all 10 recovered"));
     
     // T06: Group commit: wal_close flushes pending batch automatically
     drop(sys(UNLINK, wal_path));
-    int64:wal_fd3 = wal_open(wal_path) ?! -1i64;
-    drop(wal_enable_group_commit(wal_fd3));
+    int64:wal_fd3 = wal_open(wal_path) ? -1i64;
+    int64:wal_state3 = wal_enable_group_commit(wal_fd3) ? 0i64;
     
-    seq = wal_next_seq() ?! 0i64;
-    drop(wal_batch_append_put(wal_fd3, "kz1", v1_ptr, 2i64, seq) ?! -1i64);
-    drop(wal_batch_flush(wal_fd3) ?! -1i64);
+    seq = wal_next_seq() ? 0i64;
+    drop(wal_batch_append_put(wal_state3, wal_fd3, "kz1", v1_ptr, 2i64, seq) ? -1i64);
+    drop(wal_batch_flush(wal_fd3, wal_state3) ? -1i64);
     
-    seq = wal_next_seq() ?! 0i64;
-    drop(wal_batch_append_put(wal_fd3, "kz2", v1_ptr, 2i64, seq) ?! -1i64);
+    seq = wal_next_seq() ? 0i64;
+    drop(wal_batch_append_put(wal_state3, wal_fd3, "kz2", v1_ptr, 2i64, seq) ? -1i64);
     
     // wal_close should automatically flush "kz2"
-    drop(wal_close(wal_fd3));
+    drop(wal_close(wal_fd3, wal_state3));
     
-    int64:rep3 = wal_replay(wal_path, 0i64) ?! -1i64;
+    int64:rep3 = wal_replay(wal_path, 0i64) ? -1i64;
     drop(check(rep3 == 2i64, "T06 Group commit: wal_close flushes pending batch automatically"));
     
     // T07: Group commit disabled (per_write mode): each write fsynced
     drop(sys(UNLINK, wal_path));
-    int64:wal_fd4 = wal_open(wal_path) ?! -1i64;
+    int64:wal_fd4 = wal_open(wal_path) ? -1i64;
     
-    seq = wal_next_seq() ?! 0i64;
-    drop(wal_append_put(wal_fd4, "kp1", v1_ptr, 2i64, seq) ?! -1i64);
-    seq = wal_next_seq() ?! 0i64;
-    drop(wal_append_put(wal_fd4, "kp2", v1_ptr, 2i64, seq) ?! -1i64);
+    seq = wal_next_seq() ? 0i64;
+    drop(wal_append_put(wal_fd4, "kp1", v1_ptr, 2i64, seq) ? -1i64);
+    seq = wal_next_seq() ? 0i64;
+    drop(wal_append_put(wal_fd4, "kp2", v1_ptr, 2i64, seq) ? -1i64);
     
-    drop(wal_close(wal_fd4));
+    drop(wal_close(wal_fd4, 0i64));
     
-    int64:rep4 = wal_replay(wal_path, 0i64) ?! -1i64;
+    int64:rep4 = wal_replay(wal_path, 0i64) ? -1i64;
     drop(check(rep4 == 2i64, "T07 Group commit disabled (per_write mode): each write fsynced"));
     
     // T08: Mixed puts and deletes in a batch
     string:wal_path8 = "test_wal_group8.wal";
     drop(sys(UNLINK, wal_path8));
-    int64:wal_fd5 = wal_open(wal_path8) ?! -1i64;
-    drop(wal_enable_group_commit(wal_fd5));
+    int64:wal_fd5 = wal_open(wal_path8) ? -1i64;
+    int64:wal_state5 = wal_enable_group_commit(wal_fd5) ? 0i64;
     
-    seq = wal_next_seq() ?! 0i64;
-    drop(wal_batch_append_put(wal_fd5, "km1", v1_ptr, 2i64, seq) ?! -1i64);
-    seq = wal_next_seq() ?! 0i64;
-    drop(wal_batch_append_delete(wal_fd5, "km1", seq) ?! -1i64);
+    seq = wal_next_seq() ? 0i64;
+    drop(wal_batch_append_put(wal_state5, wal_fd5, "km1", v1_ptr, 2i64, seq) ? -1i64);
+    seq = wal_next_seq() ? 0i64;
+    drop(wal_batch_append_delete(wal_state5, wal_fd5, "km1", seq) ? -1i64);
     
-    drop(wal_batch_flush(wal_fd5) ?! -1i64);
-    drop(wal_close(wal_fd5));
+    drop(wal_batch_flush(wal_fd5, wal_state5) ? -1i64);
+    drop(wal_close(wal_fd5, wal_state5));
     
-    int64:rep5 = wal_replay(wal_path8, 0i64) ?! -1i64;
+    int64:rep5 = wal_replay(wal_path8, 0i64) ? -1i64;
     println("DEBUG: rep5 = " + string_from_int(rep5));
     drop(check(rep5 == 2i64, "T08 Mixed puts and deletes in a batch"));
     

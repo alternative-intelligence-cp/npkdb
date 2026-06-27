@@ -1,0 +1,13 @@
+func:foo = int32() {
+    fail(@cast_unchecked<tbb32>(101i32));
+};
+
+pub func:failsafe = int32(tbb32:code) {
+    println("Failsafe triggered!");
+    exit(@cast_unchecked<int32>(code));
+};
+
+pub func:main = int32() {
+    int32:x = raw foo();
+    exit 0i32;
+};

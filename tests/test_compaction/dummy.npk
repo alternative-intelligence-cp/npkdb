@@ -1,0 +1,17 @@
+use "../../src/util/mem_primitives.npk".*;
+
+pub func:sst_rec_key = string(int64:rec) {
+    int64:k_ptr = npk_mem_read_int64(rec, 0i64);
+    int64:k_len = npk_mem_read_int64(rec, 8i64);
+    pass(npk_mem_read_string(k_ptr, k_len));
+};
+
+func:failsafe = int32(tbb32:err) { exit(1); };
+
+pub func:main = int32() {
+    int64:rec = 0i64;
+    int64:ptr = raw npk_core_alloc(100i64);
+    drop(npk_mem_write_string(ptr, "hello_world"));
+    string:out = npk_mem_read_string(ptr, 11i64);
+    println("Test string write: " + out);
+};

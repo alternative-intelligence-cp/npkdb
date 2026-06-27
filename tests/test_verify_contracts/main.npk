@@ -1,12 +1,12 @@
-import core.memory;
-import src.vector.module main
-
-include "../../src/vector/hnsw_arena.npk"
-
-endpoint main {
-    exit 0
+extern "C" {
+    func:_exit = void(int32:code);
 }
+use "../../src/vector/hnsw_arena.npk".*;
 
-endpoint failsafe() {
-    exit;
-}
+func:main = int32(int32:argc, wild any->:argv) {
+    exit(0i32);
+};
+
+func:failsafe = int32(tbb32:err) {
+    exit(1i32);
+};

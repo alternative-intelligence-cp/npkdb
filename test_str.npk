@@ -1,0 +1,13 @@
+use "src/util/mem_primitives.npk".*;
+
+extern "C" {
+    func:println = void(string:s);
+    func:_exit = void(int32:code);
+}
+
+func:main = int32(int32:argc, wild any->:argv) {
+    println("Test starting");
+    int64:ptr = string_to_cstr("hello");
+    println("Allocated");
+    exit(0i32);
+};

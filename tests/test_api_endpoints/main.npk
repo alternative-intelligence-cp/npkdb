@@ -1,4 +1,4 @@
-use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
+use "../../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
 use "controllers_mock.npk".*;
 use "router_mock.npk".*;
 
@@ -6,91 +6,111 @@ extern "C" {
     func:_exit = void(int32:code);
 }
 
-pub func:mock_proc_exit = NIL(int32:code) {
+pub func:mock_proc_exit = int32(int32:code) {
     _exit(code);
-    pass(NIL);
+    pass(0i32);
 };
 
-// Simple mock for Server.send_typed since it's a member method that router calls
-pub func:send_typed = int64(int64:fd, int64:code, string:ct, string:body) {
-    println("Mock Send - FD: " + string_from_int(fd) + " Code: " + string_from_int(code) + " Body: " + body);
-    if (fd == 1i64) {
-        if (code != 200i64) { fail(11i32); }
-    } else if (fd == 2i64) {
-        if (code != 200i64) { fail(21i32); }
-    } else if (fd == 3i64) {
-        if (code != 200i64) { fail(31i32); }
-    } else if (fd == 4i64) {
-        if (code != 404i64) { fail(41i32); }
-    }
-    pass(1i64);
-};
+extern "C" {
+    func:npk_mem_write_int64 = int32(int64:addr, int64:offset, int64:val);
+    func:npk_gc_init = int32(int64:nursery_size, int64:heap_size);
+}
+use "mock_server.npk";
+use "catalog_mock.npk".*;
+use "../../src/vector/hnsw_arena.npk".*;
+use "../../src/vector/hnsw_graph.npk".*;
+use "../../src/storage/write_path.npk".*;
+use "../../src/concurrency/ebr.npk".*;
+use "../../src/index/art.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+pub int64:global_arena = 0i64;
+pub int64:global_vec_buf = 0i64;
+pub int64:global_doc_store = 0i64;
+pub int64:global_graph = 0i64;
+pub int64:global_wp = 0i64;
+
+func:mock_worker_shim = int32(int64:arg) { pass(0i32); };
 
 func:main = int32(int32:argc, wild any->:argv) {
+    global_catalog_lock = nitpick_libc_rwlock_create();
+    global_graph_lock = nitpick_libc_rwlock_create();
+    global_insert_counter = npk_shim_atomic_int64_create(0i64);
+    global_arena = raw hnsw_arena_create(10000i64, 1i16);
+    global_vec_buf = npk_core_alloc(10000i64 * 128i64 * 8i64);
+    global_doc_store = npk_core_alloc(10000i64 * 8i64);
+    global_graph = raw hnsw_graph_create(global_arena, global_vec_buf, 128i64, 16i32, 32i32, 100i32, 0.5f64);
+    global_wp = raw wp_init("data/", "test_wal.log", @mock_worker_shim, "group_commit");
+    mock_collection_vector_index = global_graph;
+    drop(npk_gc_init(10485760i64, 104857600i64));
+    drop(ebr_init());
+    drop(art_init());
+    
     // 1. Test POST /collections
-    Request:r1 = Request{
+    ServerRequest:r1 = ServerRequest{
         method: "POST",
         path: "/collections",
         query: "",
         version: "HTTP/1.1",
-        body: "{}",
+        body: "{\"name\":\"test_col\"}",
         raw_req: "",
         headers_raw: "",
-        headers: 0i64,
-        query_params: 0i64,
-        fd: 1i64
+        body_ptr: string_to_cstr("{\"name\":\"test_col\"}"),
+        body_len: 19i64,
+        buf_addr: 0i64
     };
-    drop(route_request(1i64, r1));
-    
-    // 2. Test PUT /collections/my_docs/docs
-    Request:r2 = Request{
-        method: "PUT",
-        path: "/collections/my_docs/docs",
-        query: "",
-        version: "HTTP/1.1",
-        body: "{\"field\": \"value\"}",
-        raw_req: "",
-        headers_raw: "",
-        headers: 0i64,
-        query_params: 0i64,
-        fd: 1i64
-    };
-    drop(route_request(2i64, r2));
-    
-    // 3. Test POST /search
-    Request:r3 = Request{
+    println("DEBUG: Executing r1");
+    println("DEBUG: Executing r2");
+    drop(route_request(1i64, r1, 0i64));
+
+    // 2. Test GET /collections/foo/search
+    ServerRequest:r2 = ServerRequest{
         method: "POST",
-        path: "/search",
-        query: "",
+        path: "/collections/foo/search",
+        query: "limit=10",
         version: "HTTP/1.1",
-        body: "{\"vector\": [0.1, 0.2], \"filter\": {}}",
+        body: "{\"query_vector\":[0.1,0.2]}",
         raw_req: "",
         headers_raw: "",
-        headers: 0i64,
-        query_params: 0i64,
-        fd: 1i64
+        body_ptr: string_to_cstr("{\"query_vector\":[0.1,0.2]}"),
+        body_len: 26i64,
+        buf_addr: 0i64
     };
-    drop(route_request(3i64, r3));
-    
-    // 4. Test Not Found
-    Request:r4 = Request{
+    drop(route_request(2i64, r2, 0i64));
+
+    // 3. Test DELETE /collections/foo
+    ServerRequest:r3 = ServerRequest{
+        method: "PUT",
+        path: "/collections/foo/docs",
+        query: "",
+        version: "HTTP/1.1",
+        body: "{\"docs\":[{\"id\":1}]}",
+        raw_req: "",
+        headers_raw: "",
+        body_ptr: string_to_cstr("{\"docs\":[{\"id\":1}]}"),
+        body_len: 19i64,
+        buf_addr: 0i64
+    };
+    drop(route_request(3i64, r3, 0i64));
+
+    // 4. Test 404 Route
+    ServerRequest:r4 = ServerRequest{
         method: "GET",
-        path: "/unknown",
+        path: "/does/not/exist",
         query: "",
         version: "HTTP/1.1",
         body: "",
         raw_req: "",
         headers_raw: "",
-        headers: 0i64,
-        query_params: 0i64,
-        fd: 1i64
+        body_ptr: 0i64,
+        body_len: 0i64,
+        buf_addr: 0i64
     };
-    drop(route_request(4i64, r4));
+    drop(route_request(4i64, r4, 0i64));
     
     println("API Endpoints test passed!");
-    exit(0i32);
+    exit(0);
 };
 
 func:failsafe = int32(tbb32:err) {
-    exit(1i32);
+    exit(1);
 };

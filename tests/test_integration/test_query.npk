@@ -1,0 +1,35 @@
+use "../../src/util/mem_primitives.npk".*;
+use "../../src/storage/wal.npk".*;
+use "../../src/storage/memtable.npk".*;
+use "../../src/storage/skiplist.npk".*;
+use "../../src/storage/sstable.npk".*;
+use "../../src/storage/level_manager.npk".*;
+use "../../src/storage/compaction_worker.npk".*;
+use "../../src/storage/flush.npk".*;
+use "../../src/storage/write_path.npk".*;
+
+pub func:failsafe = int32(tbb32:err) { exit(1); };
+
+pub func:main = int32() {
+    string:spath = "test_stress/L0/sst_000002.npkdb";
+    int64:reader = sstable_open_read(spath) ? 0i64;
+    if (reader == 0i64) {
+        println("Could not open " + spath);
+        exit(1);
+    }
+    
+    int64:rec = sstable_get(reader, "stress_key_000501") ? 0i64;
+    if (rec != 0i64) {
+        int64:is_ts = sst_rec_is_tombstone(rec) ? 0i64;
+        println("is tombstone: " + string_from_int(is_ts));
+        int64:vlen = sst_rec_val_len(rec) ? 0i64;
+        int64:vptr = sst_rec_val_ptr(rec) ? 0i64;
+        println("FOUND len: " + string_from_int(vlen));
+        string:s = npk_mem_read_string(vptr, vlen);
+        println("FOUND: [" + s + "]");
+    } else {
+        println("NOT FOUND!");
+    }
+    drop(sstable_close_read(reader));
+    exit(0);
+};

@@ -25,47 +25,47 @@ func:main = int32() {
     println("╚══════════════════════════════════════╝");
 
     // T01: Allocate and initialize a page
-    int64:pg = page_alloc() ?! 0i64;
+    int64:pg = page_alloc() ? 0i64;
     drop(check(pg != 0i64, "T01 page_alloc returns non-zero"));
 
-    int64:pg2 = page_init(pg, 42i64) ?! 0i64;
+    int64:pg2 = page_init(pg, 42i64) ? 0i64;
     drop(check(pg2 == pg, "T02 page_init returns same buffer"));
 
     // T03-T06: Verify header fields
-    int64:pid = page_get_id(pg) ?! 0i64;
+    int64:pid = page_get_id(pg) ? 0i64;
     drop(check(pid == 42i64, "T03 page_id = 42"));
 
-    int32:foff = page_get_free_offset(pg) ?! 0i32;
+    int32:foff = page_get_free_offset(pg) ? 0i32;
     drop(check(foff == 32i32, "T04 free_offset = 32 (PAGE_HEADER_SIZE)"));
 
-    int32:tend = page_get_tuple_end(pg) ?! 0i32;
-    drop(check(tend == 8191i32, "T05 tuple_end = 8191 (PAGE_SIZE - 1)"));
+    int32:tend = page_get_tuple_end(pg) ? 0i32;
+    drop(check(tend == 32767i32, "T05 tuple_end = 32767 (PAGE_SIZE - 1)"));
 
-    int32:scnt = page_get_slot_count(pg) ?! 0i32;
+    int32:scnt = page_get_slot_count(pg) ? 0i32;
     drop(check(scnt == 0i32, "T06 slot_count = 0"));
 
     // T07: Free space should be PAGE_SIZE - HEADER - SLOT_SIZE
-    int64:free = page_free_space(pg) ?! 0i64;
-    // Available = 8191 - 32 + 1 - 16 = 8144
-    drop(check(free == 8144i64, "T07 free_space = 8144"));
+    int64:free = page_free_space(pg) ? 0i64;
+    // Available = 32767 - 32 + 1 - 16 = 32720
+    drop(check(free == 32720i64, "T07 free_space = 32720"));
 
     // T08-T09: Slot byte offset calculation
-    int64:s0 = slot_byte_offset(0i64) ?! 0i64;
+    int64:s0 = slot_byte_offset(0i64) ? 0i64;
     drop(check(s0 == 32i64, "T08 slot 0 at byte 32"));
 
-    int64:s1 = slot_byte_offset(1i64) ?! 0i64;
+    int64:s1 = slot_byte_offset(1i64) ? 0i64;
     drop(check(s1 == 48i64, "T09 slot 1 at byte 48"));
 
     // T10-T11: Write and read a slot entry
     drop(slot_write(pg, 0i64, 8180i64, 12i64));
-    int64:toff = slot_get_tuple_offset(pg, 0i64) ?! 0i64;
+    int64:toff = slot_get_tuple_offset(pg, 0i64) ? 0i64;
     drop(check(toff == 8180i64, "T10 slot 0 tuple_offset = 8180"));
 
-    int64:tlen = slot_get_tuple_length(pg, 0i64) ?! 0i64;
+    int64:tlen = slot_get_tuple_length(pg, 0i64) ? 0i64;
     drop(check(tlen == 12i64, "T11 slot 0 tuple_length = 12"));
 
     // T12: Flags
-    int32:flags = page_get_flags(pg) ?! 0i32;
+    int32:flags = page_get_flags(pg) ? 0i32;
     drop(check(flags == PAGE_FLAG_DATA, "T12 flags = PAGE_FLAG_DATA"));
 
     // Cleanup

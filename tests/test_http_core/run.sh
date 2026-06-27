@@ -5,7 +5,7 @@ set -e
 cd "$(dirname "$0")/../.."
 
 echo "Building test_http_core..."
-/home/randy/Workspace/REPOS/nitpick/build/nitpickc tests/test_http_core/main.npk -o tests/test_http_core/main_bin
+/home/randy/Workspace/REPOS/nitpick/build/npkc tests/test_http_core/main.npk -o tests/test_http_core/main_bin
 
 echo "Starting Server in background..."
 ./tests/test_http_core/main_bin &

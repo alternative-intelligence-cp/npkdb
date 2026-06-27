@@ -5,15 +5,11 @@ use "channel.npk".*;
 use "thread.npk".*;
 use "compaction.npk".*;
 use "level_manager.npk".*;
+use "wal.npk".*;
 
-extern "nitpick_libc_mem" {
-    func:npk_core_alloc = int64(int64:size);
-    func:npk_core_dalloc = void(int64:ptr);
-    func:npk_mem_read_int64 = int64(int64:ptr, int64:offset);
-    func:npk_mem_write_int64 = void(int64:ptr, int64:offset, int64:val);
-}
+use "../util/mem_primitives.npk".*;
 
-extern func:nitpick_libc_thread_spawn = int64(wild ?*:func, int64:arg);
+extern func:nitpick_libc_thread_spawn = int64(wild ?*:func_ptr, int64:arg);
 
 // Compaction request types
 pub fixed int64:COMPACT_SHUTDOWN = 0i64;
@@ -44,15 +40,14 @@ pub func:compaction_worker_loop = int64(int64:ctx) {
         
         if (msg == COMPACT_L0) {
             drop(compact_level(lm, 0i64));
+            drop(wal_truncate("wal.log"));
         }
         
         // Relinquish CPU so query threads aren't starved
         drop(Thread.yield());
     }
-    
-    // Do NOT npk_core_dalloc the context here; wp_shutdown will npk_core_dalloc it to avoid use-after-npk_core_dalloc
-    // if shutdown is called while thread is starting. Actually, the thread can npk_core_dalloc it
-    // because wp_shutdown won't use it after joining. Let's let wp_shutdown npk_core_dalloc it.
+    // The worker thread takes ownership of its context and must dalloc it before exiting.
+    drop(npk_core_dalloc(ctx));
     
     pass(0i64);
 };

@@ -8,76 +8,76 @@
 68: int64:a    = alloc_vec(dim) ?! 0i64;
 69: int64:b    = alloc_vec(dim) ?! 0i64;
 73: when (trial < 50i64) {
-77: tfp64:ab = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
-78: tfp64:ba = l2sq_simd_pub(@cast_unchecked<tfp64->>(b), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+77: tfp64:ab = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+78: tfp64:ba = l2sq_simd_pub(cast_unchecked<tfp64->>(b), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 79: tfp64:diff = ab - ba;
 80: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 81: if (diff > PROP_TOL) { fail(1i32); }
 89: int64:a   = alloc_vec(dim) ?! 0i64;
 90: int64:b   = alloc_vec(dim) ?! 0i64;
 94: when (trial < 50i64) {
-98: tfp64:d = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+98: tfp64:d = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 99: if (d < 0.0tf) { fail(1i32); }
 107: int64:a   = alloc_vec(dim) ?! 0i64;
 110: when (trial < 20i64) {
-113: tfp64:d = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+113: tfp64:d = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 114: if (d > PROP_TOL) { fail(1i32); }
 122: int64:a   = alloc_vec(dim) ?! 0i64;
 123: int64:b   = alloc_vec(dim) ?! 0i64;
-127: tfp64:ab = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
-128: tfp64:ba = l2sq_simd_pub(@cast_unchecked<tfp64->>(b), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+127: tfp64:ab = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+128: tfp64:ba = l2sq_simd_pub(cast_unchecked<tfp64->>(b), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 129: tfp64:diff = ab - ba;
 130: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 131: if (diff > PROP_TOL) { fail(1i32); }
 137: int64:a   = alloc_vec(dim) ?! 0i64;
-141: tfp64:d = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+141: tfp64:d = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 142: if (d > PROP_TOL) { fail(1i32); }
 148: int64:a   = alloc_vec(dim) ?! 0i64;
 149: int64:b   = alloc_vec(dim) ?! 0i64;
-153: tfp64:d = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+153: tfp64:d = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 154: if (d < 0.0tf) { fail(1i32); }
 160: int64:a   = alloc_vec(dim) ?! 0i64;
-164: tfp64:d = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+164: tfp64:d = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 165: if (d > PROP_TOL) { fail(1i32); }
 171: int64:a   = alloc_vec(dim) ?! 0i64;
-176: tfp64:d = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+176: tfp64:d = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 177: if (d < 0.0tf) { fail(1i32); }
 184: int64:a     = alloc_vec(dim_a) ?! 0i64;
 185: int64:b     = alloc_vec(dim_b) ?! 0i64;
 188: if (rv != -999.0tf) { fail(1i32); }
 195: int64:a   = alloc_vec(dim) ?! 0i64;
 198: when (trial < 30i64) {
-201: tfp64:rv = cosine_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+201: tfp64:rv = cosine_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 202: tfp64:diff = rv - 1.0tf;
 203: if (dim < 0.0tf) { dim = dim * -1.0tf; }
 204: if (dim > PROP_TOL) { fail(1i32); }
 212: int64:a   = alloc_vec(dim) ?! 0i64;
 213: int64:b   = alloc_vec(dim) ?! 0i64;
 216: when (trial < 50i64) {
-219: tfp64:rv = cosine_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+219: tfp64:rv = cosine_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 220: if (rv < -1.0tf - PROP_TOL) { fail(1i32); }
 221: if (rv >  1.0tf + PROP_TOL) { fail(1i32); }
 229: int64:a   = alloc_vec(dim) ?! 0i64;
 230: int64:b   = alloc_vec(dim) ?! 0i64;
 233: when (trial < 50i64) {
-236: tfp64:ab = cosine_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
-237: tfp64:ba = cosine_simd_pub(@cast_unchecked<tfp64->>(b), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+236: tfp64:ab = cosine_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+237: tfp64:ba = cosine_simd_pub(cast_unchecked<tfp64->>(b), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 238: tfp64:diff = ab - ba;
 239: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 240: if (diff > PROP_TOL) { fail(1i32); }
 248: int64:a   = alloc_vec(dim) ?! 0i64;
-252: tfp64:rv = cosine_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+252: tfp64:rv = cosine_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 253: tfp64:diff = rv - 1.0tf;
 254: if (dim < 0.0tf) { dim = dim * -1.0tf; }
 255: if (dim > PROP_TOL) { fail(1i32); }
 261: int64:a   = alloc_vec(dim) ?! 0i64;
 262: int64:b   = alloc_vec(dim) ?! 0i64;
-266: tfp64:rv = cosine_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+266: tfp64:rv = cosine_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 267: if (rv < -1.0tf - PROP_TOL) { fail(1i32); }
 268: if (rv >  1.0tf + PROP_TOL) { fail(1i32); }
 274: int64:a   = alloc_vec(dim) ?! 0i64;
 275: int64:b   = alloc_vec(dim) ?! 0i64;
-279: tfp64:rv = cosine_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+279: tfp64:rv = cosine_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 280: if (rv < -1.0tf - PROP_TOL) { fail(1i32); }
 281: if (rv >  1.0tf + PROP_TOL) { fail(1i32); }
 287: int64:a   = alloc_vec(dim) ?! 0i64;
@@ -85,7 +85,7 @@
 300: int64:b   = alloc_vec(dim) ?! 0i64;
 305: if (rv != -999.0tf) { fail(1i32); }
 311: int64:a   = alloc_vec(dim) ?! 0i64;
-314: tfp64:rv = cosine_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+314: tfp64:rv = cosine_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 315: tfp64:diff = rv - 1.0tf;
 316: if (dim < 0.0tf) { dim = dim * -1.0tf; }
 317: if (dim > PROP_TOL) { fail(1i32); }
@@ -98,24 +98,24 @@
 337: int64:apb = alloc_vec(dim) ?! 0i64;
 341: when (trial < 30i64) {
 347: when (i < dim) {
-353: tfp64:lhs = ip_simd_pub(@cast_unchecked<tfp64->>(apb), @cast_unchecked<tfp64->>(c), dim) ?! 0.0tf;
-354: tfp64:ac  = ip_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(c), dim) ?! 0.0tf;
-355: tfp64:bc  = ip_simd_pub(@cast_unchecked<tfp64->>(b), @cast_unchecked<tfp64->>(c), dim) ?! 0.0tf;
+353: tfp64:lhs = ip_simd_pub(cast_unchecked<tfp64->>(apb), cast_unchecked<tfp64->>(c), dim) ?! 0.0tf;
+354: tfp64:ac  = ip_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(c), dim) ?! 0.0tf;
+355: tfp64:bc  = ip_simd_pub(cast_unchecked<tfp64->>(b), cast_unchecked<tfp64->>(c), dim) ?! 0.0tf;
 357: tfp64:diff = lhs - rhs;
 358: if (dim < 0.0tf) { dim = dim * -1.0tf; }
 359: if (dim > PROP_TOL) { fail(1i32); }
 367: int64:a   = alloc_vec(dim) ?! 0i64;
 368: int64:b   = alloc_vec(dim) ?! 0i64;
 371: when (trial < 50i64) {
-374: tfp64:ab = ip_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
-375: tfp64:ba = ip_simd_pub(@cast_unchecked<tfp64->>(b), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+374: tfp64:ab = ip_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+375: tfp64:ba = ip_simd_pub(cast_unchecked<tfp64->>(b), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 376: tfp64:diff = ab - ba;
 377: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 378: if (diff > PROP_TOL) { fail(1i32); }
 386: int64:a   = alloc_vec(dim) ?! 0i64;
 389: when (trial < 20i64) {
 394: when (i < dim) {
-399: tfp64:ip = ip_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+399: tfp64:ip = ip_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 400: tfp64:diff = ip - mag_sq;
 401: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 402: if (diff > PROP_TOL) { fail(1i32); }
@@ -124,20 +124,20 @@
 412: int64:c = alloc_vec(dim) ?! 0i64;
 413: int64:apb = alloc_vec(dim) ?! 0i64;
 419: when (i < dim) {
-425: tfp64:lhs  = ip_simd_pub(@cast_unchecked<tfp64->>(apb), @cast_unchecked<tfp64->>(c), dim) ?! 0.0tf;
-426: tfp64:rhs  = (ip_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(c), dim) ?! 0.0tf) + (ip_simd_pub(@cast_unchecked<tfp64->>(b), @cast_unchecked<tfp64->>(c), dim) ?! 0.0tf);
+425: tfp64:lhs  = ip_simd_pub(cast_unchecked<tfp64->>(apb), cast_unchecked<tfp64->>(c), dim) ?! 0.0tf;
+426: tfp64:rhs  = (ip_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(c), dim) ?! 0.0tf) + (ip_simd_pub(cast_unchecked<tfp64->>(b), cast_unchecked<tfp64->>(c), dim) ?! 0.0tf);
 427: tfp64:diff = lhs - rhs;
 428: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 429: if (diff > PROP_TOL) { fail(1i32); }
 435: int64:a   = alloc_vec(dim) ?! 0i64;
 436: int64:b   = alloc_vec(dim) ?! 0i64;
-440: tfp64:ab = ip_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
-441: tfp64:ba = ip_simd_pub(@cast_unchecked<tfp64->>(b), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+440: tfp64:ab = ip_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+441: tfp64:ba = ip_simd_pub(cast_unchecked<tfp64->>(b), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 442: tfp64:diff = ab - ba;
 443: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 444: if (diff > PROP_TOL) { fail(1i32); }
 450: int64:a   = alloc_vec(dim) ?! 0i64;
-455: tfp64:d    = ip_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+455: tfp64:d    = ip_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 456: tfp64:diff = d;
 457: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 458: if (diff > PROP_TOL) { fail(1i32); }
@@ -146,8 +146,8 @@
 466: int64:c   = alloc_vec(dim) ?! 0i64;
 467: int64:apb = alloc_vec(dim) ?! 0i64;
 473: when (i < dim) {
-478: tfp64:lhs  = ip_simd_pub(@cast_unchecked<tfp64->>(apb), @cast_unchecked<tfp64->>(c), dim) ?! 0.0tf;
-479: tfp64:rhs  = (ip_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(c), dim) ?! 0.0tf) + (ip_simd_pub(@cast_unchecked<tfp64->>(b), @cast_unchecked<tfp64->>(c), dim) ?! 0.0tf);
+478: tfp64:lhs  = ip_simd_pub(cast_unchecked<tfp64->>(apb), cast_unchecked<tfp64->>(c), dim) ?! 0.0tf;
+479: tfp64:rhs  = (ip_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(c), dim) ?! 0.0tf) + (ip_simd_pub(cast_unchecked<tfp64->>(b), cast_unchecked<tfp64->>(c), dim) ?! 0.0tf);
 480: tfp64:diff = lhs - rhs;
 481: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 482: if (diff > PROP_TOL) { fail(1i32); }
@@ -156,99 +156,99 @@
 492: if (rv != -999.0tf) { fail(1i32); }
 498: int64:a   = alloc_vec(dim) ?! 0i64;
 504: when (i < dim) {
-509: tfp64:ip = ip_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
+509: tfp64:ip = ip_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(a), dim) ?! 0.0tf;
 510: tfp64:diff = ip - mag_sq;
 511: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 512: if (diff > PROP_TOL) { fail(1i32); }
 519: int64:a   = alloc_vec(dim) ?! 0i64;
 520: int64:b   = alloc_vec(dim) ?! 0i64;
 523: when (trial < 50i64) {
-526: tfp64:sv = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
-527: tfp64:rv = l2sq_scalar_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+526: tfp64:sv = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
+527: tfp64:rv = l2sq_scalar_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 528: tfp64:diff = sv - rv;
 529: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 530: if (diff > BENCH_TOL) { fail(1i32); }
 538: int64:a   = alloc_vec(dim) ?! 0i64;
 539: int64:b   = alloc_vec(dim) ?! 0i64;
 542: when (trial < 50i64) {
-545: tfp64:sv = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
-546: tfp64:rv = l2sq_scalar_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+545: tfp64:sv = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
+546: tfp64:rv = l2sq_scalar_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 547: tfp64:diff = sv - rv;
 548: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 549: if (diff > BENCH_TOL) { fail(1i32); }
 557: int64:a   = alloc_vec(dim) ?! 0i64;
 558: int64:b   = alloc_vec(dim) ?! 0i64;
 561: when (trial < 50i64) {
-564: tfp64:sv = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
-565: tfp64:rv = l2sq_scalar_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+564: tfp64:sv = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
+565: tfp64:rv = l2sq_scalar_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 566: tfp64:diff = sv - rv;
 567: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 568: if (diff > BENCH_TOL) { fail(1i32); }
 576: int64:a   = alloc_vec(dim) ?! 0i64;
 577: int64:b   = alloc_vec(dim) ?! 0i64;
 580: when (trial < 20i64) {
-583: tfp64:sv = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
-584: tfp64:rv = l2sq_scalar_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+583: tfp64:sv = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
+584: tfp64:rv = l2sq_scalar_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 585: tfp64:diff = sv - rv;
 586: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 587: if (diff > BENCH_TOL) { fail(1i32); }
 595: int64:a   = alloc_vec(dim) ?! 0i64;
 596: int64:b   = alloc_vec(dim) ?! 0i64;
 599: when (trial < 20i64) {
-602: tfp64:sv = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
-603: tfp64:rv = l2sq_scalar_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+602: tfp64:sv = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
+603: tfp64:rv = l2sq_scalar_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 604: tfp64:diff = sv - rv;
 605: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 606: if (diff > BENCH_TOL) { fail(1i32); }
 614: int64:a   = alloc_vec(dim) ?! 0i64;
 615: int64:b   = alloc_vec(dim) ?! 0i64;
 618: when (trial < 50i64) {
-621: tfp64:sv = cosine_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
-622: tfp64:rv = cosine_scalar_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+621: tfp64:sv = cosine_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
+622: tfp64:rv = cosine_scalar_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 623: tfp64:diff = sv - rv;
 624: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 625: if (diff > BENCH_TOL) { fail(1i32); }
 633: int64:a   = alloc_vec(dim) ?! 0i64;
 634: int64:b   = alloc_vec(dim) ?! 0i64;
 637: when (trial < 50i64) {
-640: tfp64:sv = cosine_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
-641: tfp64:rv = cosine_scalar_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+640: tfp64:sv = cosine_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
+641: tfp64:rv = cosine_scalar_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 642: tfp64:diff = sv - rv;
 643: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 644: if (diff > BENCH_TOL) { fail(1i32); }
 652: int64:a   = alloc_vec(dim) ?! 0i64;
 653: int64:b   = alloc_vec(dim) ?! 0i64;
 656: when (trial < 50i64) {
-659: tfp64:sv = cosine_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
-660: tfp64:rv = cosine_scalar_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+659: tfp64:sv = cosine_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
+660: tfp64:rv = cosine_scalar_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 661: tfp64:diff = sv - rv;
 662: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 663: if (diff > BENCH_TOL) { fail(1i32); }
 671: int64:a   = alloc_vec(dim) ?! 0i64;
 672: int64:b   = alloc_vec(dim) ?! 0i64;
 675: when (trial < 20i64) {
-678: tfp64:sv = ip_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
-679: tfp64:rv = ip_scalar_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+678: tfp64:sv = ip_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
+679: tfp64:rv = ip_scalar_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 680: tfp64:diff = sv - rv;
 681: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 682: if (diff > BENCH_TOL) { fail(1i32); }
 690: int64:a   = alloc_vec(dim) ?! 0i64;
 691: int64:b   = alloc_vec(dim) ?! 0i64;
 694: when (trial < 20i64) {
-697: tfp64:sv = ip_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
-698: tfp64:rv = ip_scalar_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+697: tfp64:sv = ip_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim)   ?! 0.0tf;
+698: tfp64:rv = ip_scalar_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 699: tfp64:diff = sv - rv;
 700: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 701: if (diff > BENCH_TOL) { fail(1i32); }
 710: int64:a   = alloc_vec(dim) ?! 0i64;
 711: int64:b   = alloc_vec(dim) ?! 0i64;
 714: when (i < dim) {
-719: tfp64:d = l2sq_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+719: tfp64:d = l2sq_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 720: if (d > PROP_TOL) { fail(1i32); }
 726: int64:a   = alloc_vec(dim) ?! 0i64;
 727: int64:b   = alloc_vec(dim) ?! 0i64;
 730: when (i < dim) {
-735: tfp64:rv    = cosine_simd_pub(@cast_unchecked<tfp64->>(a), @cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
+735: tfp64:rv    = cosine_simd_pub(cast_unchecked<tfp64->>(a), cast_unchecked<tfp64->>(b), dim) ?! 0.0tf;
 736: tfp64:diff = rv - (-1.0tf);
 737: if (diff < 0.0tf) { diff = diff * -1.0tf; }
 738: if (diff > PROP_TOL) { fail(1i32); }

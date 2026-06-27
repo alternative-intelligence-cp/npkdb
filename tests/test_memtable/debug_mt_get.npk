@@ -1,0 +1,22 @@
+use "../../src/storage/memtable.npk".*;
+use "../../src/util/mem_primitives.npk".*;
+
+func:failsafe = int32(tbb32:err) { exit(1); };
+
+func:main = int32() {
+    int64:mt = mt_create(1i64) ? 0i64;
+    println("mt = " + string_from_int(mt));
+    
+    int64:v = npk_core_alloc(4i64);
+    
+    int64:p1 = mt_put(mt, "hello", v, 4i64) ? -1i64;
+    println("mt_put returned: " + string_from_int(p1));
+    
+    int64:cnt = mt_count(mt) ? 0i64;
+    println("mt_count: " + string_from_int(cnt));
+    
+    int64:found = mt_get(mt, "hello") ? 0i64;
+    println("mt_get('hello'): " + string_from_int(found));
+    
+    exit(0);
+};

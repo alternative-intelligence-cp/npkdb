@@ -95,7 +95,7 @@ src/network/http_worker.npk:20 - Undefined identifier: 'thread_id'
 src/network/http_worker.npk:25 - Undefined identifier: 'Channel'
 src/network/http_worker.npk:26 - Undefined identifier: 'client_fd'
 src/network/http_worker.npk:36 - Undefined identifier: 'client_fd'
-src/network/http_worker.npk:37 - @cast supports numeric types and pointer types only. Cannot cast 'int64@' to 'int64'
+src/network/http_worker.npk:37 - cast supports numeric types and pointer types only. Cannot cast 'int64@' to 'int64'
 src/network/http_worker.npk:39 - Undefined identifier: 'Server'
 src/network/http_worker.npk:40 - Undefined identifier: 'client_fd'
 src/network/http_worker.npk:41 - Undefined identifier: 'req'. Did you mean 'streq'?

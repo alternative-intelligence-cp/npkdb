@@ -11,10 +11,15 @@ use "router.npk".*;
 use "../../libn/src/syscall/syscall_numbers.npk".*;
 
 use "http_worker.npk".*;
-extern func:http_worker_loop = int64(int64:arg_handle);
+
 pub int64:global_http_channel = 0i64; // Handle to the buffered channel for sockets
 
-pub func:server_start = int32() {
+pub func:http_worker_shim = int64(int64:ch) {
+    pass http_worker_loop(ch);
+};
+
+
+pub func:server_start = int32((int64)(int64):worker_fn) {
     int64:cfg_ptr = raw config_get();
     if (cfg_ptr == 0i64) {
         println("server_start: global config is null!");
@@ -38,7 +43,7 @@ pub func:server_start = int32() {
     // Spawn worker pool
     int64:i = 0i64;
     while (i < workers) {
-        int64:t_handle = nitpick_libc_thread_spawn(@http_worker_loop, global_http_channel);
+        int64:t_handle = raw http_worker_start(global_http_channel, worker_fn);
         i = i + 1i64;
     }
     

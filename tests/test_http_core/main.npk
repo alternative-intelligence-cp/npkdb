@@ -1,8 +1,9 @@
 // tests/test_http_core/main.npk
-use "sys.npk".*;
+use "../../src/storage/sys.npk".*;
 use "../../src/util/config.npk".*;
+use "../../src/concurrency/ebr.npk".*;
 use "../../src/network/server.npk".*;
-use "../../nitpick-packages/packages/nitpick-thread/src/nitpick_thread.npk".*;
+use "../../src/network/http_worker.npk".*;
 
 extern "C" {
     func:_exit = void(int32:code);
@@ -18,19 +19,23 @@ pub func:failsafe = int32(tbb32:code) {
     exit @cast_unchecked<int32>(code);
 };
 
-
+func:http_worker_shim = int64(int64:ch) {
+    pass http_worker_loop(ch);
+};
 
 pub func:main = int32() {
     println("Testing HTTP Server Core...");
-    int32:init_res = config_init("tests/test_http_core/npkdb.toml");
+    int32:init_res = raw config_init("tests/test_http_core/npkdb.toml");
     if (init_res != 0i32) {
         println("FAILED to initialize config");
         exit 1i32;
     }
     
+    drop(ebr_init());
+    
 
     // Start server (blocks forever)
-    int32:res = raw server_start();
+    int32:res = raw server_start(@http_worker_shim);
     if (res != 0i32) {
         println("FAILED to start server");
         exit 1i32;

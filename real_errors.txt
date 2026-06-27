@@ -10693,45 +10693,45 @@ CHECK! isUnchecked: 1 src: int64 target: tfp64@
 [DEBUG CODEGEN CALL] Generating call to: println
 [DEBUG CODEGEN CALL] Generating call to: proc_exit
 [DEBUG CODEGEN CALL] Generating call to: proc_exit
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 50, Column 29: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int64' to 'int16' narrows the integer bit width and may truncate. Use @cast_unchecked<int16>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 50, Column 29: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int64' to 'int16' narrows the integer bit width and may truncate. Use cast_unchecked<int16>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 17, Column 59: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 17, Column 59: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use cast_unchecked<tbb8>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 22, Column 38: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use @cast_unchecked<tbb8>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 22, Column 38: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tbb8' narrows the integer bit width and may truncate. Use cast_unchecked<tbb8>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 148, Column 21: warning: [NITPICK-063] NITPICK-CAST-LOSSY — explicit cast from 'flt64' to 'int64' converts floating point to integer and truncates the fractional component. Use @cast_unchecked<int64>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 148, Column 21: warning: [NITPICK-063] NITPICK-CAST-LOSSY — explicit cast from 'flt64' to 'int64' converts floating point to integer and truncates the fractional component. Use cast_unchecked<int64>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 153, Column 21: warning: [NITPICK-063] NITPICK-CAST-LOSSY — explicit cast from 'flt64' to 'int64' converts floating point to integer and truncates the fractional component. Use @cast_unchecked<int64>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 153, Column 21: warning: [NITPICK-063] NITPICK-CAST-LOSSY — explicit cast from 'flt64' to 'int64' converts floating point to integer and truncates the fractional component. Use cast_unchecked<int64>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 123, Column 15: warning: [NITPICK-064] NITPICK-CAST-SIGNEDNESS — explicit cast from 'tryte' to 'int32' changes signedness/reinterpretation domain. Use @cast_unchecked<int32>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 123, Column 15: warning: [NITPICK-064] NITPICK-CAST-SIGNEDNESS — explicit cast from 'tryte' to 'int32' changes signedness/reinterpretation domain. Use cast_unchecked<int32>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 136, Column 15: warning: [NITPICK-064] NITPICK-CAST-SIGNEDNESS — explicit cast from 'nyte' to 'int32' changes signedness/reinterpretation domain. Use @cast_unchecked<int32>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 136, Column 15: warning: [NITPICK-064] NITPICK-CAST-SIGNEDNESS — explicit cast from 'nyte' to 'int32' changes signedness/reinterpretation domain. Use cast_unchecked<int32>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 210, Column 17: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use @cast_unchecked<int8>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 210, Column 17: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use cast_unchecked<int8>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 247, Column 47: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use @cast_unchecked<int8>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 247, Column 47: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use cast_unchecked<int8>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 249, Column 43: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use @cast_unchecked<int8>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 249, Column 43: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use cast_unchecked<int8>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 257, Column 48: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use @cast_unchecked<int8>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 257, Column 48: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use cast_unchecked<int8>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 259, Column 44: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use @cast_unchecked<int8>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 259, Column 44: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use cast_unchecked<int8>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 267, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use @cast_unchecked<int8>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 267, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use cast_unchecked<int8>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 274, Column 37: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use @cast_unchecked<int8>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 274, Column 37: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use cast_unchecked<int8>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 281, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use @cast_unchecked<int8>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 281, Column 36: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'int8' narrows the integer bit width and may truncate. Use cast_unchecked<int8>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 485, Column 10: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'trit' narrows the integer bit width and may truncate. Use @cast_unchecked<trit>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 485, Column 10: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'trit' narrows the integer bit width and may truncate. Use cast_unchecked<trit>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 496, Column 10: warning: [NITPICK-064] NITPICK-CAST-SIGNEDNESS — explicit cast from 'int32' to 'tryte' changes signedness/reinterpretation domain. Use @cast_unchecked<tryte>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 496, Column 10: warning: [NITPICK-064] NITPICK-CAST-SIGNEDNESS — explicit cast from 'int32' to 'tryte' changes signedness/reinterpretation domain. Use cast_unchecked<tryte>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 496, Column 10: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tryte' narrows the integer bit width and may truncate. Use @cast_unchecked<tryte>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 496, Column 10: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'tryte' narrows the integer bit width and may truncate. Use cast_unchecked<tryte>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 507, Column 10: warning: [NITPICK-064] NITPICK-CAST-SIGNEDNESS — explicit cast from 'int32' to 'nyte' changes signedness/reinterpretation domain. Use @cast_unchecked<nyte>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 507, Column 10: warning: [NITPICK-064] NITPICK-CAST-SIGNEDNESS — explicit cast from 'int32' to 'nyte' changes signedness/reinterpretation domain. Use cast_unchecked<nyte>(expr) to silence after auditing.[0m
 
-[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 507, Column 10: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'nyte' narrows the integer bit width and may truncate. Use @cast_unchecked<nyte>(expr) to silence after auditing.[0m
+[1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mLine 507, Column 10: warning: [NITPICK-062] NITPICK-CAST-NARROW — explicit cast from 'int32' to 'nyte' narrows the integer bit width and may truncate. Use cast_unchecked<nyte>(expr) to silence after auditing.[0m
 
 [1msrc/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'j' shadows outer declaration at line 200, column 9 (original at line 189, column 5)[0m
 

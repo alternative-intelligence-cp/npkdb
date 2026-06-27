@@ -33,32 +33,32 @@ pub func:main = int32() {
     // Full compaction test
     // Cleaned up by run.sh
     
-    int64:lm = lm_create("test_comp_data") ?! 0i64;
+    int64:lm = lm_create("test_comp_data") ? 0i64;
     drop(flush_ensure_dirs("test_comp_data"));
     
     // Create 4 L0 files
     int64:v_ptr = npk_core_alloc(100i64);
     drop(npk_mem_write_string(v_ptr, "testval"));
     
-    int64:mt1 = mt_create(1i64) ?! 0i64;
+    int64:mt1 = mt_create(1i64) ? 0i64;
     drop(mt_put(mt1, "a", v_ptr, 100i64));
     drop(mt_put(mt1, "c", v_ptr, 100i64));
     drop(mt_freeze(mt1));
     drop(flush_memtable(mt1, lm));
     
-    int64:mt2 = mt_create(2i64) ?! 0i64;
+    int64:mt2 = mt_create(2i64) ? 0i64;
     drop(mt_put(mt2, "b", v_ptr, 100i64)); // disjoint from 1 except a-c range
     drop(mt_put(mt2, "c", v_ptr, 100i64)); // duplicate c
     drop(mt_freeze(mt2));
     drop(flush_memtable(mt2, lm));
     
-    int64:mt3 = mt_create(3i64) ?! 0i64;
+    int64:mt3 = mt_create(3i64) ? 0i64;
     drop(mt_put(mt3, "d", v_ptr, 100i64));
     drop(mt_delete(mt3, "a")); // tombstone for a
     drop(mt_freeze(mt3));
     drop(flush_memtable(mt3, lm));
     
-    int64:mt4 = mt_create(4i64) ?! 0i64;
+    int64:mt4 = mt_create(4i64) ? 0i64;
     drop(mt_put(mt4, "e", v_ptr, 100i64));
     drop(mt_put(mt4, "f", v_ptr, 100i64));
     drop(mt_freeze(mt4));
@@ -66,20 +66,20 @@ pub func:main = int32() {
     
     drop(npk_core_dalloc(v_ptr));
     
-    int64:needs = lm_l0_needs_compaction(lm) ?! 0i64;
+    int64:needs = lm_l0_needs_compaction(lm) ? 0i64;
     drop(check(needs == 1i64, "T15 maybe_compact with L0 >= threshold = compaction runs"));
     
-    int64:comp_res = compact_l0_to_l1(lm) ?! -1i64;
+    int64:comp_res = compact_l0_to_l1(lm) ? -1i64;
     drop(check(comp_res > 0i64, "T05 Compact 4 L0 SSTables into L1"));
     
-    int64:c_l0 = lm_count_at_level(lm, 0i64) ?! -1i64;
+    int64:c_l0 = lm_count_at_level(lm, 0i64) ? -1i64;
     drop(check(c_l0 == 0i64, "T06 After compaction, L0 count = 0"));
     
-    int64:c_l1 = lm_count_at_level(lm, 1i64) ?! 0i64;
+    int64:c_l1 = lm_count_at_level(lm, 1i64) ? 0i64;
     drop(check(c_l1 > 0i64, "T07 After compaction, L1 count > 0"));
     
     // Let's read L1 file and check keys
-    int64:l1_fids = lm_get_sstables(lm, 1i64) ?! 0i64;
+    int64:l1_fids = lm_get_sstables(lm, 1i64) ? 0i64;
     int64:fid = npk_mem_read_int64(l1_fids, 0i64);
     drop(npk_core_dalloc(l1_fids));
     
@@ -89,15 +89,15 @@ pub func:main = int32() {
     string:p2 = p1 + fid_str;
     string:path = p2 + ".npkdb";
     
-    int64:reader = sstable_open_read(path) ?! 0i64;
+    int64:reader = sstable_open_read(path) ? 0i64;
     drop(check(reader != 0i64, "L1 file opens successfully"));
     
-    int64:iter = sstable_iter_create(reader) ?! 0i64;
+    int64:iter = sstable_iter_create(reader) ? 0i64;
     string:all_k = "";
     while (1i64 == 1i64) {
-        int64:rec = sstable_iter_next(iter) ?! 0i64;
+        int64:rec = sstable_iter_next(iter) ? 0i64;
         if (rec == 0i64) { break; }
-        string:k = sst_rec_key(rec) ?! 99i32;
+        string:k = sst_rec_key(rec) ? "";
         all_k = all_k + k;
         drop(sst_rec_free(rec));
     }
@@ -108,7 +108,7 @@ pub func:main = int32() {
     drop(check(all_k == "bcdef", "T08 All keys findable, deduped, tombstone removed"));
     
     // Check old files deleted
-    int64:fd1 = sys(OPEN, "test_comp_data/L0/sst_000001.npkdb", 0i64, 0i64) ?! -1i64;
+    int64:fd1 = sys(OPEN, "test_comp_data/L0/sst_000001.npkdb", 0i64, 0i64) ? -1i64;
     drop(check(fd1 <= 0i64, "T11 Old SSTable files deleted after compaction"));
     if (fd1 > 0i64) { drop(sys(CLOSE, fd1)); }
     

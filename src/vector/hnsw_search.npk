@@ -21,6 +21,14 @@ pub func:hnsw_search_layer = int64(
     int64:filter_ast,
     int64:doc_store
 ) requires (graph != 0i64), (visited_set != 0i64), (ef > 0i32) {
+    int64:ef_64 = (@cast_unchecked<int64>((ef)));
+    if (ep_slot == -1i32) {
+        pass(raw hnsw_pq_create(ef_64, 1i64));
+    }
+
+    int64:save_mem = npk_core_alloc(16i64);
+    drop(npk_mem_write_int32(save_mem, 0i64, ep_slot));
+    drop(npk_mem_write_int32(save_mem, 8i64, ep_gen));
     
     int64:arena = raw hnsw_graph_get_arena(graph) ;
     int64:ep_node_ptr = raw hnsw_arena_get_node(arena, ep_slot, ep_gen) ;
@@ -29,29 +37,31 @@ pub func:hnsw_search_layer = int64(
     int64:ep_vec_offset = raw hnsw_node_get_vector_offset(ep_node_ptr) ;
     tfp64:ep_dist = raw hnsw_graph_distance(graph, query_offset, ep_vec_offset);
 
-    int64:ef_64 = (@cast_unchecked<int64>((ef)));
-
     // candidates: Min-Heap (capacity = ef initially, dynamically grows if needed)
     int64:candidates = raw hnsw_pq_create(ef_64, 0i64) ;
     
     // W: Max-Heap (closest found so far)
     int64:W = raw hnsw_pq_create(ef_64, 1i64) ;
 
-    drop(hnsw_pq_push(candidates, ep_dist, ep_slot, ep_gen));
+    int32:safe_ep_slot = npk_mem_read_int32(save_mem, 0i64);
+    int32:safe_ep_gen = npk_mem_read_int32(save_mem, 8i64);
+    drop(hnsw_pq_push(candidates, ep_dist, safe_ep_slot, safe_ep_gen));
     bool:ep_match = true;
     if (filter_ast != 0i64) {
         if (doc_store != 0i64) {
-            int64:ep_doc_ptr = npk_mem_read_int64(doc_store, (@cast_unchecked<int64>((ep_slot))) * 8i64);
+            int64:vec_dim = raw hnsw_graph_get_vector_dim(graph);
+            int64:vec_id_ep = ep_vec_offset / (vec_dim * 8i64);
+            int64:ep_doc_ptr = npk_mem_read_int64(doc_store, vec_id_ep * 8i64);
             if (ep_doc_ptr != 0i64) {
                 ep_match = raw evaluate_filter(json_arena, filter_ast, ep_doc_ptr);
             }
         }
     }
     if (ep_match == true) {
-        drop(hnsw_pq_push(W, ep_dist, ep_slot, ep_gen));
+        drop(hnsw_pq_push(W, ep_dist, safe_ep_slot, safe_ep_gen));
     }
 
-    drop(hnsw_visited_mark(visited_set, ep_slot));
+    drop(hnsw_visited_mark(visited_set, safe_ep_slot));
 
     int64:C = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
     int64:furthest = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
@@ -92,20 +102,20 @@ pub func:hnsw_search_layer = int64(
 
                 int64:n_node_ptr = raw hnsw_arena_get_node(arena, n_slot, n_gen) ;
                 if (n_node_ptr != 0i64) {
+                    bool:match = true;
+                    int64:n_vec_offset = raw hnsw_node_get_vector_offset(n_node_ptr) ;
+                    
                     if (filter_ast != 0i64) {
                         if (doc_store != 0i64) {
-                            int64:doc_ptr = npk_mem_read_int64(doc_store, (@cast_unchecked<int64>((n_slot))) * 8i64);
+                            int64:vec_dim = raw hnsw_graph_get_vector_dim(graph);
+                            int64:vec_id = n_vec_offset / (vec_dim * 8i64);
+                            int64:doc_ptr = npk_mem_read_int64(doc_store, vec_id * 8i64);
                             if (doc_ptr != 0i64) {
-                                bool:match = raw evaluate_filter(json_arena, filter_ast, doc_ptr);
-                                if (match == false) {
-                                    i = i + 1i64;
-                                    continue;
-                                }
+                                match = raw evaluate_filter(json_arena, filter_ast, doc_ptr);
                             }
                         }
                     }
 
-                    int64:n_vec_offset = raw hnsw_node_get_vector_offset(n_node_ptr) ;
                     tfp64:n_dist = raw hnsw_graph_distance(graph, query_offset, n_vec_offset);
 
                     tfp64:f_dist2 = 3.402823466e+38f32;
@@ -114,15 +124,18 @@ pub func:hnsw_search_layer = int64(
                         drop(hnsw_pq_peek(W, furthest));
                         f_dist2 = raw hnsw_pq_get_dist(furthest);
                     }
-
                     if (w_size2 < ef_64) {
                         drop(hnsw_pq_push(candidates, n_dist, n_slot, n_gen));
-                        drop(hnsw_pq_push(W, n_dist, n_slot, n_gen));
+                        if (match) {
+                            drop(hnsw_pq_push(W, n_dist, n_slot, n_gen));
+                        }
                     } else {
                         if (n_dist < f_dist2) {
                             drop(hnsw_pq_push(candidates, n_dist, n_slot, n_gen));
-                            drop(hnsw_pq_push(W, n_dist, n_slot, n_gen));
-                            drop(hnsw_pq_pop(W, furthest)); // Maintain W size == ef
+                            if (match) {
+                                drop(hnsw_pq_push(W, n_dist, n_slot, n_gen));
+                                drop(hnsw_pq_pop(W, furthest)); // Maintain W size == ef
+                            }
                         }
                     }
                 }
@@ -134,6 +147,7 @@ pub func:hnsw_search_layer = int64(
     drop(npk_core_dalloc(C));
     drop(npk_core_dalloc(furthest));
     drop(hnsw_pq_destroy(candidates));
+    drop(npk_core_dalloc(save_mem));
 
     pass(W);
 };

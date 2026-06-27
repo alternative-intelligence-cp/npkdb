@@ -45,8 +45,8 @@ pub func:sl_node_alloc = int64(string:key, int64:val_ptr, int64:val_len, int64:l
     int64:key_len = string_length(key);
     
     int64:size = SKIPLIST_NODE_HEADER_SIZE + (level * 8i64);
-    // Add key string data size right after the pointers to keep it flat
-    int64:total_size = size + key_len;
+    // Add key string data size (including null terminator) right after the pointers
+    int64:total_size = size + key_len + 1i64;
     
     int64:node = npk_core_alloc(total_size);
     
@@ -54,7 +54,15 @@ pub func:sl_node_alloc = int64(string:key, int64:val_ptr, int64:val_len, int64:l
     int64:key_data_ptr = 0i64;
     if (key_len > 0i64) {
         key_data_ptr = node + size;
-        npk_mem_write_string(key_data_ptr, key);
+        // Use string_to_cstr + npk_mem_copy to avoid the extern ABI issue where
+        // npk_mem_write_string(ptr, string) receives a NitpickString* instead of char*.
+        int64:key_raw = string_to_cstr(key);
+        drop(npk_mem_copy(key_data_ptr, key_raw, key_len + 1i64));
+        drop(npk_core_dalloc(key_raw));
+    } else {
+        // Still need a null terminator for empty strings
+        key_data_ptr = node + size;
+        drop(npk_mem_write_byte(key_data_ptr, 0i64, 0i64));
     }
     
     drop(npk_mem_write_int64(node, 0i64, key_data_ptr));
@@ -88,6 +96,7 @@ pub func:sl_node_free = NIL(int64:node) {
 pub func:sl_node_key = string(int64:node) {
     int64:key_ptr = npk_mem_read_int64(node, 0i64);
     int64:key_len = npk_mem_read_int64(node, 8i64);
+    // drop(libc_printf("sl_node_key: node=%ld key_ptr=%ld key_len=%ld\n", node, key_ptr, key_len));
     if (key_ptr == 0i64 || key_len == 0i64) { pass(""); }
     pass(npk_mem_read_string(key_ptr, key_len));
 };

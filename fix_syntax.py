@@ -1,25 +1,20 @@
-import os, glob
+import re
+with open("src/network/controllers.npk", "r") as f:
+    text = f.read()
 
-files = glob.glob("src/vector/*.npk")
-for f in files:
-    with open(f, 'r') as fp:
-        code = fp.read()
-    
-    # Fix pub const NAME:int64 to pub fixed int64:NAME
-    import re
-    code = re.sub(r'pub const ([A-Z0-9_]+):(int64|int32|float32|float64)\s*=', r'pub fixed \2:\1 =', code)
-    code = re.sub(r'pub const ([A-Z0-9_]+): ([int64|int32|float32|float64]+)\s*=', r'pub fixed \2:\1 =', code)
-    
-    # Also clean up ?! that I missed
-    code = code.replace("?! 0i64;", ";")
-    code = code.replace("?! 0i32;", ";")
-    code = code.replace("?! 0.0f64;", ";")
-    code = code.replace("?! 0.0f32;", ";")
-    code = code.replace("?! -1i32;", ";")
-    code = code.replace("?! -1i64;", ";")
-    code = code.replace("?! -1.0f32;", ";")
-    
-    with open(f, 'w') as fp:
-        fp.write(code)
+replacements = {
+    '"{"error":"Expected object"}"': '"{\\"error\\":\\"Expected object\\"}"',
+    '"{"error":"Database capacity reached"}"': '"{\\"error\\":\\"Database capacity reached\\"}"',
+    '"{"status": "ok", "results": []}"': '"{\\"status\\": \\"ok\\", \\"results\\": []}"',
+    '"{"status":"ok"}"': '"{\\"status\\":\\"ok\\"}"',
+    '"{"error":"Missing query_vector"}"': '"{\\"error\\":\\"Missing query_vector\\"}"'
+}
+for k, v in replacements.items():
+    text = text.replace(k, v)
+with open("src/network/controllers.npk", "w") as f:
+    f.write(text)
 
-print("Done")
+with open("src/query/evaluator.npk", "r") as f:
+    text2 = f.read()
+# Let's see if astack requires @
+# In the original audit, was it @apush or apush?

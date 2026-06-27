@@ -1,0 +1,8 @@
+extern "C" {
+    func:_exit = void(int32:code);
+}
+
+pub func:main = int32(int32:argc, int64:argv) {
+    _exit(1i32);
+    pass(0i32);
+};

@@ -62,11 +62,19 @@ func:heap_less = int64(int64:array_ptr, int64:i, int64:j) {
     int64:j_idx = npk_mem_read_int64(array_ptr, j_offset);
     int64:j_rec = npk_mem_read_int64(array_ptr, j_offset + 8i64);
     
-    string:i_key = sst_rec_key(i_rec) ? "";
-    string:j_key = sst_rec_key(j_rec) ? "";
-    
-    if (i_key < j_key) { pass(1i64); }
-    if (i_key > j_key) { pass(0i64); }
+    int64:i_k_ptr = npk_mem_read_int64(i_rec, 0i64);
+    int64:i_k_len = npk_mem_read_int64(i_rec, 8i64);
+    int64:j_k_ptr = npk_mem_read_int64(j_rec, 0i64);
+    int64:j_k_len = npk_mem_read_int64(j_rec, 8i64);
+
+    int64:min_len = i_k_len;
+    if (j_k_len < min_len) { min_len = j_k_len; }
+
+    int64:cmp = npk_mem_compare(i_k_ptr, j_k_ptr, min_len);
+    if (cmp < 0i64) { pass(1i64); }
+    if (cmp > 0i64) { pass(0i64); }
+    if (i_k_len < j_k_len) { pass(1i64); }
+    if (i_k_len > j_k_len) { pass(0i64); }
     
     if (i_idx > j_idx) { pass(1i64); }
     pass(0i64);

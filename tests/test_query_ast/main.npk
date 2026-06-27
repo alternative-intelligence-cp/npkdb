@@ -23,8 +23,7 @@ pub func:failsafe = int32(tbb32:err) {
 
 func:make_json_str = int64(string:s) {
     int64:len = string_length(s);
-    int64:data = npk_core_alloc(len + 1i64);
-    drop(npk_mem_write_string(data, s));
+    int64:data = string_to_cstr(s);
     int64:obj = npk_core_alloc(16i64);
     drop(npk_mem_write_int32(obj, 0i64, @cast_unchecked<int32>(len)));
     drop(npk_mem_write_int64(obj, 8i64, data));
@@ -41,10 +40,10 @@ func:make_json_str_val = NpkJsonVal(string:s) {
 
 // Extremely simple AST evaluator for tests
 func:eval_ast = bool(int64:node_ptr, int64:doc_ptr) {
-    int64:op = npk_mem_read_byte@cast_unchecked<int64>(node_ptr, 0i64);
+    int64:op = @cast_unchecked<int64>(npk_mem_read_byte(node_ptr, 0i64));
     
     if (op == AST_OP_AND) {
-        int64:count = npk_mem_read_int32@cast_unchecked<int64>(node_ptr, 32i64);
+        int64:count = @cast_unchecked<int64>(npk_mem_read_int32(node_ptr, 32i64));
         int64:children = npk_mem_read_int64(node_ptr, 40i64);
         int64:i = 0i64;
         while (i < count) {
@@ -57,7 +56,7 @@ func:eval_ast = bool(int64:node_ptr, int64:doc_ptr) {
     }
     
     if (op == AST_OP_OR) {
-        int64:count = npk_mem_read_int32@cast_unchecked<int64>(node_ptr, 32i64);
+        int64:count = @cast_unchecked<int64>(npk_mem_read_int32(node_ptr, 32i64));
         int64:children = npk_mem_read_int64(node_ptr, 40i64);
         int64:i = 0i64;
         while (i < count) {
@@ -71,7 +70,7 @@ func:eval_ast = bool(int64:node_ptr, int64:doc_ptr) {
     
     int64:path = npk_mem_read_int64(node_ptr, 8i64);
     NpkJsonVal:target = NpkJsonVal {
-        type: npk_mem_read_byte@cast_unchecked<int8>(node_ptr, 16i64),
+        type: @cast_unchecked<int8>(npk_mem_read_byte(node_ptr, 16i64)),
         payload: npk_mem_read_int64(node_ptr, 24i64)
     };
     
@@ -87,8 +86,8 @@ func:eval_ast = bool(int64:node_ptr, int64:doc_ptr) {
             pass(actual.payload == target.payload);
         }
         if (actual.type == JSON_STR) {
-            int64:a_len = npk_mem_read_int32@cast_unchecked<int64>(actual.payload, 0i64);
-            int64:t_len = npk_mem_read_int32@cast_unchecked<int64>(target.payload, 0i64);
+            int64:a_len = @cast_unchecked<int64>(npk_mem_read_int32(actual.payload, 0i64));
+            int64:t_len = @cast_unchecked<int64>(npk_mem_read_int32(target.payload, 0i64));
             if (a_len != t_len) { pass(false); }
             int64:a_data = npk_mem_read_int64(actual.payload, 8i64);
             int64:t_data = npk_mem_read_int64(target.payload, 8i64);
@@ -119,10 +118,10 @@ func:main = int32(int32:argc, wild any->:argv) {
     int64:gt_keys = npk_core_alloc(8i64);
     int64:gt_vals = npk_core_alloc(8i64);
     int64:gt_key_ptr = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(gt_key_ptr, 0i64, JSON_STR ));
+    drop(npk_mem_write_byte(gt_key_ptr, 0i64, @cast_unchecked<int64>(JSON_STR )));
     drop(npk_mem_write_int64(gt_key_ptr, 8i64, make_json_str("$gt")));
     int64:gt_val_ptr = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(gt_val_ptr, 0i64, JSON_NUM_I64 ));
+    drop(npk_mem_write_byte(gt_val_ptr, 0i64, @cast_unchecked<int64>(JSON_NUM_I64 )));
     drop(npk_mem_write_int64(gt_val_ptr, 8i64, 2020i64));
     drop(npk_mem_write_int64(gt_keys, 0i64, gt_key_ptr));
     drop(npk_mem_write_int64(gt_vals, 0i64, gt_val_ptr));
@@ -135,10 +134,10 @@ func:main = int32(int32:argc, wild any->:argv) {
     int64:y_keys = npk_core_alloc(8i64);
     int64:y_vals = npk_core_alloc(8i64);
     int64:y_key_ptr = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(y_key_ptr, 0i64, JSON_STR ));
+    drop(npk_mem_write_byte(y_key_ptr, 0i64, @cast_unchecked<int64>(JSON_STR )));
     drop(npk_mem_write_int64(y_key_ptr, 8i64, make_json_str("year")));
     int64:y_val_ptr = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(y_val_ptr, 0i64, JSON_OBJ ));
+    drop(npk_mem_write_byte(y_val_ptr, 0i64, @cast_unchecked<int64>(JSON_OBJ )));
     drop(npk_mem_write_int64(y_val_ptr, 8i64, gt_obj));
     drop(npk_mem_write_int64(y_keys, 0i64, y_key_ptr));
     drop(npk_mem_write_int64(y_vals, 0i64, y_val_ptr));
@@ -151,10 +150,10 @@ func:main = int32(int32:argc, wild any->:argv) {
     int64:eq_keys = npk_core_alloc(8i64);
     int64:eq_vals = npk_core_alloc(8i64);
     int64:eq_key_ptr = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(eq_key_ptr, 0i64, JSON_STR ));
+    drop(npk_mem_write_byte(eq_key_ptr, 0i64, @cast_unchecked<int64>(JSON_STR )));
     drop(npk_mem_write_int64(eq_key_ptr, 8i64, make_json_str("$eq")));
     int64:eq_val_ptr = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(eq_val_ptr, 0i64, JSON_STR ));
+    drop(npk_mem_write_byte(eq_val_ptr, 0i64, @cast_unchecked<int64>(JSON_STR )));
     drop(npk_mem_write_int64(eq_val_ptr, 8i64, make_json_str("sci-fi")));
     drop(npk_mem_write_int64(eq_keys, 0i64, eq_key_ptr));
     drop(npk_mem_write_int64(eq_vals, 0i64, eq_val_ptr));
@@ -167,10 +166,10 @@ func:main = int32(int32:argc, wild any->:argv) {
     int64:g_keys = npk_core_alloc(8i64);
     int64:g_vals = npk_core_alloc(8i64);
     int64:g_key_ptr = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(g_key_ptr, 0i64, JSON_STR ));
+    drop(npk_mem_write_byte(g_key_ptr, 0i64, @cast_unchecked<int64>(JSON_STR )));
     drop(npk_mem_write_int64(g_key_ptr, 8i64, make_json_str("genre")));
     int64:g_val_ptr = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(g_val_ptr, 0i64, JSON_OBJ ));
+    drop(npk_mem_write_byte(g_val_ptr, 0i64, @cast_unchecked<int64>(JSON_OBJ )));
     drop(npk_mem_write_int64(g_val_ptr, 8i64, eq_obj));
     drop(npk_mem_write_int64(g_keys, 0i64, g_key_ptr));
     drop(npk_mem_write_int64(g_vals, 0i64, g_val_ptr));
@@ -182,10 +181,10 @@ func:main = int32(int32:argc, wild any->:argv) {
     int64:arr = npk_core_alloc(16i64);
     int64:arr_handles = npk_core_alloc(16i64);
     int64:y_ptr = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(y_ptr, 0i64, JSON_OBJ ));
+    drop(npk_mem_write_byte(y_ptr, 0i64, @cast_unchecked<int64>(JSON_OBJ )));
     drop(npk_mem_write_int64(y_ptr, 8i64, y_obj));
     int64:g_ptr = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(g_ptr, 0i64, JSON_OBJ ));
+    drop(npk_mem_write_byte(g_ptr, 0i64, @cast_unchecked<int64>(JSON_OBJ )));
     drop(npk_mem_write_int64(g_ptr, 8i64, g_obj));
     drop(npk_mem_write_int64(arr_handles, 0i64, y_ptr));
     drop(npk_mem_write_int64(arr_handles, 8i64, g_ptr));
@@ -197,10 +196,10 @@ func:main = int32(int32:argc, wild any->:argv) {
     int64:root_keys = npk_core_alloc(8i64);
     int64:root_vals = npk_core_alloc(8i64);
     int64:root_key_ptr = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(root_key_ptr, 0i64, JSON_STR ));
+    drop(npk_mem_write_byte(root_key_ptr, 0i64, @cast_unchecked<int64>(JSON_STR )));
     drop(npk_mem_write_int64(root_key_ptr, 8i64, make_json_str("$and")));
     int64:root_val_ptr = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(root_val_ptr, 0i64, JSON_ARR ));
+    drop(npk_mem_write_byte(root_val_ptr, 0i64, @cast_unchecked<int64>(JSON_ARR )));
     drop(npk_mem_write_int64(root_val_ptr, 8i64, arr));
     drop(npk_mem_write_int64(root_keys, 0i64, root_key_ptr));
     drop(npk_mem_write_int64(root_vals, 0i64, root_val_ptr));
@@ -215,14 +214,14 @@ func:main = int32(int32:argc, wild any->:argv) {
     
     // Parse AST
     int64:arena = raw ast_arena_init(4096i64);
-    int64:ast_root = raw parse_filter(arena, @cast_unchecked<int64>(@query));
+    int64:ast_root = raw parse_filter(arena, @cast_unchecked<int64>(@query), 1i32);
     
     if (ast_root == 0i64) {
         println("Failed to parse filter!");
         exit(1i32);
     }
     
-    int8:root_op = npk_mem_read_byte@cast_unchecked<int8>(ast_root, 0i64);
+    int8:root_op = @cast_unchecked<int8>(npk_mem_read_byte(ast_root, 0i64));
     if (root_op != AST_OP_AND) {
         println("Expected $and root node");
         exit(2i32);
@@ -236,17 +235,17 @@ func:main = int32(int32:argc, wild any->:argv) {
     int64:doc_vals = npk_core_alloc(16i64);
     
     int64:dk1 = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(dk1, 0i64, JSON_STR ));
+    drop(npk_mem_write_byte(dk1, 0i64, @cast_unchecked<int64>(JSON_STR )));
     drop(npk_mem_write_int64(dk1, 8i64, make_json_str("year")));
     int64:dv1 = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(dv1, 0i64, JSON_NUM_I64 ));
+    drop(npk_mem_write_byte(dv1, 0i64, @cast_unchecked<int64>(JSON_NUM_I64 )));
     drop(npk_mem_write_int64(dv1, 8i64, 2024i64));
     
     int64:dk2 = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(dk2, 0i64, JSON_STR ));
+    drop(npk_mem_write_byte(dk2, 0i64, @cast_unchecked<int64>(JSON_STR )));
     drop(npk_mem_write_int64(dk2, 8i64, make_json_str("genre")));
     int64:dv2 = npk_core_alloc(16i64);
-    drop(npk_mem_write_byte@cast_unchecked<int64>(dv2, 0i64, JSON_STR ));
+    drop(npk_mem_write_byte(dv2, 0i64, @cast_unchecked<int64>(JSON_STR )));
     drop(npk_mem_write_int64(dv2, 8i64, make_json_str("sci-fi")));
     
     drop(npk_mem_write_int64(doc_keys, 0i64, dk1));

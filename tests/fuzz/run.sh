@@ -12,7 +12,7 @@ mkdir -p build
 NPKC="/home/randy/Workspace/REPOS/nitpick/build/npkc"
 
 echo "Compiling harness_json..."
-$NPKC tests/fuzz/harness_json.npk -o build/fuzz_json_bin
+$NPKC fuzz/harness_json.npk -o build/fuzz_json_bin
 
 echo "Running fuzzer..."
 python3 scripts/fuzz_json.py

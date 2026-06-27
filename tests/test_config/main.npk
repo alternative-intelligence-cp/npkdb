@@ -1,5 +1,5 @@
 // tests/test_config/main.npk
-use "sys.npk".*;
+use "../../src/storage/sys.npk".*;
 use "../../src/util/config.npk".*;
 use "../../src/util/mem_primitives.npk".*;
 
@@ -19,7 +19,7 @@ pub func:failsafe = int32(tbb32:code) {
 
 pub func:main = int32() {
     println("Testing Config Init...");
-    int32:init_res = config_init("tests/test_config/npkdb.toml");
+    int32:init_res = raw config_init("tests/test_config/npkdb.toml");
     if (init_res != 0i32) {
         println("FAILED to initialize config");
         exit 1i32;
@@ -64,7 +64,7 @@ pub func:main = int32() {
     // Test defaults with missing file
     drop(config_shutdown());
     
-    int32:init_res_2 = config_init("nonexistent.toml");
+    int32:init_res_2 = raw config_init("nonexistent.toml");
     if (init_res_2 == 0i32) {
         println("FAILED: should return error for missing file");
         exit 8i32;

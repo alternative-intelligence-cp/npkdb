@@ -29,64 +29,66 @@ func:main = int32() {
 
     // Setup helper
     int64:v_ptr = npk_core_alloc(10i64);
-    drop(npk_mem_write_string(v_ptr, "value"));
+    int64:c_v = string_to_cstr("val");
+    drop(npk_mem_copy(v_ptr, c_v, 3i64));
+    drop(npk_core_dalloc(c_v));
 
     // T01
     drop(sys(UNLINK, path));
-    int64:fd = wal_open(path) ?! -1i64;
-    drop(wal_append_put(fd, "k1", v_ptr, 5i64, wal_next_seq() ?! 0i64));
-    drop(wal_append_put(fd, "k2", v_ptr, 5i64, wal_next_seq() ?! 0i64));
-    drop(wal_append_put(fd, "k3", v_ptr, 5i64, wal_next_seq() ?! 0i64));
-    drop(wal_close(fd));
+    int64:fd = wal_open(path) ? -1i64;
+    drop(wal_append_put(fd, "k1", v_ptr, 5i64, wal_next_seq() ? 0i64));
+    drop(wal_append_put(fd, "k2", v_ptr, 5i64, wal_next_seq() ? 0i64));
+    drop(wal_append_put(fd, "k3", v_ptr, 5i64, wal_next_seq() ? 0i64));
+    drop(wal_close(fd, 0i64));
     
-    int64:rep1 = wal_replay(path, 0i64) ?! -1i64;
+    int64:rep1 = wal_replay(path, 0i64) ? -1i64;
     drop(check(rep1 == 3i64, "T01 Write 3 PUT records, replay count = 3"));
 
     // T02
     drop(sys(UNLINK, path));
-    fd = wal_open(path) ?! -1i64;
-    drop(wal_append_put(fd, "k1", v_ptr, 5i64, wal_next_seq() ?! 0i64));
-    drop(wal_append_put(fd, "k2", v_ptr, 5i64, wal_next_seq() ?! 0i64));
-    drop(wal_append_delete(fd, "k1", wal_next_seq() ?! 0i64));
-    drop(wal_close(fd));
+    fd = wal_open(path) ? -1i64;
+    drop(wal_append_put(fd, "k1", v_ptr, 5i64, wal_next_seq() ? 0i64));
+    drop(wal_append_put(fd, "k2", v_ptr, 5i64, wal_next_seq() ? 0i64));
+    drop(wal_append_delete(fd, "k1", wal_next_seq() ? 0i64));
+    drop(wal_close(fd, 0i64));
 
-    int64:rep2 = wal_replay(path, 0i64) ?! -1i64;
+    int64:rep2 = wal_replay(path, 0i64) ? -1i64;
     drop(check(rep2 == 3i64, "T02 Write 2 PUTs + 1 DELETE, replay count = 3"));
 
     // T03
     drop(sys(UNLINK, path));
-    fd = wal_open(path) ?! -1i64;
-    drop(wal_append_put(fd, "k1", v_ptr, 5i64, wal_next_seq() ?! 0i64));
-    drop(wal_append_checkpoint(fd, wal_next_seq() ?! 0i64));
-    drop(wal_append_put(fd, "k2", v_ptr, 5i64, wal_next_seq() ?! 0i64));
-    drop(wal_close(fd));
+    fd = wal_open(path) ? -1i64;
+    drop(wal_append_put(fd, "k1", v_ptr, 5i64, wal_next_seq() ? 0i64));
+    drop(wal_append_checkpoint(fd, wal_next_seq() ? 0i64));
+    drop(wal_append_put(fd, "k2", v_ptr, 5i64, wal_next_seq() ? 0i64));
+    drop(wal_close(fd, 0i64));
 
-    int64:rep3 = wal_replay(path, 0i64) ?! -1i64;
+    int64:rep3 = wal_replay(path, 0i64) ? -1i64;
     drop(check(rep3 == 3i64, "T03 Write 1 PUT + 1 CHECKPOINT + 1 PUT, replay count = 3"));
 
     // T04, T05, T06, T07
-    int64:rfd = wal_open_read(path) ?! -1i64;
-    int64:rec1 = wal_read_next(rfd) ?! -1i64;
-    int64:rec2 = wal_read_next(rfd) ?! -1i64;
-    int64:rec3 = wal_read_next(rfd) ?! -1i64;
+    int64:rfd = wal_open_read(path) ? -1i64;
+    int64:rec1 = wal_read_next(rfd) ? -1i64;
+    int64:rec2 = wal_read_next(rfd) ? -1i64;
+    int64:rec3 = wal_read_next(rfd) ? -1i64;
 
-    int32:rt1 = wal_record_type(rec1) ?! -1i32;
-    int32:rt2 = wal_record_type(rec2) ?! -1i32;
-    int32:rt3 = wal_record_type(rec3) ?! -1i32;
+    int32:rt1 = wal_record_type(rec1) ? -1i32;
+    int32:rt2 = wal_record_type(rec2) ? -1i32;
+    int32:rt3 = wal_record_type(rec3) ? -1i32;
 
     drop(check(rt1 == WAL_RECORD_PUT && rt2 == WAL_RECORD_CHECKPOINT && rt3 == WAL_RECORD_PUT, "T04 Replay record types match"));
     
-    string:rk1 = wal_record_key(rec1) ?! "";
-    string:rk3 = wal_record_key(rec3) ?! "";
+    string:rk1 = wal_record_key(rec1) ? "";
+    string:rk3 = wal_record_key(rec3) ? "";
     drop(check(rk1 == "k1" && rk3 == "k2", "T05 Replay record keys match"));
 
-    int64:vp = wal_record_value_ptr(rec1) ?! 0i64;
+    int64:vp = wal_record_value_ptr(rec1) ? 0i64;
     string:rv1 = npk_mem_read_string(vp, 5i64);
-    drop(check(rv1 == "value", "T06 Replay record values match"));
+    drop(check(rv1 == "val", "T06 Replay record values match"));
 
-    int32:s1 = wal_record_seq(rec1) ?! -1i32;
-    int32:s2 = wal_record_seq(rec2) ?! -1i32;
-    int32:s3 = wal_record_seq(rec3) ?! -1i32;
+    int32:s1 = wal_record_seq(rec1) ? -1i32;
+    int32:s2 = wal_record_seq(rec2) ? -1i32;
+    int32:s3 = wal_record_seq(rec3) ? -1i32;
     drop(check(s2 > s1 && s3 > s2, "T07 Replay sequence numbers are monotonically increasing"));
 
     drop(npk_core_dalloc(rec1));
@@ -96,44 +98,44 @@ func:main = int32() {
 
     // T08
     drop(sys(UNLINK, path));
-    fd = wal_open(path) ?! -1i64;
-    drop(wal_close(fd));
-    int64:rep8 = wal_replay(path, 0i64) ?! -1i64;
+    fd = wal_open(path) ? -1i64;
+    drop(wal_close(fd, 0i64));
+    int64:rep8 = wal_replay(path, 0i64) ? -1i64;
     drop(check(rep8 == 0i64, "T08 Empty WAL file -> replay returns 0"));
 
     // T09
     drop(sys(UNLINK, path));
-    int64:rep9 = wal_replay(path, 0i64) ?! -1i64;
+    int64:rep9 = wal_replay(path, 0i64) ? -1i64;
     drop(check(rep9 == 0i64, "T09 Non-existent WAL file -> replay returns 0"));
 
     // T10 Corrupt WAL (truncate mid-record)
-    fd = wal_open(path) ?! -1i64;
-    drop(wal_append_put(fd, "k1", v_ptr, 5i64, wal_next_seq() ?! 0i64));
-    drop(wal_append_put(fd, "k2", v_ptr, 5i64, wal_next_seq() ?! 0i64));
-    int64:bw3 = wal_append_put(fd, "k3", v_ptr, 5i64, wal_next_seq() ?! 0i64) ?! 0i64;
-    drop(wal_close(fd));
+    fd = wal_open(path) ? -1i64;
+    drop(wal_append_put(fd, "k1", v_ptr, 5i64, wal_next_seq() ? 0i64));
+    drop(wal_append_put(fd, "k2", v_ptr, 5i64, wal_next_seq() ? 0i64));
+    drop(wal_append_put(fd, "k3", v_ptr, 5i64, wal_next_seq() ? 0i64) ? 0i64);
+    drop(wal_close(fd, 0i64));
     // Size should be bw1+bw2+bw3. To truncate last 5 bytes, open read, get size, open write truncate to size-5.
     // Nitpick sys(TRUNCATE) ? No sys truncate. Wait, we can just read all bytes except last 5, and write them back.
-    int64:t10_fd = sys(OPEN, path, 0i64, 0i64) ?! -1i64;
+    int64:t10_fd = sys(OPEN, path, 0i64, 0i64) ? -1i64;
     int64:t10_buf = npk_core_alloc(1000i64);
-    int64:t10_len = sys(READ, t10_fd, t10_buf, 1000i64) ?! 0i64;
+    int64:t10_len = sys(READ, t10_fd, t10_buf, 1000i64) ? 0i64;
     drop(sys(CLOSE, t10_fd));
     
     // rewrite
-    t10_fd = sys(OPEN, path, 513i64, 420i64) ?! -1i64; // O_TRUNC | O_WRONLY
+    t10_fd = sys(OPEN, path, 513i64, 420i64) ? -1i64; // O_TRUNC | O_WRONLY
     drop(sys(WRITE, t10_fd, t10_buf, t10_len - 5i64));
     drop(sys(CLOSE, t10_fd));
     
-    int64:rep10 = wal_replay(path, 0i64) ?! -1i64;
+    int64:rep10 = wal_replay(path, 0i64) ? -1i64;
     drop(check(rep10 == 2i64, "T10 Corrupt WAL (truncate mid-record) -> replay stops"));
 
     // T11 Corrupt WAL (flip CRC)
-    t10_fd = sys(OPEN, path, 513i64, 420i64) ?! -1i64; // TRUNC
+    t10_fd = sys(OPEN, path, 513i64, 420i64) ? -1i64; // TRUNC
     drop(sys(WRITE, t10_fd, t10_buf, t10_len)); // Write full back
     drop(sys(CLOSE, t10_fd));
     
     // read back, flip crc of first record
-    t10_fd = sys(OPEN, path, 0i64, 0i64) ?! -1i64;
+    t10_fd = sys(OPEN, path, 0i64, 0i64) ? -1i64;
     drop(sys(READ, t10_fd, t10_buf, t10_len));
     drop(sys(CLOSE, t10_fd));
     
@@ -141,26 +143,26 @@ func:main = int32() {
     int64:b0 = npk_mem_read_byte(t10_buf, 0i64);
     drop(npk_mem_write_byte(t10_buf, 0i64, b0 ^ 255i64));
     
-    t10_fd = sys(OPEN, path, 513i64, 420i64) ?! -1i64;
+    t10_fd = sys(OPEN, path, 513i64, 420i64) ? -1i64;
     drop(sys(WRITE, t10_fd, t10_buf, t10_len));
     drop(sys(CLOSE, t10_fd));
     
-    int64:rep11 = wal_replay(path, 0i64) ?! -1i64;
+    int64:rep11 = wal_replay(path, 0i64) ? -1i64;
     drop(check(rep11 == 0i64, "T11 Corrupt WAL (flip CRC) -> replay detects and stops"));
 
     drop(npk_core_dalloc(t10_buf));
 
     // T12
     drop(wal_truncate(path));
-    int64:t12_fd = sys(OPEN, path, 0i64, 0i64) ?! -1i64;
+    int64:t12_fd = sys(OPEN, path, 0i64, 0i64) ? -1i64;
     int64:t12_buf = npk_core_alloc(10i64);
-    int64:t12_read = sys(READ, t12_fd, t12_buf, 10i64) ?! -1i64;
+    int64:t12_read = sys(READ, t12_fd, t12_buf, 10i64) ? -1i64;
     drop(sys(CLOSE, t12_fd));
     drop(check(t12_read == 0i64, "T12 wal_truncate clears the file"));
     drop(npk_core_dalloc(t12_buf));
 
     // T13
-    int64:rep13 = wal_replay(path, 0i64) ?! -1i64;
+    int64:rep13 = wal_replay(path, 0i64) ? -1i64;
     drop(check(rep13 == 0i64, "T13 Replay after truncate -> 0 records"));
     
     drop(sys(UNLINK, path));

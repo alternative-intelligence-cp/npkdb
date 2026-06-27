@@ -7,27 +7,23 @@ use "hnsw_node.npk".*;
 use "hnsw_arena.npk".*;
 
 pub func:filter_eval = bool(
-        int64:filter_fn_ptr,
+        (bool)(int64):filter_fn,
         int64:vec_id,
         int64:num_vectors)
-    requires filter_fn_ptr != 0i64
     requires vec_id >= 0i64
     requires vec_id < num_vectors
     requires num_vectors > 0i64
 {
-    prove vec_id >= 0i64;
-    prove vec_id < num_vectors;
-    bool:result = (filter_fn_ptr => (bool)(int64))(vec_id);
+    bool:result = filter_fn(vec_id);
     pass(result);
 };
 
 pub func:hnsw_traversal_filter_check = bool(
         int64:arena,
         Handle<HnswNode>:candidate,
-        int64:filter_fn_ptr,
+        (bool)(int64):filter_fn,
         int64:num_vectors)
     requires arena != 0i64
-    requires filter_fn_ptr != 0i64
     requires num_vectors > 0i64
 {
     int64:node_ptr = hnsw_arena_get_node(arena, candidate.slot, candidate.generation) ? 0i64;
@@ -38,10 +34,6 @@ pub func:hnsw_traversal_filter_check = bool(
     if (vec_id < 0i64 || vec_id >= num_vectors) {
         exit 1i32; // Assuming fail doesn't exist, we use exit
     }
-    prove vec_id >= 0i64;
-    prove vec_id < num_vectors;
 
-    pass(filter_eval(filter_fn_ptr, vec_id, num_vectors) ? false);
+    pass(filter_eval(filter_fn, vec_id, num_vectors) ? false);
 };
-
-

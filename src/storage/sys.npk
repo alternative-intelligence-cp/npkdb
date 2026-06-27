@@ -1,0 +1,40 @@
+// src/storage/sys.npk — Direct I/O Syscall Bindings
+
+// Typed wrappers around the core syscalls needed for WAL operations
+
+use "../../libn/src/syscall/syscall_numbers.npk".*;
+
+pub func:sys_open = int64(int64:path_cstr, int64:flags, int64:mode) {
+    int64:res = raw sys(OPEN, path_cstr, flags, mode);
+    pass(res);
+};
+
+pub func:sys_close = int32(int64:fd) {
+    int64:res = raw sys(CLOSE, fd);
+    pass(@cast_unchecked<int32>(res));
+};
+
+pub func:sys_write = int64(int64:fd, int64:buf, int64:len) {
+    int64:res = raw sys(WRITE, fd, buf, len);
+    pass(res);
+};
+
+pub func:sys_read = int64(int64:fd, int64:buf, int64:len) {
+    int64:res = raw sys(READ, fd, buf, len);
+    pass(res);
+};
+
+pub func:sys_fsync = int64(int64:fd) {
+    int64:res = raw sys(FSYNC, fd);
+    pass(res);
+};
+
+pub func:sys_unlink = int64(int64:c_path) {
+    int64:res = raw sys(UNLINK, c_path);
+    pass(res);
+};
+
+pub func:sys_clock_gettime = int64(int64:clk_id, int64:timespec_ptr) {
+    int64:res = raw sys(CLOCK_GETTIME, clk_id, timespec_ptr);
+    pass(res);
+};

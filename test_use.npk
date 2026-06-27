@@ -1,0 +1,2 @@
+use "mock_server.npk";
+func:main = int32() { pass(0i32); };

@@ -1,28 +1,24 @@
-use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
+use "../../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
 use "controllers_mock.npk".*;
 use "router_mock.npk".*;
 
-extern "C" {
-    func:_exit = void(int32:code);
-}
-pub func:mock_proc_exit = NIL(int32:code) {
-    _exit(code);
-    pass(NIL);
-};
+use "mock_send_typed.npk".*;
 
-pub func:send_typed = int64(int64:fd, int64:code, string:ct, string:body) {
-    println("Mock Send - FD: " + string_from_int(fd) + " Code: " + string_from_int(code) + " Body: " + body);
-    if (fd == 1i64) {
-        if (code != 400i64) { fail(11i32); }
-    } else if (fd == 2i64) {
-        if (code != 400i64) { fail(21i32); }
-    }
-    pass(1i64);
-};
+extern "C" {
+    func:npk_gc_init = int32(int64:nursery_size, int64:heap_size);
+}
+
+use "../../src/engine/catalog.npk".*;
+use "../../src/concurrency/ebr.npk".*;
+use "../../src/index/art.npk".*;
 
 func:main = int32(int32:argc, wild any->:argv) {
+    drop(npk_gc_init(10485760i64, 104857600i64));
+    drop(ebr_init());
+    drop(art_init());
+    drop(catalog_init());
     // 1. Test POST /collections with malformed JSON
-    Request:r1 = Request{
+    ServerRequest:r1 = ServerRequest{
         method: "POST",
         path: "/collections",
         query: "",
@@ -30,26 +26,27 @@ func:main = int32(int32:argc, wild any->:argv) {
         body: "{ malformed }",
         raw_req: "",
         headers_raw: "",
-        headers: 0i64,
-        query_params: 0i64,
-        fd: 1i64
+        body_ptr: string_to_cstr("{ malformed }"),
+        body_len: 13i64,
+        buf_addr: 0i64
     };
-    drop(route_request(1i64, r1));
+    drop(route_request(1i64, r1, 0i64));
     
+    println("After route 1");
     // 2. Test POST /search with malformed JSON
-    Request:r2 = Request{
+    ServerRequest:r2 = ServerRequest{
         method: "POST",
-        path: "/search",
+        path: "/collections/dummy_col/search",
         query: "",
         version: "HTTP/1.1",
         body: "[1, 2, 3",
         raw_req: "",
         headers_raw: "",
-        headers: 0i64,
-        query_params: 0i64,
-        fd: 1i64
+        body_ptr: string_to_cstr("[1, 2, 3"),
+        body_len: 8i64,
+        buf_addr: 0i64
     };
-    drop(route_request(2i64, r2));
+    drop(route_request(2i64, r2, 0i64));
     
     println("HTTP Errors test passed!");
     exit(0i32);

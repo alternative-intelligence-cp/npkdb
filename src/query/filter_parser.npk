@@ -65,8 +65,17 @@ pub func:ast_arena_destroy = NIL(int64:arena_ptr) {
 };
 
 func:streq = bool(int64:a_ptr, string:b) {
-    string:a_str = npk_mem_read_string(a_ptr, 1024i64);
-    pass(a_str == b);
+    int64:b_len = string_length(b);
+    int64:b_data = string_to_cstr(b);
+    
+    int64:res = npk_mem_compare(a_ptr, b_data, b_len);
+    drop(npk_core_dalloc(b_data));
+    
+    if (res != 0i64) { pass(false); }
+    
+    int8:ca_end = @cast_unchecked<int8>(npk_mem_read_byte(a_ptr, b_len));
+    if (ca_end != 0i8) { pass(false); }
+    pass(true);
 };
 
 pub Rules<int32>:ValidAstackDepth = { $ >= 1, $ <= 128 };
@@ -90,9 +99,9 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
     int64:key0_ptr = npk_mem_read_int64(keys_ptr, 0i64);
     int64:val0_ptr = npk_mem_read_int64(vals_ptr, 0i64);
     
-    NpkJsonVal:k0_elem = NpkJsonVal {
-        type: @cast_unchecked<int8>(npk_mem_read_byte(key0_ptr, 0i64)),
-        payload: npk_mem_read_int64(key0_ptr, 8i64)
+        NpkJsonVal:k0_elem = NpkJsonVal {  
+        type: @cast_unchecked<int8>(npk_mem_read_byte(key0_ptr, 0i64)),  
+        payload: npk_mem_read_int64(key0_ptr, 8i64)  
     };
     
     NpkJsonVal:v0_elem = NpkJsonVal {
@@ -101,13 +110,12 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
     };
     
     if (k0_elem.type != JSON_STR) { pass(0i64); }
-    
     int64:k0_str_ptr = npk_mem_read_int64(k0_elem.payload, 8i64);
-    
+    if (k0_str_ptr == 0i64) { pass(0i64); }
+
     int64:node_ptr = raw ast_arena_alloc(arena_ptr, AST_NODE_SIZE);
-    if (node_ptr == 0i64) { fail(@cast_unchecked<tbb32>((ERR_JSON_PARSE_FAIL))); }
-    
-    // Check if it's an operator
+
+    // Check if it's an operator at the top level (like $and, $or)
     if (raw streq(k0_str_ptr, "$and") || raw streq(k0_str_ptr, "$or")) {
         if (raw streq(k0_str_ptr, "$and")) {
             drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_AND)));

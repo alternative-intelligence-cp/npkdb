@@ -24,12 +24,10 @@ pub fixed int64:WP_OFF_LM       = 32i64;
 pub fixed int64:WP_OFF_WORKER   = 40i64; // Contains {channel, thread, ctx} pointer
 pub fixed int64:WP_OFF_SYNC_MODE= 48i64; // 0 = per_write, 1 = group_commit
 pub fixed int64:WP_OFF_LOCK       = 56i64;
-pub fixed int64:WP_STATE_SIZE   = 64i64;
+pub fixed int64:WP_OFF_WAL_STATE  = 64i64;
+pub fixed int64:WP_STATE_SIZE   = 72i64;
 
 extern "nitpick_libc_thread" {
-    func:nitpick_libc_rwlock_create    = int64();
-    func:nitpick_libc_rwlock_wrlock    = int32(int64:handle);
-    func:nitpick_libc_rwlock_unlock    = int32(int64:handle);
 }
 
 
@@ -63,11 +61,13 @@ pub func:wp_init = int64(string:data_dir, string:wal_path, (int64)(int64):worker
     drop(npk_mem_write_int64(wp, WP_OFF_WORKER, worker));
     
     int64:mode = 0i64;
+    int64:wal_state = 0i64;
     if (sync_mode == "group_commit") {
         mode = 1i64;
-        drop(wal_enable_group_commit(wal_fd));
+        wal_state = wal_enable_group_commit(wal_fd) ? 0i64;
     }
     drop(npk_mem_write_int64(wp, WP_OFF_SYNC_MODE, mode));
+    drop(npk_mem_write_int64(wp, WP_OFF_WAL_STATE, wal_state));
     drop(npk_mem_write_int64(wp, WP_OFF_LOCK, nitpick_libc_rwlock_create()));
     
     pass(wp);
@@ -82,6 +82,11 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
     // 1. Check if we need to freeze
     int64:should_flush = mt_should_flush(active_mt) ? 0i64;
     if (should_flush == 1i64) {
+        while (npk_mem_read_int64(wp, WP_OFF_FROZEN) != 0i64) {
+            drop(nitpick_libc_rwlock_unlock(lock));
+            drop(Thread.yield());
+            drop(nitpick_libc_rwlock_wrlock(lock));
+        }
         int64:frozen_mt = npk_mem_read_int64(wp, WP_OFF_FROZEN);
         drop(mt_freeze(active_mt));
         drop(npk_mem_write_int64(wp, WP_OFF_FROZEN, active_mt));
@@ -95,9 +100,6 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
         drop(nitpick_libc_rwlock_unlock(lock));
         
         int64:lm = npk_mem_read_int64(wp, WP_OFF_LM);
-        int64:d_ptr = npk_mem_read_int64(lm, 0i64);
-        string:before_flush = npk_mem_read_string(d_ptr, 11i64);
-        println("d_ptr before flush: " + before_flush);
         int64:flushed_mt = npk_mem_read_int64(wp, WP_OFF_FROZEN);
         drop(flush_memtable(flushed_mt, lm));
         
@@ -128,11 +130,12 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
     int64:w_res = 0i64;
     
     if (sync_mode == 1i64) {
-        w_res = wal_batch_append_put(wal_fd, key, val_ptr, val_len, seq) ? -1i64;
+        int64:wal_state = npk_mem_read_int64(wp, WP_OFF_WAL_STATE);
+        w_res = wal_batch_append_put(wal_state, wal_fd, key, val_ptr, val_len, seq) ? -1i64;
         if (w_res > 0i64) {
-            int64:should = wal_batch_should_flush(wal_fd) ? 0i64;
+            int64:should = wal_batch_should_flush(wal_fd, wal_state) ? 0i64;
             if (should == 1i64) {
-                drop(wal_batch_flush(wal_fd));
+                drop(wal_batch_flush(wal_fd, wal_state));
             }
         }
     } else {
@@ -144,8 +147,15 @@ pub func:wp_put = int64(int64:wp, string:key, int64:val_ptr, int64:val_len) {
         pass(-1i64); // WAL failed
     }
     
-    // 3. Write to Memtable
-    int64:m_res = mt_put(active_mt, key, val_ptr, val_len) ? -1i64;
+    // 3. Write to Memtable — copy value to give the memtable unique ownership.
+    // The skiplist will free val_ptr in sl_node_free; without a copy, reusing
+    // the same pointer for multiple keys causes double-free on memtable destroy.
+    int64:mt_val_ptr = 0i64;
+    if (val_len > 0i64) {
+        mt_val_ptr = npk_core_alloc(val_len);
+        drop(npk_mem_copy(mt_val_ptr, val_ptr, val_len));
+    }
+    int64:m_res = mt_put(active_mt, key, mt_val_ptr, val_len) ? -1i64;
     drop(nitpick_libc_rwlock_unlock(lock));
     pass(m_res);
 };
@@ -161,11 +171,12 @@ pub func:wp_delete = int64(int64:wp, string:key) {
     int64:w_res = 0i64;
     
     if (sync_mode == 1i64) {
-        w_res = wal_batch_append_delete(wal_fd, key, seq) ? -1i64;
+        int64:wal_state = npk_mem_read_int64(wp, WP_OFF_WAL_STATE);
+        w_res = wal_batch_append_delete(wal_state, wal_fd, key, seq) ? -1i64;
         if (w_res > 0i64) {
-            int64:should = wal_batch_should_flush(wal_fd) ? 0i64;
+            int64:should = wal_batch_should_flush(wal_fd, wal_state) ? 0i64;
             if (should == 1i64) {
-                drop(wal_batch_flush(wal_fd));
+                drop(wal_batch_flush(wal_fd, wal_state));
             }
         }
     } else {
@@ -174,7 +185,7 @@ pub func:wp_delete = int64(int64:wp, string:key) {
     
     if (w_res <= 0i64) {
         drop(nitpick_libc_rwlock_unlock(lock));
-        pass(-1i64);
+        pass(-1i64); // WAL failed
     }
     
     int64:m_res = mt_delete(active_mt, key) ? -1i64;
@@ -208,11 +219,12 @@ pub func:wp_shutdown = NIL(int64:wp) {
     if (wp != 0i64) {
         int64:wal_fd = npk_mem_read_int64(wp, WP_OFF_WAL_FD);
         int64:sync_mode = npk_mem_read_int64(wp, WP_OFF_SYNC_MODE);
+        int64:wal_state = npk_mem_read_int64(wp, WP_OFF_WAL_STATE);
         if (sync_mode == 1i64) {
-            drop(wal_batch_flush(wal_fd));
+            drop(wal_batch_flush(wal_fd, wal_state));
         }
         drop(wal_sync(wal_fd));
-        drop(wal_close(wal_fd));
+        drop(wal_close(wal_fd, wal_state));
         
         int64:active_mt = npk_mem_read_int64(wp, WP_OFF_ACTIVE);
         drop(mt_destroy(active_mt));
@@ -225,12 +237,10 @@ pub func:wp_shutdown = NIL(int64:wp) {
             int64:tid = npk_mem_read_int64(worker, 8i64);
             int64:ctx = npk_mem_read_int64(worker, 16i64);
             drop(compaction_signal_shutdown(ch));
-            drop(Thread.sleep_ms(20i64)); // Brief yield for thread to exit
             drop(Thread.join(tid)); // Important to join to ensure clean shutdown
             
             drop(Channel.close(ch));
             drop(Channel.destroy(ch));
-            drop(npk_core_dalloc(ctx));
             drop(npk_core_dalloc(worker));
         }
         
@@ -248,7 +258,8 @@ pub func:wp_flush_wal = NIL(int64:wp) {
     int64:lock = npk_mem_read_int64(wp, WP_OFF_LOCK);
     drop(nitpick_libc_rwlock_wrlock(lock));
     int64:wal_fd = npk_mem_read_int64(wp, WP_OFF_WAL_FD);
-    _?wal_batch_flush(wal_fd);
+    int64:wal_state = npk_mem_read_int64(wp, WP_OFF_WAL_STATE);
+    drop(wal_batch_flush(wal_fd, wal_state));
     drop(nitpick_libc_rwlock_unlock(lock));
     pass(NIL);
 };

@@ -26,9 +26,9 @@ func:main = int32() {
     println("║  Slotted Page — Operations           ║");
     println("╚══════════════════════════════════════╝");
 
-    int64:pg = page_alloc() ?! 0i64;
+    int64:pg = page_alloc() ? 0i64;
     drop(page_init(pg, 100i64));
-    println("TUPLE END IS: " + string_from_int(@cast_unchecked<int64>(page_get_tuple_end(pg) ?! 0i32)));
+    println("TUPLE END IS: " + string_from_int(@cast_unchecked<int64>(page_get_tuple_end(pg) ? 0i32)));
 
     // T01: Insert a 10-byte record
     int64:ptr1 = npk_core_alloc(11i64);
@@ -42,7 +42,7 @@ func:main = int32() {
     drop(npk_mem_write_byte(ptr1, 7i64, 55i64)); // '7'
     drop(npk_mem_write_byte(ptr1, 8i64, 56i64)); // '8'
     drop(npk_mem_write_byte(ptr1, 9i64, 57i64)); // '9'
-    int64:idx1 = page_insert(pg, ptr1, 10i64) ?! -1i64;
+    int64:idx1 = page_insert(pg, ptr1, 10i64) ? -1i64;
     drop(check(idx1 == 0i64, "T01 Insert a 10-byte record into empty page"));
 
     string:out1 = raw page_read_tuple_string(pg, idx1);
@@ -55,21 +55,21 @@ func:main = int32() {
     drop(npk_mem_write_byte(ptr2, 2i64, 76i64)); // 'L'
     drop(npk_mem_write_byte(ptr2, 3i64, 76i64)); // 'L'
     drop(npk_mem_write_byte(ptr2, 4i64, 79i64)); // 'O'
-    int64:idx2 = page_insert(pg, ptr2, 5i64) ?! -1i64;
+    int64:idx2 = page_insert(pg, ptr2, 5i64) ? -1i64;
     drop(check(idx2 == 1i64, "T03 Insert a second record"));
 
-    int32:scnt = page_get_slot_count(pg) ?! 0i32;
+    int32:scnt = page_get_slot_count(pg) ? 0i32;
     drop(check(scnt == 2i32, "T04 Verify slot_count = 2"));
 
-    int64:free_before = page_free_space(pg) ?! 0i64;
+    int64:free_before = page_free_space(pg) ? 0i64;
     drop(check(free_before < 32700i64, "T05 Verify free_space decreased correctly"));
 
     // T06 Delete slot 0
     drop(page_delete(pg, 0i64));
-    int64:alive0 = page_slot_is_alive(pg, 0i64) ?! 1i64;
+    int64:alive0 = page_slot_is_alive(pg, 0i64) ? 1i64;
     drop(check(alive0 == 0i64, "T06 Delete slot 0"));
 
-    int64:alive1 = page_slot_is_alive(pg, 1i64) ?! 0i64;
+    int64:alive1 = page_slot_is_alive(pg, 1i64) ? 0i64;
     drop(check(alive1 == 1i64, "T07 Verify slot_is_alive(1) = 1"));
 
     // T08 Insert after delete
@@ -79,14 +79,14 @@ func:main = int32() {
     drop(npk_mem_write_byte(ptr3, 2i64, 82i64)); // 'R'
     drop(npk_mem_write_byte(ptr3, 3i64, 76i64)); // 'L'
     drop(npk_mem_write_byte(ptr3, 4i64, 68i64)); // 'D'
-    int64:idx3 = page_insert(pg, ptr3, 5i64) ?! -1i64;
+    int64:idx3 = page_insert(pg, ptr3, 5i64) ? -1i64;
     drop(check(idx3 == 2i64, "T08 Insert after delete uses new slot"));
 
     // T09 Defragment
-    int64:reclaimed = page_defragment(pg) ?! 0i64;
+    int64:reclaimed = page_defragment(pg) ? 0i64;
     drop(check(reclaimed > 0i64, "T09 Defragment reclaims dead slot space"));
 
-    int64:live = page_live_count(pg) ?! 0i64;
+    int64:live = page_live_count(pg) ? 0i64;
     drop(check(live == 2i64, "T10 After defragment, live_count = 2"));
 
     // T11 Update in-place (WORLD is now slot 1)
@@ -96,7 +96,7 @@ func:main = int32() {
     drop(npk_mem_write_byte(ptr4, 2i64, 82i64)); // 'R'
     drop(npk_mem_write_byte(ptr4, 3i64, 84i64)); // 'T'
     drop(npk_mem_write_byte(ptr4, 4i64, 72i64)); // 'H'
-    int64:idx4 = page_update(pg, 1i64, ptr4, 5i64) ?! -1i64;
+    int64:idx4 = page_update(pg, 1i64, ptr4, 5i64) ? -1i64;
     drop(check(idx4 == 1i64, "T11 Update record in-place (same size)"));
     
     // T12 Update relocate
@@ -110,7 +110,7 @@ func:main = int32() {
     drop(npk_mem_write_byte(ptr5, 6i64, 85i64)); // 'U'
     drop(npk_mem_write_byte(ptr5, 7i64, 65i64)); // 'A'
     drop(npk_mem_write_byte(ptr5, 8i64, 75i64)); // 'K'
-    int64:idx5 = page_update(pg, 1i64, ptr5, 9i64) ?! -1i64;
+    int64:idx5 = page_update(pg, 1i64, ptr5, 9i64) ? -1i64;
     drop(check(idx5 == 2i64, "T12 Update record with larger data (relocation)"));
 
     // T13-T15
@@ -118,10 +118,10 @@ func:main = int32() {
     Result<int64>:ins_err = page_insert(pg, huge_ptr, 32750i64);
     drop(check(ins_err.is_error, "T13 Fill page until full, verify ERR_PAGE_FULL"));
 
-    int64:is_full = page_is_full(pg, 32750i64) ?! 0i64;
+    int64:is_full = page_is_full(pg, 32750i64) ? 0i64;
     drop(check(is_full == 1i64, "T14 page_is_full returns 1 for oversized record"));
 
-    int64:ub = page_used_bytes(pg) ?! 0i64;
+    int64:ub = page_used_bytes(pg) ? 0i64;
     drop(check(ub == 14i64, "T15 page_used_bytes returns correct total (5 + 9)"));
 
     println("");
