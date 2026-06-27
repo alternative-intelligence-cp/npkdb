@@ -6,9 +6,9 @@ use "../util/mem_primitives.npk".*;
 pub func:art_alloc_node4 = int64()
     ensures result != 0i64 {
     int64:ptr = npk_core_alloc(NODE4_SIZE);
-    if (ptr == 0i64) { fail(@cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
+    if (ptr == 0i64) { fail(cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
     drop(npk_mem_set(ptr, 0i64, NODE4_SIZE));
-    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (@cast_unchecked<int64>(ART_NODE4))));
+    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (cast_unchecked<int64>(ART_NODE4))));
     drop(npk_mem_write_byte(ptr, ART_HDR_NUM_CHILDREN, 0i64));
     pass(ptr);
 };
@@ -16,9 +16,9 @@ pub func:art_alloc_node4 = int64()
 pub func:art_alloc_node16 = int64()
     ensures result != 0i64 {
     int64:ptr = npk_core_alloc(NODE16_SIZE);
-    if (ptr == 0i64) { fail(@cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
+    if (ptr == 0i64) { fail(cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
     drop(npk_mem_set(ptr, 0i64, NODE16_SIZE));
-    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (@cast_unchecked<int64>(ART_NODE16))));
+    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (cast_unchecked<int64>(ART_NODE16))));
     drop(npk_mem_write_byte(ptr, ART_HDR_NUM_CHILDREN, 0i64));
     pass(ptr);
 };
@@ -26,9 +26,9 @@ pub func:art_alloc_node16 = int64()
 pub func:art_alloc_node48 = int64()
     ensures result != 0i64 {
     int64:ptr = npk_core_alloc(NODE48_SIZE);
-    if (ptr == 0i64) { fail(@cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
+    if (ptr == 0i64) { fail(cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
     drop(npk_mem_set(ptr, 0i64, NODE48_SIZE));
-    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (@cast_unchecked<int64>(ART_NODE48))));
+    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (cast_unchecked<int64>(ART_NODE48))));
     drop(npk_mem_write_byte(ptr, ART_HDR_NUM_CHILDREN, 0i64));
     pass(ptr);
 };
@@ -36,9 +36,9 @@ pub func:art_alloc_node48 = int64()
 pub func:art_alloc_node256 = int64()
     ensures result != 0i64 {
     int64:ptr = npk_core_alloc(NODE256_SIZE);
-    if (ptr == 0i64) { fail(@cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
+    if (ptr == 0i64) { fail(cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
     drop(npk_mem_set(ptr, 0i64, NODE256_SIZE));
-    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (@cast_unchecked<int64>(ART_NODE256))));
+    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (cast_unchecked<int64>(ART_NODE256))));
     drop(npk_mem_write_byte(ptr, ART_HDR_NUM_CHILDREN, 0i64));
     pass(ptr);
 };
@@ -47,9 +47,9 @@ pub func:art_alloc_leaf = int64(int64:key_ptr, int64:key_len, int64:val_ptr, int
     ensures result != 0i64 {
     int64:leaf_size = LEAF_DATA_OFFSET + key_len + val_len;
     int64:ptr = npk_core_alloc(leaf_size);
-    if (ptr == 0i64) { fail(@cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
+    if (ptr == 0i64) { fail(cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
     drop(npk_mem_set(ptr, 0i64, leaf_size));
-    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (@cast_unchecked<int64>(ART_LEAF))));
+    drop(npk_mem_write_byte(ptr, ART_HDR_TYPE, (cast_unchecked<int64>(ART_LEAF))));
     drop(npk_mem_write_int64(ptr, LEAF_KEY_LEN_OFFSET, key_len));
     drop(npk_mem_write_int64(ptr, LEAF_VAL_LEN_OFFSET, val_len));
     drop(npk_mem_copy(ptr + LEAF_DATA_OFFSET, key_ptr, key_len));

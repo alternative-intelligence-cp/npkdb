@@ -35,8 +35,9 @@ pub func:lm_create = int64(string:data_dir) {
     
     int64:d_len = string_length(data_dir);
     int64:d_ptr = npk_core_alloc(d_len);
-    drop(npk_mem_write_string(d_ptr, data_dir));
-    
+    int64:__wraw_data_dir = string_to_cstr(data_dir);
+    drop(npk_mem_copy(d_ptr, __wraw_data_dir, string_length(data_dir)));    
+    drop(npk_core_dalloc(__wraw_data_dir));
     drop(npk_mem_write_int64(lm, 0i64, d_ptr));
     drop(npk_mem_write_int64(lm, 8i64, d_len));
     drop(npk_mem_write_int64(lm, 16i64, 1i64)); // file ID starts at 1
@@ -117,11 +118,13 @@ pub func:lm_add_sstable = NIL(int64:lm, int64:level, int64:file_id, string:min_k
         int64:max_ptr = npk_core_alloc(8i64 + max_len);
         
         drop(npk_mem_write_int64(min_ptr, 0i64, min_len));
-        npk_mem_write_string(min_ptr + 8i64, min_key);
-        
+        int64:__wraw_min_key = string_to_cstr(min_key);
+        drop(npk_mem_copy(min_ptr + 8i64, __wraw_min_key, string_length(min_key)));        
+        drop(npk_core_dalloc(__wraw_min_key));
         drop(npk_mem_write_int64(max_ptr, 0i64, max_len));
-        npk_mem_write_string(max_ptr + 8i64, max_key);
-        
+        int64:__wraw_max_key = string_to_cstr(max_key);
+        drop(npk_mem_copy(max_ptr + 8i64, __wraw_max_key, string_length(max_key)));        
+        drop(npk_core_dalloc(__wraw_max_key));
         drop(npk_mem_write_int64(ent_ptr, 0i64, file_id));
         drop(npk_mem_write_int64(ent_ptr, 8i64, min_ptr));
         drop(npk_mem_write_int64(ent_ptr, 16i64, max_ptr));

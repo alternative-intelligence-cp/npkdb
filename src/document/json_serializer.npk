@@ -33,7 +33,7 @@ pub func:serial_buffer_ensure = NIL(int64:buf, int64:needed) {
 pub func:serialize_value = NIL(int64:buf, NpkJsonVal:val) {
     // Write 1-byte type
     drop(serial_buffer_ensure(buf, 1i64));
-    drop(npk_mem_write_byte(raw buf_get_data(buf), raw buf_get_cursor(buf), @cast_unchecked<int64>(val.type)));
+    drop(npk_mem_write_byte(raw buf_get_data(buf), raw buf_get_cursor(buf), cast_unchecked<int64>(val.type)));
     drop(buf_set_cursor(buf, raw buf_get_cursor(buf) + 1i64));
 
     if (val.type == JSON_NULL) {
@@ -56,11 +56,11 @@ pub func:serialize_value = NIL(int64:buf, NpkJsonVal:val) {
                 } else {
                     if (val.type == JSON_STR) {
                         int64:str_ptr = val.payload;
-                        int64:len = @cast_unchecked<int64>(npk_mem_read_int32(str_ptr, 0i64)); // uint32:length is at offset 0
+                        int64:len = cast_unchecked<int64>(npk_mem_read_int32(str_ptr, 0i64)); // uint32:length is at offset 0
                         int64:data_ptr = npk_mem_read_int64(str_ptr, 8i64);    // int64:data is at offset 8
 
                         drop(serial_buffer_ensure(buf, 4i64 + len));
-                        drop(npk_mem_write_int32(raw buf_get_data(buf), raw buf_get_cursor(buf), @cast_unchecked<int32>((len))));
+                        drop(npk_mem_write_int32(raw buf_get_data(buf), raw buf_get_cursor(buf), cast_unchecked<int32>((len))));
                         drop(buf_set_cursor(buf, raw buf_get_cursor(buf) + 4i64));
                         if (len > 0i64) {
                             drop(npk_mem_copy(raw buf_get_data(buf) + raw buf_get_cursor(buf), data_ptr, len));
@@ -69,18 +69,18 @@ pub func:serialize_value = NIL(int64:buf, NpkJsonVal:val) {
                     } else {
                         if (val.type == JSON_ARR) {
                             int64:arr_ptr = val.payload;
-                            int64:count = @cast_unchecked<int64>(npk_mem_read_int32(arr_ptr, 0i64));
+                            int64:count = cast_unchecked<int64>(npk_mem_read_int32(arr_ptr, 0i64));
                             int64:handles_ptr = npk_mem_read_int64(arr_ptr, 8i64);
 
                             drop(serial_buffer_ensure(buf, 4i64));
-                            drop(npk_mem_write_int32(raw buf_get_data(buf), raw buf_get_cursor(buf), @cast_unchecked<int32>((count))));
+                            drop(npk_mem_write_int32(raw buf_get_data(buf), raw buf_get_cursor(buf), cast_unchecked<int32>((count))));
                             drop(buf_set_cursor(buf, raw buf_get_cursor(buf) + 4i64));
 
                             int64:i = 0i64;
                             while (i < count) {
                                 int64:elem_ptr = npk_mem_read_int64(handles_ptr, i * 8i64);
                                 NpkJsonVal:elem = NpkJsonVal {
-                                    type: @cast_unchecked<int8>(npk_mem_read_byte(elem_ptr, 0i64)),
+                                    type: cast_unchecked<int8>(npk_mem_read_byte(elem_ptr, 0i64)),
                                     payload: npk_mem_read_int64(elem_ptr, 8i64)
                                 };
                                 drop(serialize_value(buf, elem));
@@ -89,26 +89,26 @@ pub func:serialize_value = NIL(int64:buf, NpkJsonVal:val) {
                         } else {
                             if (val.type == JSON_OBJ) {
                                 int64:obj_ptr = val.payload;
-                                int64:count = @cast_unchecked<int64>(npk_mem_read_int32(obj_ptr, 0i64));
+                                int64:count = cast_unchecked<int64>(npk_mem_read_int32(obj_ptr, 0i64));
                                 int64:keys_ptr = npk_mem_read_int64(obj_ptr, 8i64);
                                 int64:vals_ptr = npk_mem_read_int64(obj_ptr, 16i64);
 
                                 drop(serial_buffer_ensure(buf, 4i64));
-                                drop(npk_mem_write_int32(raw buf_get_data(buf), raw buf_get_cursor(buf), @cast_unchecked<int32>((count))));
+                                drop(npk_mem_write_int32(raw buf_get_data(buf), raw buf_get_cursor(buf), cast_unchecked<int32>((count))));
                                 drop(buf_set_cursor(buf, raw buf_get_cursor(buf) + 4i64));
 
                                 int64:i = 0i64;
                                 while (i < count) {
                                     int64:key_ptr = npk_mem_read_int64(keys_ptr, i * 8i64);
                                     NpkJsonVal:k_elem = NpkJsonVal {
-                                        type: @cast_unchecked<int8>(npk_mem_read_byte(key_ptr, 0i64)),
-                                        payload: npk_mem_read_int64(key_ptr, 8i64)
+                                        type: JSON_STR,
+                                        payload: key_ptr
                                     };
                                     drop(serialize_value(buf, k_elem));
                                     
                                     int64:val_ptr = npk_mem_read_int64(vals_ptr, i * 8i64);
                                     NpkJsonVal:v_elem = NpkJsonVal {
-                                        type: @cast_unchecked<int8>(npk_mem_read_byte(val_ptr, 0i64)),
+                                        type: cast_unchecked<int8>(npk_mem_read_byte(val_ptr, 0i64)),
                                         payload: npk_mem_read_int64(val_ptr, 8i64)
                                     };
                                     drop(serialize_value(buf, v_elem));
@@ -151,7 +151,7 @@ pub func:serialize_colocated_record = int64(int64:vec_ptr, int64:vec_dim, NpkJso
     
     // 1. Vector Length (u32)
     drop(serial_buffer_ensure(buf, 4i64));
-    drop(npk_mem_write_int32(raw buf_get_data(buf), raw buf_get_cursor(buf), @cast_unchecked<int32>((vec_dim))));
+    drop(npk_mem_write_int32(raw buf_get_data(buf), raw buf_get_cursor(buf), cast_unchecked<int32>((vec_dim))));
     drop(buf_set_cursor(buf, raw buf_get_cursor(buf) + 4i64));
     
     // 2. Vector Data (tfp64 array)
@@ -173,7 +173,7 @@ pub func:serialize_colocated_record = int64(int64:vec_ptr, int64:vec_dim, NpkJso
     int64:json_len = raw buf_get_cursor(buf) - json_start;
     
     // Write back JSON length
-    drop(npk_mem_write_int32(raw buf_get_data(buf), json_len_offset, @cast_unchecked<int32>((json_len))));
+    drop(npk_mem_write_int32(raw buf_get_data(buf), json_len_offset, cast_unchecked<int32>((json_len))));
     
     drop(npk_mem_write_int64(out_len_ptr, 0i64, raw buf_get_cursor(buf)));
     pass(raw buf_get_data(buf));
@@ -182,7 +182,7 @@ pub func:serialize_colocated_record = int64(int64:vec_ptr, int64:vec_dim, NpkJso
 
 pub func:deserialize_value = NpkJsonVal(int64:arena, int64:buf, int64:cursor_ptr) {
     int64:cursor = npk_mem_read_int64(cursor_ptr, 0i64);
-    int8:type = @cast_unchecked<int8>(npk_mem_read_byte(buf, cursor));
+    int8:type = cast_unchecked<int8>(npk_mem_read_byte(buf, cursor));
     cursor = cursor + 1i64;
     drop(npk_mem_write_int64(cursor_ptr, 0i64, cursor));
     
@@ -191,7 +191,7 @@ pub func:deserialize_value = NpkJsonVal(int64:arena, int64:buf, int64:cursor_ptr
         int64:val = npk_mem_read_int64(buf, cursor);
         cursor = cursor + 8i64;
         drop(npk_mem_write_int64(cursor_ptr, 0i64, cursor));
-        pass(raw json_make_bool(@cast_unchecked<tbb8>(val)));
+        pass(raw json_make_bool(cast_unchecked<tbb8>(val)));
     }
     if (type == JSON_NUM_I64) {
         int64:val = npk_mem_read_int64(buf, cursor);
@@ -203,11 +203,11 @@ pub func:deserialize_value = NpkJsonVal(int64:arena, int64:buf, int64:cursor_ptr
         int64:val = npk_mem_read_int64(buf, cursor);
         cursor = cursor + 8i64;
         drop(npk_mem_write_int64(cursor_ptr, 0i64, cursor));
-        flt64:fval = @cast_unchecked<flt64>(val);
+        flt64:fval = cast_unchecked<flt64>(val);
         pass(raw json_make_f64(fval));
     }
     if (type == JSON_STR) {
-        int64:len = @cast_unchecked<int64>(npk_mem_read_int32(buf, cursor));
+        int64:len = cast_unchecked<int64>(npk_mem_read_int32(buf, cursor));
         cursor = cursor + 4i64;
         int64:str_data = 0i64;
         if (len > 0i64) {
@@ -217,7 +217,7 @@ pub func:deserialize_value = NpkJsonVal(int64:arena, int64:buf, int64:cursor_ptr
         drop(npk_mem_write_int64(cursor_ptr, 0i64, cursor));
         
         int64:payload = raw json_arena_alloc(arena, 16i64);
-        drop(npk_mem_write_int32(payload, 0i64, @cast_unchecked<int32>(len)));
+        drop(npk_mem_write_int32(payload, 0i64, cast_unchecked<int32>(len)));
         
         if (len > 0i64) {
             int64:s_buf = raw json_arena_alloc(arena, len);
@@ -231,12 +231,12 @@ pub func:deserialize_value = NpkJsonVal(int64:arena, int64:buf, int64:cursor_ptr
         pass(v);
     }
     if (type == JSON_ARR) {
-        int64:count = @cast_unchecked<int64>(npk_mem_read_int32(buf, cursor));
+        int64:count = cast_unchecked<int64>(npk_mem_read_int32(buf, cursor));
         cursor = cursor + 4i64;
         drop(npk_mem_write_int64(cursor_ptr, 0i64, cursor));
         
         int64:payload = raw json_arena_alloc(arena, 16i64);
-        drop(npk_mem_write_int32(payload, 0i64, @cast_unchecked<int32>(count)));
+        drop(npk_mem_write_int32(payload, 0i64, cast_unchecked<int32>(count)));
         int64:handles_ptr = raw json_arena_alloc(arena, count * 8i64);
         drop(npk_mem_write_int64(payload, 8i64, handles_ptr));
         
@@ -244,7 +244,7 @@ pub func:deserialize_value = NpkJsonVal(int64:arena, int64:buf, int64:cursor_ptr
         while (i < count) {
             NpkJsonVal:elem = raw deserialize_value(arena, buf, cursor_ptr);
             int64:elem_ptr = raw json_arena_alloc(arena, 16i64);
-            drop(npk_mem_write_byte(elem_ptr, 0i64, @cast_unchecked<int8>(elem.type)));
+            drop(npk_mem_write_byte(elem_ptr, 0i64, cast_unchecked<int8>(elem.type)));
             drop(npk_mem_write_int64(elem_ptr, 8i64, elem.payload));
             drop(npk_mem_write_int64(handles_ptr, i * 8i64, elem_ptr));
             i = i + 1i64;
@@ -253,12 +253,12 @@ pub func:deserialize_value = NpkJsonVal(int64:arena, int64:buf, int64:cursor_ptr
         pass(arr);
     }
     if (type == JSON_OBJ) {
-        int64:count = @cast_unchecked<int64>(npk_mem_read_int32(buf, cursor));
+        int64:count = cast_unchecked<int64>(npk_mem_read_int32(buf, cursor));
         cursor = cursor + 4i64;
         drop(npk_mem_write_int64(cursor_ptr, 0i64, cursor));
         
         int64:payload = raw json_arena_alloc(arena, 24i64);
-        drop(npk_mem_write_int32(payload, 0i64, @cast_unchecked<int32>(count)));
+        drop(npk_mem_write_int32(payload, 0i64, cast_unchecked<int32>(count)));
         int64:keys_ptr = raw json_arena_alloc(arena, count * 8i64);
         int64:vals_ptr = raw json_arena_alloc(arena, count * 8i64);
         drop(npk_mem_write_int64(payload, 8i64, keys_ptr));
@@ -268,13 +268,13 @@ pub func:deserialize_value = NpkJsonVal(int64:arena, int64:buf, int64:cursor_ptr
         while (i < count) {
             NpkJsonVal:k = raw deserialize_value(arena, buf, cursor_ptr);
             int64:k_ptr = raw json_arena_alloc(arena, 16i64);
-            drop(npk_mem_write_byte(k_ptr, 0i64, @cast_unchecked<int8>(k.type)));
+            drop(npk_mem_write_byte(k_ptr, 0i64, cast_unchecked<int8>(k.type)));
             drop(npk_mem_write_int64(k_ptr, 8i64, k.payload));
             drop(npk_mem_write_int64(keys_ptr, i * 8i64, k_ptr));
             
             NpkJsonVal:v = raw deserialize_value(arena, buf, cursor_ptr);
             int64:v_ptr = raw json_arena_alloc(arena, 16i64);
-            drop(npk_mem_write_byte(v_ptr, 0i64, @cast_unchecked<int8>(v.type)));
+            drop(npk_mem_write_byte(v_ptr, 0i64, cast_unchecked<int8>(v.type)));
             drop(npk_mem_write_int64(v_ptr, 8i64, v.payload));
             drop(npk_mem_write_int64(vals_ptr, i * 8i64, v_ptr));
             i = i + 1i64;

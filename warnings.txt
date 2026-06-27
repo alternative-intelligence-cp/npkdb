@@ -1,0 +1,120 @@
+      1 [1m:109:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'am_before' is declared but never used[0m
+      1 [1m:110:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'mem_before' is declared but never used[0m
+      1 [1m:113:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'bw3' is declared but never used[0m
+      1 [1m:113:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'lm_wp' is declared but never used[0m
+      1 [1m:118:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'am_new' is declared but never used[0m
+      1 [1m:12:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'argc' is unused in function 'main'[0m
+      1 [1m:12:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'argv' is unused in function 'main'[0m
+      1 [1m:133:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'data_dir' is declared but never used[0m
+      1 [1m:135:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'ig1' is declared but never used[0m
+      1 [1m:150:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'data_dir' is declared but never used[0m
+      1 [1m:15:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'argc' is unused in function 'main'[0m
+      1 [1m:15:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'argv' is unused in function 'main'[0m
+      1 [1m:15:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'err' is unused in function 'failsafe'[0m
+      1 [1m:152:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'ig1' is declared but never used[0m
+      2 [1m:16:5: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'err' is unused in function 'failsafe'[0m
+      1 [1m:18:5: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'err' is unused in function 'failsafe'[0m
+      4 [1m:19:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'err' is unused in function 'failsafe'[0m
+      1 [1m:20:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'err' is unused in function 'failsafe'[0m
+      1 [1m:21:1: [0m[1;33mwarning[0m: [1m[unused-function] function 'bg_worker_shim' is defined but never called[0m
+      1 [1m:21:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'ctx' is unused in function 'bg_worker_shim'[0m
+      3 [1m:21:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'err' is unused in function 'failsafe'[0m
+      1 [1m:21:5: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'argc' is unused in function 'main'[0m
+      1 [1m:21:5: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'argv' is unused in function 'main'[0m
+      3 [1m:22:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'err' is unused in function 'failsafe'[0m
+      1 [1m:25:1: [0m[1;33mwarning[0m: [1m[unused-function] function 'bg_worker_shim' is defined but never called[0m
+      1 [1m:25:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'ctx' is unused in function 'bg_worker_shim'[0m
+      1 [1m:25:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'err' is unused in function 'failsafe'[0m
+      1 [1m:26:1: [0m[1;33mwarning[0m: [1m[unused-function] function 'bg_worker_shim' is defined but never called[0m
+      1 [1m:26:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'ctx' is unused in function 'bg_worker_shim'[0m
+      1 [1m:26:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'err' is unused in function 'failsafe'[0m
+      2 [1m:27:5: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'err' is unused in function 'failsafe'[0m
+      1 [1m:28:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'err' is unused in function 'failsafe'[0m
+      1 [1m:29:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'str1' is declared but never used[0m
+      2 [1m:32:1: [0m[1;33mwarning[0m: [1m[unused-function] function 'bg_worker_shim' is defined but never called[0m
+      1 [1m:32:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'ctx' is unused in function 'bg_worker_shim'[0m
+      2 [1m:37:1: [0m[1;33mwarning[0m: [1m[unused-function] function 'test_mt_get_node' is defined but never called[0m
+      1 [1m:46:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'amt' is declared but never used[0m
+      1 [1m:53:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'v1_bits' is declared but never used[0m
+      1 [1m:56:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'flush_res' is declared but never used[0m
+      1 [1m:58:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'k1' is declared but never used[0m
+      1 [1m:60:1: [0m[1;33mwarning[0m: [1m[unused-function] function 'db_get' is defined but never called[0m
+      1 [1m:60:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'key' is unused in function 'db_get'[0m
+      1 [1m:60:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'wp' is unused in function 'db_get'[0m
+      1 [1m:64:1: [0m[1;33mwarning[0m: [1m[unused-function] function 'db_get' is defined but never called[0m
+      1 [1m:64:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'key' is unused in function 'db_get'[0m
+      1 [1m:64:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'wp' is unused in function 'db_get'[0m
+      1 [1m:64:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'sst_p' is declared but never used[0m
+      1 [1m:69:1: [0m[1;33mwarning[0m: [1m[unused-parameter] parameter 'err' is unused in function 'failsafe'[0m
+      2 [1m:70:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 's_a2' is declared but never used[0m
+      1 [1m:78:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'sz' is declared but never used[0m
+      1 [1m:85:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'w4_fd' is declared but never used[0m
+      1 [1m:90:5: [0m[1;33mwarning[0m: [1m[unused-variable] variable 'path' is declared but never used[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_flush/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'j' shadows outer declaration at line 211, column 9 (original at line 198, column 5)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_flush/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'nitpick_libc_rwlock_create' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_flush/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'nitpick_libc_rwlock_unlock' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_flush/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'nitpick_libc_rwlock_wrlock' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_flush/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_alloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_flush/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_dalloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_flush/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_read_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_flush/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_write_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_flush/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'SSTABLE_FOOTER_SIZE' shadows outer declaration at line 13, column 11 (original at line 0, column 0)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_flush/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'SSTABLE_FOOTER_SIZE' shadows outer declaration at line 25, column 11 (original at line 0, column 0)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_write_path/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'j' shadows outer declaration at line 211, column 9 (original at line 198, column 5)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_write_path/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_alloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_write_path/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_dalloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_write_path/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_read_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1m/home/randy/Workspace/REPOS/npkdb/tests/test_write_path/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_write_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mSummary: [0m[1;33m12 warnings[0m
+      1 [1mSummary: [0m[1;33m16 warnings[0m
+      1 [1mSummary: [0m[1;33m17 warnings[0m
+      1 [1mSummary: [0m[1;33m18 warnings[0m
+      5 [1mSummary: [0m[1;33m2 warnings[0m
+      3 [1mSummary: [0m[1;33m3 warnings[0m
+      1 [1mSummary: [0m[1;33m4 warnings[0m
+      1 [1mSummary: [0m[1;33m5 warnings[0m
+      1 [1mSummary: [0m[1;33m8 warnings[0m
+      2 [1mSummary: [0m[1;33m9 warnings[0m
+      1 [1mtest_compaction_correctness.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'j' shadows outer declaration at line 211, column 9 (original at line 198, column 5)[0m
+      1 [1mtest_compaction_correctness.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'nitpick_libc_rwlock_create' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_compaction_correctness.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'nitpick_libc_rwlock_unlock' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_compaction_correctness.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'nitpick_libc_rwlock_wrlock' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_compaction_correctness.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_alloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_compaction_correctness.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_dalloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_compaction_correctness.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_read_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_compaction_correctness.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_write_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_crash_recovery.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'j' shadows outer declaration at line 211, column 9 (original at line 198, column 5)[0m
+      1 [1mtest_crash_recovery.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_alloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_crash_recovery.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_dalloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_crash_recovery.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_read_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_crash_recovery.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_write_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_collections/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'j' shadows outer declaration at line 211, column 9 (original at line 198, column 5)[0m
+      1 [1mtests/test_collections/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_alloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_collections/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_dalloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_collections/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_read_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_collections/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_write_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction_bg/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'j' shadows outer declaration at line 211, column 9 (original at line 198, column 5)[0m
+      1 [1mtests/test_compaction_bg/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_alloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction_bg/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_dalloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction_bg/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_read_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction_bg/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_write_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction_bg/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'SSTABLE_FOOTER_SIZE' shadows outer declaration at line 13, column 11 (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction_bg/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'SSTABLE_FOOTER_SIZE' shadows outer declaration at line 25, column 11 (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'j' shadows outer declaration at line 211, column 9 (original at line 198, column 5)[0m
+      1 [1mtests/test_compaction/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'nitpick_libc_rwlock_create' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'nitpick_libc_rwlock_unlock' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'nitpick_libc_rwlock_wrlock' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_alloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_dalloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_read_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_write_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'SSTABLE_FOOTER_SIZE' shadows outer declaration at line 13, column 11 (original at line 0, column 0)[0m
+      1 [1mtests/test_compaction/main.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'SSTABLE_FOOTER_SIZE' shadows outer declaration at line 25, column 11 (original at line 0, column 0)[0m
+      1 [1mtest_stress.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'j' shadows outer declaration at line 211, column 9 (original at line 198, column 5)[0m
+      1 [1mtest_stress.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'nitpick_libc_rwlock_create' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_stress.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'nitpick_libc_rwlock_unlock' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_stress.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'nitpick_libc_rwlock_wrlock' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_stress.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_alloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_stress.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_core_dalloc' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_stress.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_read_int64' shadows outer declaration (original at line 0, column 0)[0m
+      1 [1mtest_stress.npk:0:0: [0m[1;33mwarning[0m: [1mVariable 'npk_mem_write_int64' shadows outer declaration (original at line 0, column 0)[0m

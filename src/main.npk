@@ -11,11 +11,18 @@ use "network/controllers.npk".*;
 use "vector/hnsw_arena.npk".*;
 use "vector/hnsw_graph.npk".*;
 use "vector/hnsw_visited.npk".*;
+use "vector/distance_types.npk".*;
 use "concurrency/ebr.npk".*;
 use "index/art.npk".*;
 use "engine/catalog.npk".*;
+use "network/http_worker.npk".*;
+
 func:compaction_worker_shim = int64(int64:ctx) {
-    pass compaction_worker_loop(ctx);
+    pass (raw compaction_worker_loop(ctx));
+};
+
+func:http_worker_shim = int64(int64:ch) {
+    pass http_worker_loop(ch);
 };
 
 func:main = int32(int32:argc, wild any->:argv) {
@@ -30,6 +37,7 @@ func:main = int32(int32:argc, wild any->:argv) {
     
     // Initialize locks
     global_catalog_lock = nitpick_libc_rwlock_create();
+    global_graph_lock = nitpick_libc_rwlock_create();
     global_insert_counter = npk_core_alloc(8i64);
     drop(npk_mem_write_int64(global_insert_counter, 0i64, 0i64));
     
@@ -46,12 +54,12 @@ func:main = int32(int32:argc, wild any->:argv) {
     }
     
     global_arena = raw hnsw_arena_create(10000i64, 1i16);
-    global_vec_buf = npk_core_alloc(10000i64 * 128i64 * 8i64);
-    global_graph = raw hnsw_graph_create(global_arena, global_vec_buf, 128i64, 16i32, 32i32, 100i32, 0.5f64);
+    global_vec_buf = npk_core_alloc(10000i64 * HNSW_DIM * 8i64);
+    global_graph = raw hnsw_graph_create(global_arena, global_vec_buf, HNSW_DIM, 16i32, 32i32, 100i32, 0.5f64);
     global_doc_store = npk_core_alloc(10000i64 * 8i64);
 
     
-    int32:server_res = raw server_start();
+    int32:server_res = raw server_start(@http_worker_shim);
     if (server_res != 0i32) {
         println("Server exited with error.");
         exit(1i32);

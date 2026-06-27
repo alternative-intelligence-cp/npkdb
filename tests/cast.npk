@@ -1,5 +1,5 @@
 func:main = int64() {
     int64:f = 0i64;
-    (@cast_unchecked<bool(int64)>(f))(0i64);
+    (cast_unchecked<bool(int64)>(f))(0i64);
     exit 0i32;
 };

@@ -8,7 +8,6 @@ use "../util/mem_primitives.npk".*;
 pub func:flush_ensure_dirs = NIL(string:data_dir) {
     int64:c_data_dir = string_to_cstr(data_dir);
     drop(sys(MKDIR, c_data_dir, 448i64)); // 0700
-    drop(npk_core_dalloc(c_data_dir));
     
     int64:i = 0i64;
     while (i < LM_MAX_LEVELS) {
@@ -16,7 +15,6 @@ pub func:flush_ensure_dirs = NIL(string:data_dir) {
         string:l_dir2 = l_dir + string_from_int(i);
         int64:c_l_dir2 = string_to_cstr(l_dir2);
         drop(sys(MKDIR, c_l_dir2, 448i64));
-        drop(npk_core_dalloc(c_l_dir2));
         i = i + 1i64;
     }
     pass(NIL);

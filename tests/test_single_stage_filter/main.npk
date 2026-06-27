@@ -27,7 +27,7 @@ pub func:mock_proc_exit = NIL(int32:code) {
 
 pub func:failsafe = int32(tbb32:code) {
     println("Failsafe triggered!");
-    exit(@cast_unchecked<int32>(code));
+    exit(cast_unchecked<int32>(code));
 };
 
 pub func:main = int32() {
@@ -39,7 +39,7 @@ pub func:main = int32() {
     // Write vectors (all zeroes for simplicity)
     int64:i = 0i64;
     while (i < 10i64) {
-        drop(npk_mem_write_int32(vec_buf, i * vec_dim * 4i64, @cast_unchecked<int32>(i)));
+        drop(npk_mem_write_int32(vec_buf, i * vec_dim * 4i64, cast_unchecked<int32>(i)));
         drop(npk_mem_write_int32(vec_buf, i * vec_dim * 4i64 + 4i64, 0i32));
         i = i + 1i64;
     }
@@ -90,15 +90,15 @@ pub func:main = int32() {
         
         int64:k_val = npk_core_alloc(16i64);
         drop(npk_mem_write_byte(k_val, 0i64, JSON_STR));
-        drop(npk_mem_write_int64(k_val, 8i64, @cast_unchecked<int64>(@k_cat)));
+        drop(npk_mem_write_int64(k_val, 8i64, cast_unchecked<int64>(@k_cat)));
         drop(npk_mem_write_int64(keys, 0i64, k_val));
         
         int64:v_val = npk_core_alloc(16i64);
         drop(npk_mem_write_byte(v_val, 0i64, JSON_STR));
         if (i < 5i64) {
-            drop(npk_mem_write_int64(v_val, 8i64, @cast_unchecked<int64>(@str_a)));
+            drop(npk_mem_write_int64(v_val, 8i64, cast_unchecked<int64>(@str_a)));
         } else {
-            drop(npk_mem_write_int64(v_val, 8i64, @cast_unchecked<int64>(@str_b)));
+            drop(npk_mem_write_int64(v_val, 8i64, cast_unchecked<int64>(@str_b)));
         }
         drop(npk_mem_write_int64(vals, 0i64, v_val));
         
@@ -119,7 +119,7 @@ pub func:main = int32() {
 
     // 5. Create AST Filter for "category == B"
     int64:ast_node = npk_core_alloc(48i64);
-    drop(npk_mem_write_byte(ast_node, 0i64, @cast_unchecked<int64>(AST_OP_EQ)));
+    drop(npk_mem_write_byte(ast_node, 0i64, cast_unchecked<int64>(AST_OP_EQ)));
     
     // Write path string "category"
     int64:path_str = npk_core_alloc(9i64); // null terminated
@@ -136,7 +136,7 @@ pub func:main = int32() {
     
     // Target value
     drop(npk_mem_write_byte(ast_node, 16i64, JSON_STR));
-    drop(npk_mem_write_int64(ast_node, 24i64, @cast_unchecked<int64>(@str_b)));
+    drop(npk_mem_write_int64(ast_node, 24i64, cast_unchecked<int64>(@str_b)));
 
     // 6. Search
     int64:visited_set = npk_core_alloc(128i64); // Bitset, 1024 bits
@@ -147,8 +147,8 @@ pub func:main = int32() {
     // We get entry point
     int32:ep_slot = 0i32;
     int32:ep_gen = 0i32;
-    int64:ep_slot_ptr = @cast_unchecked<int64>(@ep_slot);
-    int64:ep_gen_ptr = @cast_unchecked<int64>(@ep_gen);
+    int64:ep_slot_ptr = cast_unchecked<int64>(@ep_slot);
+    int64:ep_gen_ptr = cast_unchecked<int64>(@ep_gen);
     drop(hnsw_graph_get_ep(graph, ep_slot_ptr, ep_gen_ptr));
     
     int64:results_pq = raw hnsw_search_layer(graph, 0i64, ep_slot, ep_gen, 10i32, 0i32, visited_set, ast_node, doc_store);

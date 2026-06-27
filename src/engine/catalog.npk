@@ -8,6 +8,7 @@ use "../storage/write_path.npk".*;
 use "../storage/compaction_worker.npk".*;
 use "../vector/hnsw_arena.npk".*;
 use "../vector/hnsw_graph.npk".*;
+use "../vector/distance_types.npk".*;
 
 extern "nitpick_libc_thread" {
     func:nitpick_libc_rwlock_create    = int64();
@@ -20,23 +21,21 @@ pub int64:g_catalog_hash = 0i64;
 pub int64:g_catalog_rwlock = 0i64;
 
 
-func:compaction_worker_shim = int64(int64:ctx) {
-    pass compaction_worker_loop(ctx);
+func:catalog_compaction_worker_shim = int64(int64:ctx) {
+    pass (raw compaction_worker_loop(ctx));
 };
 
 pub func:catalog_init = int32() {
-if (false) { int64:dummy1 = compaction_worker_loop(0i64) ; }
+if (false) { int64:dummy1 = raw compaction_worker_loop(0i64) ; }
 
     g_catalog_hash = raw sl_create();
     g_catalog_rwlock = nitpick_libc_rwlock_create();
     
     int64:c_data = string_to_cstr("data");
     raw sys(MKDIR, c_data, 448i64);
-    drop(npk_core_dalloc(c_data));
 
     int64:c_data_coll = string_to_cstr("data/collections");
     raw sys(MKDIR, c_data_coll, 448i64);
-    drop(npk_core_dalloc(c_data_coll));
     
     pass(0i32);
 };
@@ -47,18 +46,18 @@ pub func:catalog_create_collection = int64(string:name) {
     int64:i = 0i64;
     int64:bad = 0i64;
     while (i < name_len) {
-        int8:c = (@cast_unchecked<int8>(((@cast_unchecked<int8>(npk_mem_read_byte(name_ptr, i))))));
+        int8:c = (cast_unchecked<int8>(((cast_unchecked<int8>(npk_mem_read_byte(name_ptr, i))))));
+        if (c == 0i8) { bad = 1i64; break; }  // null byte
         if (c == 47i8) { bad = 1i64; break; } // '/'
         if (c == 92i8) { bad = 1i64; break; } // '\\'
         if (c == 46i8) {
             if (i + 1i64 < name_len) {
-                int8:next_c = (@cast_unchecked<int8>(((@cast_unchecked<int8>(npk_mem_read_byte(name_ptr, i + 1i64))))));
+                int8:next_c = (cast_unchecked<int8>(((cast_unchecked<int8>(npk_mem_read_byte(name_ptr, i + 1i64))))));
                 if (next_c == 46i8) { bad = 1i64; break; } // '..'
             }
         }
         i = i + 1i64;
     }
-    drop(npk_core_dalloc(name_ptr));
     if (bad == 1i64) {
         pass(0i64);
     }
@@ -78,21 +77,22 @@ pub func:catalog_create_collection = int64(string:name) {
     
     int64:c_full_path = string_to_cstr(full_path);
     raw sys(MKDIR, c_full_path, 448i64);
-    drop(npk_core_dalloc(c_full_path));
     
     int64:coll_ptr = npk_core_alloc(24i64);
-    Collection->:coll = @cast_unchecked<Collection->>(coll_ptr);
+    Collection->:coll = cast_unchecked<Collection->>(coll_ptr);
     coll->name = name;
     
     string:wal_path = string_concat(full_path, "/wal.log");
     string:dir_path = string_concat(full_path, "/");
-    int64:wp = raw wp_init(dir_path, wal_path, @compaction_worker_shim, "group_commit");
-    coll->storage = @cast_unchecked<Handle<LsmTree> >(wp);
+    
+    func:local_shim = int64(int64:ctx) { pass(raw compaction_worker_loop(ctx)); };
+    int64:wp = raw wp_init(dir_path, wal_path, @local_shim, "group_commit");
+    coll->storage = cast_unchecked<Handle<LsmTree> >(wp);
     
     int64:arena = raw hnsw_arena_create(1048576i64, 1i16);
-    int64:vec_buf = npk_core_alloc(80000000i64);
-    int64:graph = raw hnsw_graph_create(arena, vec_buf, 128i64, 16i32, 32i32, 100i32, 0.5f64);
-    coll->vector_index = @cast_unchecked<Handle<HnswGraph> >(graph);
+    int64:vec_buf = npk_core_alloc(10000i64 * HNSW_DIM * 8i64);
+    int64:graph = raw hnsw_graph_create(arena, vec_buf, HNSW_DIM, 16i32, 32i32, 100i32, 0.5f64);
+    coll->vector_index = cast_unchecked<Handle<HnswGraph> >(graph);
     
     drop(sl_insert(g_catalog_hash, name, coll_ptr, 0i64));
     

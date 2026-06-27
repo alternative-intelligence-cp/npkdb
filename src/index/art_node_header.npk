@@ -11,7 +11,7 @@ pub func:art_node_num_children = int64(int64:node) {
 };
 
 pub func:art_node_set_num_children = NIL(int64:node, int64:count) {
-    drop(npk_mem_write_byte(node, ART_HDR_NUM_CHILDREN, (@cast_unchecked<int64>(count))));
+    drop(npk_mem_write_byte(node, ART_HDR_NUM_CHILDREN, (cast_unchecked<int64>(count))));
     pass(NIL);
 };
 
@@ -34,11 +34,11 @@ pub func:art_node_set_prefix_len = NIL(int64:node, int64:len) {
 };
 
 pub func:art_node_prefix_byte = int8(int64:node, int64:i) {
-    pass(@cast_unchecked<int8>(npk_mem_read_byte(node, ART_HDR_PREFIX + i)));
+    pass(cast_unchecked<int8>(npk_mem_read_byte(node, ART_HDR_PREFIX + i)));
 };
 
 pub func:art_node_set_prefix_byte = NIL(int64:node, int64:i, int64:b) {
-    drop(npk_mem_write_byte(node, ART_HDR_PREFIX + i, (@cast_unchecked<int64>(b))));
+    drop(npk_mem_write_byte(node, ART_HDR_PREFIX + i, (cast_unchecked<int64>(b))));
     pass(NIL);
 };
 
@@ -46,7 +46,7 @@ pub func:art_is_leaf = bool(int64:node) {
     if (node == 0i64) {
         pass(false);
     }
-    pass((@cast_unchecked<int8>(npk_mem_read_byte(node, ART_HDR_TYPE))) == ART_LEAF);
+    pass((cast_unchecked<int8>(npk_mem_read_byte(node, ART_HDR_TYPE))) == ART_LEAF);
 };
 
 

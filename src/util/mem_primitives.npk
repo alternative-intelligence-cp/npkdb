@@ -2,31 +2,31 @@
 // Wraps the C builtins provided by Nitpick runtime
 
 extern "nitpick_libc_mem" {
-    func:npk_mem_read_byte     = int64(int64:ptr, int64:offset);
-    func:npk_mem_write_byte    = int64(int64:ptr, int64:offset, int64:val);
-    func:npk_mem_read_int32    = int32(int64:ptr, int64:offset);
-    func:npk_mem_read_int64    = int64(int64:ptr, int64:offset);
-    func:npk_mem_write_int64   = int64(int64:ptr, int64:offset, int64:val);
-    func:npk_mem_copy          = int64(int64:dst, int64:src, int64:n);
-    func:npk_mem_set           = int64(int64:dst, int64:val, int64:n);
+    pub func:npk_mem_read_byte     = int64(int64:ptr, int64:offset);
+    pub func:npk_mem_write_byte    = int64(int64:ptr, int64:offset, int64:val);
+    pub func:npk_mem_read_int32    = int32(int64:ptr, int64:offset);
+    pub func:npk_mem_read_int64    = int64(int64:ptr, int64:offset);
+    pub func:npk_mem_write_int64   = int64(int64:ptr, int64:offset, int64:val);
+    pub func:npk_mem_copy          = int64(int64:dst, int64:src, int64:n);
+    pub func:npk_mem_set           = int64(int64:dst, int64:val, int64:n);
 }
 
 extern "nitpick_libc_mem" {
-    func:npk_mem_compare       = int64(int64:a, int64:b, int64:n);
-    func:npk_mem_offset        = int64(int64:ptr, int64:offset);
-    func:npk_mem_ptr_size      = int64();
-    func:npk_core_alloc  = int64(int64:size);
-    func:nitpick_libc_mem_calloc  = int64(int64:count, int64:size);
-    func:nitpick_libc_mem_realloc = int64(int64:ptr, int64:size);
-    func:npk_core_dalloc    = void(int64:ptr);
+    pub func:npk_mem_compare       = int64(int64:a, int64:b, int64:n);
+    pub func:npk_mem_offset        = int64(int64:ptr, int64:offset);
+    pub func:npk_mem_ptr_size      = int64();
+    pub func:npk_core_alloc  = int64(int64:size);
+    pub func:nitpick_libc_mem_calloc  = int64(int64:count, int64:size);
+    pub func:nitpick_libc_mem_realloc = int64(int64:ptr, int64:size);
+    pub func:npk_core_dalloc    = void(int64:ptr);
 }
 
 extern "nitpick_libc_mem" {
-    func:npk_mem_write_string = int64(int64:ptr, string:s);
+    pub func:npk_mem_write_string = int64(int64:ptr, string:s);
     func:npk_mem_read_string = string(int64:ptr, int64:max_len);
 }
 pub func:npk_mem_write_int32 = int64(int64:ptr, int64:offset, int32:val) {
-    int64:v = @cast_unchecked<int64>(val);
+    int64:v = cast_unchecked<int64>(val);
     drop(npk_mem_write_byte(ptr, offset, v & 255i64));
     drop(npk_mem_write_byte(ptr, offset + 1i64, (v >> 8) & 255i64));
     drop(npk_mem_write_byte(ptr, offset + 2i64, (v >> 16) & 255i64));
@@ -37,11 +37,11 @@ pub func:npk_mem_write_int32 = int64(int64:ptr, int64:offset, int32:val) {
 pub func:npk_mem_read_int16 = int16(int64:ptr, int64:offset) {
     int64:b0 = npk_mem_read_byte(ptr, offset);
     int64:b1 = npk_mem_read_byte(ptr, offset + 1i64);
-    pass(@cast_unchecked<int16>(((b1 << 8i64) | b0)));
+    pass(cast_unchecked<int16>(((b1 << 8i64) | b0)));
 };
 
 pub func:npk_mem_write_int16 = int64(int64:ptr, int64:offset, int16:val) {
-    int64:v = @cast_unchecked<int64>(val);
+    int64:v = cast_unchecked<int64>(val);
     drop(npk_mem_write_byte(ptr, offset, v & 255i64));
     drop(npk_mem_write_byte(ptr, offset + 1i64, (v >> 8i64) & 255i64));
     pass(0i64);
@@ -51,7 +51,7 @@ pub func:npk_mem_write_int16 = int64(int64:ptr, int64:offset, int16:val) {
 
 pub func:npk_mem_read_int8 = int8(int64:buf_arg, int64:pos) {
     int64:val = npk_mem_read_byte(buf_arg, pos);
-    pass(@cast_unchecked<int8>(val));
+    pass(cast_unchecked<int8>(val));
 };
 
 pub func:npk_cas_i64 = bool(int64:atomic_ptr, int64:expected, int64:desired) {

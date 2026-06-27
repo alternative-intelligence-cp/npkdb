@@ -21,15 +21,17 @@ pub func:hnsw_search_layer = int64(
     int64:filter_ast,
     int64:doc_store
 ) requires (graph != 0i64), (visited_set != 0i64), (ef > 0i32) {
+    int64:ef_64 = (cast_unchecked<int64>((ef)));
+    if (ep_slot == -1i32) {
+        pass(raw hnsw_pq_create(ef_64, 1i64));
+    }
     
     int64:arena = raw hnsw_graph_get_arena(graph) ;
     int64:ep_node_ptr = raw hnsw_arena_get_node(arena, ep_slot, ep_gen) ;
-    if (ep_node_ptr == 0i64) { fail(@cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE))); }
+    if (ep_node_ptr == 0i64) { fail(cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE))); }
 
     int64:ep_vec_offset = raw hnsw_node_get_vector_offset(ep_node_ptr) ;
     tfp64:ep_dist = raw hnsw_graph_distance(graph, query_offset, ep_vec_offset);
-
-    int64:ef_64 = (@cast_unchecked<int64>((ef)));
 
     // candidates: Min-Heap (capacity = ef initially, dynamically grows if needed)
     int64:candidates = raw hnsw_pq_create(ef_64, 0i64) ;
@@ -41,7 +43,7 @@ pub func:hnsw_search_layer = int64(
     bool:ep_match = true;
     if (filter_ast != 0i64) {
         if (doc_store != 0i64) {
-            int64:ep_doc_ptr = npk_mem_read_int64(doc_store, (@cast_unchecked<int64>((ep_slot))) * 8i64);
+            int64:ep_doc_ptr = npk_mem_read_int64(doc_store, (cast_unchecked<int64>((ep_slot))) * 8i64);
             if (ep_doc_ptr != 0i64) {
                 ep_match = raw evaluate_filter(json_arena, filter_ast, ep_doc_ptr);
             }
@@ -80,7 +82,7 @@ pub func:hnsw_search_layer = int64(
 
         int32:num_neighbors = raw hnsw_node_get_num_neighbors(c_node_ptr, layer) ;
         int64:i = 0i64;
-        int64:n_64 = (@cast_unchecked<int64>((num_neighbors)));
+        int64:n_64 = (cast_unchecked<int64>((num_neighbors)));
 
         when (i < n_64) {
             int32:n_slot = raw hnsw_node_get_neighbor_slot(c_node_ptr, layer, i) ;
@@ -94,7 +96,7 @@ pub func:hnsw_search_layer = int64(
                 if (n_node_ptr != 0i64) {
                     if (filter_ast != 0i64) {
                         if (doc_store != 0i64) {
-                            int64:doc_ptr = npk_mem_read_int64(doc_store, (@cast_unchecked<int64>((n_slot))) * 8i64);
+                            int64:doc_ptr = npk_mem_read_int64(doc_store, (cast_unchecked<int64>((n_slot))) * 8i64);
                             if (doc_ptr != 0i64) {
                                 bool:match = raw evaluate_filter(json_arena, filter_ast, doc_ptr);
                                 if (match == false) {

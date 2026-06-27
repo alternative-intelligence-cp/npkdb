@@ -23,15 +23,15 @@ def process_file(f):
             m = re.match(r'use\s+"([^"]+)"\.\*;', line_content)
             if m:
                 target = m.group(1)
-                if target.startswith("stdlib/"):
-                    target_path = os.path.abspath(os.path.join("/home/randy/Workspace/REPOS/nitpick", target))
-                else:
-                    target_path = os.path.abspath(os.path.join(base_dir, target))
+                target_path = os.path.abspath(os.path.join(base_dir, target))
                     
                 if not os.path.exists(target_path):
-                    stdlib_path = os.path.abspath(os.path.join("/home/randy/Workspace/REPOS/nitpick/stdlib", target))
-                    if os.path.exists(stdlib_path):
-                        target_path = stdlib_path
+                    # Leave stdlib imports intact for nitpickc to resolve
+                    lines.append(line_content)
+                    line_map[current_line] = (f, orig_line)
+                    current_line += 1
+                    continue
+                    
                 process_file(target_path)
                 continue
             
@@ -39,13 +39,16 @@ def process_file(f):
             line_map[current_line] = (f, orig_line)
             current_line += 1
 
-process_file("src/main.npk")
+import sys
+import json
+
+entry_point = sys.argv[1] if len(sys.argv) > 1 else "src/main.npk"
+process_file(entry_point)
 
 with open("build/flattened.npk", "w") as fp:
     fp.write('use "unsafe.npk".*;\n')
     fp.writelines(lines)
 
-import json
 with open("build/line_map.json", "w") as fp:
     json.dump(line_map, fp)
 

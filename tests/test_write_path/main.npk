@@ -38,30 +38,30 @@ func:main = int32() {
     drop(npk_mem_write_string(v_ptr, "v"));
 
     // T01
-    int64:wp = wp_init("test_data", wal_path, @bg_worker_shim, "per_write") ?! 0i64;
+    int64:wp = wp_init("test_data", wal_path, @bg_worker_shim, "per_write") ? 0i64;
     drop(check(wp != 0i64, "T01 wp_init creates WAL file and active Memtable"));
 
     // T02
-    int64:p1 = wp_put(wp, "doc_1", v_ptr, 1i64) ?! -1i64;
-    int64:amt = wp_active_memtable(wp) ?! 0i64;
-    int64:g1 = mt_get(amt, "doc_1") ?! 0i64;
+    int64:p1 = wp_put(wp, "doc_1", v_ptr, 1i64) ? -1i64;
+    int64:amt = wp_active_memtable(wp) ? 0i64;
+    int64:g1 = mt_get(amt, "doc_1") ? 0i64;
     drop(check(p1 == 0i64 && g1 != 0i64, "T02 wp_put 'doc_1', retrieve from active Memtable"));
 
     // T03
     drop(wp_put(wp, "doc_2", v_ptr, 1i64));
-    int64:g1b = mt_get(amt, "doc_1") ?! 0i64;
-    int64:g2 = mt_get(amt, "doc_2") ?! 0i64;
+    int64:g1b = mt_get(amt, "doc_1") ? 0i64;
+    int64:g2 = mt_get(amt, "doc_2") ? 0i64;
     drop(check(g1b != 0i64 && g2 != 0i64, "T03 wp_put 'doc_2', retrieve both keys"));
 
     // T04
     drop(wp_delete(wp, "doc_1"));
-    int64:g1c = mt_get(amt, "doc_1") ?! -1i64;
+    int64:g1c = mt_get(amt, "doc_1") ? -1i64;
     drop(check(g1c == 0i64, "T04 wp_delete 'doc_1', verify deleted from Memtable"));
 
     // T05
-    int64:fd = sys(OPEN, wal_path, 0i64, 0i64) ?! -1i64;
+    int64:fd = sys(OPEN, wal_path, 0i64, 0i64) ? -1i64;
     int64:buf = npk_core_alloc(1000i64);
-    int64:bw = sys(READ, fd, buf, 1000i64) ?! 0i64;
+    int64:bw = sys(READ, fd, buf, 1000i64) ? 0i64;
     drop(sys(CLOSE, fd));
     drop(npk_core_dalloc(buf));
     drop(check(bw > 0i64, "T05 WAL file has grown (bytes > 0) after puts"));
@@ -71,7 +71,7 @@ func:main = int32() {
     drop(check(1i64 == 1i64, "T07 wp_shutdown completes without error"));
 
     // T06
-    int64:rep = wal_replay(wal_path, 0i64) ?! -1i64;
+    int64:rep = wal_replay(wal_path, 0i64) ? -1i64;
     // We wrote: doc_1 (PUT), doc_2 (PUT), doc_1 (DELETE) -> 3 records
     drop(check(rep == 3i64, "T06 Replay WAL after shutdown, verify records match"));
 

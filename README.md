@@ -255,3 +255,13 @@ This project is grounded in peer-reviewed research and production system design:
 - Leis et al. — *The Adaptive Radix Tree: ARTful Indexing for Main-Memory Databases* (2013)
 
 See [`META/NPKDB/REFERENCES.md`](https://github.com/alternative-intelligence-cp/npkdb) for the full annotated bibliography.
+
+
+---
+
+## Nitpick Ecosystem
+
+This repository is part of the [Nitpick](https://github.com/alternative-intelligence-cp/nitpick) ecosystem. 
+- 🌍 **[Nitpick-Lang Hub](https://github.com/alternative-intelligence-cp/nitpick-lang)** — The central hub connecting all Nitpick projects.
+- 📖 **[Official Web Documentation](https://ai-liberation-platform.org/nitpick/docs/)** — Guides, references, and language specifications.
+- 🛠️ **[Nitpick Compiler](https://github.com/alternative-intelligence-cp/nitpick)** — The core language and toolchain.

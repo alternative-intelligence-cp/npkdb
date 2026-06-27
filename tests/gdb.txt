@@ -1,0 +1,203 @@
+warning: Currently logging to gdb.txt.  Turn the logging off and on to make the new setting effective.
+pc: 55555557bd40, rax: 5
+0x000055555557bd44	76	    AriaString r = { NULL, 0 };
+pc: 55555557bd44, rax: 5
+0x000055555557bd46	76	    AriaString r = { NULL, 0 };
+pc: 55555557bd46, rax: 5
+0x000055555557bd4b	76	    AriaString r = { NULL, 0 };
+pc: 55555557bd4b, rax: 5
+0x0000555555558260 in memset@plt ()
+pc: 555555558260, rax: 5
+__memset_evex_unaligned_erms () at ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S:158
+warning: 158	../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S: No such file or directory
+pc: 7ffff79993c0, rax: 5
+159	in ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+pc: 7ffff79993c4, rax: 5
+0x00007ffff79993ca	159	in ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+pc: 7ffff79993ca, rax: 5
+164	in ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+pc: 7ffff79993cd, rax: 7fffffffc8e0
+165	in ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+pc: 7ffff79993d1, rax: 7fffffffc8e0
+200	in ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+pc: 7ffff7999400, rax: 7fffffffc8e0
+204	in ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+pc: 7ffff7999406, rax: 7fffffffc8e0
+206	in ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+pc: 7ffff799940c, rax: 7fffffffc8e0
+212	in ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+pc: 7ffff7999412, rax: 7fffffffc8e0
+213	in ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+pc: 7ffff7999417, rax: 7fffffffc8e0
+214	in ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+pc: 7ffff799941c, rax: 7fffffffc8e0
+216	in ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+pc: 7ffff7999420, rax: 7fffffffc8e0
+217	in ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+pc: 7ffff7999426, rax: 7fffffffc8e0
+npk_mem_read_string (ptr=0x7ffff7a60078, max_len=5) at /home/randy/Workspace/REPOS/nitpick/src/runtime/allocators/mem_primitives.c:77
+77	    if (ptr == 0 || max_len <= 0) return r;
+pc: 55555557bd50, rax: 7fffffffc8e0
+0x000055555557bd55	77	    if (ptr == 0 || max_len <= 0) return r;
+pc: 55555557bd55, rax: 7fffffffc8e0
+0x000055555557bd5b	77	    if (ptr == 0 || max_len <= 0) return r;
+pc: 55555557bd5b, rax: 7fffffffc8e0
+0x000055555557bd60	77	    if (ptr == 0 || max_len <= 0) return r;
+pc: 55555557bd60, rax: 7fffffffc8e0
+78	    const char *src = (const char *)(intptr_t)ptr;
+pc: 55555557bd6b, rax: 7fffffffc8e0
+0x000055555557bd6f	78	    const char *src = (const char *)(intptr_t)ptr;
+pc: 55555557bd6f, rax: 7ffff7a60078
+79	    int64_t len = 0;
+pc: 55555557bd73, rax: 7ffff7a60078
+80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd7b, rax: 7ffff7a60078
+0x000055555557bd7f	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd7f, rax: 7ffff7a60078
+0x000055555557bd81	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd81, rax: 0
+0x000055555557bd85	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd85, rax: 0
+0x000055555557bd88	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd88, rax: 0
+0x000055555557bd8e	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd8e, rax: 0
+0x000055555557bd92	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd92, rax: 7ffff7a60078
+0x000055555557bd96	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd96, rax: 7ffff7a60078
+0x000055555557bd9a	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd9a, rax: 64
+0x000055555557bd9d	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd9d, rax: 64
+0x000055555557bda0	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda0, rax: 1
+0x000055555557bda3	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda3, rax: 1
+0x000055555557bda6	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda6, rax: 1
+0x000055555557bda8	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda8, rax: 1
+0x000055555557bdb3	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdb3, rax: 1
+0x000055555557bdb7	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdb7, rax: 0
+0x000055555557bdbb	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdbb, rax: 1
+0x000055555557bdbf	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdbf, rax: 1
+80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd7b, rax: 1
+0x000055555557bd7f	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd7f, rax: 1
+0x000055555557bd81	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd81, rax: 0
+0x000055555557bd85	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd85, rax: 0
+0x000055555557bd88	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd88, rax: 0
+0x000055555557bd8e	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd8e, rax: 0
+0x000055555557bd92	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd92, rax: 7ffff7a60078
+0x000055555557bd96	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd96, rax: 7ffff7a60078
+0x000055555557bd9a	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd9a, rax: 6f
+0x000055555557bd9d	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd9d, rax: 6f
+0x000055555557bda0	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda0, rax: 1
+0x000055555557bda3	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda3, rax: 1
+0x000055555557bda6	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda6, rax: 1
+0x000055555557bda8	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda8, rax: 1
+0x000055555557bdb3	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdb3, rax: 1
+0x000055555557bdb7	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdb7, rax: 1
+0x000055555557bdbb	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdbb, rax: 2
+0x000055555557bdbf	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdbf, rax: 2
+80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd7b, rax: 2
+0x000055555557bd7f	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd7f, rax: 2
+0x000055555557bd81	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd81, rax: 0
+0x000055555557bd85	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd85, rax: 0
+0x000055555557bd88	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd88, rax: 0
+0x000055555557bd8e	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd8e, rax: 0
+0x000055555557bd92	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd92, rax: 7ffff7a60078
+0x000055555557bd96	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd96, rax: 7ffff7a60078
+0x000055555557bd9a	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd9a, rax: 63
+0x000055555557bd9d	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd9d, rax: 63
+0x000055555557bda0	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda0, rax: 1
+0x000055555557bda3	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda3, rax: 1
+0x000055555557bda6	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda6, rax: 1
+0x000055555557bda8	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda8, rax: 1
+0x000055555557bdb3	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdb3, rax: 1
+0x000055555557bdb7	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdb7, rax: 2
+0x000055555557bdbb	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdbb, rax: 3
+0x000055555557bdbf	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdbf, rax: 3
+80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd7b, rax: 3
+0x000055555557bd7f	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd7f, rax: 3
+0x000055555557bd81	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd81, rax: 0
+0x000055555557bd85	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd85, rax: 0
+0x000055555557bd88	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd88, rax: 0
+0x000055555557bd8e	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd8e, rax: 0
+0x000055555557bd92	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd92, rax: 7ffff7a60078
+0x000055555557bd96	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd96, rax: 7ffff7a60078
+0x000055555557bd9a	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd9a, rax: 5f
+0x000055555557bd9d	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd9d, rax: 5f
+0x000055555557bda0	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda0, rax: 1
+0x000055555557bda3	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda3, rax: 1
+0x000055555557bda6	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda6, rax: 1
+0x000055555557bda8	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bda8, rax: 1
+0x000055555557bdb3	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdb3, rax: 1
+0x000055555557bdb7	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdb7, rax: 3
+0x000055555557bdbb	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdbb, rax: 4
+0x000055555557bdbf	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bdbf, rax: 4
+80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd7b, rax: 4
+0x000055555557bd7f	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd7f, rax: 4
+0x000055555557bd81	80	    while (len < max_len && src[len] != '\0') len++;
+pc: 55555557bd81, rax: 0
+0x000055555557bd85	80	    while (len < max_len && src[len] != '\0') len++;

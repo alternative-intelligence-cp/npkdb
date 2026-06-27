@@ -27,49 +27,49 @@ func:main = int32() {
     drop(npk_mem_write_string(v_ptr, "v"));
 
     // T01
-    int64:mt = mt_create(1i64) ?! 0i64;
+    int64:mt = mt_create(1i64) ? 0i64;
     drop(check(mt != 0i64, "T01 mt_create returns non-zero"));
 
     // T02
-    drop(check((mt_count(mt) ?! -1i64) == 0i64, "T02 mt_count on new = 0"));
+    drop(check((mt_count(mt) ? -1i64) == 0i64, "T02 mt_count on new = 0"));
 
     // T03
-    drop(check((mt_is_frozen(mt) ?! -1i64) == 0i64, "T03 mt_is_frozen on new = 0"));
+    drop(check((mt_is_frozen(mt) ? -1i64) == 0i64, "T03 mt_is_frozen on new = 0"));
 
     // T04
-    int64:p1 = mt_put(mt, "key_a", v_ptr, 1i64) ?! -1i64;
+    int64:p1 = mt_put(mt, "key_a", v_ptr, 1i64) ? -1i64;
     drop(check(p1 == 0i64, "T04 mt_put 'key_a' succeeds"));
 
     // T05
-    int64:g1 = mt_get(mt, "key_a") ?! 0i64;
+    int64:g1 = mt_get(mt, "key_a") ? 0i64;
     drop(check(g1 != 0i64, "T05 mt_get 'key_a' returns node"));
 
     // T06
-    drop(check((mt_count(mt) ?! -1i64) == 1i64, "T06 mt_count = 1"));
+    drop(check((mt_count(mt) ? -1i64) == 1i64, "T06 mt_count = 1"));
 
     // T07
-    int64:d1 = mt_delete(mt, "key_a") ?! -1i64;
+    int64:d1 = mt_delete(mt, "key_a") ? -1i64;
     drop(check(d1 == 0i64, "T07 mt_delete 'key_a' succeeds"));
 
     // T08
-    int64:g2 = mt_get(mt, "key_a") ?! -1i64;
+    int64:g2 = mt_get(mt, "key_a") ? -1i64;
     drop(check(g2 == 0i64, "T08 mt_get 'key_a' returns 0 (deleted)"));
 
     // T09
     drop(mt_freeze(mt));
-    drop(check((mt_is_frozen(mt) ?! 0i64) == 1i64, "T09 mt_freeze makes Memtable immutable"));
+    drop(check((mt_is_frozen(mt) ? 0i64) == 1i64, "T09 mt_freeze makes Memtable immutable"));
 
     // T10
-    int64:p2 = mt_put(mt, "key_b", v_ptr, 1i64) ?! 0i64;
+    int64:p2 = mt_put(mt, "key_b", v_ptr, 1i64) ? 0i64;
     drop(check(p2 != 0i64, "T10 mt_put after freeze returns ERR_MEMTABLE_FULL (non-zero)"));
 
     // T11
-    int64:mt2 = mt_create(2i64) ?! 0i64;
-    drop(check((mt_should_flush(mt2) ?! -1i64) == 0i64, "T11 mt_should_flush = 0 for small Memtable"));
+    int64:mt2 = mt_create(2i64) ? 0i64;
+    drop(check((mt_should_flush(mt2) ? -1i64) == 0i64, "T11 mt_should_flush = 0 for small Memtable"));
 
     // T12
     drop(mt_put(mt2, "key_x", v_ptr, 1i64));
-    drop(check((mt_memory_usage(mt2) ?! 0i64) > 0i64, "T12 mt_memory_usage > 0 after inserts"));
+    drop(check((mt_memory_usage(mt2) ? 0i64) > 0i64, "T12 mt_memory_usage > 0 after inserts"));
 
     drop(mt_destroy(mt));
     drop(mt_destroy(mt2));

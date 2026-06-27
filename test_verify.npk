@@ -7,7 +7,7 @@ use "src/vector/distance_types.npk".*;
 pub fixed tfp64:TFP64_ERROR_SENTINEL = -999.0tf;
 
 pub func:l2sq_simd = tfp64(wild tfp64->:a, wild tfp64->:b, int64:dim)
-    requires @cast_unchecked<int64>(a) != 0i64, @cast_unchecked<int64>(b) != 0i64, dim > 0i64, dim <= HNSW_DIM
+    requires cast_unchecked<int64>(a) != 0i64, cast_unchecked<int64>(b) != 0i64, dim > 0i64, dim <= HNSW_DIM
     ensures result >= 0.0tf
 {
     int64:simd_iters = dim / SIMD_F64_WIDTH;

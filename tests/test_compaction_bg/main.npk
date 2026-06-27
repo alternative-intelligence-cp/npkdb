@@ -26,7 +26,7 @@ pub func:main = int32() {
     println("║  Background Compaction Tests         ║");
     println("╚══════════════════════════════════════╝");
     
-    int64:wp = wp_init("test_bg_data", "test_bg_data/test.wal", @bg_worker_shim, "per_write") ?! 0i64;
+    int64:wp = wp_init("test_bg_data", "test_bg_data/test.wal", @bg_worker_shim, "per_write") ? 0i64;
     if (wp == -9999i64) { drop(bg_worker_shim(0i64)); }
     if (wp == 0i64) {
         println("  ✗ Failed to init write path");
@@ -62,14 +62,14 @@ pub func:main = int32() {
         
         // Replace with new mt
         int64:ctr = npk_mem_read_int64(wp, WP_OFF_COUNTER);
-        int64:new_mt = mt_create(ctr) ?! 0i64;
+        int64:new_mt = mt_create(ctr) ? 0i64;
         drop(npk_mem_write_int64(wp, WP_OFF_COUNTER, ctr + 1i64));
         drop(npk_mem_write_int64(wp, WP_OFF_ACTIVE, new_mt));
         
         i = i + 1i64;
     }
     
-    int64:l0_count = lm_count_at_level(lm, 0i64) ?! 0i64;
+    int64:l0_count = lm_count_at_level(lm, 0i64) ? 0i64;
     if (l0_count == 4i64) {
         println("  ✓ T02 Write enough data to trigger 4 L0 flushes");
     } else {
@@ -84,7 +84,7 @@ pub func:main = int32() {
     println("DEBUG: waiting for compaction...");
     int64:wait_iters = 0i64;
     while (wait_iters < 100i64) {
-        l0_count = lm_count_at_level(lm, 0i64) ?! 0i64;
+        l0_count = lm_count_at_level(lm, 0i64) ? 0i64;
         if (l0_count == 0i64) { break; }
         drop(Thread.sleep_ms(50i64));
         wait_iters = wait_iters + 1i64;
@@ -97,7 +97,7 @@ pub func:main = int32() {
         exit 1i32;
     }
     
-    int64:l1_count = lm_count_at_level(lm, 1i64) ?! 0i64;
+    int64:l1_count = lm_count_at_level(lm, 1i64) ? 0i64;
     if (l1_count > 0i64) {
         println("  ✓ T04 L1 SSTables exist after background compaction");
     } else {
@@ -106,7 +106,7 @@ pub func:main = int32() {
     }
     
     // T06
-    int64:st = compaction_stats_total() ?! 0i64;
+    int64:st = compaction_stats_total() ? 0i64;
     if (st > 0i64) {
         println("  ✓ T06 Compaction stats updated");
     } else {

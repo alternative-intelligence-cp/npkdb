@@ -19,7 +19,9 @@ int64:art_root_ptr = 0i64;
 int64:art_write_lock_ptr = 0i64;
 
 pub func:art_lock = NIL() {
-    while (raw npk_cas_i64(art_write_lock_ptr, 0i64, 1i64) == false) { }
+    while (raw npk_cas_i64(art_write_lock_ptr, 0i64, 1i64) == false) {
+        drop(asm!!!<int64>("x86_64", "pause", "~{memory}"));
+    }
     pass(NIL);
 };
 

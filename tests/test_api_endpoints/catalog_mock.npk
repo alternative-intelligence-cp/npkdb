@@ -1,0 +1,21 @@
+use "../../src/engine/collection.npk".*;
+pub int64:mock_collection_vector_index = 0i64;
+
+pub func:catalog_create_collection = int64(string:name) {
+    println("MOCK: catalog_create_collection(" + name + ")");
+    pass(1i64);
+};
+
+pub func:catalog_get_collection = int64(string:name) {
+    println("MOCK: catalog_get_collection(" + name + ")");
+    int64:c_ptr = npk_core_alloc(32i64);
+    Collection->:c = cast_unchecked<Collection->>(c_ptr);
+    c->name = name;
+    c->vector_index = cast_unchecked<Handle<HnswGraph> >(mock_collection_vector_index);
+    pass(c_ptr);
+};
+
+pub func:catalog_init = int64(string:base_dir) {
+    println("MOCK: catalog_init(" + base_dir + ")");
+    pass(0i64);
+};

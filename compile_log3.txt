@@ -1,0 +1,10 @@
+[1mscratch/test_wild_ptr2.npk:2:33: [0m[1;31merror[0m: [1m  Use '?->' for type-erased pointers in Nitpick code, not '?*'.
+  Found: token ':'[0m
+    2 | pub func:my_func = int64(wild ?*:worker) {
+                                        [1;32m^[0m
+
+[1mscratch/test_wild_ptr2.npk:5:1: [0m[1;31merror[0m: [1m  Expected ';' after function declaration. Functions end with '};' — the closing brace needs a semicolon
+  Found: end of file
+  Hint: In Nitpick, declarations (like functions, structs, or traits) need a semicolon after their closing brace: '};'[0m
+
+[1mSummary: [0m[1;31m2 errors[0m

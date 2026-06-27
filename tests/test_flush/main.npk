@@ -34,16 +34,16 @@ func:main = int32() {
     drop(sys(MKDIR, data_dir, 493i64));
     drop(flush_ensure_dirs(data_dir));
     
-    int64:lm = lm_create(data_dir) ?! 0i64;
+    int64:lm = lm_create(data_dir) ? 0i64;
     drop(check(lm != 0i64, "T01 lm_create returns non-zero"));
     
-    int64:c0 = lm_count_at_level(lm, 0i64) ?! -1i64;
+    int64:c0 = lm_count_at_level(lm, 0i64) ? -1i64;
     drop(check(c0 == 0i64, "T02 lm_count_at_level(0) = 0 initially"));
     
-    string:nxt = lm_next_sstable_path(lm, 0i64) ?! "";
+    string:nxt = lm_next_sstable_path(lm, 0i64) ? "";
     drop(check(string_length(nxt) > 10i64, "T03 lm_next_sstable_path generates valid path"));
     
-    int64:mt1 = mt_create(1i64) ?! 0i64;
+    int64:mt1 = mt_create(1i64) ? 0i64;
     int64:v_ptr = npk_core_alloc(8i64);
     drop(npk_mem_write_string(v_ptr, "test_val"));
     
@@ -55,24 +55,24 @@ func:main = int32() {
     }
     
     drop(mt_freeze(mt1));
-    int64:f_res = flush_memtable(mt1, lm) ?! -1i64;
+    int64:f_res = flush_memtable(mt1, lm) ? -1i64;
     drop(check(f_res == 0i64, "T04 Write 10 records to Memtable, freeze, flush to L0"));
     
-    int64:c1 = lm_count_at_level(lm, 0i64) ?! 0i64;
+    int64:c1 = lm_count_at_level(lm, 0i64) ? 0i64;
     drop(check(c1 == 1i64, "T05 lm_count_at_level(0) = 1 after flush"));
     
     string:sst_p = "test_data/L0/sst_000002.npkdb";
-    int64:fd = sys(OPEN, sst_p, 0i64, 0i64) ?! -1i64;
+    int64:fd = sys(OPEN, sst_p, 0i64, 0i64) ? -1i64;
     drop(check(fd > 0i64, "T06 SSTable file exists on disk"));
     if (fd > 0i64) { drop(sys(CLOSE, fd)); }
     
-    int64:reader = sstable_open_read(sst_p) ?! 0i64;
+    int64:reader = sstable_open_read(sst_p) ? 0i64;
     int64:k_found = 0i64;
     if (reader != 0i64) {
         int64:j = 0i64;
         while (j < 10i64) {
             string:k = "key_" + string_from_int(j);
-            int64:rec = sstable_get(reader, k) ?! 0i64;
+            int64:rec = sstable_get(reader, k) ? 0i64;
             if (rec != 0i64) { k_found = k_found + 1i64; drop(npk_core_dalloc(rec)); }
             j = j + 1i64;
         }
@@ -80,25 +80,25 @@ func:main = int32() {
     }
     drop(check(k_found == 10i64, "T07 Open and read back the SSTable, all 10 records present"));
     
-    int64:mt2 = mt_create(2i64) ?! 0i64;
+    int64:mt2 = mt_create(2i64) ? 0i64;
     drop(mt_put(mt2, "key_a", v_ptr, 8i64));
     drop(mt_freeze(mt2));
     drop(flush_memtable(mt2, lm));
     
-    int64:c2 = lm_count_at_level(lm, 0i64) ?! 0i64;
+    int64:c2 = lm_count_at_level(lm, 0i64) ? 0i64;
     drop(check(c2 == 2i64, "T08 Flush a second Memtable -> lm_count_at_level(0) = 2"));
     
-    int64:n1 = lm_l0_needs_compaction(lm) ?! -1i64;
+    int64:n1 = lm_l0_needs_compaction(lm) ? -1i64;
     drop(check(n1 == 0i64, "T09 lm_l0_needs_compaction = 0 with 2 SSTables"));
     
-    int64:mt3 = mt_create(3i64) ?! 0i64; drop(mt_put(mt3, "k", v_ptr, 1i64)); drop(flush_memtable(mt3, lm));
-    int64:mt4 = mt_create(4i64) ?! 0i64; drop(mt_put(mt4, "k", v_ptr, 1i64)); drop(flush_memtable(mt4, lm));
+    int64:mt3 = mt_create(3i64) ? 0i64; drop(mt_put(mt3, "k", v_ptr, 1i64)); drop(flush_memtable(mt3, lm));
+    int64:mt4 = mt_create(4i64) ? 0i64; drop(mt_put(mt4, "k", v_ptr, 1i64)); drop(flush_memtable(mt4, lm));
     
-    int64:n2 = lm_l0_needs_compaction(lm) ?! -1i64;
+    int64:n2 = lm_l0_needs_compaction(lm) ? -1i64;
     drop(check(n2 == 1i64, "T10 Flush 4 Memtables -> lm_l0_needs_compaction = 1"));
     
     // WP Tests
-    int64:wp = wp_init("test_data", "test_wal.log", @bg_worker_shim, "per_write") ?! 0i64;
+    int64:wp = wp_init("test_data", "test_wal.log", @bg_worker_shim, "per_write") ? 0i64;
     
     int64:v_ptr_large = npk_core_alloc(1000000i64);
     drop(wp_put(wp, "trigger_flush_1", v_ptr_large, 1000000i64));
@@ -106,23 +106,23 @@ func:main = int32() {
     drop(wp_put(wp, "trigger_flush_3", v_ptr_large, 1000000i64));
     drop(wp_put(wp, "trigger_flush_4", v_ptr_large, 1000000i64));
     drop(wp_put(wp, "trigger_flush_5", v_ptr_large, 1000000i64));
-    int64:am_before = wp_active_memtable(wp) ?! 0i64;
-    int64:mem_before = mt_memory_usage(am_before) ?! -1i64;
+    int64:am_before = wp_active_memtable(wp) ? 0i64;
+    int64:mem_before = mt_memory_usage(am_before) ? -1i64;
     drop(wp_put(wp, "trigger_flush_6", v_ptr_large, 10i64)); // This checks mt_should_flush > 4MB and triggers flush!
     
     int64:lm_wp = npk_mem_read_int64(wp, 32i64); // WP_OFF_LM
-    int64:c_wp = lm_count_at_level(lm_wp, 0i64) ?! -1i64;
+    int64:c_wp = lm_count_at_level(lm_wp, 0i64) ? -1i64;
     
     drop(check(c_wp == 1i64, "T11 Write path auto-flushes when Memtable exceeds threshold"));
     
-    int64:am_new = wp_active_memtable(wp) ?! 0i64;
-    int64:c_new = mt_count(am_new) ?! -1i64;
+    int64:am_new = wp_active_memtable(wp) ? 0i64;
+    int64:c_new = mt_count(am_new) ? -1i64;
     drop(check(c_new > 0i64, "T12 After auto-flush, active Memtable is fresh"));
     
     drop(check(1i64 == 1i64, "T13 Data written before flush is readable from SSTable after flush"));
     
     drop(lm_remove_sstable(lm, 0i64, 2i64)); 
-    int64:c_rem = lm_count_at_level(lm, 0i64) ?! 0i64;
+    int64:c_rem = lm_count_at_level(lm, 0i64) ? 0i64;
     drop(check(c_rem == 3i64, "T14 lm_remove_sstable removes entry"));
     
     drop(wp_shutdown(wp));

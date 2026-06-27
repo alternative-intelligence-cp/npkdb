@@ -1,0 +1,10 @@
+pub struct:Thread = { int64:handle; };
+pub Type:Thread = {
+    func:join = int32(Thread:t) {
+        int64:x = t.handle;
+        pass 0i32;
+    };
+};
+pub func:main = int32() {
+    pass 0i32;
+};

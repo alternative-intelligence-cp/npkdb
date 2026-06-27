@@ -1,4 +1,4 @@
-use "sys.npk".*;
+use "../../src/storage/sys.npk".*;
 use "../../src/util/mem_primitives.npk".*;
 use "../../src/document/json_types.npk".*;
 use "../../src/document/json_serializer.npk".*;
@@ -40,7 +40,7 @@ func:main = int32(int32:argc, wild any->:argv) {
     drop(npk_mem_write_string(str_data, "hello vector"));
     
     int64:str_obj = npk_core_alloc(16i64);
-    drop(npk_mem_write_int32(str_obj, 0i64, @cast_unchecked<int32>(str_len)));
+    drop(npk_mem_write_int32(str_obj, 0i64, cast_unchecked<int32>(str_len)));
     drop(npk_mem_write_int64(str_obj, 8i64, str_data));
     
     int64:val_ptr = npk_core_alloc(16i64);
@@ -49,11 +49,14 @@ func:main = int32(int32:argc, wild any->:argv) {
     
     // 3. Serialize co-located record
     int64:out_len = 0i64;
-    int64:record_buf = raw serialize_colocated_record(vec_ptr, vec_dim, @cast_unchecked<NpkJsonVal->>(val_ptr), out_len);
+    int64:json_type = cast_unchecked<int64>(npk_mem_read_byte(val_ptr, 0i64));
+    int64:json_payload = npk_mem_read_int64(val_ptr, 8i64);
+    NpkJsonVal:val_struct = NpkJsonVal { type: cast_unchecked<int8>(json_type), payload: json_payload };
+    int64:record_buf = raw serialize_colocated_record(vec_ptr, vec_dim, val_struct, cast_unchecked<int64>(@out_len));
     
     // 4. Assert layout
     // Format: [Vector Length (u32)][Vector Data (tfp64...)][JSON Length (u32)][JSON Data (int8...)]
-    int64:read_dim = npk_mem_read_int32@cast_unchecked<int64>(record_buf, 0i64);
+    int64:read_dim = cast_unchecked<int64>(npk_mem_read_int32(record_buf, 0i64));
     if (read_dim != vec_dim) {
         println("Dim mismatch!");
         exit(1i32);
@@ -72,7 +75,7 @@ func:main = int32(int32:argc, wild any->:argv) {
     }
     
     int64:json_len_off = 4i64 + (vec_dim * 8i64);
-    int64:read_json_len = npk_mem_read_int32@cast_unchecked<int64>(record_buf, json_len_off);
+    int64:read_json_len = cast_unchecked<int64>(npk_mem_read_int32(record_buf, json_len_off));
     if (read_json_len <= 0i64) {
         println("JSON len invalid!");
         exit(4i32);

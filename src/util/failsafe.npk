@@ -3,11 +3,15 @@
 
 extern "C" {
     func:_exit = void(int32:code);
-    func:proc_exit = NIL(int32:code);
+    func:proc_exit = void(int32:code);
     func:write = int64(int32:fd, string:buf, int64:count);
 }
 
 pub int32:g_db_lock_fd = -1i32;
+
+// To flush WAL on fatal error
+// use "../network/controllers.npk".*;
+// use "../storage/write_path.npk".*;
 
 pub func:failsafe = int32(tbb32:err) {
     // 1. Log to stderr (fd 2) using direct syscall
@@ -16,10 +20,12 @@ pub func:failsafe = int32(tbb32:err) {
     
     // 2. Attempt to unlock POSIX directory lock
     if (g_db_lock_fd >= 0i32) {
-        drop(sys(FLOCK, @cast_unchecked<int64>(g_db_lock_fd), 8i64)); // sys_flock(fd, LOCK_UN)
+        drop(sys(FLOCK, cast_unchecked<int64>(g_db_lock_fd), 8i64)); // sys_flock(fd, LOCK_UN)
     }
     
-    exit(1i32);
+//    if (global_wp != 0i64) {
+//        drop(wp_flush_wal(global_wp));
+//    }
+    
+    proc_exit(1i32);
 };
-
-

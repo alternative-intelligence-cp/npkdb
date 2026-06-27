@@ -17,7 +17,7 @@ pub struct:npk_ast_node = {
     int64:path;             // offset 8, int8:path
     NpkJsonVal:target;      // offset 16 (16 bytes)
     uint32:child_count;     // offset 32
-    int64:children;         // offset 36/40? Nitpick aligns fields. Target is at 16, child_count at 32, children at 40 if size is 48, or children at 36 if packed. Wait, let's use getters/setters instead of raw struct if we use Bump Allocator. Let's just use the struct definition and `@cast_unchecked`!
+    int64:children;         // offset 36/40? Nitpick aligns fields. Target is at 16, child_count at 32, children at 40 if size is 48, or children at 36 if packed. Wait, let's use getters/setters instead of raw struct if we use Bump Allocator. Let's just use the struct definition and `cast_unchecked`!
 };
 
 pub func:ast_node_make = int64(int64:arena_ptr) {
