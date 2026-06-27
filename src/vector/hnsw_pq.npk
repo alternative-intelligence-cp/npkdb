@@ -41,7 +41,7 @@ pub func:hnsw_pq_get_candidate_ptr = int64(int64:pq, int64:index)
 
 pub func:hnsw_pq_get_dist = tfp64(int64:candidate_ptr) requires (candidate_ptr != 0i64) {
     int64:bits = npk_mem_read_int64(candidate_ptr, 0i64);
-    pass(cast_unchecked<tfp64>(bits));
+    pass(@cast_unchecked<tfp64>(bits));
 };
 
 pub func:hnsw_pq_get_slot = int32(int64:candidate_ptr) requires (candidate_ptr != 0i64) {
@@ -54,7 +54,7 @@ pub func:hnsw_pq_get_gen = int32(int64:candidate_ptr) requires (candidate_ptr !=
 
 func:hnsw_pq_set_candidate = int64(int64:candidate_ptr, tfp64:dist, int32:slot, int32:gen) 
     requires (candidate_ptr != 0i64) {
-    int64:bits = cast_unchecked<int64>(dist);
+    int64:bits = @cast_unchecked<int64>(dist);
     drop(npk_mem_write_int64(candidate_ptr, 0i64, bits));
     drop(npk_mem_write_int32(candidate_ptr, 8i64, slot));
     drop(npk_mem_write_int32(candidate_ptr, 12i64, gen));
@@ -165,10 +165,10 @@ func:hnsw_pq_sift_down = int64(int64:pq, int64:index) requires (pq != 0i64), (in
 
 pub func:hnsw_pq_create = int64(int64:capacity, int64:is_max_heap) requires (capacity > 0i64) {
     int64:pq = npk_core_alloc(HNSW_PQ_HEADER_SIZE);
-    if (pq == 0i64) { fail(cast_unchecked<tbb32>((ERR_HNSW_OOM))); }
+    if (pq == 0i64) { fail(@cast_unchecked<tbb32>((ERR_HNSW_OOM))); }
 
     int64:elems = npk_core_alloc(capacity * HNSW_PQ_CANDIDATE_SIZE);
-    if (elems == 0i64) { fail(cast_unchecked<tbb32>((ERR_HNSW_OOM))); }
+    if (elems == 0i64) { fail(@cast_unchecked<tbb32>((ERR_HNSW_OOM))); }
 
     drop(npk_mem_write_int64(pq, HNSW_PQ_OFF_CAPACITY, capacity));
     drop(npk_mem_write_int64(pq, HNSW_PQ_OFF_SIZE, 0i64));
@@ -191,7 +191,7 @@ func:hnsw_pq_grow = int64(int64:pq) requires (pq != 0i64) {
     int64:old_elems = hnsw_pq_get_elements(pq)  ?! 0i64;
     
     int64:new_elems = npk_core_alloc(new_capacity * HNSW_PQ_CANDIDATE_SIZE);
-    if (new_elems == 0i64) { fail(cast_unchecked<tbb32>((ERR_HNSW_OOM))); }
+    if (new_elems == 0i64) { fail(@cast_unchecked<tbb32>((ERR_HNSW_OOM))); }
     
     int64:size = hnsw_pq_get_size(pq)  ?! 0i64;
     if (size > 0i64) {

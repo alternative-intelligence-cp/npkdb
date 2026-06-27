@@ -34,7 +34,7 @@ pub func:main = int32(int32:argc, wild int8->:argv) {
     drop(npk_mem_write_string(str_data, test_str));
     
     int64:str_obj = npk_core_alloc(16i64); // NpkJsonStr is 16 bytes due to padding
-    drop(npk_mem_write_int32(str_obj, 0i64, cast_unchecked<int32>(str_len)));
+    drop(npk_mem_write_int32(str_obj, 0i64, @cast_unchecked<int32>(str_len)));
     drop(npk_mem_write_int64(str_obj, 8i64, str_data));
     
     int64:val_ptr = npk_core_alloc(16i64);

@@ -34,7 +34,7 @@ pub func:bench_now = NIL(int64:ts_buf)
 {
     int64:ret = sys(SYS_CLOCK_GETTIME, CLOCK_MONOTONIC, ts_buf) ;
     if (ret != 0i64) {
-        fail(cast_unchecked<tbb32>((ret)));
+        fail(@cast_unchecked<tbb32>((ret)));
     }
     pass(NIL);
 };
@@ -72,8 +72,8 @@ pub func:dist_l2_scalar = tfp64(int64:a_ptr, int64:b_ptr, int64:dim)
     int64:i    = 0i64;
     int64:step = 8i64;  // sizeof(tfp64)
     when (i < dim) {
-        tfp64:a = ((cast_unchecked<tfp64->>((a_ptr))))[i];
-        tfp64:b = ((cast_unchecked<tfp64->>((b_ptr))))[i];
+        tfp64:a = ((@cast_unchecked<tfp64->>((a_ptr))))[i];
+        tfp64:b = ((@cast_unchecked<tfp64->>((b_ptr))))[i];
         tfp64:d = a - b;
         acc     = acc + (d * d);
         i       = i + 1i64;
@@ -91,15 +91,15 @@ pub func:dist_cosine_scalar = tfp64(int64:a_ptr, int64:b_ptr, int64:dim)
     int64:i    = 0i64;
     int64:step = 8i64;
     when (i < dim) {
-        tfp64:a = ((cast_unchecked<tfp64->>((a_ptr))))[i];
-        tfp64:b = ((cast_unchecked<tfp64->>((b_ptr))))[i];
+        tfp64:a = ((@cast_unchecked<tfp64->>((a_ptr))))[i];
+        tfp64:b = ((@cast_unchecked<tfp64->>((b_ptr))))[i];
         dot     = dot   + (a * b);
         mag_a   = mag_a + (a * a);
         mag_b   = mag_b + (b * b);
         i       = i + 1i64;
     }
-    if (mag_a == 0.0tf) { fail(cast_unchecked<tbb32>((ERR_VECTOR_ZERO_MAGNITUDE))); }
-    if (mag_b == 0.0tf) { fail(cast_unchecked<tbb32>((ERR_VECTOR_ZERO_MAGNITUDE))); }
+    if (mag_a == 0.0tf) { fail(@cast_unchecked<tbb32>((ERR_VECTOR_ZERO_MAGNITUDE))); }
+    if (mag_b == 0.0tf) { fail(@cast_unchecked<tbb32>((ERR_VECTOR_ZERO_MAGNITUDE))); }
     tfp64:result = dot / (tfp64_sqrt(mag_a) * tfp64_sqrt(mag_b));
     pass(result);
 };
@@ -111,8 +111,8 @@ pub func:dist_ip_scalar = tfp64(int64:a_ptr, int64:b_ptr, int64:dim)
     int64:i    = 0i64;
     int64:step = 8i64;
     when (i < dim) {
-        tfp64:a = ((cast_unchecked<tfp64->>((a_ptr))))[i];
-        tfp64:b = ((cast_unchecked<tfp64->>((b_ptr))))[i];
+        tfp64:a = ((@cast_unchecked<tfp64->>((a_ptr))))[i];
+        tfp64:b = ((@cast_unchecked<tfp64->>((b_ptr))))[i];
         dot     = dot + (a * b);
         i       = i + 1i64;
     }
@@ -144,7 +144,7 @@ pub func:bench_run_l2 = NIL(int64:a_ptr, int64:b_ptr,
     // ── Warmup: SIMD ──
     int64:w = 0i64;
     when (w < BENCH_WARMUP_ITERS) {
-        tfp64:dummy_simd_w = l2sq_simd_pub((cast_unchecked<tfp64->>((a_ptr))), (cast_unchecked<tfp64->>((b_ptr))), BENCH_DIM) ? 0.0tf;
+        tfp64:dummy_simd_w = l2sq_simd_pub((@cast_unchecked<tfp64->>((a_ptr))), (@cast_unchecked<tfp64->>((b_ptr))), BENCH_DIM) ? 0.0tf;
         w = w + 1i64;
     }
 
@@ -152,7 +152,7 @@ pub func:bench_run_l2 = NIL(int64:a_ptr, int64:b_ptr,
     drop(bench_now(ts0));
     int64:m = 0i64;
     when (m < BENCH_MEASURE_ITERS) {
-        tfp64:dummy_simd_w = l2sq_simd_pub((cast_unchecked<tfp64->>((a_ptr))), (cast_unchecked<tfp64->>((b_ptr))), BENCH_DIM) ? 0.0tf;
+        tfp64:dummy_simd_w = l2sq_simd_pub((@cast_unchecked<tfp64->>((a_ptr))), (@cast_unchecked<tfp64->>((b_ptr))), BENCH_DIM) ? 0.0tf;
         m = m + 1i64;
     }
     drop(bench_now(ts1));
@@ -181,7 +181,7 @@ pub func:bench_run_l2 = NIL(int64:a_ptr, int64:b_ptr,
 
     // ── Speedup assertion: scalar_nsop >= 3 * simd_nsop ──
     if ((simd_nsop * 3i64) > scalar_nsop) {
-        fail(cast_unchecked<tbb32>((ERR_SIMD_DIM_MISMATCH)));  // re-uses error slot; bench failure
+        fail(@cast_unchecked<tbb32>((ERR_SIMD_DIM_MISMATCH)));  // re-uses error slot; bench failure
     }
     pass(NIL);
 };
@@ -197,14 +197,14 @@ pub func:bench_run_cosine = NIL(int64:a_ptr, int64:b_ptr,
 
     int64:w = 0i64;
     when (w < BENCH_WARMUP_ITERS) {
-        tfp64:dummy_simd_w = cosine_simd_pub((cast_unchecked<tfp64->>((a_ptr))), (cast_unchecked<tfp64->>((b_ptr))), BENCH_DIM) ? 0.0tf;
+        tfp64:dummy_simd_w = cosine_simd_pub((@cast_unchecked<tfp64->>((a_ptr))), (@cast_unchecked<tfp64->>((b_ptr))), BENCH_DIM) ? 0.0tf;
         w = w + 1i64;
     }
 
     drop(bench_now(ts0));
     int64:m = 0i64;
     when (m < BENCH_MEASURE_ITERS) {
-        tfp64:dummy_simd_w = cosine_simd_pub((cast_unchecked<tfp64->>((a_ptr))), (cast_unchecked<tfp64->>((b_ptr))), BENCH_DIM) ? 0.0tf;
+        tfp64:dummy_simd_w = cosine_simd_pub((@cast_unchecked<tfp64->>((a_ptr))), (@cast_unchecked<tfp64->>((b_ptr))), BENCH_DIM) ? 0.0tf;
         m = m + 1i64;
     }
     drop(bench_now(ts1));
@@ -230,7 +230,7 @@ pub func:bench_run_cosine = NIL(int64:a_ptr, int64:b_ptr,
     npk_mem_write_int64(scalar_nsop_out, 0i64, scalar_nsop);
 
     if ((simd_nsop * 3i64) > scalar_nsop) {
-        fail(cast_unchecked<tbb32>((ERR_SIMD_DIM_MISMATCH)));
+        fail(@cast_unchecked<tbb32>((ERR_SIMD_DIM_MISMATCH)));
     }
     pass(NIL);
 };
@@ -246,14 +246,14 @@ pub func:bench_run_ip = NIL(int64:a_ptr, int64:b_ptr,
 
     int64:w = 0i64;
     when (w < BENCH_WARMUP_ITERS) {
-        tfp64:dummy_simd_w = ip_simd_pub((cast_unchecked<tfp64->>((a_ptr))), (cast_unchecked<tfp64->>((b_ptr))), BENCH_DIM) ? 0.0tf;
+        tfp64:dummy_simd_w = ip_simd_pub((@cast_unchecked<tfp64->>((a_ptr))), (@cast_unchecked<tfp64->>((b_ptr))), BENCH_DIM) ? 0.0tf;
         w = w + 1i64;
     }
 
     drop(bench_now(ts0));
     int64:m = 0i64;
     when (m < BENCH_MEASURE_ITERS) {
-        tfp64:dummy_simd_w = ip_simd_pub((cast_unchecked<tfp64->>((a_ptr))), (cast_unchecked<tfp64->>((b_ptr))), BENCH_DIM) ? 0.0tf;
+        tfp64:dummy_simd_w = ip_simd_pub((@cast_unchecked<tfp64->>((a_ptr))), (@cast_unchecked<tfp64->>((b_ptr))), BENCH_DIM) ? 0.0tf;
         m = m + 1i64;
     }
     drop(bench_now(ts1));
@@ -279,7 +279,7 @@ pub func:bench_run_ip = NIL(int64:a_ptr, int64:b_ptr,
     npk_mem_write_int64(scalar_nsop_out, 0i64, scalar_nsop);
 
     if ((simd_nsop * 3i64) > scalar_nsop) {
-        fail(cast_unchecked<tbb32>((ERR_SIMD_DIM_MISMATCH)));
+        fail(@cast_unchecked<tbb32>((ERR_SIMD_DIM_MISMATCH)));
     }
     pass(NIL);
 };

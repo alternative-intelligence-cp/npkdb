@@ -99,15 +99,15 @@ func:main = int32() {
     drop(sys(READ, r_fd, buf, 34i64));
     
     // npk_mem_read_int32 returns an int32, which might be negative. Let's do bitwise cast.
-    int64:read_crc_signed = cast_unchecked<int64>(npk_mem_read_int32(buf, 0i64));
+    int64:read_crc_signed = @cast_unchecked<int64>(npk_mem_read_int32(buf, 0i64));
     int64:read_crc = read_crc_signed & 4294967295i64; // mask to unsigned 32-bit
 
     int64:comp_crc = crc32_compute(buf + 4i64, 30i64) ? -1i64;
     drop(check(read_crc == comp_crc, "T11 Read back WAL file bytes, verify first record CRC matches"));
 
     // T12: Read back first record type
-    int64:read_type = cast_unchecked<int64>(npk_mem_read_int32(buf, 8i64));
-    drop(check(read_type == cast_unchecked<int64>(WAL_RECORD_PUT), "T12 Read back first record type = WAL_RECORD_PUT"));
+    int64:read_type = @cast_unchecked<int64>(npk_mem_read_int32(buf, 8i64));
+    drop(check(read_type == @cast_unchecked<int64>(WAL_RECORD_PUT), "T12 Read back first record type = WAL_RECORD_PUT"));
 
     drop(npk_core_dalloc(buf));
     drop(sys(CLOSE, r_fd));

@@ -1,0 +1,16 @@
+use "../../../nitpick/stdlib/core.npk".*;
+
+extern "nitpick_libc_thread" {
+}
+
+pub func:main = int32() {
+    int64:l = nitpick_libc_rwlock_create();
+    drop(println("Created lock: " + string_from_int(l)));
+    int32:res = nitpick_libc_rwlock_wrlock(l);
+    drop(println("Wrlock returned: " + string_from_int(int64(res))));
+    exit(0);
+};
+
+pub func:failsafe = int32(tbb32:err) {
+    exit(1);
+};

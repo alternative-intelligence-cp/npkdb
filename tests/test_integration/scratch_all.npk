@@ -1,0 +1,12 @@
+use "../../src/storage/memtable.npk".*;
+use "../../src/storage/sstable.npk".*;
+use "../../src/storage/level_manager.npk".*;
+use "../../src/storage/write_path.npk".*;
+use "../../src/storage/compaction.npk".*;
+use "../../src/storage/compaction_worker.npk".*;
+use "../../src/storage/flush.npk".*;
+use "../../src/storage/db.npk".*;
+use "thread.npk".*;
+use "../../src/util/npk_core.npk".*;
+func:failsafe = int32(tbb32:err) { exit(1i32); };
+func:main = int32() { exit(0i32); };

@@ -28,7 +28,7 @@ func:main = int32() {
 
     int64:pg = page_alloc() ? 0i64;
     drop(page_init(pg, 100i64));
-    println("TUPLE END IS: " + string_from_int(cast_unchecked<int64>(page_get_tuple_end(pg) ? 0i32)));
+    println("TUPLE END IS: " + string_from_int(@cast_unchecked<int64>(page_get_tuple_end(pg) ? 0i32)));
 
     // T01: Insert a 10-byte record
     int64:ptr1 = npk_core_alloc(11i64);

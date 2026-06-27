@@ -208,21 +208,21 @@ pub func:compact_level = int64(int64:lm, int64:from_level) {
     while (i < total_iters) {
         int64:key_fid = npk_mem_read_int64(all_fids, i * 8i64);
         int64:key_lvl = npk_mem_read_int64(all_levels, i * 8i64);
-        int64:j = i - 1i64;
+        int64:sort_idx = i - 1i64;
         
-        while (j >= 0i64) {
-            int64:curr_fid = npk_mem_read_int64(all_fids, j * 8i64);
+        while (sort_idx >= 0i64) {
+            int64:curr_fid = npk_mem_read_int64(all_fids, sort_idx * 8i64);
             if (curr_fid > key_fid) {
-                int64:curr_lvl = npk_mem_read_int64(all_levels, j * 8i64);
-                drop(npk_mem_write_int64(all_fids, (j + 1i64) * 8i64, curr_fid));
-                drop(npk_mem_write_int64(all_levels, (j + 1i64) * 8i64, curr_lvl));
-                j = j - 1i64;
+                int64:curr_lvl = npk_mem_read_int64(all_levels, sort_idx * 8i64);
+                drop(npk_mem_write_int64(all_fids, (sort_idx + 1i64) * 8i64, curr_fid));
+                drop(npk_mem_write_int64(all_levels, (sort_idx + 1i64) * 8i64, curr_lvl));
+                sort_idx = sort_idx - 1i64;
             } else {
                 break;
             }
         }
-        drop(npk_mem_write_int64(all_fids, (j + 1i64) * 8i64, key_fid));
-        drop(npk_mem_write_int64(all_levels, (j + 1i64) * 8i64, key_lvl));
+        drop(npk_mem_write_int64(all_fids, (sort_idx + 1i64) * 8i64, key_fid));
+        drop(npk_mem_write_int64(all_levels, (sort_idx + 1i64) * 8i64, key_lvl));
         i = i + 1i64;
     }
     

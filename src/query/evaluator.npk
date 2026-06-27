@@ -21,7 +21,7 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
     drop(npk_mem_write_int64(cursor_ptr, 0i64, 0i64));  
     NpkJsonVal:doc = raw deserialize_value(doc_arena, doc_buf, cursor_ptr);  
     drop(npk_core_dalloc(cursor_ptr));  
-    int64:doc_ptr = cast_unchecked<int64>(@doc);  
+    int64:doc_ptr = @cast_unchecked<int64>(@doc);  
       
     apush(ast_root);  
     apush(0i64);  
@@ -36,10 +36,10 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
         int64:node = apop();  
         stack_size = stack_size - 1i64;  
           
-        int64:op = cast_unchecked<int64>(npk_mem_read_byte(node, 0i64));  
+        int64:op = @cast_unchecked<int64>(npk_mem_read_byte(node, 0i64));  
           
-        if (op == cast_unchecked<int64>(AST_OP_AND)) {  
-            int64:count = cast_unchecked<int64>(npk_mem_read_int32(node, 32i64));  
+        if (op == @cast_unchecked<int64>(AST_OP_AND)) {  
+            int64:count = @cast_unchecked<int64>(npk_mem_read_int32(node, 32i64));  
             if (c_idx == 0i64) { acc = 1i64; } else { if (last_result == 0i64) { acc = 0i64; } }  
             if (acc == 0i64) { last_result = 0i64; continue; }  
             if (c_idx < count) {  
@@ -53,8 +53,8 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
             } else { last_result = acc; continue; }  
         }  
           
-        if (op == cast_unchecked<int64>(AST_OP_OR)) {  
-            int64:count = cast_unchecked<int64>(npk_mem_read_int32(node, 32i64));  
+        if (op == @cast_unchecked<int64>(AST_OP_OR)) {  
+            int64:count = @cast_unchecked<int64>(npk_mem_read_int32(node, 32i64));  
             if (c_idx == 0i64) { acc = 0i64; } else { if (last_result == 1i64) { acc = 1i64; } }  
             if (acc == 1i64) { last_result = 1i64; continue; }  
             if (c_idx < count) {  
@@ -70,14 +70,14 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
           
         int64:path = npk_mem_read_int64(node, 8i64);  
         NpkJsonVal:actual = raw eval_path(path, doc_ptr);  
-        NpkJsonVal:target = NpkJsonVal { type: cast_unchecked<int8>(npk_mem_read_byte(node, 16i64)), payload: npk_mem_read_int64(node, 24i64) };
+        NpkJsonVal:target = NpkJsonVal { type: @cast_unchecked<int8>(npk_mem_read_byte(node, 16i64)), payload: npk_mem_read_int64(node, 24i64) };
         
         if (actual.type == JSON_NULL) {
             last_result = 0i64;
             continue;
         }
         
-        if (op == (cast_unchecked<int64>(AST_OP_EQ))) {
+        if (op == (@cast_unchecked<int64>(AST_OP_EQ))) {
             if (actual.type != target.type) {
                 last_result = 0i64;
                 continue;
@@ -87,8 +87,8 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
                 continue;
             }
             if (actual.type == JSON_STR) {
-                int64:a_len = cast_unchecked<int64>(npk_mem_read_int32(actual.payload, 0i64));
-                int64:t_len = cast_unchecked<int64>(npk_mem_read_int32(target.payload, 0i64));
+                int64:a_len = @cast_unchecked<int64>(npk_mem_read_int32(actual.payload, 0i64));
+                int64:t_len = @cast_unchecked<int64>(npk_mem_read_int32(target.payload, 0i64));
                 if (a_len != t_len) {
                     last_result = 0i64;
                     continue;
@@ -103,7 +103,7 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
             continue;
         }
         
-        if (op == (cast_unchecked<int64>(AST_OP_GT))) {
+        if (op == (@cast_unchecked<int64>(AST_OP_GT))) {
             if (actual.type != target.type) {
                 last_result = 0i64;
                 continue;
@@ -116,7 +116,7 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
             continue;
         }
         
-        if (op == (cast_unchecked<int64>(AST_OP_LT))) {
+        if (op == (@cast_unchecked<int64>(AST_OP_LT))) {
             if (actual.type != target.type) {
                 last_result = 0i64;
                 continue;

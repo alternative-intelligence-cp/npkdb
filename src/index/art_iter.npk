@@ -373,7 +373,7 @@ pub func:art_iter_create_prefix = int64(int64:prefix_ptr, int64:prefix_len) {
         
         int64:key_byte = 0i64;
         int64:b = npk_mem_read_byte(prefix_ptr, depth);
-        key_byte = cast_unchecked<int64>((b));
+        key_byte = @cast_unchecked<int64>((b));
         
         int64:next_child = raw art_find_child(node, key_byte);
         if (next_child == 0i64) {

@@ -11,7 +11,7 @@ pub func:sys_open = int64(int64:path_cstr, int64:flags, int64:mode) {
 
 pub func:sys_close = int32(int64:fd) {
     int64:res = raw sys(CLOSE, fd);
-    pass(cast_unchecked<int32>(res));
+    pass(@cast_unchecked<int32>(res));
 };
 
 pub func:sys_write = int64(int64:fd, int64:buf, int64:len) {

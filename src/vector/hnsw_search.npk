@@ -21,14 +21,18 @@ pub func:hnsw_search_layer = int64(
     int64:filter_ast,
     int64:doc_store
 ) requires (graph != 0i64), (visited_set != 0i64), (ef > 0i32) {
-    int64:ef_64 = (cast_unchecked<int64>((ef)));
+    int64:ef_64 = (@cast_unchecked<int64>((ef)));
     if (ep_slot == -1i32) {
         pass(raw hnsw_pq_create(ef_64, 1i64));
     }
+
+    int64:save_mem = npk_core_alloc(16i64);
+    drop(npk_mem_write_int32(save_mem, 0i64, ep_slot));
+    drop(npk_mem_write_int32(save_mem, 8i64, ep_gen));
     
     int64:arena = raw hnsw_graph_get_arena(graph) ;
     int64:ep_node_ptr = raw hnsw_arena_get_node(arena, ep_slot, ep_gen) ;
-    if (ep_node_ptr == 0i64) { fail(cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE))); }
+    if (ep_node_ptr == 0i64) { fail(@cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE))); }
 
     int64:ep_vec_offset = raw hnsw_node_get_vector_offset(ep_node_ptr) ;
     tfp64:ep_dist = raw hnsw_graph_distance(graph, query_offset, ep_vec_offset);
@@ -39,21 +43,23 @@ pub func:hnsw_search_layer = int64(
     // W: Max-Heap (closest found so far)
     int64:W = raw hnsw_pq_create(ef_64, 1i64) ;
 
-    drop(hnsw_pq_push(candidates, ep_dist, ep_slot, ep_gen));
+    int32:safe_ep_slot = npk_mem_read_int32(save_mem, 0i64);
+    int32:safe_ep_gen = npk_mem_read_int32(save_mem, 8i64);
+    drop(hnsw_pq_push(candidates, ep_dist, safe_ep_slot, safe_ep_gen));
     bool:ep_match = true;
     if (filter_ast != 0i64) {
         if (doc_store != 0i64) {
-            int64:ep_doc_ptr = npk_mem_read_int64(doc_store, (cast_unchecked<int64>((ep_slot))) * 8i64);
+            int64:ep_doc_ptr = npk_mem_read_int64(doc_store, (@cast_unchecked<int64>((safe_ep_slot))) * 8i64);
             if (ep_doc_ptr != 0i64) {
                 ep_match = raw evaluate_filter(json_arena, filter_ast, ep_doc_ptr);
             }
         }
     }
     if (ep_match == true) {
-        drop(hnsw_pq_push(W, ep_dist, ep_slot, ep_gen));
+        drop(hnsw_pq_push(W, ep_dist, safe_ep_slot, safe_ep_gen));
     }
 
-    drop(hnsw_visited_mark(visited_set, ep_slot));
+    drop(hnsw_visited_mark(visited_set, safe_ep_slot));
 
     int64:C = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
     int64:furthest = npk_core_alloc(HNSW_PQ_CANDIDATE_SIZE);
@@ -82,7 +88,7 @@ pub func:hnsw_search_layer = int64(
 
         int32:num_neighbors = raw hnsw_node_get_num_neighbors(c_node_ptr, layer) ;
         int64:i = 0i64;
-        int64:n_64 = (cast_unchecked<int64>((num_neighbors)));
+        int64:n_64 = (@cast_unchecked<int64>((num_neighbors)));
 
         when (i < n_64) {
             int32:n_slot = raw hnsw_node_get_neighbor_slot(c_node_ptr, layer, i) ;
@@ -96,7 +102,7 @@ pub func:hnsw_search_layer = int64(
                 if (n_node_ptr != 0i64) {
                     if (filter_ast != 0i64) {
                         if (doc_store != 0i64) {
-                            int64:doc_ptr = npk_mem_read_int64(doc_store, (cast_unchecked<int64>((n_slot))) * 8i64);
+                            int64:doc_ptr = npk_mem_read_int64(doc_store, (@cast_unchecked<int64>((n_slot))) * 8i64);
                             if (doc_ptr != 0i64) {
                                 bool:match = raw evaluate_filter(json_arena, filter_ast, doc_ptr);
                                 if (match == false) {
@@ -136,6 +142,7 @@ pub func:hnsw_search_layer = int64(
     drop(npk_core_dalloc(C));
     drop(npk_core_dalloc(furthest));
     drop(hnsw_pq_destroy(candidates));
+    drop(npk_core_dalloc(save_mem));
 
     pass(W);
 };

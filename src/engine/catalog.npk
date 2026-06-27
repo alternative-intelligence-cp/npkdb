@@ -11,10 +11,6 @@ use "../vector/hnsw_graph.npk".*;
 use "../vector/distance_types.npk".*;
 
 extern "nitpick_libc_thread" {
-    func:nitpick_libc_rwlock_create    = int64();
-    func:nitpick_libc_rwlock_rdlock    = int32(int64:handle);
-    func:nitpick_libc_rwlock_wrlock    = int32(int64:handle);
-    func:nitpick_libc_rwlock_unlock    = int32(int64:handle);
 }
 
 pub int64:g_catalog_hash = 0i64;
@@ -46,13 +42,13 @@ pub func:catalog_create_collection = int64(string:name) {
     int64:i = 0i64;
     int64:bad = 0i64;
     while (i < name_len) {
-        int8:c = (cast_unchecked<int8>(((cast_unchecked<int8>(npk_mem_read_byte(name_ptr, i))))));
+        int8:c = (@cast_unchecked<int8>(((@cast_unchecked<int8>(npk_mem_read_byte(name_ptr, i))))));
         if (c == 0i8) { bad = 1i64; break; }  // null byte
         if (c == 47i8) { bad = 1i64; break; } // '/'
         if (c == 92i8) { bad = 1i64; break; } // '\\'
         if (c == 46i8) {
             if (i + 1i64 < name_len) {
-                int8:next_c = (cast_unchecked<int8>(((cast_unchecked<int8>(npk_mem_read_byte(name_ptr, i + 1i64))))));
+                int8:next_c = (@cast_unchecked<int8>(((@cast_unchecked<int8>(npk_mem_read_byte(name_ptr, i + 1i64))))));
                 if (next_c == 46i8) { bad = 1i64; break; } // '..'
             }
         }
@@ -79,7 +75,7 @@ pub func:catalog_create_collection = int64(string:name) {
     raw sys(MKDIR, c_full_path, 448i64);
     
     int64:coll_ptr = npk_core_alloc(24i64);
-    Collection->:coll = cast_unchecked<Collection->>(coll_ptr);
+    Collection->:coll = @cast_unchecked<Collection->>(coll_ptr);
     coll->name = name;
     
     string:wal_path = string_concat(full_path, "/wal.log");
@@ -87,12 +83,12 @@ pub func:catalog_create_collection = int64(string:name) {
     
     func:local_shim = int64(int64:ctx) { pass(raw compaction_worker_loop(ctx)); };
     int64:wp = raw wp_init(dir_path, wal_path, @local_shim, "group_commit");
-    coll->storage = cast_unchecked<Handle<LsmTree> >(wp);
+    coll->storage = @cast_unchecked<Handle<LsmTree> >(wp);
     
     int64:arena = raw hnsw_arena_create(1048576i64, 1i16);
     int64:vec_buf = npk_core_alloc(10000i64 * HNSW_DIM * 8i64);
     int64:graph = raw hnsw_graph_create(arena, vec_buf, HNSW_DIM, 16i32, 32i32, 100i32, 0.5f64);
-    coll->vector_index = cast_unchecked<Handle<HnswGraph> >(graph);
+    coll->vector_index = @cast_unchecked<Handle<HnswGraph> >(graph);
     
     drop(sl_insert(g_catalog_hash, name, coll_ptr, 0i64));
     

@@ -7,12 +7,7 @@ use "compaction.npk".*;
 use "level_manager.npk".*;
 use "wal.npk".*;
 
-extern "nitpick_libc_mem" {
-    func:npk_core_alloc = int64(int64:size);
-    func:npk_core_dalloc = void(int64:ptr);
-    func:npk_mem_read_int64 = int64(int64:ptr, int64:offset);
-    func:npk_mem_write_int64 = void(int64:ptr, int64:offset, int64:val);
-}
+use "../util/mem_primitives.npk".*;
 
 extern func:nitpick_libc_thread_spawn = int64(wild ?*:func_ptr, int64:arg);
 

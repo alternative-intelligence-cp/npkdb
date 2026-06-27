@@ -18,27 +18,30 @@ func:check = NIL(bool:cond, string:msg) {
     pass(NIL);
 };
 
-func:failsafe = int32(tbb32:err) { exit(1); };
-
-
+pub func:failsafe = int32(tbb32:err) {
+    drop(err);
+    println("FAILSAFE TRIGGERED");
+    exit(1);
+};
 
 func:bg_worker_shim = int64(int64:ctx) {
     pass 0i64;
 };
 
-func:main = int32() {
+pub func:main = int32() {
     println("╔══════════════════════════════════════╗");
-    println("║  Write Path Tests                    ║");
+    println("║  Component Test: Write Path          ║");
     println("╚══════════════════════════════════════╝");
-
-    string:wal_path = "/tmp/npkdb_test_write_path.wal";
-    drop(sys(UNLINK, wal_path));
-
+    
     int64:v_ptr = npk_core_alloc(10i64);
-    drop(npk_mem_write_string(v_ptr, "v"));
+    drop(npk_mem_write_string(v_ptr, "val_1"));
+    
+    string:wal_path = "test_data/test.wal";
+    string:data_dir = "test_data";
 
-    // T01
-    int64:wp = wp_init("test_data", wal_path, @bg_worker_shim, "per_write") ? 0i64;
+    bool:ig1 = sys(UNLINK, wal_path).is_error;
+    
+    int64:wp = wp_init(data_dir, wal_path, @bg_worker_shim, "per_write") ? 0i64;
     drop(check(wp != 0i64, "T01 wp_init creates WAL file and active Memtable"));
 
     // T02

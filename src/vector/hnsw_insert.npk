@@ -24,18 +24,18 @@ pub func:hnsw_random_layer = int32(int64:graph, int64:rand_state_ptr)
     float64:mL = raw hnsw_graph_get_mL(graph) ;
     int32:max_layer_limit = 3i32; // HNSW_MAX_LAYERS - 1
 
-    uint64:s = ((cast_unchecked<uint64>(npk_mem_read_int64(rand_state_ptr, 0i64))));
+    uint64:s = ((@cast_unchecked<uint64>(npk_mem_read_int64(rand_state_ptr, 0i64))));
     uint64:next_s = raw rand_next(s);
     if (next_s == 0u64) { next_s = 1u64; }
-    drop(npk_mem_write_int64(rand_state_ptr, 0i64, (cast_unchecked<int64>((next_s)))));
+    drop(npk_mem_write_int64(rand_state_ptr, 0i64, (@cast_unchecked<int64>((next_s)))));
 
-    int64:r_int = (cast_unchecked<int64>((next_s))) % 1000000i64;
+    int64:r_int = (@cast_unchecked<int64>((next_s))) % 1000000i64;
     if (r_int < 0i64) { r_int = -r_int; }
     if (r_int == 0i64) { r_int = 1i64; }
 
-    float64:unif = (cast_unchecked<float64>((r_int))) / 1000000.0f64;
+    float64:unif = (@cast_unchecked<float64>((r_int))) / 1000000.0f64;
     float64:l_val = -log(unif) * mL;
-    int32:l = ((cast_unchecked<int32>(floor(l_val))));
+    int32:l = ((@cast_unchecked<int32>(floor(l_val))));
 
     if (l > max_layer_limit) { pass(max_layer_limit); }
     pass(l);
@@ -52,7 +52,7 @@ pub func:hnsw_select_neighbors = int64(
 
     int64:size = raw hnsw_pq_get_size(W_pq) ;
     if (size == 0i64) {
-        pass(raw hnsw_pq_create((cast_unchecked<int64>((M))), 1i64));
+        pass(raw hnsw_pq_create((@cast_unchecked<int64>((M))), 1i64));
     }
 
     int64:min_heap = raw hnsw_pq_create(size, 0i64) ;
@@ -66,7 +66,7 @@ pub func:hnsw_select_neighbors = int64(
         drop(hnsw_pq_push(min_heap, dist, slot, gen));
     }
 
-    int64:R = raw hnsw_pq_create((cast_unchecked<int64>((M))), 1i64) ;
+    int64:R = raw hnsw_pq_create((@cast_unchecked<int64>((M))), 1i64) ;
     int64:arena = raw hnsw_graph_get_arena(graph) ;
 
     when ((raw hnsw_pq_get_size(min_heap)) > 0i64) {
@@ -76,7 +76,7 @@ pub func:hnsw_select_neighbors = int64(
         int32:c_gen = raw hnsw_pq_get_gen(C) ;
 
         int64:r_size = raw hnsw_pq_get_size(R) ;
-        if (r_size >= (cast_unchecked<int64>((M)))) { break; }
+        if (r_size >= (@cast_unchecked<int64>((M)))) { break; }
 
         int64:c_node = raw hnsw_arena_get_node(arena, c_slot, c_gen) ;
         if (c_node == 0i64) { continue; }
@@ -125,7 +125,7 @@ func:hnsw_shrink_connections = int64(
     int32:new_gen
 ) requires (graph != 0i64), (n_node != 0i64) {
     
-    int64:W = raw hnsw_pq_create((cast_unchecked<int64>((layer_m))) + 1i64, 1i64) ;
+    int64:W = raw hnsw_pq_create((@cast_unchecked<int64>((layer_m))) + 1i64, 1i64) ;
     int32:num_n = raw hnsw_node_get_num_neighbors(n_node, layer) ;
 
     int64:n_vec = raw hnsw_node_get_vector_offset(n_node) ;
@@ -133,7 +133,7 @@ func:hnsw_shrink_connections = int64(
     int64:i = 0i64;
     int64:arena = raw hnsw_graph_get_arena(graph) ;
 
-    when (i < (cast_unchecked<int64>((num_n)))) {
+    when (i < (@cast_unchecked<int64>((num_n)))) {
         int32:c_slot = raw hnsw_node_get_neighbor_slot(n_node, layer, i) ;
         int32:c_gen = raw hnsw_node_get_neighbor_gen(n_node, layer, i) ;
 
@@ -156,7 +156,7 @@ func:hnsw_shrink_connections = int64(
     int64:neighbors = raw hnsw_select_neighbors(graph, n_vec, W, layer_m) ;
     int64:n_size = raw hnsw_pq_get_size(neighbors) ;
 
-    drop(hnsw_node_set_num_neighbors(n_node, layer, (cast_unchecked<int32>((n_size)))));
+    drop(hnsw_node_set_num_neighbors(n_node, layer, (@cast_unchecked<int32>((n_size)))));
 
     i = 0i64;
     when (i < n_size) {
@@ -189,7 +189,7 @@ pub func:hnsw_insert = int64(
         drop(npk_core_dalloc(node_buf));
         pass(-1i64);
     }
-    int32:slot = ((cast_unchecked<int32>(npk_mem_read_int64(node_buf, 0i64))));
+    int32:slot = ((@cast_unchecked<int32>(npk_mem_read_int64(node_buf, 0i64))));
     int32:gen  = npk_mem_read_int32(node_buf, 8i64);
     drop(npk_core_dalloc(node_buf));
 
@@ -252,7 +252,7 @@ pub func:hnsw_insert = int64(
         int64:neighbors = raw hnsw_select_neighbors(graph, vec_offset, W, layer_m) ;
         
         int64:n_size = raw hnsw_pq_get_size(neighbors) ;
-        drop(hnsw_node_set_num_neighbors(node_ptr, lc, (cast_unchecked<int32>((n_size)))));
+        drop(hnsw_node_set_num_neighbors(node_ptr, lc, (@cast_unchecked<int32>((n_size)))));
 
         int64:i = 0i64;
         when (i < n_size) {
@@ -265,7 +265,7 @@ pub func:hnsw_insert = int64(
             if (n_node_ptr != 0i64) {
                 int32:n_num = raw hnsw_node_get_num_neighbors(n_node_ptr, lc) ;
                 if (n_num < layer_m) {
-                    drop(hnsw_node_set_neighbor(n_node_ptr, lc, (cast_unchecked<int64>((n_num))), slot, gen, 1i16));
+                    drop(hnsw_node_set_neighbor(n_node_ptr, lc, (@cast_unchecked<int64>((n_num))), slot, gen, 1i16));
                     drop(hnsw_node_set_num_neighbors(n_node_ptr, lc, n_num + 1i32));
                 } else {
                     drop(hnsw_shrink_connections(graph, n_node_ptr, n_slot, n_gen, lc, layer_m, slot, gen));

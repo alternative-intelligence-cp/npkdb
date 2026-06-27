@@ -16,7 +16,7 @@ pub fixed int64:LOCATION_OFF_SLOT_ID   = 16i64;
 // Allocate a location buffer and encode the three fields.
 pub func:location_encode = int64(int64:file_num, int64:page_id, int64:slot_id)
 {
-    int64:buf = cast_unchecked<int64>(npk_core_alloc(LOCATION_SIZE));
+    int64:buf = @cast_unchecked<int64>(npk_core_alloc(LOCATION_SIZE));
     drop(npk_mem_write_int64(buf, LOCATION_OFF_FILE_NUM, file_num));
     drop(npk_mem_write_int64(buf, LOCATION_OFF_PAGE_ID,  page_id));
     drop(npk_mem_write_int64(buf, LOCATION_OFF_SLOT_ID,  slot_id));

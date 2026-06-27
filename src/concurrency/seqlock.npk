@@ -17,7 +17,7 @@ pub fixed int64:SEQLOCK_MAX_RETRIES   = 1000i64;  // Max reader retries before f
 // Allocate and initialize a seqlock (seq = 0, even, no write in progress).
 pub func:seqlock_alloc = int64() {
     int64:ptr = npk_core_alloc(SEQLOCK_SIZE);
-    if (ptr == 0i64) { fail(cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
+    if (ptr == 0i64) { fail(@cast_unchecked<tbb8>(ERR_ART_CAS_FAILED)); }
     // Write initial seq = 0 using atomic store
     drop(atomic_store_seqcst(ptr + SEQLOCK_OFF_SEQ, 0i64));
     pass(ptr);
@@ -123,7 +123,7 @@ pub func:seqlock_read_copy = int64(int64:seqlock_ptr, int64:data_ptr,
         }
         retries = retries + 1i64;
     }
-    fail(cast_unchecked<tbb8>(ERR_ART_CAS_FAILED));
+    fail(@cast_unchecked<tbb8>(ERR_ART_CAS_FAILED));
 };
 
 // Write a small metadata block protected by a seqlock.

@@ -9,9 +9,9 @@ pub func:catalog_create_collection = int64(string:name) {
 pub func:catalog_get_collection = int64(string:name) {
     println("MOCK: catalog_get_collection(" + name + ")");
     int64:c_ptr = npk_core_alloc(32i64);
-    Collection->:c = cast_unchecked<Collection->>(c_ptr);
+    Collection->:c = @cast_unchecked<Collection->>(c_ptr);
     c->name = name;
-    c->vector_index = cast_unchecked<Handle<HnswGraph> >(mock_collection_vector_index);
+    c->vector_index = @cast_unchecked<Handle<HnswGraph> >(mock_collection_vector_index);
     pass(c_ptr);
 };
 

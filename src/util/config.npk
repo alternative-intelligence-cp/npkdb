@@ -54,7 +54,7 @@ pub func:config_init = int32(string:toml_path) {
     // Get values or default
     int32:port = 8080i32;
     int64:p = raw Toml.get_int("server.http_port");
-    if (p > 0i64) { port = cast_unchecked<int32>((p)); }
+    if (p > 0i64) { port = @cast_unchecked<int32>((p)); }
     
     int64:threads = raw Toml.get_int("server.max_threads");
     if (threads <= 0i64) { threads = 4i64; }

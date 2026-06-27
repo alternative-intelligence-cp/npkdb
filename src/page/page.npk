@@ -16,7 +16,7 @@ Rules<int64>:valid_page_offset = { $ >= 0i64, $ < PAGE_SIZE };
 pub func:page_alloc = int64() {
     int64:ptr = nitpick_libc_mem_calloc(1i64, PAGE_SIZE);
     if (ptr == 0i64) {
-        fail(cast_unchecked<tbb8>(ERR_PAGE_FULL));
+        fail(@cast_unchecked<tbb8>(ERR_PAGE_FULL));
     }
     pass(ptr);
 };
@@ -24,12 +24,12 @@ pub func:page_alloc = int64() {
 // Initialize a page header in an already-allocated buffer
 pub func:page_init = int64(int64:buf, int64:page_id) {
     if (buf == 0i64) {
-        fail(cast_unchecked<tbb8>(ERR_PAGE_CORRUPT));
+        fail(@cast_unchecked<tbb8>(ERR_PAGE_CORRUPT));
     }
     drop(npk_mem_write_int64(buf, HDR_OFF_PAGE_ID, page_id));
     drop(npk_mem_write_int32(buf, HDR_OFF_CHECKSUM, 0i32));
-    drop(npk_mem_write_int32(buf, HDR_OFF_FREE_OFFSET, cast_unchecked<int32>(PAGE_HEADER_SIZE)));
-    drop(npk_mem_write_int32(buf, HDR_OFF_TUPLE_END, cast_unchecked<int32>((PAGE_SIZE - 1i64))));
+    drop(npk_mem_write_int32(buf, HDR_OFF_FREE_OFFSET, @cast_unchecked<int32>(PAGE_HEADER_SIZE)));
+    drop(npk_mem_write_int32(buf, HDR_OFF_TUPLE_END, @cast_unchecked<int32>((PAGE_SIZE - 1i64))));
     drop(npk_mem_write_int32(buf, HDR_OFF_SLOT_COUNT, 0i32));
     drop(npk_mem_write_int32(buf, HDR_OFF_FLAGS, PAGE_FLAG_DATA));
     drop(npk_mem_write_int32(buf, HDR_OFF_RESERVED, 0i32));
@@ -68,8 +68,8 @@ pub func:page_get_flags = int32(int64:buf) {
 
 // Calculate available npk_core_dalloc space on the page
 pub func:page_free_space = int64(int64:buf) {
-    int64:free_off = cast_unchecked<int64>((page_get_free_offset(buf) ? 0i32));
-    int64:tup_end  = cast_unchecked<int64>((page_get_tuple_end(buf) ? 0i32));
+    int64:free_off = @cast_unchecked<int64>((page_get_free_offset(buf) ? 0i32));
+    int64:tup_end  = @cast_unchecked<int64>((page_get_tuple_end(buf) ? 0i32));
     int64:available = tup_end - free_off + 1i64 - SLOT_SIZE;
     if (available < 0i64) {
         pass(0i64);
@@ -104,16 +104,16 @@ pub func:slot_write = NIL(int64:buf, int64:slot_index, int64:tuple_offset, int64
 
 // Read raw tuple bytes from the page into a new buffer
 pub func:page_read_tuple = int64(int64:buf, int64:slot_index) {
-    int64:count = cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+    int64:count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
     if (slot_index < 0i64 || slot_index >= count) {
-        fail(cast_unchecked<tbb8>(ERR_PAGE_INVALID_SLOT));
+        fail(@cast_unchecked<tbb8>(ERR_PAGE_INVALID_SLOT));
     }
 
     int64:tup_off = slot_get_tuple_offset(buf, slot_index) ? 0i64;
     int64:tup_len = slot_get_tuple_length(buf, slot_index) ? 0i64;
 
     if (tup_len <= 0i64 || tup_off < 0i64 || tup_off + tup_len > PAGE_SIZE) {
-        fail(cast_unchecked<tbb8>(ERR_PAGE_CORRUPT));
+        fail(@cast_unchecked<tbb8>(ERR_PAGE_CORRUPT));
     }
 
     int64:out = npk_core_alloc(tup_len);
@@ -140,7 +140,7 @@ pub func:page_is_full = int64(int64:buf, int64:record_size) {
 
 // Returns the total number of live (non-deleted) records on the page.
 pub func:page_live_count = int64(int64:buf) {
-    int64:count = cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+    int64:count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
     int64:live = 0i64;
     int64:i = 0i64;
     while (i < count) {
@@ -155,7 +155,7 @@ pub func:page_live_count = int64(int64:buf) {
 
 // Returns the total bytes used by live tuple data
 pub func:page_used_bytes = int64(int64:buf) {
-    int64:count = cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+    int64:count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
     int64:used = 0i64;
     int64:i = 0i64;
     while (i < count) {
@@ -173,39 +173,39 @@ pub func:page_insert = int64(int64:buf, int64:data_ptr, int64:data_len)
     requires buf != 0i64, data_ptr != 0i64, data_len > 0i64
     ensures (result >= 0i64 || result == ERR_PAGE_FULL) {
     if (data_len <= 0i64) {
-        fail(cast_unchecked<tbb8>(ERR_PAGE_CORRUPT));
+        fail(@cast_unchecked<tbb8>(ERR_PAGE_CORRUPT));
     }
     // Records larger than a page can never fit — treat as page full
     if (data_len >= PAGE_SIZE) {
-        fail(cast_unchecked<tbb8>(ERR_PAGE_FULL));
+        fail(@cast_unchecked<tbb8>(ERR_PAGE_FULL));
     }
     int64:is_full = page_is_full(buf, data_len) ? 1i64;
     if (is_full == 1i64) {
-        fail(cast_unchecked<tbb8>(ERR_PAGE_FULL));
+        fail(@cast_unchecked<tbb8>(ERR_PAGE_FULL));
     }
 
-    int64:tend = cast_unchecked<int64>((page_get_tuple_end(buf) ? 0i32));
+    int64:tend = @cast_unchecked<int64>((page_get_tuple_end(buf) ? 0i32));
     limit<valid_page_offset> int64:new_toff = tend - data_len + 1i64;
     if (new_toff < PAGE_HEADER_SIZE) {
-        fail(cast_unchecked<tbb8>(ERR_PAGE_FULL));
+        fail(@cast_unchecked<tbb8>(ERR_PAGE_FULL));
     }
 
     drop(npk_mem_copy(buf + new_toff, data_ptr, data_len));
 
-    int64:scnt = cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+    int64:scnt = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
     drop(slot_write(buf, scnt, new_toff, data_len));
 
-    int64:foff = cast_unchecked<int64>((page_get_free_offset(buf) ? 0i32));
-    drop(npk_mem_write_int32(buf, HDR_OFF_SLOT_COUNT, cast_unchecked<int32>((scnt + 1i64))));
-    drop(npk_mem_write_int32(buf, HDR_OFF_FREE_OFFSET, cast_unchecked<int32>((foff + SLOT_SIZE))));
-    drop(npk_mem_write_int32(buf, HDR_OFF_TUPLE_END, cast_unchecked<int32>((new_toff - 1i64))));
+    int64:foff = @cast_unchecked<int64>((page_get_free_offset(buf) ? 0i32));
+    drop(npk_mem_write_int32(buf, HDR_OFF_SLOT_COUNT, @cast_unchecked<int32>((scnt + 1i64))));
+    drop(npk_mem_write_int32(buf, HDR_OFF_FREE_OFFSET, @cast_unchecked<int32>((foff + SLOT_SIZE))));
+    drop(npk_mem_write_int32(buf, HDR_OFF_TUPLE_END, @cast_unchecked<int32>((new_toff - 1i64))));
 
     pass(scnt);
 };
 
 // Mark a record as deleted by zeroing its slot entry.
 pub func:page_delete = NIL(int64:buf, int64:slot_index) {
-    int64:count = cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+    int64:count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
     if (slot_index >= 0i64 && slot_index < count) {
         int64:offset = slot_get_tuple_offset(buf, slot_index) ? 0i64;
         int64:len = slot_get_tuple_length(buf, slot_index) ? 0i64;
@@ -228,14 +228,14 @@ pub func:page_slot_is_alive = int64(int64:buf, int64:slot_index) {
 
 // Update the record at slot_index with new data.
 pub func:page_update = int64(int64:buf, int64:slot_index, int64:data_ptr, int64:data_len) {
-    int64:count = cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+    int64:count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
     if (slot_index < 0i64 || slot_index >= count) {
-        fail(cast_unchecked<tbb8>(ERR_PAGE_INVALID_SLOT));
+        fail(@cast_unchecked<tbb8>(ERR_PAGE_INVALID_SLOT));
     }
 
     int64:old_len = slot_get_tuple_length(buf, slot_index) ? 0i64;
     if (old_len == 0i64) {
-        fail(cast_unchecked<tbb8>(ERR_PAGE_INVALID_SLOT)); // Already deleted
+        fail(@cast_unchecked<tbb8>(ERR_PAGE_INVALID_SLOT)); // Already deleted
     }
 
     if (data_len <= old_len) {
@@ -250,7 +250,7 @@ pub func:page_update = int64(int64:buf, int64:slot_index, int64:data_ptr, int64:
     drop(page_delete(buf, slot_index));
     int64:new_idx = page_insert(buf, data_ptr, data_len) ? -1i64;
     if (new_idx == -1i64) {
-        fail(cast_unchecked<tbb8>(ERR_PAGE_FULL));
+        fail(@cast_unchecked<tbb8>(ERR_PAGE_FULL));
     }
     pass(new_idx);
 };
@@ -266,11 +266,11 @@ pub func:page_defragment = int64(int64:buf) {
 
     drop(npk_mem_copy(temp, buf, PAGE_HEADER_SIZE));
 
-    drop(npk_mem_write_int32(temp, HDR_OFF_FREE_OFFSET, cast_unchecked<int32>(PAGE_HEADER_SIZE)));
-    drop(npk_mem_write_int32(temp, HDR_OFF_TUPLE_END, cast_unchecked<int32>((PAGE_SIZE - 1i64))));
+    drop(npk_mem_write_int32(temp, HDR_OFF_FREE_OFFSET, @cast_unchecked<int32>(PAGE_HEADER_SIZE)));
+    drop(npk_mem_write_int32(temp, HDR_OFF_TUPLE_END, @cast_unchecked<int32>((PAGE_SIZE - 1i64))));
     drop(npk_mem_write_int32(temp, HDR_OFF_SLOT_COUNT, 0i32));
 
-    int64:orig_count = cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
+    int64:orig_count = @cast_unchecked<int64>((page_get_slot_count(buf) ? 0i32));
     int64:i = 0i64;
     while (i < orig_count) {
         int64:len = slot_get_tuple_length(buf, i) ? 0i64;

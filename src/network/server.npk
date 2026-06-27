@@ -28,7 +28,7 @@ pub func:server_start = int32((int64)(int64):worker_fn) {
     
     int64:workers = npk_mem_read_int64(cfg_ptr, CFG_MAX_THREADS);
     if (workers <= 0i64) {
-        workers = ((cast_unchecked<int64>((raw Thread.hardware_concurrency()))) * 2i64);
+        workers = ((@cast_unchecked<int64>((raw Thread.hardware_concurrency()))) * 2i64);
         if (workers <= 0i64) { workers = 4i64; }
     }
     
@@ -49,13 +49,13 @@ pub func:server_start = int32((int64)(int64):worker_fn) {
     
     // Start TCP Listener
     int32:port = npk_mem_read_int32(cfg_ptr, CFG_HTTP_PORT);
-    int64:server_fd = raw Server.bind_and_listen("0.0.0.0", (cast_unchecked<int64>((port))), 1024i64);
+    int64:server_fd = raw Server.bind_and_listen("0.0.0.0", (@cast_unchecked<int64>((port))), 1024i64);
     if (server_fd < 0i64) {
-        println(string_concat("Failed to bind and listen on port ", string_from_int((cast_unchecked<int64>((port))))));
+        println(string_concat("Failed to bind and listen on port ", string_from_int((@cast_unchecked<int64>((port))))));
         pass(ERR_SERVER_BIND_FAILED);
     }
     
-    println(string_concat("Server listening on port ", string_from_int((cast_unchecked<int64>((port))))));
+    println(string_concat("Server listening on port ", string_from_int((@cast_unchecked<int64>((port))))));
     
     // Accept loop (runs on main thread)
     till(1000000000, 1) {

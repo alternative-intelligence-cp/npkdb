@@ -3,8 +3,8 @@ use "art_node.npk".*;
 use "../util/mem_primitives.npk".*;
 
 pub func:node48_get_slot = int64(int64:node, int64:byte_val) {
-    int64:idx_off = NODE48_INDEX_OFFSET + (cast_unchecked<int64>(byte_val));
-    pass(cast_unchecked<int64>(npk_mem_read_byte(node, idx_off)));
+    int64:idx_off = NODE48_INDEX_OFFSET + (@cast_unchecked<int64>(byte_val));
+    pass(@cast_unchecked<int64>(npk_mem_read_byte(node, idx_off)));
 };
 
 pub func:node48_set_slot = NIL(int64:node, int64:byte_val, int64:slot) {

@@ -36,7 +36,7 @@ pub func:http_worker_loop = int64(int64:arg_handle) {
         
         // Set socket receive timeout (SO_RCVTIMEO) to prevent Slowloris attacks
         Timeval:tv = Timeval { sec: 3i64, usec: 0i64 };
-        int64:tv_ptr = cast_unchecked<int64>(@tv);
+        int64:tv_ptr = @cast_unchecked<int64>(@tv);
         // SETSOCKOPT=54, SOL_SOCKET=1, SO_RCVTIMEO=20
         drop(sys(SETSOCKOPT, client_fd, 1i64, 20i64, tv_ptr, 16i64));
         

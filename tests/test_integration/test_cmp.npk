@@ -1,0 +1,10 @@
+pub func:main = int64() {
+    string:a = "stress_key_000875";
+    string:b = "stress_key_000876";
+    if (a >= b) {
+        println("BUG: a >= b");
+    } else {
+        println("OK: a < b");
+    }
+    pass(0i64);
+}

@@ -14,7 +14,7 @@ pub func:mock_proc_exit = NIL(int32:code) {
 
 pub func:failsafe = int32(tbb32:code) {
     println("Failsafe triggered!");
-    exit(cast_unchecked<int32>(code));
+    exit(@cast_unchecked<int32>(code));
 };
 
 pub func:main = int32() {

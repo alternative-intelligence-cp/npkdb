@@ -28,9 +28,6 @@ pub fixed int64:WP_OFF_WAL_STATE  = 64i64;
 pub fixed int64:WP_STATE_SIZE   = 72i64;
 
 extern "nitpick_libc_thread" {
-    func:nitpick_libc_rwlock_create    = int64();
-    func:nitpick_libc_rwlock_wrlock    = int32(int64:handle);
-    func:nitpick_libc_rwlock_unlock    = int32(int64:handle);
 }
 
 

@@ -85,7 +85,7 @@ func:main = int32() {
     drop(check(t_keys == 5i64, "T08 Footer total_keys = 5"));
     
     int64:crc_calc = crc32_compute(footer, 44i64) ? 0i64;
-    drop(check(chk == cast_unchecked<int32>(crc_calc), "T09 Footer checksum validates"));
+    drop(check(chk == @cast_unchecked<int32>(crc_calc), "T09 Footer checksum validates"));
     
     drop(npk_core_dalloc(footer));
     drop(sys(CLOSE, fd));

@@ -13,7 +13,7 @@ use "../util/mem_primitives.npk".*;
 use "../../libn/src/syscall/syscall_numbers.npk".*;
 
 // SSTable magic number (identifies file type)
-// "NPKDB01" in hex: 4E 50 4B 44 42 30 cast_unchecked<0x4E504B44423031>(31)
+// "NPKDB01" in hex: 4E 50 4B 44 42 30 @cast_unchecked<0x4E504B44423031>(31)
 pub fixed int64:SSTABLE_MAGIC = 22033878037372977i64; // 0x4E504B44423031
 
 // Footer layout (32 bytes):
@@ -93,7 +93,7 @@ pub func:sstable_open_read = int64(string:path) {
     
     int64:crc_calc = crc32_compute(footer, 44i64) ? 0i64;
     int32:chk = npk_mem_read_int32(footer, 44i64);
-    if (chk != (cast_unchecked<int32>((crc_calc)))) {
+    if (chk != (@cast_unchecked<int32>((crc_calc)))) {
         drop(npk_core_dalloc(footer));
         drop(sys(CLOSE, fd));
         pass(0i64);
@@ -163,7 +163,7 @@ pub func:sstable_close_read = NIL(int64:reader) {
 pub func:sstable_find_block = int64(int64:reader, string:key) {
     int64:index_page = npk_mem_read_int64(reader, 32i64);
     int32:count32 = page_get_slot_count(index_page) ? 0i32;
-    int64:count = cast_unchecked<int64>(count32);
+    int64:count = @cast_unchecked<int64>(count32);
     if (count == 0i64) { pass(-1i64); }
     
     int64:low = 0i64;
@@ -176,7 +176,7 @@ pub func:sstable_find_block = int64(int64:reader, string:key) {
         int64:tup_off = slot_get_tuple_offset(index_page, mid) ? 0i64;
         
         int64:tup_ptr = npk_mem_offset(index_page, tup_off);
-        int64:k_len = cast_unchecked<int64>(npk_mem_read_int32(tup_ptr, 0i64));
+        int64:k_len = @cast_unchecked<int64>(npk_mem_read_int32(tup_ptr, 0i64));
         string:last_k = npk_mem_read_string(tup_ptr + 4i64, k_len);
         
         if (last_k >= key) {
@@ -190,7 +190,7 @@ pub func:sstable_find_block = int64(int64:reader, string:key) {
     if (found != -1i64) {
         int64:t_off = slot_get_tuple_offset(index_page, found) ? 0i64;
         int64:t_ptr = npk_mem_offset(index_page, t_off);
-        int64:kl = cast_unchecked<int64>(npk_mem_read_int32(t_ptr, 0i64));
+        int64:kl = @cast_unchecked<int64>(npk_mem_read_int32(t_ptr, 0i64));
         int64:blk_off = npk_mem_read_int64(t_ptr, 4i64 + kl);
         pass(blk_off / PAGE_SIZE);
     }
@@ -237,7 +237,7 @@ pub func:sstable_get = int64(int64:reader, string:key) {
     if (page == 0i64) { pass(0i64); }
     
     int32:count32 = page_get_slot_count(page) ? 0i32;
-    int64:count = cast_unchecked<int64>(count32);
+    int64:count = @cast_unchecked<int64>(count32);
     int64:i = 0i64;
     int64:found_rec = 0i64;
     
@@ -283,7 +283,7 @@ pub func:sstable_iter_next = int64(int64:iter) {
     
     while (page != 0i64) {
         int32:count32 = page_get_slot_count(page) ? 0i32;
-        int64:count = cast_unchecked<int64>(count32);
+        int64:count = @cast_unchecked<int64>(count32);
         if (slot < count) {
             int64:rec = sstable_read_record(page, slot) ? 0i64;
             drop(npk_mem_write_int64(iter, 16i64, slot + 1i64));

@@ -47,14 +47,14 @@ pub func:hnsw_arena_get_arena_id = int16(int64:arena) requires (arena != 0i64) {
 pub func:hnsw_arena_create = int64(int64:capacity, int16:arena_id)
     requires (capacity >= 1i64) {
     int64:arena = npk_core_alloc(HNSW_ARENA_STRUCT_SIZE);
-    if (arena == 0i64) { fail(cast_unchecked<tbb32>((ERR_HNSW_OOM))); }
+    if (arena == 0i64) { fail(@cast_unchecked<tbb32>((ERR_HNSW_OOM))); }
     drop(npk_mem_set(arena, 0i64, HNSW_ARENA_STRUCT_SIZE));
 
     int64:node_buf_size = capacity * HNSW_NODE_SIZE;
     int64:node_buf = npk_core_alloc(node_buf_size);
     if (node_buf == 0i64) {
         drop(npk_core_dalloc(arena));
-        fail(cast_unchecked<tbb32>((ERR_HNSW_OOM)));
+        fail(@cast_unchecked<tbb32>((ERR_HNSW_OOM)));
     }
     drop(npk_mem_set(node_buf, 0i64, node_buf_size));
 
@@ -63,7 +63,7 @@ pub func:hnsw_arena_create = int64(int64:capacity, int16:arena_id)
     if (gen_buf == 0i64) {
         drop(npk_core_dalloc(node_buf));
         drop(npk_core_dalloc(arena));
-        fail(cast_unchecked<tbb32>((ERR_HNSW_OOM)));
+        fail(@cast_unchecked<tbb32>((ERR_HNSW_OOM)));
     }
     drop(npk_mem_set(gen_buf, 0i64, gen_buf_size));
 
@@ -73,7 +73,7 @@ pub func:hnsw_arena_create = int64(int64:capacity, int16:arena_id)
         drop(npk_core_dalloc(gen_buf));
         drop(npk_core_dalloc(node_buf));
         drop(npk_core_dalloc(arena));
-        fail(cast_unchecked<tbb32>((ERR_HNSW_OOM)));
+        fail(@cast_unchecked<tbb32>((ERR_HNSW_OOM)));
     }
 
     int64:i = 0i64;
@@ -118,7 +118,7 @@ pub func:hnsw_arena_alloc_node = int64(int64:arena, int64:out_slot_idx_ptr, int6
     int64:free_top = hnsw_arena_get_free_top(arena)  ?! 0i64;
 
     if (free_top == 0i64) {
-        fail(cast_unchecked<tbb32>((ERR_HNSW_OOM)));
+        fail(@cast_unchecked<tbb32>((ERR_HNSW_OOM)));
     }
 
     int64:new_top  = free_top - 1i64;
@@ -150,16 +150,16 @@ pub func:hnsw_arena_alloc_node = int64(int64:arena, int64:out_slot_idx_ptr, int6
 pub func:hnsw_arena_free_node = int64(int64:arena, int32:handle_slot_idx, int32:handle_generation)
     requires (arena != 0i64), (handle_slot_idx >= 0i32), (handle_generation > 0i32) {
     int64:capacity = hnsw_arena_get_capacity(arena)  ?! 0i64;
-    int64:slot     = (cast_unchecked<int64>((handle_slot_idx)));
+    int64:slot     = (@cast_unchecked<int64>((handle_slot_idx)));
 
     if (slot >= capacity) {
-        fail(cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE)));
+        fail(@cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE)));
     }
 
     int64:gen_buf = hnsw_arena_get_gen_buf(arena)   ?! 0i64;
     int32:live_gen   = npk_mem_read_int32(gen_buf, slot * 4i64);
     if (handle_generation != live_gen) {
-        fail(cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE)));
+        fail(@cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE)));
     }
 
     int32:new_gen = live_gen + 1i32;
@@ -182,20 +182,20 @@ pub func:hnsw_arena_free_node = int64(int64:arena, int32:handle_slot_idx, int32:
 pub func:hnsw_arena_get_node = int64(int64:arena, int32:handle_slot_idx, int32:handle_generation)
     requires (arena != 0i64) {
     if (handle_generation == 0i32) {
-        fail(cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE)));
+        fail(@cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE)));
     }
 
     int64:capacity = hnsw_arena_get_capacity(arena)  ?! 0i64;
-    int64:slot     = (cast_unchecked<int64>((handle_slot_idx)));
+    int64:slot     = (@cast_unchecked<int64>((handle_slot_idx)));
 
     if (slot >= capacity) {
-        fail(cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE)));
+        fail(@cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE)));
     }
 
     int64:gen_buf = hnsw_arena_get_gen_buf(arena)  ?! 0i64;
     int32:live_gen = npk_mem_read_int32(gen_buf, slot * 4i64);
     if (handle_generation != live_gen) {
-        fail(cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE)));
+        fail(@cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE)));
     }
 
     int64:node_buf = hnsw_hnsw_arena_get_node_buf(arena)  ?! 0i64;
@@ -205,10 +205,10 @@ pub func:hnsw_arena_get_node = int64(int64:arena, int32:handle_slot_idx, int32:h
 pub func:hnsw_hnsw_arena_get_node_unchecked = int64(int64:arena, int32:handle_slot_idx)
     requires (arena != 0i64), (handle_slot_idx >= 0i32) {
     int64:capacity = hnsw_arena_get_capacity(arena)  ?! 0i64;
-    int64:slot     = (cast_unchecked<int64>((handle_slot_idx)));
+    int64:slot     = (@cast_unchecked<int64>((handle_slot_idx)));
 
     if (slot >= capacity) {
-        fail(cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE)));
+        fail(@cast_unchecked<tbb32>((ERR_HNSW_STALE_HANDLE)));
     }
 
     int64:node_buf = hnsw_hnsw_arena_get_node_buf(arena)  ?! 0i64;
@@ -217,8 +217,8 @@ pub func:hnsw_hnsw_arena_get_node_unchecked = int64(int64:arena, int32:handle_sl
 
 pub func:handle_encode = NIL(int32:slot_idx, int32:generation, int16:arena_id, int64:out_buf)
     requires (out_buf != 0i64) {
-    int64:word0 = (cast_unchecked<int64>((slot_idx))) | ((cast_unchecked<int64>((generation))) << 32i64);
-    int64:word1 = (cast_unchecked<int64>((arena_id))) & 0xFFFFi64;
+    int64:word0 = (@cast_unchecked<int64>((slot_idx))) | ((@cast_unchecked<int64>((generation))) << 32i64);
+    int64:word1 = (@cast_unchecked<int64>((arena_id))) & 0xFFFFi64;
 
     drop(npk_mem_write_int64(out_buf, 0i64,  word0));
     drop(npk_mem_write_int64(out_buf, 8i64,  word1));

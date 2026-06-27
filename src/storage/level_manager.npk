@@ -3,10 +3,6 @@ use "../util/constants.npk".*;
 use "../util/mem_primitives.npk".*;
 
 extern "nitpick_libc_thread" {
-    func:nitpick_libc_rwlock_create    = int64();
-    func:nitpick_libc_rwlock_wrlock    = int32(int64:handle);
-    func:nitpick_libc_rwlock_rdlock    = int32(int64:handle);
-    func:nitpick_libc_rwlock_unlock    = int32(int64:handle);
 }
 
 // Level metadata per SSTable entry:
