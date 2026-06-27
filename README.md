@@ -16,7 +16,7 @@ The core problem NPKDB solves is one of operational complexity: modern AI applic
 
 Beyond its functional goals, NPKDB is a flagship demonstration of the Nitpick ecosystem's capability to implement **serious, high-performance systems software** — proving that Nitpick's deterministic memory model, compile-time Z3 verification, native SIMD types, and lock-free concurrency primitives are sufficient to build production-grade infrastructure from scratch.
 
-> **Status: Pre-development (design phase)** — Architecture finalized. Implementation starting. See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) and [CHANGELOG.md](CHANGELOG.md).
+> **Status: Active Development (v0.25)** — Core engine, LSM-Tree, HNSW Vector Index, and HTTP API are implemented and stable. See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) and [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
@@ -90,7 +90,7 @@ NPKDB opts out of any garbage-collected runtime. All memory safety is achieved t
 
 ---
 
-## Building from Source
+## Building and Installation
 
 ### Prerequisites
 
@@ -99,7 +99,7 @@ NPKDB opts out of any garbage-collected runtime. All memory safety is achieved t
 - **LLVM 20**
 - Linux (x86-64 or ARM64)
 
-### Build
+### Build from Source
 
 ```bash
 git clone https://github.com/alternative-intelligence-cp/npkdb.git
@@ -111,18 +111,28 @@ npkbld build
 # Debug build (enables Z3 contract verification)
 npkbld build --debug
 
-# Run all tests
+# Run the comprehensive test suite
 npkbld test tests/
 ```
 
-### Run
+### Install
+
+Once built, you can install the binary globally:
+
+```bash
+sudo cp ./build/npkdb /usr/local/bin/
+```
+
+### Usage
+
+NPKDB runs as a standalone server, communicating via a RESTful HTTP API.
 
 ```bash
 # Start the NPKDB server (default: HTTP API on :7373)
-./build/npkdb --config config.toml
+npkdb --config config.toml
 
-# Embedded mode (link as a library)
-# See docs/embedding.md
+# Or run directly from the build directory
+./build/npkdb --config config.toml
 ```
 
 ---
