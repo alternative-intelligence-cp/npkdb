@@ -1,158 +1,317 @@
 // regex_cache.npk — Concurrency & Caching
 
 use "regex_types.npk".*;
-use "regex_arena.npk".*;
+use "nfa_arena.npk".*;
 use "regex_vm.npk".*;
+use "prefix_extractor.npk".*;
 use "../util/error_codes.npk".*;
 use "../util/mem_primitives.npk".*;
-use "atomic.npk".*;
 
-extern "nitpick_libc_sys" {
-    func:npk_shim_rwlock_create = int64();
-    func:npk_shim_rwlock_rdlock = int32(int64:handle);
-    func:npk_shim_rwlock_wrlock = int32(int64:handle);
-    func:npk_shim_rwlock_unlock = int32(int64:handle);
-}
+pub struct:RegexCacheGlobal = {
+    int64: lock;
+    int64: head;
+    int64: tail;
+    int64: size;
+};
 
-// Global rwlock and list head
-pub int64:g_regex_rwlock = 0i64;
-pub int64:g_regex_cache_head = 0i64;
+// Global list head and size bounds
+pub int64:g_regex_cache_ptr = 0i64;
+pub fixed int64:MAX_CACHE_SIZE = 1000i64;
+
+extern func:npk_atomic_int32_create = int64(int32:initial);
+extern func:npk_atomic_int32_exchange = int32(int64:ptr, int32:val, int32:order);
+extern func:npk_atomic_int32_fetch_add = int32(int64:ptr, int32:val, int32:order);
+extern func:npk_atomic_int32_fetch_sub = int32(int64:ptr, int32:val, int32:order);
 
 pub func:regex_cache_init = int32() {
-    g_regex_rwlock = npk_shim_rwlock_create();
-    g_regex_cache_head = 0i64;
-    pass(0i32);
+    int64:ptr = npk_core_alloc(32i64);
+    RegexCacheGlobal->:c = @cast_unchecked<RegexCacheGlobal->>(ptr);
+    c->lock = npk_atomic_int32_create(0i32);
+    c->head = 0i64;
+    c->tail = 0i64;
+    c->size = 0i64;
+    g_regex_cache_ptr = ptr;
+    pass 0i32;
 };
 
 func:strings_equal = int32(int64:str1, int64:len1, int64:str2, int64:len2) {
-    if (len1 != len2) { pass(0i32); }
-    int64:i = 0i64;
-    int32:match = 1i32;
-    when (i < len1) {
-        int64:c1 = npk_mem_read_byte(str1, i);
-        int64:c2 = npk_mem_read_byte(str2, i);
-        if (c1 != c2) {
-            match = 0i32;
-            i = len1; // break
-        } else {
-            i = i + 1i64;
-        }
-    }
-    pass(match);
+    if (len1 != len2) { pass 0i32; }
+    if (len1 == 0i64) { pass 1i32; }
+    int64:cmp = npk_mem_compare(str1, str2, len1);
+    if (cmp == 0i64) { pass 1i32; }
+    pass 0i32;
 };
 
 pub func:regex_cache_get = int64(int64:pattern, int64:pattern_len) {
-    int32:rdlock_res = npk_shim_rwlock_rdlock(g_regex_rwlock);
-    defer { drop(npk_shim_rwlock_unlock(g_regex_rwlock)); }
+    if (g_regex_cache_ptr == 0i64) { pass 0i64; }
+    RegexCacheGlobal->:cache = @cast_unchecked<RegexCacheGlobal->>(g_regex_cache_ptr);
     
-    int64:curr = g_regex_cache_head;
+    int64:lock = cache->lock;
+    int32:locked = 0i32;
+    int32:spins = 0i32;
+    when (locked == 0i32) {
+        spins = spins + 1i32;
+        if (spins > 1000i32) {
+            pass 0i64; // Sentinel for spinlock in get
+        } else {
+            int32:old = npk_atomic_int32_exchange(lock, 1i32, 5i32);
+            if (old == 0i32) { locked = 1i32; }
+        }
+    }
+    
+    int64:curr = cache->head;
     int64:found = 0i64;
     int32:running = 1i32;
+    int32:iters = 0i32;
     
     when (running == 1i32) {
-        if (curr == 0i64) {
+        iters = iters + 1i32;
+        if (iters > 1000i32) {
+            drop npk_atomic_int32_exchange(lock, 0i32, 5i32);
+            pass 0i64; // Sentinel for infinite loop in get
+        } else if (curr == 0i64) {
             running = 0i32;
         } else {
-            int64:p_str = npk_mem_read_int64(curr, 0i64);
-            int64:p_len = npk_mem_read_int64(curr, 8i64);
+            CacheEntry->:curr_ptr = @cast_unchecked<CacheEntry->>(curr);
+            int64:p_str = curr_ptr->p_str;
+            int64:p_len = curr_ptr->p_len;
             
             int32:eq = raw strings_equal(pattern, pattern_len, p_str, p_len);
             if (eq == 1i32) {
                 found = curr;
+                drop npk_atomic_int32_fetch_add(curr_ptr->ref_count, 1i32, 5i32);
+                
+                // Move to front if not already at head
+                if (curr != cache->head) {
+                    CacheEntry->:prev_ptr = curr_ptr->prev;
+                    CacheEntry->:next_ptr = curr_ptr->next;
+                    
+                    if (cast_unchecked<int64>(prev_ptr) != 0i64) {
+                        prev_ptr->next = next_ptr;
+                    }
+                    if (cast_unchecked<int64>(next_ptr) != 0i64) {
+                        next_ptr->prev = prev_ptr;
+                    }
+                    if (curr == cache->tail) {
+                        cache->tail = cast_unchecked<int64>(prev_ptr);
+                    }
+                    
+                    CacheEntry->:old_head = @cast_unchecked<CacheEntry->>(cache->head);
+                    curr_ptr->next = old_head;
+                    curr_ptr->prev = @cast_unchecked<CacheEntry->>(0i64);
+                    old_head->prev = curr_ptr;
+                    cache->head = curr;
+                }
+                
                 running = 0i32;
             } else {
-                curr = npk_mem_read_int64(curr, 40i64);
+                curr = cast_unchecked<int64>(curr_ptr->next);
             }
         }
     }
-    
-    pass(found);
+        // Unlock
+        drop npk_atomic_int32_exchange(lock, 0i32, 5i32);
+        pass found;
 };
 
-pub func:regex_cache_insert = int64(int64:pattern, int64:pattern_len, int64:arena_ptr, int64:start_state) {
-    int32:wrlock_res = npk_shim_rwlock_wrlock(g_regex_rwlock);
-    defer { drop(npk_shim_rwlock_unlock(g_regex_rwlock)); }
-    
-    // Eviction logic
-    int64:curr = g_regex_cache_head;
-    int32:count = 0i32;
-    int64:prev = 0i64;
-    int64:lowest_hit_node = 0i64;
-    int64:lowest_hit_prev = 0i64;
-    int64:min_hits = 999999999i64;
-    
-    when (curr != 0i64) {
-        count = count + 1i32;
-        int64:hndl = npk_mem_read_int64(curr, 32i64);
-        int64:hits = raw AtomicInt64.add(AtomicInt64{handle: hndl}, 0i64, raw AtomicInt64.RELAXED());
-        if (hits < min_hits) {
-            min_hits = hits;
-            lowest_hit_node = curr;
-            lowest_hit_prev = prev;
-        }
-        prev = curr;
-        curr = npk_mem_read_int64(curr, 40i64);
+pub func:regex_cache_free_entry = int32(int64:entry) {
+    if (entry == 0i64) { pass 0i32; }
+    CacheEntry->:entry_ptr = @cast_unchecked<CacheEntry->>(entry);
+    int64:p_str = entry_ptr->p_str;
+    if (p_str != 0i64) {
+        drop npk_core_dalloc(p_str);
     }
-    
-    if (count >= 1000i32) {
-        if (lowest_hit_node != 0i64) {
-            if (lowest_hit_prev == 0i64) {
-                g_regex_cache_head = npk_mem_read_int64(lowest_hit_node, 40i64);
-            } else {
-                int64:next_node = npk_mem_read_int64(lowest_hit_node, 40i64);
-                drop(npk_mem_write_int64(lowest_hit_prev, 40i64, next_node));
-            }
-            int64:p_str = npk_mem_read_int64(lowest_hit_node, 0i64);
-            drop(npk_core_dalloc(p_str));
-            // arena_ptr is freed by the VM or GC in NPKDB usually, but we drop the node
-            drop(npk_core_dalloc(lowest_hit_node));
-        }
+    int64:prefix_ptr = entry_ptr->prefix_ptr;
+    if (prefix_ptr != 0i64) {
+        drop npk_core_dalloc(prefix_ptr);
     }
+    int64:arena_ptr = entry_ptr->arena_ptr;
+    if (arena_ptr != 0i64) {
+        drop regex_arena_destroy(arena_ptr);
+    }
+        int64:hc = entry_ptr->hit_counter;
+    if (hc != 0i64) { drop npk_core_dalloc(hc); }
+    int64:rc = entry_ptr->ref_count;
+    if (rc != 0i64) { drop npk_core_dalloc(rc); }
+    drop npk_core_dalloc(entry);
+    pass 0i32;
+};
 
-    int64:entry = npk_core_alloc(48i64);
+pub func:regex_cache_decrement_ref = int32(int64:entry) {
+    if (entry == 0i64) { pass 0i32; }
+    CacheEntry->:entry_ptr = @cast_unchecked<CacheEntry->>(entry);
+    
+    int32:prev = npk_atomic_int32_fetch_sub(entry_ptr->ref_count, 1i32, 5i32);
+    
+    if (prev <= 1i32) {
+        drop regex_cache_free_entry(entry);
+    }
+    
+    pass 0i32;
+};
+
+pub func:regex_cache_insert = int64(int64:pattern, int64:pattern_len, int64:arena_ptr, int64:start_state, int64:prefix_ptr, int64:prefix_len) {
+    if (g_regex_cache_ptr == 0i64) { pass 0i64; }
+    RegexCacheGlobal->:cache = @cast_unchecked<RegexCacheGlobal->>(g_regex_cache_ptr);
     
     // Copy the string
-    int64:p_copy = npk_core_alloc(pattern_len);
-    int64:i = 0i64;
-    when (i < pattern_len) {
-        int64:c = npk_mem_read_byte(pattern, i);
-        drop(npk_mem_write_byte(p_copy, i, c));
-        i = i + 1i64;
+    int64:p_copy = 0i64;
+    if (pattern_len > 0i64) {
+        p_copy = npk_core_alloc(pattern_len);
+        if (p_copy == 0i64) { 
+            if (arena_ptr != 0i64) { drop regex_arena_destroy(arena_ptr); }
+            if (prefix_ptr != 0i64) { drop npk_core_dalloc(prefix_ptr); }
+            pass 0i64; 
+        }
+        drop npk_mem_copy(p_copy, pattern, pattern_len);
     }
     
-    drop(npk_mem_write_int64(entry, 0i64, p_copy));
-    drop(npk_mem_write_int64(entry, 8i64, pattern_len));
-    drop(npk_mem_write_int64(entry, 16i64, arena_ptr));
-    drop(npk_mem_write_int64(entry, 24i64, start_state));
+    int64:entry = npk_core_alloc(80i64);
+    if (entry == 0i64) {
+        if (p_copy != 0i64) { drop npk_core_dalloc(p_copy); }
+        if (arena_ptr != 0i64) { drop regex_arena_destroy(arena_ptr); }
+        if (prefix_ptr != 0i64) { drop npk_core_dalloc(prefix_ptr); }
+        pass 0i64; 
+    }
+    int64:hit_counter_ptr = npk_atomic_int32_create(0i32);
+    int64:ref_count_ptr = npk_atomic_int32_create(2i32);
+    if (hit_counter_ptr == 0i64 || ref_count_ptr == 0i64) {
+        if (hit_counter_ptr != 0i64) { drop npk_core_dalloc(hit_counter_ptr); }
+        if (ref_count_ptr != 0i64) { drop npk_core_dalloc(ref_count_ptr); }
+        drop npk_core_dalloc(entry);
+        if (p_copy != 0i64) { drop npk_core_dalloc(p_copy); }
+        if (arena_ptr != 0i64) { drop regex_arena_destroy(arena_ptr); }
+        if (prefix_ptr != 0i64) { drop npk_core_dalloc(prefix_ptr); }
+        pass 0i64;
+    }
+
+    CacheEntry->:entry_ptr = @cast_unchecked<CacheEntry->>(entry);
+    entry_ptr->p_str = p_copy;
+    entry_ptr->p_len = pattern_len;
+    entry_ptr->arena_ptr = arena_ptr;
+    entry_ptr->start_state = start_state;
+    entry_ptr->hit_counter = hit_counter_ptr;
+    entry_ptr->ref_count = ref_count_ptr;
+    entry_ptr->prefix_ptr = prefix_ptr;
+    entry_ptr->prefix_len = prefix_len;
+
+    // Acquire lock
+    int64:lock = cache->lock;
+    int32:locked = 0i32;
+    int32:spins = 0i32;
+    when (locked == 0i32) {
+        spins = spins + 1i32;
+        if (spins > 1000i32) {
+            drop npk_core_dalloc(entry);
+            drop npk_core_dalloc(hit_counter_ptr);
+            drop npk_core_dalloc(ref_count_ptr);
+            if (p_copy != 0i64) { drop npk_core_dalloc(p_copy); }
+            if (arena_ptr != 0i64) { drop regex_arena_destroy(arena_ptr); }
+            if (prefix_ptr != 0i64) { drop npk_core_dalloc(prefix_ptr); }
+            pass 0i64; // Sentinel for spinlock in insert
+        } else {
+            int32:old = npk_atomic_int32_exchange(lock, 1i32, 5i32);
+            if (old == 0i32) { locked = 1i32; }
+        }
+    }
     
-    // hit_counter
-    AtomicInt64:hit_counter = raw AtomicInt64.create(0i64);
-    drop(npk_mem_write_int64(entry, 32i64, hit_counter.handle));
+    int64:sz = cache->size;
     
-    // insert at head
-    drop(npk_mem_write_int64(entry, 40i64, g_regex_cache_head));
-    g_regex_cache_head = entry;
+    // Insert at head
+    entry_ptr->next = @cast_unchecked<CacheEntry->>(cache->head);
+    entry_ptr->prev = @cast_unchecked<CacheEntry->>(0i64);
+    if (cache->head != 0i64) {
+        CacheEntry->:old_head = @cast_unchecked<CacheEntry->>(cache->head);
+        old_head->prev = entry_ptr;
+    }
+    cache->head = entry;
+    if (cache->tail == 0i64) {
+        cache->tail = entry;
+    }
     
-    pass(entry);
+    cache->size = sz + 1i64;
+    
+    int64:entry_to_free = 0i64;
+    // Evict if over size
+    if (cache->size > MAX_CACHE_SIZE) {
+        int64:t = cache->tail;
+        if (t != 0i64) {
+            CacheEntry->:t_ptr = @cast_unchecked<CacheEntry->>(t);
+            CacheEntry->:t_prev = t_ptr->prev;
+            cache->tail = cast_unchecked<int64>(t_prev);
+            if (cast_unchecked<int64>(t_prev) != 0i64) {
+                t_prev->next = @cast_unchecked<CacheEntry->>(0i64);
+            } else {
+                cache->head = 0i64;
+            }
+            cache->size = cache->size - 1i64;
+            
+            // Deref evicted entry
+            int32:prev_ref = npk_atomic_int32_fetch_sub(t_ptr->ref_count, 1i32, 5i32);
+            if (prev_ref == 1i32) {
+                entry_to_free = t;
+            }
+        }
+    }
+    
+    // Release lock
+    drop npk_atomic_int32_exchange(lock, 0i32, 5i32);
+    
+    if (entry_to_free != 0i64) {
+        drop regex_cache_free_entry(entry_to_free);
+    }
+    
+    pass entry;
 };
 
 pub func:regex_cache_increment_hit = int32(int64:entry) {
-    if (entry == 0i64) { pass(0i32); }
-    int64:handle = npk_mem_read_int64(entry, 32i64);
-    AtomicInt64:hit_counter = AtomicInt64{handle: handle};
-    int32:RELAXED = raw AtomicInt64.RELAXED();
-    drop(AtomicInt64.add(hit_counter, 1i64, RELAXED));
-    pass(1i32);
+    if (entry == 0i64) { pass 0i32; }
+    CacheEntry->:entry_ptr = @cast_unchecked<CacheEntry->>(@cast_unchecked<CacheEntry->>(entry));
+    drop npk_atomic_int32_fetch_add(entry_ptr->hit_counter, 1i32, 5i32);
+    pass 1i32;
 };
 
-pub func:regex_execute = int32(int64:entry, int64:text, int64:text_len) {
-    if (entry == 0i64) { pass(0i32); }
-    drop(regex_cache_increment_hit(entry));
+pub func:regex_execute = MatchResult(int64:entry, int64:text, int64:text_len) {
+    MatchResult:def_match;
+    def_match.matched = 0i32;
+    def_match.start_idx = 0i32;
+    def_match.end_idx = 0i32;
+    int64:i_def = 0i64;
+    when (i_def < 20i64) { def_match.captures[i_def] = -1i32; i_def = i_def + 1i64; }
+
+    if (entry == 0i64) { pass def_match; }
+    drop regex_cache_increment_hit(entry);
     
-    int64:arena_ptr = npk_mem_read_int64(entry, 16i64);
-    int64:start_state = npk_mem_read_int64(entry, 24i64);
+    CacheEntry->:entry_ptr = @cast_unchecked<CacheEntry->>(@cast_unchecked<CacheEntry->>(entry));
+    int64:arena_ptr = entry_ptr->arena_ptr;
+    int64:start_state = entry_ptr->start_state;
+    int64:prefix_ptr = entry_ptr->prefix_ptr;
+    int64:prefix_len = entry_ptr->prefix_len;
     
-    // Call the VM
-    int32:match = raw regex_vm_match(arena_ptr, start_state, text, text_len);
-    pass(match);
+    int64:initial_idx = 0i64;
+    int32:can_match = 1i32;
+    if (prefix_len > 0i64) {
+        can_match = 0i32;
+        int64:i = 0i64;
+        when (i <= text_len - prefix_len) {
+            if (npk_mem_compare(text + i, prefix_ptr, prefix_len) == 0i64) {
+                initial_idx = i;
+                can_match = 1i32;
+                i = text_len; // break
+            }
+            i = i + 1i64;
+        }
+    }
+    
+    MatchResult:match_res;
+    if (can_match == 1i32) {
+        match_res = raw regex_vm_match(arena_ptr, start_state, text, text_len, initial_idx);
+    } else {
+        match_res = def_match;
+    }
+    
+    // Decrement ref count
+    drop regex_cache_decrement_ref(entry);
+    
+    pass match_res;
 };

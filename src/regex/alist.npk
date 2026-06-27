@@ -1,0 +1,28 @@
+use "../util/mem_primitives.npk".*;
+pub func:alist = int64() {
+    // Struct: [8 bytes cap] [8 bytes size] [8 bytes data_ptr]
+    int64:list = npk_core_alloc(24i64);
+    int64:data = npk_core_alloc(131072i64); // 16384 elements * 8 bytes
+    drop(npk_mem_write_int64(list, 0i64, 16384i64));
+    drop(npk_mem_write_int64(list, 8i64, 0i64));
+    drop(npk_mem_write_int64(list, 16i64, data));
+    pass list;
+};
+
+pub func:alpush = int64(int64:list, int64:val) {
+    int64:size = npk_mem_read_int64(list, 8i64);
+    int64:data = npk_mem_read_int64(list, 16i64);
+    drop(npk_mem_write_int64(data, size * 8i64, val));
+    drop(npk_mem_write_int64(list, 8i64, size + 1i64));
+    pass 0i64;
+};
+
+pub func:alpop = int64(int64:list) {
+    int64:size = npk_mem_read_int64(list, 8i64);
+    if (size == 0i64) { pass 0i64; }
+    int64:data = npk_mem_read_int64(list, 16i64);
+    int64:new_size = size - 1i64;
+    int64:val = npk_mem_read_int64(data, new_size * 8i64);
+    drop(npk_mem_write_int64(list, 8i64, new_size));
+    pass val;
+};

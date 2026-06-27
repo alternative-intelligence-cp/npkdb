@@ -2,27 +2,22 @@
 
 use "regex_types.npk".*;
 use "ast_types.npk".*;
-use "regex_arena.npk".*;
+use "nfa_arena.npk".*;
 use "../util/error_codes.npk".*;
 use "../util/mem_primitives.npk".*;
+use "alist.npk".*;
 
-// A fragment represents a partially built NFA
-// start: Handle<NfaState>
-// e: Handle<NfaState>
 
-func:frag_create = int64(int64:start, int64:e) {
-    // Pack two 32-bit offset/indices, or just use astack/heap?
-    // We'll use astack to hold fragments. Since astack holds int64, we can pack two 32-bit arena offsets into an int64!
-    // But pointers are 64-bit. We can just push twice!
-    pass(0i64);
-};
 
 pub func:compile_nfa = int64(int64:arena_ptr, int64:ast_root) {
     if (ast_root == 0i64) {
-        pass(0i64);
+        fail ERR_REGEX_PARSE;
     }
     
-    astack(4096i64);
+    int64:trav_stack = raw alist();
+    
+    int64:frag_stack = raw alist();
+    
     int32:frag_stack_size = 0i32;
     
     // Post-order traversal using an explicit stack
@@ -30,159 +25,284 @@ pub func:compile_nfa = int64(int64:arena_ptr, int64:ast_root) {
     // state: 0 = unvisited, 1 = left processed, 2 = right processed
     
     int32:trav_stack_size = 0i32;
-    apush(ast_root);
-    apush(0i64);
-    trav_stack_size = trav_stack_size + 1i32;
+    drop raw alpush(trav_stack, ast_root);
+    drop raw alpush(trav_stack, 0i64);
+    trav_stack_size = trav_stack_size + 2i32;
     
     when (trav_stack_size > 0i32) {
-        int64:state = apop();
-        int64:node = apop();
-        trav_stack_size = trav_stack_size - 1i32;
+        int64:state = raw alpop(trav_stack);
+        int64:node = raw alpop(trav_stack);
+        trav_stack_size = trav_stack_size - 2i32;
         
-        int32:type = npk_mem_read_int32(node, 0i64);
-        int32:val  = npk_mem_read_int32(node, 4i64);
-        int64:left = npk_mem_read_int64(node, 8i64);
-        int64:right = npk_mem_read_int64(node, 16i64);
+        AstNode->:node_ptr = @cast_unchecked<AstNode->>(@cast_unchecked<AstNode->>(node));
+        int32:type = node_ptr->type;
+        int32:val  = node_ptr->val;
+        int64:left = node_ptr->left;
+        int64:right = node_ptr->right;
         
         if (state == 0i64) {
-            apush(node);
-            apush(1i64);
-            trav_stack_size = trav_stack_size + 1i32;
+            drop raw alpush(trav_stack, node);
+            drop raw alpush(trav_stack, 1i64);
+            trav_stack_size = trav_stack_size + 2i32;
             if (left != 0i64) {
-                apush(left);
-                apush(0i64);
-                trav_stack_size = trav_stack_size + 1i32;
+                drop raw alpush(trav_stack, left);
+                drop raw alpush(trav_stack, 0i64);
+                trav_stack_size = trav_stack_size + 2i32;
             }
         } else if (state == 1i64) {
-            apush(node);
-            apush(2i64);
-            trav_stack_size = trav_stack_size + 1i32;
+            drop raw alpush(trav_stack, node);
+            drop raw alpush(trav_stack, 2i64);
+            trav_stack_size = trav_stack_size + 2i32;
             if (right != 0i64) {
-                apush(right);
-                apush(0i64);
-                trav_stack_size = trav_stack_size + 1i32;
+                drop raw alpush(trav_stack, right);
+                drop raw alpush(trav_stack, 0i64);
+                trav_stack_size = trav_stack_size + 2i32;
             }
         } else {
             // Process node
             if (type == AST_LITERAL) {
                 int64:s = raw regex_arena_alloc(arena_ptr, OP_CHAR, val);
+                if (s == 0i64) { fail ERR_REGEX_PARSE; }
                 int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
-                drop(npk_mem_write_int64(s, 8i64, e)); // out1 = e
+                if (e == 0i64) { fail ERR_REGEX_PARSE; }
+                NfaState->:s_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(s));
+                s_ptr->out1 = e;
                 
                 // push fragment
-                apush(s);
-                apush(e);
+                drop raw alpush(frag_stack, s);
+                drop raw alpush(frag_stack, e);
+                frag_stack_size = frag_stack_size + 1i32;
+            } else if (type == AST_EPSILON) {
+                int64:s = raw regex_arena_alloc(arena_ptr, OP_JMP, 0i32);
+                if (s == 0i64) { fail ERR_REGEX_PARSE; }
+                int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
+                if (e == 0i64) { fail ERR_REGEX_PARSE; }
+                NfaState->:s_ptr = @cast_unchecked<NfaState->>(s);
+                s_ptr->out1 = e;
+                drop raw alpush(frag_stack, s);
+                drop raw alpush(frag_stack, e);
                 frag_stack_size = frag_stack_size + 1i32;
             } else if (type == AST_ANY) {
                 int64:s = raw regex_arena_alloc(arena_ptr, OP_ANY, 0i32);
+                if (s == 0i64) { fail ERR_REGEX_PARSE; }
                 int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
-                drop(npk_mem_write_int64(s, 8i64, e)); // out1 = e
+                if (e == 0i64) { fail ERR_REGEX_PARSE; }
+                NfaState->:s_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(s));
+                s_ptr->out1 = e;
                 
-                apush(s);
-                apush(e);
+                drop raw alpush(frag_stack, s);
+                drop raw alpush(frag_stack, e);
+                frag_stack_size = frag_stack_size + 1i32;
+            } else if (type == AST_CLASS) {
+                int64:s = raw regex_arena_alloc(arena_ptr, OP_CHAR_CLASS, 0i32);
+                if (s == 0i64) { fail ERR_REGEX_PARSE; }
+                int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
+                if (e == 0i64) { fail ERR_REGEX_PARSE; }
+                NfaState->:s_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(s));
+                s_ptr->out1 = e;
+                s_ptr->match_char = val; // Store is_inverted
+                // Copy 32-byte bitmask from AstNode to NfaState
+                int64:j = 0i64;
+                when (j < 32i64) {
+                    int64:b = npk_mem_read_byte(node, 24i64 + j);
+                    drop npk_mem_write_byte(s, 24i64 + j, b);
+                    j = j + 1i64;
+                }
+                
+                drop raw alpush(frag_stack, s);
+                drop raw alpush(frag_stack, e);
+                frag_stack_size = frag_stack_size + 1i32;
+            } else if (type == AST_ASSERT_START) {
+                int64:s = raw regex_arena_alloc(arena_ptr, OP_ASSERT_START, 0i32);
+                if (s == 0i64) { fail ERR_REGEX_PARSE; }
+                int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
+                if (e == 0i64) { fail ERR_REGEX_PARSE; }
+                NfaState->:s_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(s));
+                s_ptr->out1 = e;
+                
+                drop raw alpush(frag_stack, s);
+                drop raw alpush(frag_stack, e);
+                frag_stack_size = frag_stack_size + 1i32;
+            } else if (type == AST_ASSERT_END) {
+                int64:s = raw regex_arena_alloc(arena_ptr, OP_ASSERT_END, 0i32);
+                if (s == 0i64) { fail ERR_REGEX_PARSE; }
+                int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
+                if (e == 0i64) { fail ERR_REGEX_PARSE; }
+                NfaState->:s_ptr = @cast_unchecked<NfaState->>(s);
+                s_ptr->out1 = e;
+                
+                drop raw alpush(frag_stack, s);
+                drop raw alpush(frag_stack, e);
+                frag_stack_size = frag_stack_size + 1i32;
+            } else if (type == AST_SAVE) {
+                if (frag_stack_size < 1i32) { fail ERR_REGEX_PARSE; }
+                int64:f_e = raw alpop(frag_stack);
+                int64:f_s = raw alpop(frag_stack);
+                frag_stack_size = frag_stack_size - 1i32;
+                
+                int64:save_start = raw regex_arena_alloc(arena_ptr, OP_SAVE, val * 2i32);
+                if (save_start == 0i64) { fail ERR_REGEX_PARSE; }
+                NfaState->:ss_ptr = @cast_unchecked<NfaState->>(save_start);
+                ss_ptr->out1 = f_s;
+                
+                int64:save_end = raw regex_arena_alloc(arena_ptr, OP_SAVE, val * 2i32 + 1i32);
+                if (save_end == 0i64) { fail ERR_REGEX_PARSE; }
+                
+                int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
+                if (e == 0i64) { fail ERR_REGEX_PARSE; }
+                
+                NfaState->:se_ptr = @cast_unchecked<NfaState->>(save_end);
+                se_ptr->out1 = e;
+                
+                NfaState->:f_e_ptr = @cast_unchecked<NfaState->>(f_e);
+                f_e_ptr->opcode = OP_JMP;
+                f_e_ptr->out1 = save_end;
+                
+                drop raw alpush(frag_stack, save_start);
+                drop raw alpush(frag_stack, e);
                 frag_stack_size = frag_stack_size + 1i32;
             } else if (type == AST_CONCAT) {
-                if (frag_stack_size < 2i32) { pass(0i64); }
-                int64:f2_e = apop();
-                int64:f2_s = apop();
-                int64:f1_e = apop();
-                int64:f1_s = apop();
+                if (frag_stack_size < 2i32) { fail ERR_REGEX_PARSE; }
+                int64:f2_e = raw alpop(frag_stack);
+                int64:f2_s = raw alpop(frag_stack);
+                int64:f1_e = raw alpop(frag_stack);
+                int64:f1_s = raw alpop(frag_stack);
                 frag_stack_size = frag_stack_size - 2i32;
                 
                 // Patch f1_e to JMP to f2_s
-                drop(npk_mem_write_int32(f1_e, 0i64, OP_JMP));
-                drop(npk_mem_write_int64(f1_e, 8i64, f2_s));
+                NfaState->:f1_e_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(f1_e));
+                f1_e_ptr->opcode = OP_JMP;
+                f1_e_ptr->out1 = f2_s;
                 
-                apush(f1_s);
-                apush(f2_e);
+                drop raw alpush(frag_stack, f1_s);
+                drop raw alpush(frag_stack, f2_e);
                 frag_stack_size = frag_stack_size + 1i32;
             } else if (type == AST_STAR) {
-                if (frag_stack_size < 1i32) { pass(0i64); }
-                int64:f1_e = apop();
-                int64:f1_s = apop();
+                if (frag_stack_size < 1i32) { fail ERR_REGEX_PARSE; }
+                int64:f1_e = raw alpop(frag_stack);
+                int64:f1_s = raw alpop(frag_stack);
                 frag_stack_size = frag_stack_size - 1i32;
                 
                 int64:s = raw regex_arena_alloc(arena_ptr, OP_SPLIT, 0i32);
+                if (s == 0i64) { fail ERR_REGEX_PARSE; }
                 int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
+                if (e == 0i64) { fail ERR_REGEX_PARSE; }
                 
-                drop(npk_mem_write_int64(s, 8i64, f1_s));
-                drop(npk_mem_write_int64(s, 16i64, e));
-                drop(npk_mem_write_int32(f1_e, 0i64, OP_JMP));
-                drop(npk_mem_write_int64(f1_e, 8i64, s));
+                NfaState->:s_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(s));
+                if (val == 1i32) {
+                    // Lazy: explore skip path first
+                    s_ptr->out1 = e;
+                    s_ptr->out2 = f1_s;
+                } else {
+                    // Greedy: explore body first
+                    s_ptr->out1 = f1_s;
+                    s_ptr->out2 = e;
+                }
                 
-                apush(s);
-                apush(e);
+                NfaState->:f1_e_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(f1_e));
+                f1_e_ptr->opcode = OP_JMP;
+                f1_e_ptr->out1 = s;
+                
+                drop raw alpush(frag_stack, s);
+                drop raw alpush(frag_stack, e);
                 frag_stack_size = frag_stack_size + 1i32;
             } else if (type == AST_ALT) {
-                if (frag_stack_size < 2i32) { pass(0i64); }
-                int64:f2_e = apop();
-                int64:f2_s = apop();
-                int64:f1_e = apop();
-                int64:f1_s = apop();
+                if (frag_stack_size < 2i32) { fail ERR_REGEX_PARSE; }
+                int64:f2_e = raw alpop(frag_stack);
+                int64:f2_s = raw alpop(frag_stack);
+                int64:f1_e = raw alpop(frag_stack);
+                int64:f1_s = raw alpop(frag_stack);
                 frag_stack_size = frag_stack_size - 2i32;
 
                 int64:s = raw regex_arena_alloc(arena_ptr, OP_SPLIT, 0i32);
+                if (s == 0i64) { fail ERR_REGEX_PARSE; }
                 int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
+                if (e == 0i64) { fail ERR_REGEX_PARSE; }
 
-                drop(npk_mem_write_int64(s, 8i64, f1_s));
-                drop(npk_mem_write_int64(s, 16i64, f2_s));
+                NfaState->:s_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(s));
+                s_ptr->out1 = f1_s;
+                s_ptr->out2 = f2_s;
 
-                drop(npk_mem_write_int32(f1_e, 0i64, OP_JMP));
-                drop(npk_mem_write_int64(f1_e, 8i64, e));
+                NfaState->:f1_e_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(f1_e));
+                f1_e_ptr->opcode = OP_JMP;
+                f1_e_ptr->out1 = e;
 
-                drop(npk_mem_write_int32(f2_e, 0i64, OP_JMP));
-                drop(npk_mem_write_int64(f2_e, 8i64, e));
+                NfaState->:f2_e_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(f2_e));
+                f2_e_ptr->opcode = OP_JMP;
+                f2_e_ptr->out1 = e;
 
-                apush(s);
-                apush(e);
+                drop raw alpush(frag_stack, s);
+                drop raw alpush(frag_stack, e);
                 frag_stack_size = frag_stack_size + 1i32;
             } else if (type == AST_PLUS) {
-                if (frag_stack_size < 1i32) { pass(0i64); }
-                int64:f1_e = apop();
-                int64:f1_s = apop();
+                if (frag_stack_size < 1i32) { fail ERR_REGEX_PARSE; }
+                int64:f1_e = raw alpop(frag_stack);
+                int64:f1_s = raw alpop(frag_stack);
                 frag_stack_size = frag_stack_size - 1i32;
 
                 int64:s = raw regex_arena_alloc(arena_ptr, OP_SPLIT, 0i32);
+                if (s == 0i64) { fail ERR_REGEX_PARSE; }
                 int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
+                if (e == 0i64) { fail ERR_REGEX_PARSE; }
 
-                drop(npk_mem_write_int32(f1_e, 0i64, OP_SPLIT));
-                drop(npk_mem_write_int64(f1_e, 8i64, f1_s));
-                drop(npk_mem_write_int64(f1_e, 16i64, e));
+                NfaState->:f1_e_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(f1_e));
+                f1_e_ptr->opcode = OP_SPLIT;
+                if (val == 1i32) {
+                    // Lazy: skip loop
+                    f1_e_ptr->out1 = e;
+                    f1_e_ptr->out2 = f1_s;
+                } else {
+                    // Greedy: loop first
+                    f1_e_ptr->out1 = f1_s;
+                    f1_e_ptr->out2 = e;
+                }
 
-                drop(npk_mem_write_int32(s, 0i64, OP_JMP));
-                drop(npk_mem_write_int64(s, 8i64, f1_s));
+                NfaState->:s_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(s));
+                s_ptr->opcode = OP_JMP;
+                s_ptr->out1 = f1_s;
 
-                apush(s);
-                apush(e);
+                drop raw alpush(frag_stack, s);
+                drop raw alpush(frag_stack, e);
                 frag_stack_size = frag_stack_size + 1i32;
             } else if (type == AST_QMARK) {
-                if (frag_stack_size < 1i32) { pass(0i64); }
-                int64:f1_e = apop();
-                int64:f1_s = apop();
+                if (frag_stack_size < 1i32) { fail ERR_REGEX_PARSE; }
+                int64:f1_e = raw alpop(frag_stack);
+                int64:f1_s = raw alpop(frag_stack);
                 frag_stack_size = frag_stack_size - 1i32;
 
                 int64:s = raw regex_arena_alloc(arena_ptr, OP_SPLIT, 0i32);
+                if (s == 0i64) { fail ERR_REGEX_PARSE; }
                 int64:e = raw regex_arena_alloc(arena_ptr, OP_MATCH, 0i32);
+                if (e == 0i64) { fail ERR_REGEX_PARSE; }
 
-                drop(npk_mem_write_int64(s, 8i64, f1_s));
-                drop(npk_mem_write_int64(s, 16i64, e));
+                NfaState->:s_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(s));
+                if (val == 1i32) {
+                    // Lazy: skip first
+                    s_ptr->out1 = e;
+                    s_ptr->out2 = f1_s;
+                } else {
+                    // Greedy: body first
+                    s_ptr->out1 = f1_s;
+                    s_ptr->out2 = e;
+                }
 
-                drop(npk_mem_write_int32(f1_e, 0i64, OP_JMP));
-                drop(npk_mem_write_int64(f1_e, 8i64, e));
+                NfaState->:f1_e_ptr = @cast_unchecked<NfaState->>(@cast_unchecked<NfaState->>(f1_e));
+                f1_e_ptr->opcode = OP_JMP;
+                f1_e_ptr->out1 = e;
 
-                apush(s);
-                apush(e);
+                drop raw alpush(frag_stack, s);
+                drop raw alpush(frag_stack, e);
                 frag_stack_size = frag_stack_size + 1i32;
             }
         }
     }
     
     if (frag_stack_size != 1i32) {
-        pass(0i64);
+        fail ERR_REGEX_PARSE;
     }
     
-    int64:final_e = apop();
-    int64:final_s = apop();
+    int64:final_e = raw alpop(frag_stack);
+    int64:final_s = raw alpop(frag_stack);
     
-    pass(final_s);
+    pass final_s;
 };

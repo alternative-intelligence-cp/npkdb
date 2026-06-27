@@ -8,6 +8,7 @@ pub fixed int8:AST_OP_EQ  = 2i8;
 pub fixed int8:AST_OP_GT  = 3i8;
 pub fixed int8:AST_OP_LT  = 4i8;
 pub fixed int8:AST_OP_IN  = 5i8;
+pub fixed int8:AST_OP_REGEX = 6i8;
 
 pub fixed int64:AST_NODE_SIZE = 48i64; // size in bytes for the bump allocator
 

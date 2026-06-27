@@ -188,7 +188,11 @@ pub func:parse_filter = int64(int64:arena_ptr, int64:query_raw_ptr, limit<ValidA
                                 if (raw streq(ik0_str_ptr, "$in")) { 
                                     drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_IN))); 
                                 } else { 
-                                    drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_EQ))); 
+                                    if (raw streq(ik0_str_ptr, "$regex")) {
+                                        drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_REGEX)));
+                                    } else {
+                                        drop(npk_mem_write_byte(node_ptr, 0i64, @cast_unchecked<int64>(AST_OP_EQ))); 
+                                    }
                                 }
                             }
                         }

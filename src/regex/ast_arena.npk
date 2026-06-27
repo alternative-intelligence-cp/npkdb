@@ -1,0 +1,38 @@
+// ast_arena.npk — AST Node Allocator
+use "std/arena.npk".*;
+use "ast_types.npk".*;
+use "../util/mem_primitives.npk".*;
+
+pub func:ast_arena_init = int64(int64:capacity) {
+    pass raw Arena.create(capacity);
+};
+
+pub func:ast_arena_destroy = int32(int64:arena_ptr) {
+    if (arena_ptr != 0i64) {
+        drop Arena.destroy(arena_ptr);
+    }
+    pass 0i32;
+};
+
+pub func:ast_arena_alloc_node = int64(int64:arena_ptr, int32:type, int32:val) {
+    int64:offset = raw Arena.alloc(arena_ptr, 64i64);
+    if (offset < 0i64) { pass 0i64; } // OOM
+    
+    // get actual pointer
+    int64:data_ptr = npk_mem_read_int64(arena_ptr, 16i64);
+    int64:node = data_ptr + offset;
+    
+    AstNode->:ptr = @cast_unchecked<AstNode->>(node);
+    ptr->type = type;
+    ptr->val = val;
+    ptr->left = 0i64;
+    ptr->right = 0i64;
+    
+    int64:i = 0i64;
+    when (i < 32i64) {
+        drop npk_mem_write_byte(node, 24i64 + i, 0i64);
+        i = i + 1i64;
+    }
+    
+    pass node;
+};

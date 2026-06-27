@@ -1,6 +1,7 @@
-// regex_types.npk — Foundational structs and constraints for niregx
+// regex_types.npk — Foundational structs and constraints for nregx
 
-use "../util/error_codes.npk".*;
+// We will likely need a local error_codes.npk for a standalone library instead of npkdb's relative paths.
+// use "error_codes.npk".*;
 
 // Mathematical limit for maximum string length of a valid regular expression pattern (8KB max).
 pub Rules<int64>:r_valid_regex_len = { $ > 0i64, $ <= 8192i64 };
@@ -12,18 +13,46 @@ pub fixed int32:OP_SPLIT      = 2i32;
 pub fixed int32:OP_JMP        = 3i32;
 pub fixed int32:OP_ANY        = 4i32;
 pub fixed int32:OP_CHAR_CLASS = 5i32;
+pub fixed int32:OP_ASSERT_START = 6i32;
+pub fixed int32:OP_ASSERT_END   = 7i32;
+pub fixed int32:OP_SAVE         = 8i32;
+
+// Match Boundary struct for public API
+pub struct:MatchResult = {
+    int32:matched;
+    int32:start_idx;
+    int32:end_idx;
+    int32[20]:captures;
+};
 
 // NFA State node utilizing Generational Handles
 pub struct:NfaState = {
     int32:opcode;
     int32:match_char;
-    Handle<NfaState>:out1;
-    Handle<NfaState>:out2;
-    uint8[32]:charset; // 256-bit bitmask for character classes
+    int64:out1;
+    int64:out2;
+    int64:charset0; // bytes 0-7
+    int64:charset1; // bytes 8-15
+    int64:charset2; // bytes 16-23
+    int64:charset3; // bytes 24-31
 };
 
 // The compiled regular expression execution bundle
 pub struct:Regex = {
-    Handle<NfaState>:start_state;
+    int64:start_state;
     int32:state_count;
+};
+
+
+pub struct:CacheEntry = {
+    int64:p_str;
+    int64:p_len;
+    int64:arena_ptr;
+    int64:start_state;
+    int64:prefix_ptr;
+    int64:prefix_len;
+    CacheEntry->: prev;
+    CacheEntry->: next;
+    int64: hit_counter;
+    int64: ref_count;
 };

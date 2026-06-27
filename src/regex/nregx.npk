@@ -1,0 +1,128 @@
+// nregx.npk — High-Level Facade
+
+use "regex_types.npk".*;
+use "ast_types.npk".*;
+use "alist.npk".*;
+use "nfa_arena.npk".*;
+use "regex_compiler.npk".*;
+use "nfa_compiler.npk".*;
+use "regex_vm.npk".*;
+use "regex_cache.npk".*;
+use "prefix_extractor.npk".*;
+use "../util/error_codes.npk".*;
+use "../util/mem_primitives.npk".*;
+use "ast_arena.npk".*;
+
+
+
+extern "c" { func:puts = int32(string:s); }
+pub func:nregx_init = int32() {
+    drop regex_cache_init();
+    pass 0i32;
+};
+
+func:compile_and_cache = int64(int64:pattern, int64:pattern_len) {
+    // 1. Check cache
+    int64:entry = raw regex_cache_get(pattern, pattern_len);
+    if (entry != 0i64) {
+        pass entry;
+    }
+    
+    int64:tokens = npk_core_alloc(pattern_len * 8i64);
+    if (tokens == 0i64) { fail ERR_REGEX_PARSE; }
+    defer { drop npk_core_dalloc(tokens); }
+    
+    int32:token_count = raw lex_pattern(pattern, pattern_len, tokens);
+    
+    // 3. Parse AST
+    int64:ast_arena = raw ast_arena_init(8192i64 * 64i64); // 8192 Nodes
+    defer { drop ast_arena_destroy(ast_arena); }
+    int64:ast_root = parse_regex_ast(tokens, token_count, ast_arena) ? 0i64;
+    
+    // 4. Init Arena
+    int64:arena_capacity = 1024i64; // default capacity
+    int64:arena_ptr = raw regex_arena_init(arena_capacity);
+    
+    // 5. Compile NFA
+    int64:start_state = compile_nfa(arena_ptr, ast_root) ? 0i64;
+    if (start_state == 0i64) {
+        drop regex_arena_destroy(arena_ptr);
+        fail ERR_REGEX_PARSE;
+    }
+    
+    // Extract Prefix
+    int64:prefix_ptr = 0i64;
+    int64:prefix_len = 0i64;
+    int64:ext = raw extract_literal_prefix(ast_root, pattern);
+    if (ext != 0i64) {
+        prefix_ptr = npk_mem_read_int64(ext, 8i64);
+        prefix_len = npk_mem_read_int64(ext, 16i64);
+        drop npk_core_dalloc(ext);
+    }
+    
+    // 6. Insert to cache
+    entry = raw regex_cache_insert(pattern, pattern_len, arena_ptr, start_state, prefix_ptr, prefix_len);
+    
+    pass entry;
+};
+
+pub func:compile_and_cache_str = int64(string:pattern) {
+    int64:p_cstr = string_to_cstr(pattern);
+    defer { drop npk_core_dalloc(p_cstr); }
+    int64:res = compile_and_cache(p_cstr, string_length(pattern)) ? 0i64;
+    pass res;
+};
+
+pub func:nregx_match = MatchResult(int64:pattern, int64:pattern_len, int64:text, int64:text_len) {
+    MatchResult:def_match;
+    def_match.matched = 0i32;
+    def_match.start_idx = 0i32;
+    def_match.end_idx = 0i32;
+    int64:i_def = 0i64;
+    when (i_def < 20i64) { def_match.captures[i_def] = -1i32; i_def = i_def + 1i64; }
+
+    if (pattern_len <= 0i64) { pass def_match; }
+    int64:entry = compile_and_cache(pattern, pattern_len) ? 0i64;
+    if (entry == 0i64) { pass def_match; } // compilation failed
+    
+    CacheEntry->:entry_ptr = @cast_unchecked<CacheEntry->>(entry);
+    
+    MatchResult:match_res = raw regex_execute(entry, text, text_len);
+    pass match_res;
+};
+
+pub func:nregx_match_str = MatchResult(string:pattern, string:text) {
+    int64:p_cstr = string_to_cstr(pattern);
+    int64:t_cstr = string_to_cstr(text);
+    defer { drop npk_core_dalloc(p_cstr); drop npk_core_dalloc(t_cstr); }
+    MatchResult:def_match;
+    def_match.matched = 0i32;
+    def_match.start_idx = 0i32;
+    def_match.end_idx = 0i32;
+    int64:i = 0i64;
+    when (i < 20i64) { def_match.captures[i] = -1i32; i = i + 1i64; }
+    MatchResult:res = nregx_match(p_cstr, string_length(pattern), t_cstr, string_length(text)) ? def_match;
+    pass res;
+};
+
+pub func:nregx_extract = int64(int64:pattern, int64:pattern_len) {
+    int64:tokens = npk_core_alloc(pattern_len * 8i64);
+    if (tokens == 0i64) { fail ERR_REGEX_PARSE; }
+    
+    int32:token_count = raw lex_pattern(pattern, pattern_len, tokens);
+    int64:ast_arena = raw ast_arena_init(8192i64 * 64i64);
+    defer { drop ast_arena_destroy(ast_arena); }
+    int64:ast_root = parse_regex_ast(tokens, token_count, ast_arena) ? 0i64;
+    
+    int64:ext = raw extract_literal_prefix(ast_root, pattern);
+    
+    drop npk_core_dalloc(tokens);
+    pass ext;
+};
+
+pub func:nregx_extract_str = int64(string:pattern) {
+    int64:p_cstr = string_to_cstr(pattern);
+    defer { drop npk_core_dalloc(p_cstr); }
+    int64:res = nregx_extract(p_cstr, string_length(pattern)) ? 0i64;
+    pass res;
+};

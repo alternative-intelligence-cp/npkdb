@@ -237,17 +237,19 @@ npkbld build
 Within Nitpick, use the thread-local regex compiler and bounded cache to securely execute evaluations without memory leaks.
 
 ```nitpick
-use "regex/regex_cache.npk".*;
+use "regex/nregx.npk".*;
 
-// Initialize the cache subsystem globally
-_?regex_cache_init();
+// Initialize the cache subsystem globally during server start
+drop(nregx_init());
 
-// Insert or Retrieve a pattern (automatically compiles & LRU caches)
+// Match against text safely using the high-level API
 int64:pattern_str = "hello( |-)world+";
-int64:entry = regex_cache_insert(pattern_str, string_length(pattern_str), arena, start);
+int64:text_str = "hello-world";
+MatchResult:res = nregx_match_str(pattern_str, text_str);
 
-// Match against text safely
-int32:is_match = regex_execute(entry, text_str, string_length(text_str));
+if (res.matched == 1i32) {
+    println("Pattern matched!");
+}
 ```
 
 ---

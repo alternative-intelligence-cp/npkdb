@@ -1,4 +1,4 @@
-// ast_types.npk — Token and AST Node types for niregx
+// ast_types.npk — Token and AST Node types for nregx
 
 // Token definitions
 pub fixed int32:TOKEN_LITERAL = 1i32;
@@ -9,6 +9,14 @@ pub fixed int32:TOKEN_PIPE    = 5i32;
 pub fixed int32:TOKEN_LPAREN  = 6i32;
 pub fixed int32:TOKEN_RPAREN  = 7i32;
 pub fixed int32:TOKEN_DOT     = 8i32;
+pub fixed int32:TOKEN_LBRACKET= 9i32;
+pub fixed int32:TOKEN_RBRACKET= 10i32;
+pub fixed int32:TOKEN_CARET   = 11i32;
+pub fixed int32:TOKEN_DOLLAR  = 12i32;
+pub fixed int32:TOKEN_ESCAPE  = 13i32;
+pub fixed int32:TOKEN_LBRACE  = 14i32;
+pub fixed int32:TOKEN_RBRACE  = 15i32;
+pub fixed int32:TOKEN_COMMA   = 16i32;
 
 pub struct:Token = {
     int32:type;
@@ -23,10 +31,19 @@ pub fixed int32:AST_STAR    = 4i32;
 pub fixed int32:AST_PLUS    = 5i32;
 pub fixed int32:AST_QMARK   = 6i32;
 pub fixed int32:AST_ANY     = 7i32;
+pub fixed int32:AST_CLASS   = 8i32;
+pub fixed int32:AST_ASSERT_START = 9i32;
+pub fixed int32:AST_ASSERT_END = 10i32;
+pub fixed int32:AST_SAVE    = 11i32;
+pub fixed int32:AST_EPSILON = 12i32;
 
 pub struct:AstNode = {
     int32:type;
     int32:val;
     int64:left;
     int64:right;
+    int64:charset0;
+    int64:charset1;
+    int64:charset2;
+    int64:charset3;
 };

@@ -7,6 +7,8 @@ use "../document/json_parser.npk".*;
 use "../document/json_serializer.npk".*;
 use "../util/error_codes.npk".*;
 use "../util/mem_primitives.npk".*;
+use "../regex/regex_types.npk".*;
+use "../regex/nregx.npk".*;
 
 // Returns true if the record satisfies the AST filter
 // Iterative AST evaluator using astack (transient call stack simulation)
@@ -103,6 +105,27 @@ pub func:evaluate_filter = bool(int64:arena, int64:ast_root, int64:doc_buf) {
                 int64:t_data = npk_mem_read_int64(target.payload, 8i64);
                 int64:res = npk_mem_compare(a_data, t_data, a_len);
                 if (res == 0i64) { last_result = 1i64; } else { last_result = 0i64; }
+                continue;
+            }
+            last_result = 0i64;
+            continue;
+        }
+        
+        if (op == (@cast_unchecked<int64>(AST_OP_REGEX))) {
+            if (actual.type != target.type) {
+                last_result = 0i64;
+                continue;
+            }
+            if (actual.type == JSON_STR) {
+                int64:a_len = @cast_unchecked<int64>(npk_mem_read_int32(actual.payload, 0i64));
+                int64:t_len = @cast_unchecked<int64>(npk_mem_read_int32(target.payload, 0i64));
+                int64:a_data = npk_mem_read_int64(actual.payload, 8i64);
+                int64:t_data = npk_mem_read_int64(target.payload, 8i64);
+                
+                MatchResult:def_match;
+                def_match.matched = 0i32;
+                MatchResult:res = nregx_match(t_data, t_len, a_data, a_len) ? def_match;
+                if (res.matched == 1i32) { last_result = 1i64; } else { last_result = 0i64; }
                 continue;
             }
             last_result = 0i64;

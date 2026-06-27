@@ -2,120 +2,295 @@
 
 use "regex_types.npk".*;
 use "ast_types.npk".*;
-use "regex_arena.npk".*;
+use "nfa_arena.npk".*;
 use "../util/error_codes.npk".*;
 use "../util/mem_primitives.npk".*;
 
-func:add_state = int64(int64:state, int64:list_ptr, int64:list_size_ptr, int64:visit_gen) {
-    if (state == 0i64) { pass(0i64); }
+func:apush_list = int64(int64:list_ah, int64:val, int64:start_idx, int64:captures_ptr) {
+    int64:sz = npk_mem_read_int64(list_ah, 0i64);
+    int64:element_ptr = list_ah + 8i64 + sz * 96i64;
+    drop(npk_mem_write_int64(element_ptr, 0i64, val));
+    drop(npk_mem_write_int64(element_ptr, 8i64, start_idx));
     
-    // Read visit_gen (offset 32)
-    int64:last_visit = npk_mem_read_int64(state, 32i64);
-    if (last_visit == visit_gen) { pass(0i64); }
-    
-    drop(npk_mem_write_int64(state, 32i64, visit_gen));
-    
-    int32:opcode = npk_mem_read_int32(state, 0i64);
-    int64:out1 = npk_mem_read_int64(state, 8i64);
-    int64:out2 = npk_mem_read_int64(state, 16i64);
-    
-    if (opcode == OP_SPLIT) {
-        drop(add_state(out1, list_ptr, list_size_ptr, visit_gen));
-        drop(add_state(out2, list_ptr, list_size_ptr, visit_gen));
-        pass(0i64);
-    } else if (opcode == OP_JMP) {
-        drop(add_state(out1, list_ptr, list_size_ptr, visit_gen));
-        pass(0i64);
+    if (captures_ptr == 0i64) {
+        drop npk_mem_set(element_ptr + 16i64, 255i64, 80i64);
+    } else {
+        drop npk_mem_copy(element_ptr + 16i64, captures_ptr, 80i64);
     }
     
-    int64:size = npk_mem_read_int64(list_size_ptr, 0i64);
-    drop(npk_mem_write_int64(list_ptr, size * 8i64, state));
-    drop(npk_mem_write_int64(list_size_ptr, 0i64, size + 1i64));
-    
-    pass(0i64);
+    drop(npk_mem_write_int64(list_ah, 0i64, sz + 1i64));
+    pass 0i64;
 };
 
-pub func:regex_vm_match = int32(int64:arena_ptr, int64:start_state, int64:text, int64:text_len) {
-    if (start_state == 0i64) { pass(0i32); }
+func:apop_state = int64(int64:list_ah) {
+    int64:sz = npk_mem_read_int64(list_ah, 0i64);
+    pass npk_mem_read_int64(list_ah, 8i64 + (sz - 1i64) * 96i64);
+};
+
+func:apop_start_idx = int64(int64:list_ah) {
+    int64:sz = npk_mem_read_int64(list_ah, 0i64);
+    pass npk_mem_read_int64(list_ah, 8i64 + (sz - 1i64) * 96i64 + 8i64);
+};
+
+func:apop_captures = int64(int64:list_ah) {
+    int64:sz = npk_mem_read_int64(list_ah, 0i64);
+    int64:val = list_ah + 8i64 + (sz - 1i64) * 96i64 + 16i64;
+    drop(npk_mem_write_int64(list_ah, 0i64, sz - 1i64));
+    pass val;
+};
+
+func:asize_list = int64(int64:list_ah) {
+    pass npk_mem_read_int64(list_ah, 0i64);
+};
+
+func:aclear_list = int64(int64:list_ah) {
+    drop(npk_mem_write_int64(list_ah, 0i64, 0i64));
+    pass 0i64;
+};
+
+func:add_state = int64(int64:start_state, int64:list_ah, int64:visit_gen, int64:visited_arr, int64:work_ah, int64:idx, int64:text_len, int64:start_idx, int64:captures_ptr, int64:arena_data, int64:temp_caps_scratch) {
+    if (start_state == 0i64) { pass 0i64; }
     
-    int64:capacity = npk_mem_read_int64(arena_ptr, 8i64);
-    int64:clist = npk_core_alloc(capacity * 8i64);
-    int64:nlist = npk_core_alloc(capacity * 8i64);
-    int64:clist_sz_ptr = npk_core_alloc(8i64);
-    int64:nlist_sz_ptr = npk_core_alloc(8i64);
+    int64:start_state_idx = (start_state - arena_data) / 64i64;
+    
+    if (npk_mem_read_int64(visited_arr, start_state_idx * 8i64) != visit_gen) {
+        drop npk_mem_write_int64(visited_arr, start_state_idx * 8i64, visit_gen);
+        drop(apush_list(work_ah, start_state, start_idx, captures_ptr));
+    }
+    
+    when (raw asize_list(work_ah) > 0i64) {
+        int64:state = raw apop_state(work_ah);
+        int64:state_start_idx = raw apop_start_idx(work_ah);
+        int64:state_captures_raw = raw apop_captures(work_ah);
+        
+        drop npk_mem_copy(temp_caps_scratch, state_captures_raw, 80i64);
+        int64:state_captures = temp_caps_scratch;
+        
+        NfaState->:s_ptr = @cast_unchecked<NfaState->>(state);
+        int32:opcode = s_ptr->opcode;
+        int64:out1 = s_ptr->out1;
+        int64:out2 = s_ptr->out2;
+        
+        if (opcode == OP_SPLIT) {
+            if (out2 != 0i64) {
+                int64:out2_idx = (out2 - arena_data) / 64i64;
+                if (npk_mem_read_int64(visited_arr, out2_idx * 8i64) != visit_gen) {
+                    drop npk_mem_write_int64(visited_arr, out2_idx * 8i64, visit_gen);
+                    drop(apush_list(work_ah, out2, state_start_idx, state_captures));
+                }
+            }
+            if (out1 != 0i64) {
+                int64:out1_idx = (out1 - arena_data) / 64i64;
+                if (npk_mem_read_int64(visited_arr, out1_idx * 8i64) != visit_gen) {
+                    drop npk_mem_write_int64(visited_arr, out1_idx * 8i64, visit_gen);
+                    drop(apush_list(work_ah, out1, state_start_idx, state_captures));
+                }
+            }
+        } else if (opcode == OP_JMP) {
+            if (out1 != 0i64) {
+                int64:out1_idx = (out1 - arena_data) / 64i64;
+                if (npk_mem_read_int64(visited_arr, out1_idx * 8i64) != visit_gen) {
+                    drop npk_mem_write_int64(visited_arr, out1_idx * 8i64, visit_gen);
+                    drop(apush_list(work_ah, out1, state_start_idx, state_captures));
+                }
+            }
+        } else if (opcode == OP_SAVE) {
+            int32:match_char = s_ptr->match_char;
+            int32:old_val = npk_mem_read_int32(state_captures, (match_char => int64) * 4i64);
+            drop npk_mem_write_int32(state_captures, (match_char => int64) * 4i64, idx => int32);
+            
+            if (out1 != 0i64) {
+                int64:out1_idx = (out1 - arena_data) / 64i64;
+                if (npk_mem_read_int64(visited_arr, out1_idx * 8i64) != visit_gen) {
+                    drop npk_mem_write_int64(visited_arr, out1_idx * 8i64, visit_gen);
+                    drop(apush_list(work_ah, out1, state_start_idx, state_captures));
+                }
+            }
+            drop npk_mem_write_int32(state_captures, (match_char => int64) * 4i64, old_val);
+            
+        } else if (opcode == OP_ASSERT_START) {
+            if (idx == 0i64) {
+                if (out1 != 0i64) {
+                    int64:out1_idx = (out1 - arena_data) / 64i64;
+                    if (npk_mem_read_int64(visited_arr, out1_idx * 8i64) != visit_gen) {
+                        drop npk_mem_write_int64(visited_arr, out1_idx * 8i64, visit_gen);
+                        drop(apush_list(work_ah, out1, state_start_idx, state_captures));
+                    }
+                }
+            }
+        } else if (opcode == OP_ASSERT_END) {
+            if (idx == text_len) {
+                if (out1 != 0i64) {
+                    int64:out1_idx = (out1 - arena_data) / 64i64;
+                    if (npk_mem_read_int64(visited_arr, out1_idx * 8i64) != visit_gen) {
+                        drop npk_mem_write_int64(visited_arr, out1_idx * 8i64, visit_gen);
+                        drop(apush_list(work_ah, out1, state_start_idx, state_captures));
+                    }
+                }
+            }
+        } else {
+            drop(apush_list(list_ah, state, state_start_idx, state_captures));
+        }
+    }
+    pass 0i64;
+};
+
+pub func:regex_vm_match = MatchResult(int64:arena_ptr, int64:start_state, int64:text, int64:text_len, int64:initial_idx) {
+    MatchResult:def_match;
+    def_match.matched = 0i32;
+    def_match.start_idx = 0i32;
+    def_match.end_idx = 0i32;
+    int64:i_def = 0i64;
+    when (i_def < 20i64) { def_match.captures[i_def] = -1i32; i_def = i_def + 1i64; }
+
+    if (start_state == 0i64) { pass def_match; }
+    
+    int64:capacity = npk_mem_read_int64(arena_ptr, 0i64) / 64i64;
+    int64:arena_data = npk_mem_read_int64(arena_ptr, 16i64);
+    
+    int64:batch_mem = npk_core_alloc(capacity * 96i64 * 3i64 + 24i64 + capacity * 8i64 + 160i64);
+    if (batch_mem == 0i64) { pass def_match; }
+    defer { drop npk_core_dalloc(batch_mem); }
+    
+    int64:clist_ah = batch_mem; drop(npk_mem_write_int64(clist_ah, 0i64, 0i64));
+    int64:nlist_ah = batch_mem + capacity * 96i64 + 8i64; drop(npk_mem_write_int64(nlist_ah, 0i64, 0i64));
+    int64:work_ah = batch_mem + capacity * 192i64 + 16i64; drop(npk_mem_write_int64(work_ah, 0i64, 0i64));
+    
+    int64:visited_arr = batch_mem + capacity * 288i64 + 24i64;
+    int64:vi = 0i64;
+    when (vi < capacity) {
+        drop npk_mem_write_int64(visited_arr, vi * 8i64, 0i64);
+        vi = vi + 1i64;
+    }
+    
+    int64:temp_caps_scratch = batch_mem + capacity * 288i64 + 24i64 + capacity * 8i64;
+    int64:final_caps_buf = temp_caps_scratch + 80i64;
     
     int64:visit_gen = 1i64;
-    drop(npk_mem_write_int64(clist_sz_ptr, 0i64, 0i64));
-    drop(npk_mem_write_int64(nlist_sz_ptr, 0i64, 0i64));
     
-    drop(add_state(start_state, clist, clist_sz_ptr, visit_gen));
-    
-    int64:idx = 0i64;
+    int64:idx = initial_idx;
     int32:matched = 0i32;
     int32:running = 1i32;
+    int64:final_start_idx = 0i64;
+    int64:final_end_idx = -1i64;
     
     when (running == 1i32) {
-        int64:clist_sz = npk_mem_read_int64(clist_sz_ptr, 0i64);
-        if (clist_sz == 0i64) {
+        if (matched == 0i32) {
+            drop add_state(start_state, clist_ah, visit_gen, visited_arr, work_ah, idx, text_len, idx, 0i64, arena_data, temp_caps_scratch);
+        }
+        
+        if (raw asize_list(clist_ah) == 0i64) {
             running = 0i32;
         } else {
-            // Process current states
-            // If we run out of string, we can't consume characters, but we still check for OP_MATCH
             int64:c = -1i64;
+            int64:next_idx = idx + 1i64;
             if (idx < text_len) {
-                c = npk_mem_read_byte(text, idx);
+                int64:b0 = npk_mem_read_byte(text, idx);
+                c = b0;
+                if ((b0 & 128i64) != 0i64) {
+                    if ((b0 & 224i64) == 192i64) {
+                        if (idx + 1i64 < text_len) {
+                            c = ((b0 & 31i64) << 6i64) | (npk_mem_read_byte(text, idx + 1i64) & 63i64);
+                            next_idx = idx + 2i64;
+                        }
+                    } else if ((b0 & 240i64) == 224i64) {
+                        if (idx + 2i64 < text_len) {
+                            c = ((b0 & 15i64) << 12i64) | ((npk_mem_read_byte(text, idx + 1i64) & 63i64) << 6i64) | (npk_mem_read_byte(text, idx + 2i64) & 63i64);
+                            next_idx = idx + 3i64;
+                        }
+                    } else if ((b0 & 248i64) == 240i64) {
+                        if (idx + 3i64 < text_len) {
+                            c = ((b0 & 7i64) << 18i64) | ((npk_mem_read_byte(text, idx + 1i64) & 63i64) << 12i64) | ((npk_mem_read_byte(text, idx + 2i64) & 63i64) << 6i64) | (npk_mem_read_byte(text, idx + 3i64) & 63i64);
+                            next_idx = idx + 4i64;
+                        }
+                    }
+                }
             }
             
             visit_gen = visit_gen + 1i64;
-            drop(npk_mem_write_int64(nlist_sz_ptr, 0i64, 0i64));
             
-            int64:i = 0i64;
-            when (i < clist_sz) {
-                int64:state = npk_mem_read_int64(clist, i * 8i64);
-                int32:opcode = npk_mem_read_int32(state, 0i64);
+            int64:sz = raw asize_list(clist_ah);
+            int64:ti = 0i64;
+            when (ti < sz) {
+                int64:state = npk_mem_read_int64(clist_ah, 8i64 + ti * 96i64);
+                int64:state_start_idx = npk_mem_read_int64(clist_ah, 8i64 + ti * 96i64 + 8i64);
+                int64:state_captures = clist_ah + 8i64 + ti * 96i64 + 16i64;
+                
+                NfaState->:s_ptr = @cast_unchecked<NfaState->>(state);
+                int32:opcode = s_ptr->opcode;
                 
                 if (opcode == OP_MATCH) {
-                    matched = 1i32;
-                    running = 0i32;
-                    // We found a match, but if we want greedy matching we might need to continue.
-                    // For now, any match is accepted (since we are doing regex match, not search).
+                    if (matched == 0i32 || state_start_idx < final_start_idx || (state_start_idx == final_start_idx && idx > final_end_idx)) {
+                        matched = 1i32;
+                        final_start_idx = state_start_idx;
+                        final_end_idx = idx;
+                        drop npk_mem_copy(final_caps_buf, state_captures, 80i64);
+                    }
+                    ti = sz;
                 } else if (c != -1i64) {
                     if (opcode == OP_CHAR) {
-                        int32:match_char = npk_mem_read_int32(state, 4i64);
+                        int32:match_char = s_ptr->match_char;
                         if (c == (match_char => int64)) {
-                            int64:out1 = npk_mem_read_int64(state, 8i64);
-                            drop(add_state(out1, nlist, nlist_sz_ptr, visit_gen));
+                            int64:out1 = s_ptr->out1;
+                            drop add_state(out1, nlist_ah, visit_gen, visited_arr, work_ah, next_idx, text_len, state_start_idx, state_captures, arena_data, temp_caps_scratch);
                         }
                     } else if (opcode == OP_ANY) {
-                        int64:out1 = npk_mem_read_int64(state, 8i64);
-                        drop(add_state(out1, nlist, nlist_sz_ptr, visit_gen));
+                        int64:out1 = s_ptr->out1;
+                        drop add_state(out1, nlist_ah, visit_gen, visited_arr, work_ah, next_idx, text_len, state_start_idx, state_captures, arena_data, temp_caps_scratch);
+                    } else if (opcode == OP_CHAR_CLASS) {
+                        int32:is_inverted = s_ptr->match_char; 
+                        if (c <= 255i64) {
+                            int64:byte_idx = c / 8i64;
+                            int64:bit_idx = c % 8i64;
+                            int64:mask_byte = npk_mem_read_byte(state, 24i64 + byte_idx);
+                            if ((mask_byte & (1i64 << bit_idx)) != 0i64) {
+                                int64:out1 = s_ptr->out1;
+                                drop add_state(out1, nlist_ah, visit_gen, visited_arr, work_ah, next_idx, text_len, state_start_idx, state_captures, arena_data, temp_caps_scratch);
+                            }
+                        } else {
+                            if (is_inverted == 1i32) {
+                                int64:out1 = s_ptr->out1;
+                                drop add_state(out1, nlist_ah, visit_gen, visited_arr, work_ah, next_idx, text_len, state_start_idx, state_captures, arena_data, temp_caps_scratch);
+                            }
+                        }
                     }
                 }
                 
-                i = i + 1i64;
+                ti = ti + 1i64;
             }
+            drop(aclear_list(clist_ah));
             
-            if (matched == 0i32) {
-                if (idx >= text_len) {
-                    running = 0i32;
-                } else {
-                    // Swap clist and nlist
-                    int64:tmp = clist;
-                    clist = nlist;
-                    nlist = tmp;
-                    
-                    int64:nlist_sz = npk_mem_read_int64(nlist_sz_ptr, 0i64);
-                    drop(npk_mem_write_int64(clist_sz_ptr, 0i64, nlist_sz));
-                    idx = idx + 1i64;
-                }
+            if (idx >= text_len) {
+                running = 0i32;
+            } else {
+                int64:tmp = clist_ah;
+                clist_ah = nlist_ah;
+                nlist_ah = tmp;
+                
+                idx = next_idx;
             }
         }
     }
     
-    drop(npk_core_dalloc(clist));
-    drop(npk_core_dalloc(nlist));
-    drop(npk_core_dalloc(clist_sz_ptr));
-    drop(npk_core_dalloc(nlist_sz_ptr));
-    
-    pass(matched);
+    MatchResult:mr;
+    if (matched == 1i32) {
+        mr.matched = 1i32;
+        mr.start_idx = cast_unchecked<int32>(final_start_idx);
+        mr.end_idx = cast_unchecked<int32>(final_end_idx);
+        int64:ci = 0i64;
+        when (ci < 20i64) {
+            mr.captures[ci] = npk_mem_read_int32(final_caps_buf, ci * 4i64);
+            ci = ci + 1i64;
+        }
+    } else {
+        mr.matched = 0i32;
+        mr.start_idx = 0i32;
+        mr.end_idx = 0i32;
+        int64:ci = 0i64;
+        when (ci < 20i64) {
+            mr.captures[ci] = -1i32;
+            ci = ci + 1i64;
+        }
+    }
+    pass mr;
 };

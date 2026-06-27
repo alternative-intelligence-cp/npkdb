@@ -1,0 +1,37 @@
+// nfa_arena.npk — Generational Arena for NFA States
+use "std/arena.npk".*;
+use "regex_types.npk".*;
+use "../util/mem_primitives.npk".*;
+
+pub func:regex_arena_init = int64(int64:capacity) {
+    pass raw Arena.create(capacity * 64i64); // Allocate capacity states, each 64 bytes
+};
+
+pub func:regex_arena_destroy = NIL(int64:arena_ptr) {
+    if (arena_ptr != 0i64) {
+        drop Arena.destroy(arena_ptr);
+    }
+    pass NIL;
+};
+
+pub func:regex_arena_alloc = int64(int64:arena_ptr, int32:opcode, int32:match_char) {
+    int64:offset = raw Arena.alloc(arena_ptr, 64i64);
+    if (offset < 0i64) { pass 0i64; }
+    
+    int64:data_ptr = npk_mem_read_int64(arena_ptr, 16i64);
+    int64:node = data_ptr + offset;
+    
+    drop npk_mem_write_int32(node, 0i64, opcode);
+    drop npk_mem_write_int32(node, 4i64, match_char);
+    
+    // Clear the rest
+    drop npk_mem_write_int64(node, 8i64, 0i64); // out1
+    drop npk_mem_write_int64(node, 16i64, 0i64); // out2
+    drop npk_mem_write_int64(node, 24i64, 0i64); // charset
+    drop npk_mem_write_int64(node, 32i64, 0i64); // charset
+    drop npk_mem_write_int64(node, 40i64, 0i64); // charset
+    drop npk_mem_write_int64(node, 48i64, 0i64); // charset
+    drop npk_mem_write_int64(node, 56i64, 0i64); // visited_gen
+    
+    pass node;
+};

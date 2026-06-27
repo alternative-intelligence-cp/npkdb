@@ -17,6 +17,7 @@ use "concurrency/ebr.npk".*;
 use "index/art.npk".*;
 use "engine/catalog.npk".*;
 use "network/http_worker.npk".*;
+use "regex/nregx.npk".*;
 
 func:failsafe = int32(tbb32:err) {
     drop(do_failsafe(err));
@@ -51,6 +52,7 @@ func:main = int32(int32:argc, wild any->:argv) {
     drop(catalog_init());
     drop(ebr_init());
     drop(art_init());
+    drop(nregx_init());
     
     // Initialize storage engine
     global_wp = raw wp_init("data/", "wal.log", @compaction_worker_shim, "group_commit");

@@ -1,5 +1,10 @@
 # NPKDB Changelog
 
+## [v1.1.0]
+
+- Integrated native nregx regex engine, replacing C FFI wrapper.
+- Added $regex operator support to AST query filters.
+
 All notable changes to this project will be documented in this file.
 
 ## [v1.0.0-rc1]

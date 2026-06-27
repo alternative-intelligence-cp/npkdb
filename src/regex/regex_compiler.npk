@@ -2,67 +2,131 @@
 
 use "ast_types.npk".*;
 use "regex_types.npk".*;
+use "ast_arena.npk".*;
 use "../util/error_codes.npk".*;
 use "../util/mem_primitives.npk".*;
 
 // Thread-Local Cache allocations for ephemeral AST Nodes
-extern "nitpick_libc_sys" {
-    func:npk_tlc_batch_alloc = int64(int64:size);
-    func:npk_tlc_batch_flush = void();
+extern "nitpick_libc_mem" {
 }
 
 // Memory-safe AST Node allocator using the thread-local batch
-func:alloc_ast_node = int64(int32:type, int32:val) {
-    int64:node = npk_tlc_batch_alloc(32i64);
-    drop(npk_mem_write_int32(node, 0i64, type));
-    drop(npk_mem_write_int32(node, 4i64, val));
-    drop(npk_mem_write_int64(node, 8i64, 0i64));
-    drop(npk_mem_write_int64(node, 16i64, 0i64));
-    pass(node);
-};
+// (Deleted alloc_ast_node, using ast_arena.npk instead)
 
+
+// free_ast is removed; arena destruction handles cleanup
 // ── LEXER ────────────────────────────────────────────────────────────────
 
-pub func:lex_pattern = int32(int64:pattern, limit<r_valid_regex_len> int64:len, int64:out_tokens) {
+pub func:lex_pattern = int32(int64:pattern, limit<r_valid_regex_len> int64:len, int64:tokens) {
     int64:i = 0i64;
     int32:token_count = 0i32;
 
     when (i < len) {
         int64:c = npk_mem_read_byte(pattern, i);
-        int64:tok_ptr = out_tokens + ((token_count => int64) * 8i64);
+        int64:codepoint = c;
+        if ((c & 128i64) != 0i64) {
+            if ((c & 224i64) == 192i64) {
+                if (i + 1i64 < len) {
+                    codepoint = ((c & 31i64) << 6i64) | (npk_mem_read_byte(pattern, i + 1i64) & 63i64);
+                    i = i + 1i64;
+                }
+            } else if ((c & 240i64) == 224i64) {
+                if (i + 2i64 < len) {
+                    codepoint = ((c & 15i64) << 12i64) | ((npk_mem_read_byte(pattern, i + 1i64) & 63i64) << 6i64) | (npk_mem_read_byte(pattern, i + 2i64) & 63i64);
+                    i = i + 2i64;
+                }
+            } else if ((c & 248i64) == 240i64) {
+                if (i + 3i64 < len) {
+                    codepoint = ((c & 7i64) << 18i64) | ((npk_mem_read_byte(pattern, i + 1i64) & 63i64) << 12i64) | ((npk_mem_read_byte(pattern, i + 2i64) & 63i64) << 6i64) | (npk_mem_read_byte(pattern, i + 3i64) & 63i64);
+                    i = i + 3i64;
+                }
+            }
+        }
+        c = codepoint;
+
+        Token->:tok_ptr = @cast_unchecked<Token->>(tokens + ((token_count => int64) * 8i64));
+        tok_ptr->val = cast_unchecked<int32>(c);
         
         if (c == 42i64) { 
-            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_STAR));
+            tok_ptr->type = TOKEN_STAR;
         } else if (c == 43i64) { 
-            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_PLUS));
+            tok_ptr->type = TOKEN_PLUS;
         } else if (c == 63i64) { 
-            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_QMARK));
+            tok_ptr->type = TOKEN_QMARK;
         } else if (c == 124i64) { 
-            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_PIPE));
+            tok_ptr->type = TOKEN_PIPE;
         } else if (c == 40i64) { 
-            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_LPAREN));
+            tok_ptr->type = TOKEN_LPAREN;
         } else if (c == 41i64) { 
-            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_RPAREN));
+            tok_ptr->type = TOKEN_RPAREN;
         } else if (c == 46i64) { 
-            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_DOT));
+            tok_ptr->type = TOKEN_DOT;
+        } else if (c == 91i64) {
+            tok_ptr->type = TOKEN_LBRACKET;
+        } else if (c == 93i64) {
+            tok_ptr->type = TOKEN_RBRACKET;
+        } else if (c == 94i64) {
+            tok_ptr->type = TOKEN_CARET;
+        } else if (c == 36i64) {
+            tok_ptr->type = TOKEN_DOLLAR;
+        } else if (c == 92i64) {
+            tok_ptr->type = TOKEN_ESCAPE;
+        } else if (c == 123i64) {
+            tok_ptr->type = TOKEN_LBRACE;
+        } else if (c == 125i64) {
+            tok_ptr->type = TOKEN_RBRACE;
+        } else if (c == 44i64) {
+            tok_ptr->type = TOKEN_COMMA;
         } else { 
-            drop(npk_mem_write_int32(tok_ptr, 0i64, TOKEN_LITERAL));
-            drop(npk_mem_write_int32(tok_ptr, 4i64, c => int32));
+            tok_ptr->type = TOKEN_LITERAL;
         }
         
         token_count = token_count + 1i32;
         i = i + 1i64;
     }
     
-    pass(token_count);
+    pass token_count;
+};
+
+// ── AST CLONING ─────────────────────────────────────────────────────────────────
+
+func:ast_clone = int64(int64:node_ptr, int64:arena_ptr) {
+    if (node_ptr == 0i64) { pass 0i64; }
+    AstNode->:old_ptr = @cast_unchecked<AstNode->>(node_ptr);
+    int64:new_node = raw ast_arena_alloc_node(arena_ptr, old_ptr->type, old_ptr->val);
+    if (new_node == 0i64) { pass 0i64; }
+    AstNode->:new_ptr = @cast_unchecked<AstNode->>(new_node);
+    
+    // Copy the bitmasks for AST_CLASS
+    if (old_ptr->type == AST_CLASS) {
+        drop npk_mem_write_int64(new_node, 24i64, npk_mem_read_int64(node_ptr, 24i64));
+        drop npk_mem_write_int64(new_node, 32i64, npk_mem_read_int64(node_ptr, 32i64));
+        drop npk_mem_write_int64(new_node, 40i64, npk_mem_read_int64(node_ptr, 40i64));
+        drop npk_mem_write_int64(new_node, 48i64, npk_mem_read_int64(node_ptr, 48i64));
+    }
+    
+    int64:l = old_ptr->left;
+    if (l != 0i64) {
+        int64:ll = ast_clone(l, arena_ptr) ? 0i64;
+        if ((ll == 0i64) && (l != 0i64)) { fail ERR_REGEX_PARSE; }
+        new_ptr->left = ll;
+    }
+    int64:r = old_ptr->right;
+    if (r != 0i64) {
+        int64:rr = ast_clone(r, arena_ptr) ? 0i64;
+        if ((rr == 0i64) && (r != 0i64)) { fail ERR_REGEX_PARSE; }
+        new_ptr->right = rr;
+    }
+    
+    pass new_node;
 };
 
 // ── RECURSIVE DESCENT PARSER ──────────────────────────────────────────────────
 
-func:parse_alt = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth) {
-    if (depth > 128i32) { pass(0i64); }
-    int64:left = raw parse_concat(tokens, count, idx_ptr, depth + 1i32);
-    if (left == 0i64) { pass(0i64); }
+func:parse_alt = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth, int64:arena_ptr) {
+    if (depth > 128i32) { fail ERR_REGEX_PARSE; }
+    int64:left = parse_concat(tokens, count, idx_ptr, depth + 1i32, arena_ptr) ? 0i64;
+    if (left == 0i64) { fail ERR_REGEX_PARSE; }
     
     int32:running = 1i32;
     when (running == 1i32) {
@@ -70,28 +134,30 @@ func:parse_alt = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth) {
         if (idx >= count) {
             running = 0i32;
         } else {
-            int64:tok_ptr = tokens + ((idx => int64) * 8i64);
-            int32:tok_type = npk_mem_read_int32(tok_ptr, 0i64);
+            Token->:tok_ptr = @cast_unchecked<Token->>(tokens + ((idx => int64) * 8i64));
+            int32:tok_type = tok_ptr->type;
             if (tok_type == TOKEN_PIPE) {
-                drop(npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32));
-                int64:right = raw parse_concat(tokens, count, idx_ptr, depth + 1i32);
-                if (right == 0i64) { pass(0i64); }
-                int64:alt_node = raw alloc_ast_node(AST_ALT, 0i32);
-                drop(npk_mem_write_int64(alt_node, 8i64, left));
-                drop(npk_mem_write_int64(alt_node, 16i64, right));
+                drop npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32);
+                int64:right = parse_concat(tokens, count, idx_ptr, depth + 1i32, arena_ptr) ? 0i64;
+                if (right == 0i64) { fail ERR_REGEX_PARSE; }
+                int64:alt_node = raw ast_arena_alloc_node(arena_ptr,AST_ALT, 0i32);
+                if (alt_node == 0i64) { fail ERR_REGEX_PARSE; }
+                AstNode->:alt_ptr = @cast_unchecked<AstNode->>(alt_node);
+                alt_ptr->left = left;
+                alt_ptr->right = right;
                 left = alt_node;
             } else {
                 running = 0i32;
             }
         }
     }
-    pass(left);
+    pass left;
 };
 
-func:parse_concat = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth) {
-    if (depth > 128i32) { pass(0i64); }
-    int64:left = raw parse_rep(tokens, count, idx_ptr, depth + 1i32);
-    if (left == 0i64) { pass(0i64); }
+func:parse_concat = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth, int64:arena_ptr) {
+    if (depth > 128i32) { fail ERR_REGEX_PARSE; }
+    int64:left = parse_rep(tokens, count, idx_ptr, depth + 1i32, arena_ptr) ? 0i64;
+    if (left == 0i64) { fail ERR_REGEX_PARSE; }
     
     int32:running = 1i32;
     when (running == 1i32) {
@@ -99,105 +165,557 @@ func:parse_concat = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth)
         if (idx >= count) {
             running = 0i32;
         } else {
-            int64:tok_ptr = tokens + ((idx => int64) * 8i64);
-            int32:tok_type = npk_mem_read_int32(tok_ptr, 0i64);
-            // concat if token is LITERAL, DOT, LPAREN
-            if ((tok_type == TOKEN_LITERAL) || (tok_type == TOKEN_DOT) || (tok_type == TOKEN_LPAREN)) {
-                int64:right = raw parse_rep(tokens, count, idx_ptr, depth + 1i32);
-                if (right == 0i64) { pass(0i64); }
-                int64:concat_node = raw alloc_ast_node(AST_CONCAT, 0i32);
-                drop(npk_mem_write_int64(concat_node, 8i64, left));
-                drop(npk_mem_write_int64(concat_node, 16i64, right));
+            Token->:tok_ptr = @cast_unchecked<Token->>(tokens + ((idx => int64) * 8i64));
+            int32:tok_type = tok_ptr->type;
+            // concat if token is LITERAL, DOT, LPAREN, LBRACKET, CARET, DOLLAR, ESCAPE, LBRACE, RBRACE, COMMA
+            if ((tok_type == TOKEN_LITERAL) || (tok_type == TOKEN_DOT) || (tok_type == TOKEN_LPAREN) || 
+                (tok_type == TOKEN_LBRACKET) || (tok_type == TOKEN_CARET) || (tok_type == TOKEN_DOLLAR) || (tok_type == TOKEN_ESCAPE) || (tok_type == TOKEN_LBRACE) || (tok_type == TOKEN_RBRACE) || (tok_type == TOKEN_COMMA)) {
+                int64:right = parse_rep(tokens, count, idx_ptr, depth + 1i32, arena_ptr) ? 0i64;
+                if (right == 0i64) { fail ERR_REGEX_PARSE; }
+                int64:concat_node = raw ast_arena_alloc_node(arena_ptr,AST_CONCAT, 0i32);
+                if (concat_node == 0i64) { fail ERR_REGEX_PARSE; }
+                AstNode->:concat_ptr = @cast_unchecked<AstNode->>(concat_node);
+                concat_ptr->left = left;
+                concat_ptr->right = right;
                 left = concat_node;
             } else {
                 running = 0i32;
             }
         }
     }
-    pass(left);
+    pass left;
 };
 
-func:parse_rep = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth) {
-    if (depth > 128i32) { pass(0i64); }
-    int64:node = raw parse_atom(tokens, count, idx_ptr, depth + 1i32);
-    if (node == 0i64) { pass(0i64); }
+func:parse_rep = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth, int64:arena_ptr) {
+    if (depth > 128i32) { fail ERR_REGEX_PARSE; }
+    int64:node = parse_atom(tokens, count, idx_ptr, depth + 1i32, arena_ptr) ? 0i64;
+    if (node == 0i64) { fail ERR_REGEX_PARSE; }
     
     int32:idx = npk_mem_read_int32(idx_ptr, 0i64);
     if (idx < count) {
-        int64:tok_ptr = tokens + ((idx => int64) * 8i64);
-        int32:tok_type = npk_mem_read_int32(tok_ptr, 0i64);
+        Token->:tok_ptr = @cast_unchecked<Token->>(tokens + ((idx => int64) * 8i64));
+        int32:tok_type = tok_ptr->type;
         
-        if (tok_type == TOKEN_STAR) {
-            drop(npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32));
-            int64:star_node = raw alloc_ast_node(AST_STAR, 0i32);
-            drop(npk_mem_write_int64(star_node, 8i64, node));
-            node = star_node;
-        } else if (tok_type == TOKEN_PLUS) {
-            drop(npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32));
-            int64:plus_node = raw alloc_ast_node(AST_PLUS, 0i32);
-            drop(npk_mem_write_int64(plus_node, 8i64, node));
-            node = plus_node;
-        } else if (tok_type == TOKEN_QMARK) {
-            drop(npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32));
-            int64:qmark_node = raw alloc_ast_node(AST_QMARK, 0i32);
-            drop(npk_mem_write_int64(qmark_node, 8i64, node));
-            node = qmark_node;
+        if (tok_type == TOKEN_STAR || tok_type == TOKEN_PLUS || tok_type == TOKEN_QMARK) {
+            drop npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32);
+            int32:lazy = 0i32;
+            int32:idx_next = npk_mem_read_int32(idx_ptr, 0i64);
+            if (idx_next < count) {
+                Token->:tok_ptr_next = @cast_unchecked<Token->>(tokens + ((idx_next => int64) * 8i64));
+                if (tok_ptr_next->type == TOKEN_QMARK) {
+                    lazy = 1i32;
+                    drop npk_mem_write_int32(idx_ptr, 0i64, idx_next + 1i32);
+                }
+            }
+            
+            if (tok_type == TOKEN_STAR) {
+                int64:star_node = raw ast_arena_alloc_node(arena_ptr,AST_STAR, lazy);
+                if (star_node == 0i64) { fail ERR_REGEX_PARSE; }
+                AstNode->:star_ptr = @cast_unchecked<AstNode->>(star_node);
+                star_ptr->left = node;
+                node = star_node;
+            } else if (tok_type == TOKEN_PLUS) {
+                int64:plus_node = raw ast_arena_alloc_node(arena_ptr,AST_PLUS, lazy);
+                if (plus_node == 0i64) { fail ERR_REGEX_PARSE; }
+                AstNode->:plus_ptr = @cast_unchecked<AstNode->>(plus_node);
+                plus_ptr->left = node;
+                node = plus_node;
+            } else if (tok_type == TOKEN_QMARK) {
+                int64:qmark_node = raw ast_arena_alloc_node(arena_ptr,AST_QMARK, lazy);
+                if (qmark_node == 0i64) { fail ERR_REGEX_PARSE; }
+                AstNode->:qmark_ptr = @cast_unchecked<AstNode->>(qmark_node);
+                qmark_ptr->left = node;
+                node = qmark_node;
+            }
+        } else if (tok_type == TOKEN_LBRACE) {
+            // Peek bounded repetition
+            int32:valid = 0i32;
+            int32:m = 0i32;
+            int32:n = -1i32;
+            int32:state = 0i32; // 0 = parsing m, 1 = parsing n
+            int32:i = idx + 1i32;
+            
+            when (i < count && valid == 0i32) {
+                Token->:t = @cast_unchecked<Token->>(tokens + ((i => int64) * 8i64));
+                if (t->type == TOKEN_LITERAL && t->val >= 48i32 && t->val <= 57i32) {
+                    if (state == 0i32) {
+                        m = (m * 10i32) + (t->val - 48i32);
+                    } else {
+                        if (n == -1i32) { n = 0i32; }
+                        n = (n * 10i32) + (t->val - 48i32);
+                    }
+                } else if (t->type == TOKEN_COMMA) {
+                    if (state == 0i32) {
+                        state = 1i32;
+                    } else {
+                        break;
+                    }
+                } else if (t->type == TOKEN_RBRACE) {
+                    if (state == 0i32) { n = m; } // {m} means exactly m
+                    valid = 1i32;
+                } else {
+                    break;
+                }
+                i = i + 1i32;
+            }
+            
+            if (valid == 1i32) {
+                if (m > 1000i32 || n > 1000i32) { fail ERR_REGEX_COMPLEXITY_EXCEEDED; }
+                drop npk_mem_write_int32(idx_ptr, 0i64, i);
+                
+                int32:lazy = 0i32;
+                if (i < count) {
+                    Token->:t_next = @cast_unchecked<Token->>(tokens + ((i => int64) * 8i64));
+                    if (t_next->type == TOKEN_QMARK) {
+                        lazy = 1i32;
+                        drop npk_mem_write_int32(idx_ptr, 0i64, i + 1i32);
+                    }
+                }
+                
+                // Desugar {m,n}
+                int64:base_node = node;
+                node = 0i64;
+                
+                if (m == 0i32 && n == 0i32) {
+                    // Match empty string
+                    node = raw ast_arena_alloc_node(arena_ptr,AST_EPSILON, 0i32);
+                } else {
+                    // Concat m times
+                    int32:c_idx = 0i32;
+                    when (c_idx < m) {
+                        int64:clone = base_node;
+                        if (c_idx > 0i32) {
+                            clone = ast_clone(base_node, arena_ptr) ? 0i64;
+                            if ((clone == 0i64) && (base_node != 0i64)) { fail ERR_REGEX_PARSE; }
+                        }
+                        
+                        if (node == 0i64) {
+                            node = clone;
+                        } else {
+                            int64:concat = raw ast_arena_alloc_node(arena_ptr,AST_CONCAT, 0i32);
+                            if (concat == 0i64) { fail ERR_REGEX_PARSE; }
+                            AstNode->:c_ptr = @cast_unchecked<AstNode->>(concat);
+                            c_ptr->left = node;
+                            c_ptr->right = clone;
+                            node = concat;
+                        }
+                        c_idx = c_idx + 1i32;
+                    }
+                    
+                    if (n == -1i32) {
+                        // Unbounded: Concat(m times, Star(A))
+                        int64:clone = base_node;
+                        if (m > 0i32) {
+                            clone = ast_clone(base_node, arena_ptr) ? 0i64;
+                            if ((clone == 0i64) && (base_node != 0i64)) { fail ERR_REGEX_PARSE; }
+                        }
+                        int64:star = raw ast_arena_alloc_node(arena_ptr,AST_STAR, lazy);
+                        if (star == 0i64) { fail ERR_REGEX_PARSE; }
+                        AstNode->:s_ptr = @cast_unchecked<AstNode->>(star);
+                        s_ptr->left = clone;
+                        
+                        if (node == 0i64) {
+                            node = star;
+                        } else {
+                            int64:concat = raw ast_arena_alloc_node(arena_ptr,AST_CONCAT, 0i32);
+                            if (concat == 0i64) { fail ERR_REGEX_PARSE; }
+                            AstNode->:c_ptr = @cast_unchecked<AstNode->>(concat);
+                            c_ptr->left = node;
+                            c_ptr->right = star;
+                            node = concat;
+                        }
+                    } else {
+                        // Bounded n: Concat(m times, Optional(A) (n-m) times)
+                        int32:diff = n - m;
+                        int32:d_idx = 0i32;
+                        when (d_idx < diff) {
+                            int64:clone = base_node;
+                            if (m > 0i32 || d_idx > 0i32) {
+                                clone = ast_clone(base_node, arena_ptr) ? 0i64;
+                                if ((clone == 0i64) && (base_node != 0i64)) { fail ERR_REGEX_PARSE; }
+                            }
+                            
+                            int64:qmark = raw ast_arena_alloc_node(arena_ptr,AST_QMARK, lazy);
+                            if (qmark == 0i64) { fail ERR_REGEX_PARSE; }
+                            AstNode->:q_ptr = @cast_unchecked<AstNode->>(qmark);
+                            q_ptr->left = clone;
+                            
+                            if (node == 0i64) {
+                                node = qmark;
+                            } else {
+                                int64:concat = raw ast_arena_alloc_node(arena_ptr,AST_CONCAT, 0i32);
+                                if (concat == 0i64) { fail ERR_REGEX_PARSE; }
+                                AstNode->:c_ptr = @cast_unchecked<AstNode->>(concat);
+                                c_ptr->left = node;
+                                c_ptr->right = qmark;
+                                node = concat;
+                            }
+                            d_idx = d_idx + 1i32;
+                        }
+                    }
+                }
+            }
         }
     }
-    pass(node);
+    pass node;
 };
 
-func:parse_atom = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth) {
-    if (depth > 128i32) { pass(0i64); }
+func:parse_atom = int64(int64:tokens, int32:count, int64:idx_ptr, int32:depth, int64:arena_ptr) {
+    if (depth > 128i32) { fail ERR_REGEX_PARSE; }
     
     int32:idx = npk_mem_read_int32(idx_ptr, 0i64);
-    if (idx >= count) { pass(0i64); }
+    if (idx >= count) { fail ERR_REGEX_PARSE; }
     
-    int64:tok_ptr = tokens + ((idx => int64) * 8i64);
-    int32:tok_type = npk_mem_read_int32(tok_ptr, 0i64);
-    int32:tok_val = npk_mem_read_int32(tok_ptr, 4i64);
+    Token->:tok_ptr = @cast_unchecked<Token->>(tokens + ((idx => int64) * 8i64));
+    int32:tok_type = tok_ptr->type;
+    int32:tok_val = tok_ptr->val;
     
-    drop(npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32));
+    drop npk_mem_write_int32(idx_ptr, 0i64, idx + 1i32);
     
-    if (tok_type == TOKEN_LITERAL) {
-        pass(raw alloc_ast_node(AST_LITERAL, tok_val));
+    if (tok_type == TOKEN_LITERAL || tok_type == TOKEN_LBRACE || tok_type == TOKEN_RBRACE || tok_type == TOKEN_COMMA) {
+        int64:n = raw ast_arena_alloc_node(arena_ptr,AST_LITERAL, tok_val);
+        if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            pass n;
     } else if (tok_type == TOKEN_DOT) {
-        pass(raw alloc_ast_node(AST_ANY, 0i32));
+        int64:n = raw ast_arena_alloc_node(arena_ptr,AST_ANY, 0i32);
+        if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            pass n;
+    } else if (tok_type == TOKEN_CARET) {
+        int64:n = raw ast_arena_alloc_node(arena_ptr,AST_ASSERT_START, 0i32);
+        if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            pass n;
+    } else if (tok_type == TOKEN_DOLLAR) {
+        int64:n = raw ast_arena_alloc_node(arena_ptr,AST_ASSERT_END, 0i32);
+        if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            pass n;
+    } else if (tok_type == TOKEN_ESCAPE) {
+        // Lookahead 1
+        int32:idx_next = npk_mem_read_int32(idx_ptr, 0i64);
+        if (idx_next >= count) { fail ERR_REGEX_PARSE; } // Invalid escape at end of pattern
+        Token->:tok_ptr_next = @cast_unchecked<Token->>(tokens + ((idx_next => int64) * 8i64));
+        int32:esc_val = tok_ptr_next->val;
+        drop npk_mem_write_int32(idx_ptr, 0i64, idx_next + 1i32);
+        
+        if (esc_val == 100i32) { // 'd'
+            int64:c_node = raw ast_arena_alloc_node(arena_ptr,AST_CLASS, 0i32);
+            if (c_node == 0i64) { fail ERR_REGEX_PARSE; }
+            // digits '0'-'9' (48-57) -> bits 48..57 in charset0
+            // 0x03FF000000000000 = 287948901175001088
+            drop npk_mem_write_int64(c_node, 24i64, 287948901175001088i64);
+            pass c_node;
+        } else if (esc_val == 68i32) { // 'D'
+            int64:c_node = raw ast_arena_alloc_node(arena_ptr,AST_CLASS, 1i32);
+            if (c_node == 0i64) { fail ERR_REGEX_PARSE; }
+            drop npk_mem_write_int64(c_node, 24i64, -287948901175001089i64); // ~0x03FF000000000000
+            drop npk_mem_write_int64(c_node, 32i64, -1i64);
+            drop npk_mem_write_int64(c_node, 40i64, -1i64);
+            drop npk_mem_write_int64(c_node, 48i64, -1i64);
+            pass c_node;
+        } else if (esc_val == 119i32) { // 'w'
+            int64:c_node = raw ast_arena_alloc_node(arena_ptr,AST_CLASS, 0i32);
+            if (c_node == 0i64) { fail ERR_REGEX_PARSE; }
+            // digits: 287948901175001088i64
+            drop npk_mem_write_int64(c_node, 24i64, 287948901175001088i64);
+            // 'A'-'Z' (1..26), 'a'-'z' (33..58), '_' (31)
+            // A-Z = 0x07FFFFFE, a-z = 0x07FFFFFE00000000, _ = 0x80000000
+            // total = 0x07FFFFFE87FFFFFE = 576460745995190270
+            drop npk_mem_write_int64(c_node, 32i64, 576460745995190270i64);
+            pass c_node;
+        } else if (esc_val == 87i32) { // 'W'
+            int64:c_node = raw ast_arena_alloc_node(arena_ptr,AST_CLASS, 1i32);
+            if (c_node == 0i64) { fail ERR_REGEX_PARSE; }
+            drop npk_mem_write_int64(c_node, 24i64, -287948901175001089i64);
+            drop npk_mem_write_int64(c_node, 32i64, -576460745995190271i64);
+            drop npk_mem_write_int64(c_node, 40i64, -1i64);
+            drop npk_mem_write_int64(c_node, 48i64, -1i64);
+            pass c_node;
+        } else if (esc_val == 115i32) { // 's'
+            int64:c_node = raw ast_arena_alloc_node(arena_ptr,AST_CLASS, 0i32);
+            if (c_node == 0i64) { fail ERR_REGEX_PARSE; }
+            // 9..13 = 0x3E00, 32 = 0x100000000
+            // total = 0x100003E00 = 4294983168
+            drop npk_mem_write_int64(c_node, 24i64, 4294983168i64);
+            pass c_node;
+        } else if (esc_val == 83i32) { // 'S'
+            int64:c_node = raw ast_arena_alloc_node(arena_ptr,AST_CLASS, 1i32);
+            if (c_node == 0i64) { fail ERR_REGEX_PARSE; }
+            drop npk_mem_write_int64(c_node, 24i64, -4294983169i64);
+            drop npk_mem_write_int64(c_node, 32i64, -1i64);
+            drop npk_mem_write_int64(c_node, 40i64, -1i64);
+            drop npk_mem_write_int64(c_node, 48i64, -1i64);
+            pass c_node;
+        } else if (esc_val == 110i32) { // 'n'
+            int64:n = raw ast_arena_alloc_node(arena_ptr,AST_LITERAL, 10i32);
+            if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            pass n;
+        } else if (esc_val == 114i32) { // 'r'
+            int64:n = raw ast_arena_alloc_node(arena_ptr,AST_LITERAL, 13i32);
+            if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            pass n;
+        } else if (esc_val == 116i32) { // 't'
+            int64:n = raw ast_arena_alloc_node(arena_ptr,AST_LITERAL, 9i32);
+            if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            pass n;
+        } else {
+            // treat as literal
+            int64:n = raw ast_arena_alloc_node(arena_ptr,AST_LITERAL, esc_val);
+            if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            if (n == 0i64) { fail ERR_REGEX_PARSE; }
+            pass n;
+        }
+    } else if (tok_type == TOKEN_LBRACKET) {
+        int64:c_node = raw ast_arena_alloc_node(arena_ptr,AST_CLASS, 0i32);
+        if (c_node == 0i64) { fail ERR_REGEX_PARSE; }
+        int32:inverted = 0i32;
+        int32:idx_curr_init = npk_mem_read_int32(idx_ptr, 0i64);
+        if (idx_curr_init < count) {
+            Token->:tok_ptr_init = @cast_unchecked<Token->>(tokens + ((idx_curr_init => int64) * 8i64));
+            if (tok_ptr_init->type == TOKEN_CARET) {
+                inverted = 1i32;
+                drop npk_mem_write_int32(idx_ptr, 0i64, idx_curr_init + 1i32);
+            }
+        }
+        
+        int32:running = 1i32;
+        when (running == 1i32) {
+            int32:idx_curr = npk_mem_read_int32(idx_ptr, 0i64);
+            if (idx_curr >= count) { fail ERR_REGEX_PARSE; }
+            Token->:tok_ptr_curr = @cast_unchecked<Token->>(tokens + ((idx_curr => int64) * 8i64));
+            
+            if (tok_ptr_curr->type == TOKEN_RBRACKET) {
+                drop npk_mem_write_int32(idx_ptr, 0i64, idx_curr + 1i32);
+                running = 0i32;
+            } else if (tok_ptr_curr->type == TOKEN_ESCAPE) {
+                int32:idx_next = idx_curr + 1i32;
+                if (idx_next >= count) { fail ERR_REGEX_PARSE; }
+                Token->:tok_ptr_next = @cast_unchecked<Token->>(tokens + ((idx_next => int64) * 8i64));
+                int32:esc_val = tok_ptr_next->val;
+                drop npk_mem_write_int32(idx_ptr, 0i64, idx_next + 1i32);
+                
+                if (esc_val == 100i32) { // 'd'
+                    int64:b0 = npk_mem_read_int64(c_node, 24i64);
+                    drop npk_mem_write_int64(c_node, 24i64, b0 | 287948901175001088i64);
+                } else if (esc_val == 68i32) { // 'D'
+                    int64:b0 = npk_mem_read_int64(c_node, 24i64);
+                    int64:b1 = npk_mem_read_int64(c_node, 32i64);
+                    int64:b2 = npk_mem_read_int64(c_node, 40i64);
+                    int64:b3 = npk_mem_read_int64(c_node, 48i64);
+                    drop npk_mem_write_int64(c_node, 24i64, b0 | -287948901175001089i64);
+                    drop npk_mem_write_int64(c_node, 32i64, b1 | -1i64);
+                    drop npk_mem_write_int64(c_node, 40i64, b2 | -1i64);
+                    drop npk_mem_write_int64(c_node, 48i64, b3 | -1i64);
+                    AstNode->:c_ptr = @cast_unchecked<AstNode->>(c_node);
+                    c_ptr->val = c_ptr->val | 1i32;
+                } else if (esc_val == 119i32) { // 'w'
+                    int64:b0 = npk_mem_read_int64(c_node, 24i64);
+                    int64:b1 = npk_mem_read_int64(c_node, 32i64);
+                    drop npk_mem_write_int64(c_node, 24i64, b0 | 287948901175001088i64);
+                    drop npk_mem_write_int64(c_node, 32i64, b1 | 576460745995190270i64);
+                } else if (esc_val == 87i32) { // 'W'
+                    int64:b0 = npk_mem_read_int64(c_node, 24i64);
+                    int64:b1 = npk_mem_read_int64(c_node, 32i64);
+                    int64:b2 = npk_mem_read_int64(c_node, 40i64);
+                    int64:b3 = npk_mem_read_int64(c_node, 48i64);
+                    drop npk_mem_write_int64(c_node, 24i64, b0 | -287948901175001089i64);
+                    drop npk_mem_write_int64(c_node, 32i64, b1 | -576460745995190271i64);
+                    drop npk_mem_write_int64(c_node, 40i64, b2 | -1i64);
+                    drop npk_mem_write_int64(c_node, 48i64, b3 | -1i64);
+                    AstNode->:c_ptr = @cast_unchecked<AstNode->>(c_node);
+                    c_ptr->val = c_ptr->val | 1i32;
+                } else if (esc_val == 115i32) { // 's'
+                    int64:b0 = npk_mem_read_int64(c_node, 24i64);
+                    drop npk_mem_write_int64(c_node, 24i64, b0 | 4294983168i64);
+                } else if (esc_val == 83i32) { // 'S'
+                    int64:b0 = npk_mem_read_int64(c_node, 24i64);
+                    int64:b1 = npk_mem_read_int64(c_node, 32i64);
+                    int64:b2 = npk_mem_read_int64(c_node, 40i64);
+                    int64:b3 = npk_mem_read_int64(c_node, 48i64);
+                    drop npk_mem_write_int64(c_node, 24i64, b0 | -4294983169i64);
+                    drop npk_mem_write_int64(c_node, 32i64, b1 | -1i64);
+                    drop npk_mem_write_int64(c_node, 40i64, b2 | -1i64);
+                    drop npk_mem_write_int64(c_node, 48i64, b3 | -1i64);
+                    AstNode->:c_ptr = @cast_unchecked<AstNode->>(c_node);
+                    c_ptr->val = c_ptr->val | 1i32;
+                } else {
+                    int32:c1 = esc_val;
+                    if (c1 == 110i32) { c1 = 10i32; }
+                    else if (c1 == 114i32) { c1 = 13i32; }
+                    else if (c1 == 116i32) { c1 = 9i32; }
+                    
+                    int32:idx_next2 = npk_mem_read_int32(idx_ptr, 0i64);
+                    int32:is_range = 0i32;
+                    int32:c2 = c1;
+                    
+                    if (idx_next2 + 1i32 < count) {
+                        Token->:tok_ptr_dash = @cast_unchecked<Token->>(tokens + ((idx_next2 => int64) * 8i64));
+                        if ((tok_ptr_dash->type == TOKEN_LITERAL) && (tok_ptr_dash->val == 45i32)) {
+                            Token->:tok_ptr_end = @cast_unchecked<Token->>(tokens + (((idx_next2 + 1i32) => int64) * 8i64));
+                            if (tok_ptr_end->type != TOKEN_RBRACKET) { 
+                                int32:adv = 2i32;
+                                c2 = tok_ptr_end->val;
+                                if (tok_ptr_end->type == TOKEN_ESCAPE) {
+                                    int32:idx_escape_char = idx_next2 + 2i32;
+                                    if (idx_escape_char < count) {
+                                        Token->:tok_ptr_escape_char = @cast_unchecked<Token->>(tokens + ((idx_escape_char => int64) * 8i64));
+                                        c2 = tok_ptr_escape_char->val;
+                                        adv = 3i32;
+                                    } else { fail ERR_REGEX_PARSE; }
+                                    if (c2 == 110i32) { c2 = 10i32; }
+                                    else if (c2 == 114i32) { c2 = 13i32; }
+                                    else if (c2 == 116i32) { c2 = 9i32; }
+                                }
+                                drop npk_mem_write_int32(idx_ptr, 0i64, idx_next2 + adv);
+                                is_range = 1i32;
+                            }
+                        }
+                    }
+                    
+                    int64:j = c1 => int64;
+                    int64:j_end = c2 => int64;
+                    if (j_end < j || j_end > 255i64) { fail ERR_REGEX_PARSE; } 
+                    when (j <= j_end) {
+                        int64:byte_idx = j / 8i64;
+                        int64:bit_idx = j % 8i64;
+                        int64:old_byte = npk_mem_read_byte(c_node, 24i64 + byte_idx);
+                        int64:new_byte = old_byte | (1i64 << bit_idx);
+                        drop npk_mem_write_byte(c_node, 24i64 + byte_idx, new_byte);
+                        j = j + 1i64;
+                    }
+                }
+            } else {
+                int32:c1 = tok_ptr_curr->val;
+                drop npk_mem_write_int32(idx_ptr, 0i64, idx_curr + 1i32);
+                
+                int32:idx_next = npk_mem_read_int32(idx_ptr, 0i64);
+                int32:is_range = 0i32;
+                int32:c2 = c1;
+                
+                if (idx_next + 1i32 < count) {
+                    Token->:tok_ptr_dash = @cast_unchecked<Token->>(tokens + ((idx_next => int64) * 8i64));
+                    if ((tok_ptr_dash->type == TOKEN_LITERAL) && (tok_ptr_dash->val == 45i32)) {
+                        Token->:tok_ptr_end = @cast_unchecked<Token->>(tokens + (((idx_next + 1i32) => int64) * 8i64));
+                        if (tok_ptr_end->type != TOKEN_RBRACKET) { 
+                            int32:adv = 2i32;
+                            c2 = tok_ptr_end->val;
+                            if (tok_ptr_end->type == TOKEN_ESCAPE) {
+                                int32:idx_escape_char = idx_next + 2i32;
+                                if (idx_escape_char < count) {
+                                    Token->:tok_ptr_escape_char = @cast_unchecked<Token->>(tokens + ((idx_escape_char => int64) * 8i64));
+                                    c2 = tok_ptr_escape_char->val;
+                                    adv = 3i32;
+                                } else { fail ERR_REGEX_PARSE; }
+                                if (c2 == 110i32) { c2 = 10i32; }
+                                else if (c2 == 114i32) { c2 = 13i32; }
+                                else if (c2 == 116i32) { c2 = 9i32; }
+                            }
+                            drop npk_mem_write_int32(idx_ptr, 0i64, idx_next + adv);
+                            is_range = 1i32;
+                        }
+                    }
+                }
+                
+                int64:j = c1 => int64;
+                int64:j_end = c2 => int64;
+                if (j_end < j || j_end > 255i64) { fail ERR_REGEX_PARSE; } 
+                when (j <= j_end) {
+                    int64:byte_idx = j / 8i64;
+                    int64:bit_idx = j % 8i64;
+                    int64:old_byte = npk_mem_read_byte(c_node, 24i64 + byte_idx);
+                    int64:new_byte = old_byte | (1i64 << bit_idx);
+                    drop npk_mem_write_byte(c_node, 24i64 + byte_idx, new_byte);
+                    j = j + 1i64;
+                }
+            }
+        }
+        
+        if (inverted == 1i32) {
+            AstNode->:c_ptr = @cast_unchecked<AstNode->>(c_node);
+            c_ptr->val = c_ptr->val ^ 1i32;
+            int64:b0 = npk_mem_read_int64(c_node, 24i64);
+            int64:b1 = npk_mem_read_int64(c_node, 32i64);
+            int64:b2 = npk_mem_read_int64(c_node, 40i64);
+            int64:b3 = npk_mem_read_int64(c_node, 48i64);
+            drop npk_mem_write_int64(c_node, 24i64, ~b0);
+            drop npk_mem_write_int64(c_node, 32i64, ~b1);
+            drop npk_mem_write_int64(c_node, 40i64, ~b2);
+            drop npk_mem_write_int64(c_node, 48i64, ~b3);
+        }
+        
+        pass c_node;
     } else if (tok_type == TOKEN_LPAREN) {
-        int64:inner = raw parse_alt(tokens, count, idx_ptr, depth + 1i32);
-        if (inner == 0i64) { pass(0i64); }
+        int32:is_capture = 1i32;
+        int32:idx_nc = npk_mem_read_int32(idx_ptr, 0i64);
+        if (idx_nc + 1i32 < count) {
+            Token->:t1 = @cast_unchecked<Token->>(tokens + ((idx_nc => int64) * 8i64));
+            Token->:t2 = @cast_unchecked<Token->>(tokens + (((idx_nc + 1i32) => int64) * 8i64));
+            if (t1->type == TOKEN_QMARK && t2->type == TOKEN_LITERAL && t2->val == 58i32) {
+                is_capture = 0i32;
+                drop npk_mem_write_int32(idx_ptr, 0i64, idx_nc + 2i32);
+            }
+        }
+        
+        int32:cap = 0i32;
+        if (is_capture == 1i32) {
+            cap = npk_mem_read_int32(idx_ptr, 4i64);
+            if (cap >= 10i32) { fail ERR_REGEX_COMPLEXITY_EXCEEDED; }
+            drop npk_mem_write_int32(idx_ptr, 4i64, cap + 1i32);
+        }
+        
+        int64:inner = parse_alt(tokens, count, idx_ptr, depth + 1i32, arena_ptr) ? 0i64;
+        if (inner == 0i64) { fail ERR_REGEX_PARSE; }
         
         int32:idx2 = npk_mem_read_int32(idx_ptr, 0i64);
-        if (idx2 >= count) { pass(0i64); }
-        int64:tok_ptr2 = tokens + ((idx2 => int64) * 8i64);
-        int32:tok_type2 = npk_mem_read_int32(tok_ptr2, 0i64);
+        if (idx2 >= count) { fail ERR_REGEX_PARSE; }
+        Token->:tok_ptr2 = @cast_unchecked<Token->>(tokens + ((idx2 => int64) * 8i64));
+        int32:tok_type2 = tok_ptr2->type;
         
-        if (tok_type2 != TOKEN_RPAREN) { pass(0i64); }
-        drop(npk_mem_write_int32(idx_ptr, 0i64, idx2 + 1i32));
+        if (tok_type2 != TOKEN_RPAREN) { fail ERR_REGEX_PARSE; }
+        drop npk_mem_write_int32(idx_ptr, 0i64, idx2 + 1i32);
         
-        pass(inner);
+        if (is_capture == 1i32) {
+            int64:save_node = raw ast_arena_alloc_node(arena_ptr,AST_SAVE, cap);
+            if (save_node == 0i64) { fail ERR_REGEX_PARSE; }
+            AstNode->:save_ptr = @cast_unchecked<AstNode->>(save_node);
+            save_ptr->left = inner;
+            pass save_node;
+        } else {
+            pass inner;
+        }
     }
     
-    pass(0i64);
+    fail ERR_REGEX_PARSE;
 };
 
-pub func:parse_regex_ast = int64(int64:tokens, int32:count) {
-    defer { npk_tlc_batch_flush(); }
+pub func:parse_regex_ast = int64(int64:tokens, int32:count, int64:arena_ptr) {
     
     if (count == 0i32) {
-        pass(0i64);
+        fail ERR_REGEX_PARSE;
     }
     
-    int64:idx_ptr = npk_tlc_batch_alloc(8i64);
-    drop(npk_mem_write_int32(idx_ptr, 0i64, 0i32));
+    int64:idx_ptr = npk_core_alloc(16i64);
+    defer { drop npk_core_dalloc(idx_ptr); }
+    drop npk_mem_write_int32(idx_ptr, 0i64, 0i32);
+    drop npk_mem_write_int32(idx_ptr, 4i64, 1i32);
     
-    int64:root = raw parse_alt(tokens, count, idx_ptr, 0i32);
-    if (root == 0i64) { pass(0i64); }
+    int64:root = parse_alt(tokens, count, idx_ptr, 0i32, arena_ptr) ? 0i64;
+    if (root == 0i64) { fail ERR_REGEX_PARSE; }
+    
+    int64:save_root = raw ast_arena_alloc_node(arena_ptr,AST_SAVE, 0i32);
+    if (save_root == 0i64) { fail ERR_REGEX_PARSE; }
+    AstNode->:sr_ptr = @cast_unchecked<AstNode->>(save_root);
+    sr_ptr->left = root;
     
     int32:idx = npk_mem_read_int32(idx_ptr, 0i64);
     if (idx != count) {
-        pass(0i64); // unexpected trailing tokens
+        fail ERR_REGEX_PARSE; // unexpected trailing tokens
     }
     
-    pass(root);
+    pass save_root;
 };

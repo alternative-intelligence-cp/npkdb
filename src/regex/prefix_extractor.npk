@@ -3,22 +3,23 @@
 use "ast_types.npk".*;
 use "../util/str_view.npk".*;
 use "../util/mem_primitives.npk".*;
+use "alist.npk".*;
 
-extern "nitpick_libc_sys" {
-    func:npk_tlc_batch_alloc = int64(int64:size);
-}
+
 
 pub func:extract_literal_prefix = int64(int64:ast_root, int64:pattern) {
-    int64:ext = npk_tlc_batch_alloc(24i64);
-    drop(npk_mem_write_int32(ext, 0i64, 0i32)); // has_prefix
-    drop(npk_mem_write_int64(ext, 8i64, 0i64)); // ptr
-    drop(npk_mem_write_int64(ext, 16i64, 0i64)); // len
+    int64:ext = npk_core_alloc(24i64);
+    if (ext == 0i64) { pass 0i64; }
+    drop npk_mem_write_int32(ext, 0i64, 0i32); // has_prefix
+    drop npk_mem_write_int64(ext, 8i64, 0i64); // ptr
+    drop npk_mem_write_int64(ext, 16i64, 0i64); // len
     
     if (ast_root == 0i64) {
-        pass(ext);
+        pass ext;
     }
     
-    astack(1024i64);
+    int64:trav_stack = raw alist();
+    
     int32:stack_size = 0i32;
     
     int64:curr = ast_root;
@@ -27,25 +28,44 @@ pub func:extract_literal_prefix = int64(int64:ast_root, int64:pattern) {
     
     when (running == 1i32) {
         if (curr != 0i64) {
-            apush(curr);
-            stack_size = stack_size + 1i32;
-            curr = npk_mem_read_int64(curr, 8i64); // left
+            int32:type = npk_mem_read_int32(curr, 0i64);
+            if ((type != AST_LITERAL) && (type != AST_CONCAT) && (type != AST_SAVE) && (type != AST_ASSERT_START)) {
+                running = 0i32;
+            } else {
+                drop raw alpush(trav_stack, curr);
+                stack_size = stack_size + 1i32;
+                curr = npk_mem_read_int64(curr, 8i64); // left
+            }
         } else {
             if (stack_size > 0i32) {
-                curr = apop();
+                curr = raw alpop(trav_stack);
                 stack_size = stack_size - 1i32;
                 
                 int32:type = npk_mem_read_int32(curr, 0i64);
                 if (type == AST_LITERAL) {
-                    literal_count = literal_count + 1i32;
-                } else if (type == AST_CONCAT) {
+                    int32:val = npk_mem_read_int32(curr, 4i64);
+                    int64:v = val => int64;
+                    if (v <= 127i64) {
+                        literal_count = literal_count + 1i32;
+                    } else if (v <= 2047i64) {
+                        literal_count = literal_count + 2i32;
+                    } else if (v <= 65535i64) {
+                        literal_count = literal_count + 3i32;
+                    } else {
+                        literal_count = literal_count + 4i32;
+                    }
+                } else if ((type == AST_CONCAT) || (type == AST_SAVE) || (type == AST_ASSERT_START)) {
                     // continue
                 } else {
                     running = 0i32;
                 }
                 
                 if (running == 1i32) {
-                    curr = npk_mem_read_int64(curr, 16i64); // right
+                    if (type == AST_CONCAT) {
+                        curr = npk_mem_read_int64(curr, 16i64); // right
+                    } else {
+                        curr = 0i64;
+                    }
                 }
             } else {
                 running = 0i32;
@@ -54,10 +74,78 @@ pub func:extract_literal_prefix = int64(int64:ast_root, int64:pattern) {
     }
     
     if (literal_count > 0i32) {
-        drop(npk_mem_write_int32(ext, 0i64, 1i32));
-        drop(npk_mem_write_int64(ext, 8i64, pattern)); // point to start of pattern
-        drop(npk_mem_write_int64(ext, 16i64, literal_count => int64));
+        int64:str_buf = npk_core_alloc(literal_count => int64);
+        if (str_buf == 0i64) {
+            drop npk_core_dalloc(ext);
+            pass 0i64;
+        }
+        
+        int64:c_idx = 0i64;
+        curr = ast_root;
+        stack_size = 0i32;
+        running = 1i32;
+        
+        when (running == 1i32) {
+            if (curr != 0i64) {
+                int32:type = npk_mem_read_int32(curr, 0i64);
+                if ((type != AST_LITERAL) && (type != AST_CONCAT) && (type != AST_SAVE) && (type != AST_ASSERT_START)) {
+                    running = 0i32;
+                } else {
+                    drop raw alpush(trav_stack, curr);
+                    stack_size = stack_size + 1i32;
+                    curr = npk_mem_read_int64(curr, 8i64);
+                }
+            } else {
+                if (stack_size > 0i32) {
+                    curr = raw alpop(trav_stack);
+                    stack_size = stack_size - 1i32;
+                    
+                    int32:type = npk_mem_read_int32(curr, 0i64);
+                    if (type == AST_LITERAL) {
+                        int32:val = npk_mem_read_int32(curr, 4i64);
+                        int64:v = val => int64;
+                        if (v <= 127i64) {
+                            drop npk_mem_write_byte(str_buf, c_idx, v);
+                            c_idx = c_idx + 1i64;
+                        } else if (v <= 2047i64) {
+                            drop npk_mem_write_byte(str_buf, c_idx, (192i64 | ((v >> 6i64) & 31i64)));
+                            drop npk_mem_write_byte(str_buf, c_idx + 1i64, (128i64 | (v & 63i64)));
+                            c_idx = c_idx + 2i64;
+                        } else if (v <= 65535i64) {
+                            drop npk_mem_write_byte(str_buf, c_idx, (224i64 | ((v >> 12i64) & 15i64)));
+                            drop npk_mem_write_byte(str_buf, c_idx + 1i64, (128i64 | ((v >> 6i64) & 63i64)));
+                            drop npk_mem_write_byte(str_buf, c_idx + 2i64, (128i64 | (v & 63i64)));
+                            c_idx = c_idx + 3i64;
+                        } else {
+                            drop npk_mem_write_byte(str_buf, c_idx, (240i64 | ((v >> 18i64) & 7i64)));
+                            drop npk_mem_write_byte(str_buf, c_idx + 1i64, (128i64 | ((v >> 12i64) & 63i64)));
+                            drop npk_mem_write_byte(str_buf, c_idx + 2i64, (128i64 | ((v >> 6i64) & 63i64)));
+                            drop npk_mem_write_byte(str_buf, c_idx + 3i64, (128i64 | (v & 63i64)));
+                            c_idx = c_idx + 4i64;
+                        }
+                    } else if ((type == AST_CONCAT) || (type == AST_SAVE) || (type == AST_ASSERT_START)) {
+                        // continue
+                    } else {
+                        running = 0i32;
+                    }
+                    
+                    if (running == 1i32) {
+                        if (type == AST_CONCAT) {
+                            curr = npk_mem_read_int64(curr, 16i64);
+                        } else {
+                            curr = 0i64;
+                        }
+                    }
+                } else {
+                    running = 0i32;
+                }
+            }
+        }
+        
+        drop npk_mem_write_int32(ext, 0i64, 1i32);
+        drop npk_mem_write_int64(ext, 8i64, str_buf);
+        drop npk_mem_write_int64(ext, 16i64, literal_count => int64);
     }
     
-    pass(ext);
+    pass ext;
 };
