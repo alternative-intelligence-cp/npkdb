@@ -3,7 +3,7 @@ extern "C" {
 }
 use "../../src/vector/hnsw_arena.npk".*;
 
-func:main = int32(int32:argc, wild any->:argv) {
+func:main = int32(int32:argc, any->:argv) {
     exit(0i32);
 };
 

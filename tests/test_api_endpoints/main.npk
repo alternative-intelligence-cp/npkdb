@@ -31,7 +31,7 @@ pub int64:global_wp = 0i64;
 
 func:mock_worker_shim = int32(int64:arg) { pass(0i32); };
 
-func:main = int32(int32:argc, wild any->:argv) {
+func:main = int32(int32:argc, any->:argv) {
     global_catalog_lock = nitpick_libc_rwlock_create();
     global_graph_lock = nitpick_libc_rwlock_create();
     global_insert_counter = npk_shim_atomic_int64_create(0i64);

@@ -12,7 +12,7 @@ use "../../src/engine/catalog.npk".*;
 use "../../src/concurrency/ebr.npk".*;
 use "../../src/index/art.npk".*;
 
-func:main = int32(int32:argc, wild any->:argv) {
+func:main = int32(int32:argc, any->:argv) {
     drop(npk_gc_init(10485760i64, 104857600i64));
     drop(ebr_init());
     drop(art_init());

@@ -12,7 +12,7 @@ pub func:proc_exit = NIL(int32:code) {
     pass(NIL);
 };
 
-func:main = int32(int32:argc, wild any->:argv) {
+func:main = int32(int32:argc, any->:argv) {
     int64:arena_ptr = raw json_arena_init(65536i64);
     
     // 1. Test parse_i64 implicitly through parse_json

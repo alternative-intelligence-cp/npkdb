@@ -20,7 +20,7 @@ pub func:failsafe = int32(tbb32:err) {
     exit(1i32);
 };
 
-func:main = int32(int32:argc, wild any->:argv) {
+func:main = int32(int32:argc, any->:argv) {
     println("Starting Vector + Document Co-location test...");
 
     // 1. Create a dummy tfp64 array

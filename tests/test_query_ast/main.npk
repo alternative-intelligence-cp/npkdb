@@ -108,7 +108,7 @@ func:eval_ast = bool(int64:node_ptr, int64:doc_ptr) {
     pass(false);
 };
 
-func:main = int32(int32:argc, wild any->:argv) {
+func:main = int32(int32:argc, any->:argv) {
     println("Starting AST Query Filter Test...");
     
     // Construct Query: { "$and": [ {"year": {"$gt": 2020}}, {"genre": {"$eq": "sci-fi"}} ] }

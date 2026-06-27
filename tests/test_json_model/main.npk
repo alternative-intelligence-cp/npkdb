@@ -9,7 +9,7 @@ pub func:mock_proc_exit = NIL(int32:code) {
     pass(NIL);
 };
 
-func:main = int32(int32:argc, wild any->:argv) {
+func:main = int32(int32:argc, any->:argv) {
     NpkJsonVal:n = _!json_make_null();
     if (n.type != JSON_NULL) { exit(11i32); }
 
