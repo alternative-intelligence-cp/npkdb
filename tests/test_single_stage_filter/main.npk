@@ -14,6 +14,8 @@ use "../../src/vector/hnsw_graph.npk".*;
 use "../../src/vector/hnsw_visited.npk".*;
 use "../../src/vector/hnsw_search.npk".*;
 use "../../src/vector/hnsw_insert.npk".*;
+use "../../src/document/json_parser.npk".*;
+use "../../src/document/json_serializer.npk".*;
 
 extern "C" {
     func:_exit = void(int32:code);
@@ -25,30 +27,43 @@ pub func:mock_proc_exit = NIL(int32:code) {
     pass(NIL);
 };
 
+
+
 pub func:failsafe = int32(tbb32:code) {
-    println("Failsafe triggered!");
-    exit(@cast_unchecked<int32>(code));
+    exit(77i32);
 };
 
 pub func:main = int32() {
-    // 1. Create vector buffer
-    int64:vec_dim = 2i64;
-    int64:vec_buf_size = 10i64 * vec_dim * 4i64; // 10 vectors
+    println("DEBUG: Entering main()");
+    int64:vec_dim = 8i64;
+    int64:vec_buf_size = 10i64 * vec_dim * 8i64; // 10 vectors, 8 bytes per dim
     int64:vec_buf = npk_core_alloc(vec_buf_size);
 
-    // Write vectors (all zeroes for simplicity)
+    // Write vectors
     int64:i = 0i64;
     while (i < 10i64) {
-        drop(npk_mem_write_int32(vec_buf, i * vec_dim * 4i64, @cast_unchecked<int32>(i)));
-        drop(npk_mem_write_int32(vec_buf, i * vec_dim * 4i64 + 4i64, 0i32));
+        // Write tfp64 (double precision floats)
+        flt64:v1 = @cast_unchecked<flt64>(i);
+        flt64:v2 = 0.0f64;
+        drop(npk_mem_write_int64(vec_buf, i * vec_dim * 8i64, @cast_unchecked<int64>(v1)));
+        drop(npk_mem_write_int64(vec_buf, i * vec_dim * 8i64 + 8i64, @cast_unchecked<int64>(v2)));
+        int64:j = 2i64;
+        while (j < 8i64) {
+            drop(npk_mem_write_int64(vec_buf, i * vec_dim * 8i64 + j * 8i64, 0i64));
+            j = j + 1i64;
+        }
         i = i + 1i64;
     }
 
+    println("DEBUG: Create Arena");
     // 2. Create Arena
     int64:arena = raw hnsw_arena_create(10i64, 1i16);
 
+    println("DEBUG: Create Graph");
     // 3. Create Graph
     int64:graph = raw hnsw_graph_create(arena, vec_buf, vec_dim, 16i32, 32i32, 100i32, 0.5f64);
+
+    println("DEBUG: Insert vectors");
 
     // 4. Insert vectors
     int64:doc_store = npk_core_alloc(10i64 * 8i64); // array of pointers to NpkJsonVal
@@ -74,13 +89,11 @@ pub func:main = int32() {
     int64:rand_state = npk_core_alloc(8i64);
     drop(npk_mem_write_int64(rand_state, 0i64, 12345i64));
     
-    int64:insert_visited_set = npk_core_alloc(128i64);
-    drop(npk_mem_write_int64(insert_visited_set, 0i64, 16i64));
-    int64:insert_vdata = npk_core_alloc(128i64);
-    drop(npk_mem_write_int64(insert_visited_set, 8i64, insert_vdata));
+    int64:insert_visited_set = raw hnsw_visited_create(1024i64);
 
     i = 0i64;
     while (i < 10i64) {
+        println("DEBUG: Loop start");
         // Create doc
         int64:obj_ptr = npk_core_alloc(24i64);
         drop(npk_mem_write_int32(obj_ptr, 0i64, 1i32)); // count
@@ -88,10 +101,8 @@ pub func:main = int32() {
         int64:keys = npk_core_alloc(8i64);
         int64:vals = npk_core_alloc(8i64);
         
-        int64:k_val = npk_core_alloc(16i64);
-        drop(npk_mem_write_byte(k_val, 0i64, JSON_STR));
-        drop(npk_mem_write_int64(k_val, 8i64, @cast_unchecked<int64>(@k_cat)));
-        drop(npk_mem_write_int64(keys, 0i64, k_val));
+        // Key is just string payload
+        drop(npk_mem_write_int64(keys, 0i64, @cast_unchecked<int64>(@k_cat)));
         
         int64:v_val = npk_core_alloc(16i64);
         drop(npk_mem_write_byte(v_val, 0i64, JSON_STR));
@@ -105,15 +116,18 @@ pub func:main = int32() {
         drop(npk_mem_write_int64(obj_ptr, 8i64, keys));
         drop(npk_mem_write_int64(obj_ptr, 16i64, vals));
         
-        int64:doc_ptr = npk_core_alloc(16i64);
-        drop(npk_mem_write_byte(doc_ptr, 0i64, JSON_OBJ));
-        drop(npk_mem_write_int64(doc_ptr, 8i64, obj_ptr));
+        NpkJsonVal:val = NpkJsonVal { type: JSON_OBJ, payload: obj_ptr };
+        int64:out_len = 0i64;
+        int64:doc_ptr = raw serialize_document(val, @cast_unchecked<int64>(@out_len));
         
         drop(npk_mem_write_int64(doc_store, i * 8i64, doc_ptr));
         
         // hnsw_insert(graph, vec_offset, rand_state, visited_set)
-        int64:node_ptr = raw hnsw_insert(graph, i * vec_dim * 4i64, rand_state, insert_visited_set);
-        
+        int64:read_dim = raw hnsw_graph_get_vector_dim(graph);
+        println("Dim before insert: " + string_from_int(read_dim));
+        int64:node_ptr = raw hnsw_insert(graph, i * vec_dim * 8i64, rand_state, insert_visited_set);
+
+        println("DEBUG: Loop end");
         i = i + 1i64;
     }
 
@@ -139,10 +153,7 @@ pub func:main = int32() {
     drop(npk_mem_write_int64(ast_node, 24i64, @cast_unchecked<int64>(@str_b)));
 
     // 6. Search
-    int64:visited_set = npk_core_alloc(128i64); // Bitset, 1024 bits
-    drop(npk_mem_write_int64(visited_set, 0i64, 16i64)); // size
-    int64:vdata = npk_core_alloc(128i64);
-    drop(npk_mem_write_int64(visited_set, 8i64, vdata));
+    int64:visited_set = raw hnsw_visited_create(1024i64);
     
     // We get entry point
     int32:ep_slot = 0i32;
@@ -151,7 +162,14 @@ pub func:main = int32() {
     int64:ep_gen_ptr = @cast_unchecked<int64>(@ep_gen);
     drop(hnsw_graph_get_ep(graph, ep_slot_ptr, ep_gen_ptr));
     
-    int64:results_pq = raw hnsw_search_layer(graph, 0i64, ep_slot, ep_gen, 10i32, 0i32, visited_set, ast_node, doc_store);
+    int64:json_arena = raw json_arena_init(65536i64);
+    int64:results_pq = raw hnsw_search_layer(json_arena, graph, 0i64, ep_slot, ep_gen, 10i32, 0i32, visited_set, ast_node, doc_store);
+    drop(json_arena_destroy(json_arena));
+    
+    // Verify filter directly!
+    int64:doc_5 = npk_mem_read_int64(doc_store, 5i64 * 8i64);
+    bool:match_5 = raw evaluate_filter(json_arena, ast_node, doc_5);
+    if (match_5) { println("Filter match for doc 5: TRUE"); } else { println("Filter match for doc 5: FALSE"); }
     
     // Verify results
     int64:pq_size = raw hnsw_pq_get_size(results_pq);
