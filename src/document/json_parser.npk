@@ -348,7 +348,10 @@ pub func:parse_value = NpkJsonVal(int64:state) {
 
 pub func:parse_json = NpkJsonVal(int64:arena_ptr, string:json_str) {
     int64:len = string_length(json_str);
-    int64:ptr = string_to_cstr(json_str);
+    int64:ptr = raw json_arena_alloc(arena_ptr, len + 1i64);
+    int64:tmp = string_to_cstr(json_str);
+    drop(npk_mem_copy(ptr, tmp, len));
+    drop(npk_core_dalloc(tmp));
     pass(parse_json_raw(arena_ptr, ptr, len));
 };
 

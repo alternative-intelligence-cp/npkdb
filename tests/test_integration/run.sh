@@ -3,8 +3,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-echo "Running Integration Tests..."
+echo "Cleaning up previous test data..."
+rm -rf test_roundtrip_dir test_crash_dir test_comp_corr test_stress data/ *.wal
 
+echo "Running Integration Tests..."
 # We assume npkc is built at ../../../nitpick/build/npkc
 NPKC="../../../nitpick/build/npkc"
 

@@ -49,7 +49,9 @@ pub func:hnsw_search_layer = int64(
     bool:ep_match = true;
     if (filter_ast != 0i64) {
         if (doc_store != 0i64) {
-            int64:ep_doc_ptr = npk_mem_read_int64(doc_store, (@cast_unchecked<int64>((safe_ep_slot))) * 8i64);
+            int64:vec_dim = raw hnsw_graph_get_vector_dim(graph);
+            int64:vec_id_ep = ep_vec_offset / (vec_dim * 8i64);
+            int64:ep_doc_ptr = npk_mem_read_int64(doc_store, vec_id_ep * 8i64);
             if (ep_doc_ptr != 0i64) {
                 ep_match = raw evaluate_filter(json_arena, filter_ast, ep_doc_ptr);
             }
@@ -100,20 +102,20 @@ pub func:hnsw_search_layer = int64(
 
                 int64:n_node_ptr = raw hnsw_arena_get_node(arena, n_slot, n_gen) ;
                 if (n_node_ptr != 0i64) {
+                    bool:match = true;
+                    int64:n_vec_offset = raw hnsw_node_get_vector_offset(n_node_ptr) ;
+                    
                     if (filter_ast != 0i64) {
                         if (doc_store != 0i64) {
-                            int64:doc_ptr = npk_mem_read_int64(doc_store, (@cast_unchecked<int64>((n_slot))) * 8i64);
+                            int64:vec_dim = raw hnsw_graph_get_vector_dim(graph);
+                            int64:vec_id = n_vec_offset / (vec_dim * 8i64);
+                            int64:doc_ptr = npk_mem_read_int64(doc_store, vec_id * 8i64);
                             if (doc_ptr != 0i64) {
-                                bool:match = raw evaluate_filter(json_arena, filter_ast, doc_ptr);
-                                if (match == false) {
-                                    i = i + 1i64;
-                                    continue;
-                                }
+                                match = raw evaluate_filter(json_arena, filter_ast, doc_ptr);
                             }
                         }
                     }
 
-                    int64:n_vec_offset = raw hnsw_node_get_vector_offset(n_node_ptr) ;
                     tfp64:n_dist = raw hnsw_graph_distance(graph, query_offset, n_vec_offset);
 
                     tfp64:f_dist2 = 3.402823466e+38f32;
@@ -122,15 +124,18 @@ pub func:hnsw_search_layer = int64(
                         drop(hnsw_pq_peek(W, furthest));
                         f_dist2 = raw hnsw_pq_get_dist(furthest);
                     }
-
                     if (w_size2 < ef_64) {
                         drop(hnsw_pq_push(candidates, n_dist, n_slot, n_gen));
-                        drop(hnsw_pq_push(W, n_dist, n_slot, n_gen));
+                        if (match) {
+                            drop(hnsw_pq_push(W, n_dist, n_slot, n_gen));
+                        }
                     } else {
                         if (n_dist < f_dist2) {
                             drop(hnsw_pq_push(candidates, n_dist, n_slot, n_gen));
-                            drop(hnsw_pq_push(W, n_dist, n_slot, n_gen));
-                            drop(hnsw_pq_pop(W, furthest)); // Maintain W size == ef
+                            if (match) {
+                                drop(hnsw_pq_push(W, n_dist, n_slot, n_gen));
+                                drop(hnsw_pq_pop(W, furthest)); // Maintain W size == ef
+                            }
                         }
                     }
                 }

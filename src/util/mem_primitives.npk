@@ -24,11 +24,6 @@ extern "nitpick_libc_mem" {
 extern "nitpick_libc_mem" {
     pub func:npk_mem_write_string = int64(int64:ptr, string:s);
     func:npk_mem_read_string = string(int64:ptr, int64:max_len);
-    pub func:nitpick_libc_rwlock_create = int64();
-    pub func:nitpick_libc_rwlock_wrlock = int64(int64:lock);
-    pub func:nitpick_libc_rwlock_rdlock = int64(int64:lock);
-    pub func:nitpick_libc_rwlock_unlock = int64(int64:lock);
-    pub func:nitpick_libc_rwlock_destroy = int64(int64:lock);
 }
 pub func:npk_mem_write_int32 = int64(int64:ptr, int64:offset, int32:val) {
     int64:v = @cast_unchecked<int64>(val);
@@ -71,3 +66,16 @@ pub func:atomic_load_seqcst = int64(int64:atomic_ptr) {
 
 
 pub func:free = NIL(int64:ptr) { drop(npk_core_dalloc(ptr)); pass(NIL); };
+
+extern "nitpick_libc_thread" {
+    pub func:nitpick_libc_rwlock_create    = int64();
+    pub func:nitpick_libc_rwlock_wrlock    = int32(int64:l);
+    pub func:nitpick_libc_rwlock_rdlock    = int32(int64:l);
+    pub func:nitpick_libc_rwlock_unlock    = int32(int64:l);
+    pub func:nitpick_libc_rwlock_destroy   = int32(int64:l);
+}
+
+extern "nitpick_libc_thread" {
+    pub func:npk_shim_atomic_int64_create  = int64(int64:initial);
+    pub func:npk_shim_atomic_int64_fetch_add = int64(int64:handle, int64:value, int32:order);
+}

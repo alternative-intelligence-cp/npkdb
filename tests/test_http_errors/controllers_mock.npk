@@ -1,4 +1,4 @@
-pub func:send_typed = int64(int64:fd, int64:code, string:ct, string:body);
+use "mock_send_typed.npk".*;
 
 // controllers.npk — HTTP API Controllers
 use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
@@ -14,7 +14,7 @@ use "../../src/document/json_serializer.npk".*;
 use "../../src/query/ast_types.npk".*;
 use "../../src/query/filter_parser.npk".*;
 use "../../src/query/path_eval.npk".*;
-use "../../../../nitpick/stdlib/fmt.npk".*;
+use "../../../nitpick/stdlib/fmt.npk".*;
 use "../../src/vector/distance_types.npk".*;
 use "../../src/vector/hnsw_pq.npk".*;
 use "../../src/vector/hnsw_node.npk".*;
@@ -25,7 +25,7 @@ use "../../src/vector/hnsw_search.npk".*;
 use "../../src/vector/hnsw_insert.npk".*;
 
 use "../../src/util/mem_primitives.npk".*;
-use "../engine/catalog.npk".*;
+use "../../src/engine/catalog.npk".*;
 
 pub func:is_valid_collection_name = bool(string:name) {
     int64:len = string_length(name);
@@ -44,28 +44,25 @@ pub func:is_valid_collection_name = bool(string:name) {
 };
 
 pub func:controller_create_collection = int32(int64:client_fd, ServerRequest:req, string:col_name) {
-    if (!is_valid_collection_name(col_name)) {
+    if (!(is_valid_collection_name(col_name) ? false)) {
         string:err = "{\"status\": \"error\", \"message\": \"invalid collection name\"}";
-        drop(Server.send_typed(client_fd, 400i64, "application/json", err));
+        drop(send_typed(client_fd, 400i64, "application/json", err));
         pass(0i32);
     }
     
     int64:coll_ptr = catalog_create_collection(col_name) ? 0i64;
     if (coll_ptr == 0i64) {
         string:err2 = "{\"status\": \"error\", \"message\": \"collection already exists or could not be created\"}";
-        drop(Server.send_typed(client_fd, 400i64, "application/json", err2));
+        drop(send_typed(client_fd, 400i64, "application/json", err2));
         pass(0i32);
     }
     
     string:res = "{\"status\": \"ok\", \"message\": \"collection created\"}";
-    drop(Server.send_typed(client_fd, 200i64, "application/json", res));
+    drop(send_typed(client_fd, 200i64, "application/json", res));
     pass(0i32);
 };
 
-extern "nitpick_libc_thread" {
-    func:npk_shim_atomic_int64_create  = int64(int64:initial);
-    func:npk_shim_atomic_int64_fetch_add = int64(int64:handle, int64:value, int32:order);
-}
+
 
 pub int64:global_catalog_lock = 0i64;
 pub int64:global_graph_lock = 0i64;
@@ -93,13 +90,13 @@ pub func:controller_insert = int32(int64:client_fd, ServerRequest:req, string:co
     if (v_res.is_error) {  
         int64:status = raw format_error_status(ERR_JSON_PARSE_FAIL);  
         string:err_json = raw format_error_json(ERR_JSON_PARSE_FAIL);  
-        drop(Server.send_typed(client_fd, status, "application/json", err_json));  
+        drop(send_typed(client_fd, status, "application/json", err_json));  
         pass(ERR_JSON_PARSE_FAIL);  
     }  
     NpkJsonVal:v = raw v_res;
 
     if (v.type != JSON_OBJ) {  
-        drop(Server.send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Expected object\"}"));  
+        drop(send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Expected object\"}"));  
         pass(400i32);  
     }
 
@@ -146,7 +143,7 @@ pub func:controller_insert = int32(int64:client_fd, ServerRequest:req, string:co
                             int64:ctr = npk_shim_atomic_int64_fetch_add(global_insert_counter, 1i64, 5i32);  
                             if (ctr >= 10000i64) {  
                                 drop(npk_shim_atomic_int64_fetch_add(global_insert_counter, -1i64, 5i32));  
-                                drop(Server.send_typed(client_fd, 507i64, "application/json", "{\"error\":\"Database capacity reached\"}"));  
+                                drop(send_typed(client_fd, 507i64, "application/json", "{\"error\":\"Database capacity reached\"}"));  
                                 pass(0i32);  
                             }  
                             string:tmp1 = string_concat(collection_name, "_");  
@@ -245,7 +242,7 @@ pub func:controller_insert = int32(int64:client_fd, ServerRequest:req, string:co
         _?wp_flush_wal(global_wp);  
     }  
       
-    drop(Server.send_typed(client_fd, 200i64, "application/json", "{\"status\":\"ok\"}"));  
+    drop(send_typed(client_fd, 200i64, "application/json", "{\"status\":\"ok\"}"));  
     pass(0i32);  
 };
 
@@ -259,7 +256,7 @@ pub func:controller_search = int32(int64:client_fd, ServerRequest:req, string:co
     if (v_res.is_error) {  
         int64:status = raw format_error_status(ERR_JSON_PARSE_FAIL);  
         string:err_json = raw format_error_json(ERR_JSON_PARSE_FAIL);  
-        drop(Server.send_typed(client_fd, status, "application/json", err_json));  
+        drop(send_typed(client_fd, status, "application/json", err_json));  
         pass(ERR_JSON_PARSE_FAIL);  
     }  
       
@@ -267,7 +264,7 @@ pub func:controller_search = int32(int64:client_fd, ServerRequest:req, string:co
     if (v.type != JSON_OBJ) {  
         int64:status = raw format_error_status(ERR_QUERY_PARSE_FAILED);  
         string:err_json = raw format_error_json(ERR_QUERY_PARSE_FAILED);  
-        drop(Server.send_typed(client_fd, status, "application/json", err_json));  
+        drop(send_typed(client_fd, status, "application/json", err_json));  
         pass(ERR_QUERY_PARSE_FAILED);  
     }  
       
@@ -334,7 +331,7 @@ pub func:controller_search = int32(int64:client_fd, ServerRequest:req, string:co
     }
     
     if (has_query_vector == false) {
-        drop(Server.send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Missing query_vector\"}"));
+        drop(send_typed(client_fd, 400i64, "application/json", "{\"error\":\"Missing query_vector\"}"));
         pass(ERR_QUERY_PARSE_FAILED);
     }
     
@@ -363,7 +360,7 @@ pub func:controller_search = int32(int64:client_fd, ServerRequest:req, string:co
     
     
     if (res_pq == 0i64) {
-        drop(Server.send_typed(client_fd, 200i64, "application/json", "{\"status\": \"ok\", \"results\": []}"));
+        drop(send_typed(client_fd, 200i64, "application/json", "{\"status\": \"ok\", \"results\": []}"));
         pass(0i32);
     }
     
@@ -385,11 +382,19 @@ pub func:controller_search = int32(int64:client_fd, ServerRequest:req, string:co
         drop(hnsw_pq_pop(res_pq, C));
         tfp64:dist = hnsw_pq_get_dist(C) ? 0.0tf;
         int32:slot = hnsw_pq_get_slot(C) ? 0i32;
+        int32:gen = hnsw_pq_get_gen(C) ? 0i32;
         
-        int64:slot64 = @cast_unchecked<int64>(slot);
+        int64:vec_id = 0i64;
+        int64:node_ptr = raw hnsw_arena_get_node(global_arena, slot, gen);
+        if (node_ptr != 0i64) {
+            int64:vec_offset = raw hnsw_node_get_vector_offset(node_ptr);
+            int64:vec_dim = raw hnsw_graph_get_vector_dim(global_graph);
+            vec_id = vec_offset / (vec_dim * 8i64);
+        }
+        
         flt64:dist_f64 = @cast_unchecked<flt64>(dist);
         string:dist_str = fmt_float(dist_f64, 4i64) ? "0.0000";
-        string:item = `{"document_id": "doc&{slot64}", "distance": &{dist_str}}`;
+        string:item = `{"document_id": "doc&{vec_id}", "distance": &{dist_str}}`;
         
         if (count > 0i64) {
             drop(serial_buffer_ensure(sbuf, 1i64));
@@ -413,7 +418,7 @@ pub func:controller_search = int32(int64:client_fd, ServerRequest:req, string:co
     final_json = string_concat(final_json, json_str);
     final_json = string_concat(final_json, "]}");
     
-    drop(Server.send_typed(client_fd, 200i64, "application/json", final_json));
+    drop(send_typed(client_fd, 200i64, "application/json", final_json));
     pass(0i32);
 };
 

@@ -161,7 +161,19 @@ pub func:main = int32() {
     int64:ep_slot_ptr = @cast_unchecked<int64>(@ep_slot);
     int64:ep_gen_ptr = @cast_unchecked<int64>(@ep_gen);
     drop(hnsw_graph_get_ep(graph, ep_slot_ptr, ep_gen_ptr));
+    println("EP Slot: " + string_from_int(@cast_unchecked<int64>(ep_slot)));
     
+    int32:chk_idx = 0i32;
+    int64:arena_chk = raw hnsw_graph_get_arena(graph);
+    while (chk_idx < 10i32) {
+        int64:chk_node = raw hnsw_arena_get_node(arena_chk, chk_idx, 1i32);
+        int64:chk_voff = raw hnsw_node_get_vector_offset(chk_node);
+        println("Node " + string_from_int(@cast_unchecked<int64>(chk_idx)) + " vec_offset=" + string_from_int(chk_voff));
+        chk_idx = chk_idx + 1i32;
+    }
+    
+    int64:visited_set = raw hnsw_visited_create(10i64);
+    drop(hnsw_visited_clear(visited_set));
     int64:json_arena = raw json_arena_init(65536i64);
     int64:results_pq = raw hnsw_search_layer(json_arena, graph, 0i64, ep_slot, ep_gen, 10i32, 0i32, visited_set, ast_node, doc_store);
     drop(json_arena_destroy(json_arena));
@@ -179,11 +191,19 @@ pub func:main = int32() {
     }
     
     i = 0i64;
+    int64:arena_check2 = raw hnsw_graph_get_arena(graph);
     while (i < pq_size) {
         int64:item = raw hnsw_pq_get_candidate_ptr(results_pq, i);
         int32:slot = raw hnsw_pq_get_slot(item);
-        if (slot < 5i32) {
-            println("TEST FAILED: invalid slot matched");
+        int32:gen = raw hnsw_pq_get_gen(item);
+        
+        int64:n_ptr = raw hnsw_arena_get_node(arena_check2, slot, gen);
+        int64:voff = raw hnsw_node_get_vector_offset(n_ptr);
+        int64:vdim = raw hnsw_graph_get_vector_dim(graph);
+        int64:doc_id = voff / (vdim * 8i64);
+        
+        if (doc_id < 5i64) {
+            println("TEST FAILED: invalid doc matched");
             exit 2i32;
         }
         i = i + 1i64;

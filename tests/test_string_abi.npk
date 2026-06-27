@@ -1,0 +1,15 @@
+use "../src/util/mem_primitives.npk".*;
+pub func:failsafe = int32(tbb32:err) { exit(1); };
+pub func:main = int32() {
+    int64:ptr = npk_core_alloc(16i64);
+    drop(npk_mem_write_string(ptr, "hello"));
+    string:out = npk_mem_read_string(ptr, 5i64);
+    println("out: '" + out + "'");
+    if (out == "hello") {
+        println("MATCH!");
+    } else {
+        println("MISMATCH!");
+    }
+    drop(npk_core_dalloc(ptr));
+    exit(0);
+};

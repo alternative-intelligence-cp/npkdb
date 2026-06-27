@@ -1,0 +1,22 @@
+extern "C" {
+    func:_exit = void(int32:code);
+}
+pub func:mock_proc_exit = NIL(int32:code) {
+    _exit(code);
+    pass(NIL);
+};
+
+pub func:send_typed = int64(int64:fd, int64:code, string:ct, string:body) {
+    println("SEND_TYPED: code=");
+    println(string_from_int(code));
+    println("fd=");
+    println(string_from_int(fd));
+    println("BODY: ");
+    println(body);
+    if (fd == 1i64) {
+        if (code != 200i64) { drop(mock_proc_exit(11i32)); }
+    } else if (fd == 2i64) {
+        if (code != 400i64) { drop(mock_proc_exit(21i32)); }
+    }
+    pass(1i64);
+};

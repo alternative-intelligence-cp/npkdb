@@ -10,7 +10,7 @@ use "../util/bloom.npk".*;
 use "../../libn/src/syscall/syscall_numbers.npk".*;
 
 pub fixed int64:SSTABLE_MAGIC = 22033878037372977i64; // 0x4E504B44423031
-pub fixed int64:SSTABLE_FOOTER_SIZE = 48i64;
+
 
 pub fixed int8:RECORD_FLAG_LIVE      = 0i8;
 pub fixed int8:RECORD_FLAG_TOMBSTONE = 1i8;
@@ -106,7 +106,9 @@ pub func:sstable_build_index = int64(int64:k_ptrs, int64:k_lens, int64:offsets, 
         int64:rec_sz = 4i64 + k_len + 8i64;
         int64:rec = npk_core_alloc(rec_sz);
         drop(npk_mem_write_int32(rec, 0i64, @cast_unchecked<int32>(k_len)));
-        drop(npk_mem_copy(rec + 4i64, k_ptr, k_len));
+        if (k_len > 0i64) {
+            drop(npk_mem_copy(rec + 4i64, k_ptr, k_len));
+        }
         drop(npk_mem_write_int64(rec, 4i64 + k_len, block_num));
         
         int64:ins = page_insert(page, rec, rec_sz) ? -1i64;
@@ -207,8 +209,11 @@ pub func:sstable_builder_flush_current_page = int64(int64:b) {
     
     int64:last_k_len = npk_mem_read_int64(b, 88i64);
     int64:last_k_ptr_src = npk_mem_read_int64(b, 80i64);
-    int64:last_k_ptr_dup = npk_core_alloc(last_k_len);
-    drop(npk_mem_copy(last_k_ptr_dup, last_k_ptr_src, last_k_len));
+    int64:last_k_ptr_dup = 0i64;
+    if (last_k_len > 0i64) {
+        last_k_ptr_dup = npk_core_alloc(last_k_len);
+        drop(npk_mem_copy(last_k_ptr_dup, last_k_ptr_src, last_k_len));
+    }
     
     drop(npk_mem_write_int64(k_ptrs, block_count * 8i64, last_k_ptr_dup));
     drop(npk_mem_write_int64(k_lens, block_count * 8i64, last_k_len));

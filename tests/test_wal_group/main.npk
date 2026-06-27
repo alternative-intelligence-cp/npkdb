@@ -31,7 +31,7 @@ pub func:main = int32() {
     // T01: Enable group commit, append 1 record, batch_should_flush = 0
     drop(sys(UNLINK, wal_path));
     int64:wal_fd = wal_open(wal_path) ? -1i64;
-    int64:wal_state = wal_enable_group_commit() ? 0i64;
+    int64:wal_state = wal_enable_group_commit(wal_fd) ? 0i64;
     
     int64:v1_ptr = npk_core_alloc(10i64);
     drop(npk_mem_write_string(v1_ptr, "v1"));
@@ -74,7 +74,7 @@ pub func:main = int32() {
     // T05: Append 10 records, force flush, all 10 recovered
     drop(sys(UNLINK, wal_path));
     int64:wal_fd2 = wal_open(wal_path) ? -1i64;
-    int64:wal_state2 = wal_enable_group_commit() ? 0i64;
+    int64:wal_state2 = wal_enable_group_commit(wal_fd2) ? 0i64;
     
     i = 0i64;
     while (i < 10i64) {
@@ -91,7 +91,7 @@ pub func:main = int32() {
     // T06: Group commit: wal_close flushes pending batch automatically
     drop(sys(UNLINK, wal_path));
     int64:wal_fd3 = wal_open(wal_path) ? -1i64;
-    int64:wal_state3 = wal_enable_group_commit() ? 0i64;
+    int64:wal_state3 = wal_enable_group_commit(wal_fd3) ? 0i64;
     
     seq = wal_next_seq() ? 0i64;
     drop(wal_batch_append_put(wal_state3, wal_fd3, "kz1", v1_ptr, 2i64, seq) ? -1i64);
@@ -124,7 +124,7 @@ pub func:main = int32() {
     string:wal_path8 = "test_wal_group8.wal";
     drop(sys(UNLINK, wal_path8));
     int64:wal_fd5 = wal_open(wal_path8) ? -1i64;
-    int64:wal_state5 = wal_enable_group_commit() ? 0i64;
+    int64:wal_state5 = wal_enable_group_commit(wal_fd5) ? 0i64;
     
     seq = wal_next_seq() ? 0i64;
     drop(wal_batch_append_put(wal_state5, wal_fd5, "km1", v1_ptr, 2i64, seq) ? -1i64);

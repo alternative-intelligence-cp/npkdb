@@ -9,7 +9,8 @@ for test_dir in test_*/; do
     if [ -f "${test_dir}run.sh" ]; then
         echo ""
         echo "--- Running $test_dir ---"
-        if ! ./"${test_dir}run.sh"; then
+        rm -rf ../data; if ! ./"${test_dir}run.sh"; then
+            echo "✗ Failed: $test_dir"
             FAILED=$((FAILED + 1))
         fi
     fi

@@ -28,10 +28,18 @@ if (false) { int64:dummy1 = raw compaction_worker_loop(0i64) ; }
     g_catalog_rwlock = nitpick_libc_rwlock_create();
     
     int64:c_data = string_to_cstr("data");
-    raw sys(MKDIR, c_data, 448i64);
+    Result<int64>:r1 = sys(MKDIR, c_data, 448i64);
+    if ((r1 ? -1i64) < 0i64) {
+        // Ignore error if already exists, but we can print a warning if we wanted
+    }
+    drop(npk_core_dalloc(c_data));
 
     int64:c_data_coll = string_to_cstr("data/collections");
-    raw sys(MKDIR, c_data_coll, 448i64);
+    Result<int64>:r2 = sys(MKDIR, c_data_coll, 448i64);
+    if ((r2 ? -1i64) < 0i64) {
+        // Ignore error if already exists
+    }
+    drop(npk_core_dalloc(c_data_coll));
     
     pass(0i32);
 };
@@ -55,8 +63,10 @@ pub func:catalog_create_collection = int64(string:name) {
         i = i + 1i64;
     }
     if (bad == 1i64) {
+        drop(npk_core_dalloc(name_ptr));
         pass(0i64);
     }
+    drop(npk_core_dalloc(name_ptr));
 
     drop(nitpick_libc_rwlock_wrlock(g_catalog_rwlock));
     
@@ -72,7 +82,14 @@ pub func:catalog_create_collection = int64(string:name) {
     string:full_path = string_concat(base_dir, name);
     
     int64:c_full_path = string_to_cstr(full_path);
-    raw sys(MKDIR, c_full_path, 448i64);
+    Result<int64>:r3 = sys(MKDIR, c_full_path, 448i64);
+    int64:mk_val = r3 ? -1i64;
+    drop(npk_core_dalloc(c_full_path));
+    if (mk_val < 0i64 && mk_val != -17i64) {
+        drop(nitpick_libc_rwlock_unlock(g_catalog_rwlock));
+        println("catalog_create_collection: failed to create directory " + full_path);
+        pass(0i64);
+    }
     
     int64:coll_ptr = npk_core_alloc(24i64);
     Collection->:coll = @cast_unchecked<Collection->>(coll_ptr);

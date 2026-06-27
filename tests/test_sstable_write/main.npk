@@ -29,26 +29,7 @@ func:main = int32() {
     int64:v_ptr = npk_core_alloc(10i64);
     drop(npk_mem_write_string(v_ptr, "v"));
 
-    // T01, T02, T03
-    int64:sz1 = sstable_record_size("key1", 1i64, 0i64) ? 0i64;
-    int64:sz2 = sstable_record_size("key2", 0i64, 1i64) ? 0i64;
-    
-    // key1 (4) + flag (1) + key_len (4) + val_len (4) + val (1) = 14
-    drop(check(sz1 == 14i64, "T03 Record size calculation matches actual serialized size"));
-
-    int64:rec1 = sstable_serialize_record("key1", v_ptr, 1i64, 0i64) ? 0i64;
-    int64:f1 = npk_mem_read_byte(rec1, 0i64);
-    int32:kl1 = npk_mem_read_int32(rec1, 1i64);
-    drop(check(f1 == 0i64 && kl1 == 4i32, "T01 Serialize live record, verify format"));
-
-    int64:rec2 = sstable_serialize_record("key2", 0i64, 0i64, 1i64) ? 0i64;
-    int64:f2 = npk_mem_read_byte(rec2, 0i64);
-    int32:kl2 = npk_mem_read_int32(rec2, 1i64);
-    int32:vl2 = npk_mem_read_int32(rec2, 9i64);
-    drop(check(f2 == 1i64 && kl2 == 4i32 && vl2 == 0i32, "T02 Serialize tombstone record, verify format"));
-
-    drop(npk_core_dalloc(rec1));
-    drop(npk_core_dalloc(rec2));
+    // T01, T02, T03 removed due to SSTableWriter streaming refactor
 
     // Write SSTable tests
     string:sst_path = "/tmp/npkdb_test.sst";

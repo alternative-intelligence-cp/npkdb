@@ -13,10 +13,14 @@ cp src/network/errors.npk tests/test_http_errors/errors_mock.npk
 
 # Patch the Server.send_typed references
 sed -i 's/raw Server.send_typed/send_typed/g' tests/test_http_errors/controllers_mock.npk
+sed -i 's/Server.send_typed/send_typed/g' tests/test_http_errors/controllers_mock.npk
 sed -i 's/raw Server.send_typed/send_typed/g' tests/test_http_errors/router_mock.npk
-sed -i '1s/^/pub func:send_typed = int64(int64:fd, int64:code, string:ct, string:body);\n/' tests/test_http_errors/controllers_mock.npk
-sed -i '1s/^/pub func:send_typed = int64(int64:fd, int64:code, string:ct, string:body);\n/' tests/test_http_errors/router_mock.npk
+sed -i 's/Server.send_typed/send_typed/g' tests/test_http_errors/router_mock.npk
+sed -i '1s/^/use "mock_send_typed.npk".*;\n/' tests/test_http_errors/controllers_mock.npk
+sed -i '1s/^/use "mock_send_typed.npk".*;\n/' tests/test_http_errors/router_mock.npk
+sed -i 's/send_typed(client_fd\(.*\));/drop(send_typed(client_fd\1));/g' tests/test_http_errors/router_mock.npk
 sed -i 's/use "..\/document/use "..\/..\/src\/document/g' tests/test_http_errors/controllers_mock.npk
+sed -i 's/use "..\/engine/use "..\/..\/src\/engine/g' tests/test_http_errors/controllers_mock.npk
 sed -i 's/use "..\/util/use "..\/..\/src\/util/g' tests/test_http_errors/controllers_mock.npk
 sed -i 's/use "..\/index/use "..\/..\/src\/index/g' tests/test_http_errors/controllers_mock.npk
 sed -i 's/use "..\/storage/use "..\/..\/src\/storage/g' tests/test_http_errors/controllers_mock.npk
@@ -26,7 +30,7 @@ sed -i 's/use "errors.npk"/use "..\/..\/src\/network\/errors.npk"/g' tests/test_
 sed -i 's/use "errors_mock.npk"/use "..\/..\/src\/network\/errors.npk"/g' tests/test_http_errors/controllers_mock.npk
 sed -i 's/use "rwlock.npk"/use "..\/..\/src\/network\/rwlock.npk"/g' tests/test_http_errors/controllers_mock.npk
 sed -i 's/use "atomic.npk"/use "..\/..\/src\/network\/atomic.npk"/g' tests/test_http_errors/controllers_mock.npk
-sed -i 's/use "..\/..\/..\/nitpick\/stdlib/use "..\/..\/..\/..\/nitpick\/stdlib/g' tests/test_http_errors/controllers_mock.npk
+
 sed -i 's/use "..\/util/use "..\/..\/src\/util/g' tests/test_http_errors/router_mock.npk
 sed -i 's/use "errors.npk"/use "..\/..\/src\/network\/errors.npk"/g' tests/test_http_errors/router_mock.npk
 sed -i 's/use "errors_mock.npk"/use "..\/..\/src\/network\/errors.npk"/g' tests/test_http_errors/router_mock.npk

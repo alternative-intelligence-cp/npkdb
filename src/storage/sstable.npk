@@ -22,7 +22,7 @@ pub fixed int64:SSTABLE_MAGIC = 22033878037372977i64; // 0x4E504B44423031
 //   Offset 16: total_keys (int64)
 //   Offset 24: magic (int32)
 //   Offset 28: footer_checksum (int32)
-pub fixed int64:SSTABLE_FOOTER_SIZE = 48i64;
+
 
 // Record flags
 pub fixed int8:RECORD_FLAG_LIVE      = 0i8;
@@ -35,6 +35,7 @@ pub fixed int8:RECORD_FLAG_TOMBSTONE = 1i8;
 pub func:sstable_write = int64(string:path, int64:mt) {
     int64:c_path = string_to_cstr(path);
     int64:fd = sys(OPEN, c_path, 578i64, 420i64) ? -1i64; // O_RDWR|O_CREAT|O_TRUNC, 0644
+    drop(npk_core_dalloc(c_path));
     if (fd <= 0i64) {
         println("sstable_write: sys(OPEN) failed for " + path);
         pass(-1i64);
@@ -67,6 +68,7 @@ pub func:sstable_write = int64(string:path, int64:mt) {
 pub func:sstable_open_read = int64(string:path) {
     int64:c_path = string_to_cstr(path);
     int64:fd = sys(OPEN, c_path, 0i64, 0i64) ? -1i64;
+    drop(npk_core_dalloc(c_path));
     if (fd <= 0i64) { pass(0i64); }
     
     int64:footer = npk_core_alloc(SSTABLE_FOOTER_SIZE);

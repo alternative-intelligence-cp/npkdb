@@ -29,7 +29,9 @@ func:main = int32() {
 
     // Setup helper
     int64:v_ptr = npk_core_alloc(10i64);
-    drop(npk_mem_write_string(v_ptr, "value"));
+    int64:c_v = string_to_cstr("val");
+    drop(npk_mem_copy(v_ptr, c_v, 3i64));
+    drop(npk_core_dalloc(c_v));
 
     // T01
     drop(sys(UNLINK, path));
@@ -82,7 +84,7 @@ func:main = int32() {
 
     int64:vp = wal_record_value_ptr(rec1) ? 0i64;
     string:rv1 = npk_mem_read_string(vp, 5i64);
-    drop(check(rv1 == "value", "T06 Replay record values match"));
+    drop(check(rv1 == "val", "T06 Replay record values match"));
 
     int32:s1 = wal_record_seq(rec1) ? -1i32;
     int32:s2 = wal_record_seq(rec2) ? -1i32;
@@ -110,7 +112,7 @@ func:main = int32() {
     fd = wal_open(path) ? -1i64;
     drop(wal_append_put(fd, "k1", v_ptr, 5i64, wal_next_seq() ? 0i64));
     drop(wal_append_put(fd, "k2", v_ptr, 5i64, wal_next_seq() ? 0i64));
-    int64:bw3 = wal_append_put(fd, "k3", v_ptr, 5i64, wal_next_seq() ? 0i64) ? 0i64;
+    drop(wal_append_put(fd, "k3", v_ptr, 5i64, wal_next_seq() ? 0i64) ? 0i64);
     drop(wal_close(fd, 0i64));
     // Size should be bw1+bw2+bw3. To truncate last 5 bytes, open read, get size, open write truncate to size-5.
     // Nitpick sys(TRUNCATE) ? No sys truncate. Wait, we can just read all bytes except last 5, and write them back.

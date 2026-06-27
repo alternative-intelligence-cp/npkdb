@@ -34,7 +34,9 @@ pub func:main = int32() {
     println("╚══════════════════════════════════════╝");
     
     int64:v_ptr = npk_core_alloc(10i64);
-    drop(npk_mem_write_string(v_ptr, "val_1"));
+    int64:c_v = string_to_cstr("val_1");
+    drop(npk_mem_copy(v_ptr, c_v, 5i64));
+    drop(npk_core_dalloc(c_v));
     
     string:wal_path = "test_data/test.wal";
     string:data_dir = "test_data";

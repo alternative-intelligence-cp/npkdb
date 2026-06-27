@@ -1,0 +1,1 @@
+pub func:main = int32() { exit 1i32; };

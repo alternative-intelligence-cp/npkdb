@@ -44,7 +44,7 @@ pub func:is_valid_collection_name = bool(string:name) {
 };
 
 pub func:controller_create_collection = int32(int64:client_fd, ServerRequest:req, string:col_name) {
-    if (!is_valid_collection_name(col_name)) {
+    if (!(is_valid_collection_name(col_name) ? false)) {
         string:err = "{\"status\": \"error\", \"message\": \"invalid collection name\"}";
         drop(send_typed(client_fd, 400i64, "application/json", err));
         pass(0i32);
@@ -62,10 +62,7 @@ pub func:controller_create_collection = int32(int64:client_fd, ServerRequest:req
     pass(0i32);
 };
 
-extern "nitpick_libc_thread" {
-    func:npk_shim_atomic_int64_create  = int64(int64:initial);
-    func:npk_shim_atomic_int64_fetch_add = int64(int64:handle, int64:value, int32:order);
-}
+
 
 pub int64:global_catalog_lock = 0i64;
 pub int64:global_graph_lock = 0i64;

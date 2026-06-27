@@ -7,19 +7,16 @@ use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
 use "../../libn/src/syscall/syscall_numbers.npk".*;
 use "../concurrency/ebr.npk".*;
 
-extern "nitpick_libc_mem" {
-    func:npk_core_alloc = int64(int64:size);
-    func:npk_core_dalloc = void(int64:ptr);
-}
+
 
 use "string_convert.npk".*;
 
 extern func:nitpick_libc_thread_spawn = int64(wild ?*:func, int64:arg);
 
-pub struct Timeval {
+pub struct:Timeval = {
     int64:sec;
     int64:usec;
-}
+};
 
 pub func:http_worker_loop = int64(int64:arg_handle) {
     int64:thread_id = raw Thread.current_id();

@@ -22,7 +22,7 @@ use "../../src/vector/hnsw_graph.npk".*;
 use "../../src/storage/write_path.npk".*;
 use "../../src/concurrency/ebr.npk".*;
 use "../../src/index/art.npk".*;
-
+use "../../src/util/mem_primitives.npk".*;
 pub int64:global_arena = 0i64;
 pub int64:global_vec_buf = 0i64;
 pub int64:global_doc_store = 0i64;

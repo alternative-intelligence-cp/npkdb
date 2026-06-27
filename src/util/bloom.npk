@@ -22,6 +22,7 @@ pub func:bloom_hash1 = int64(string:key) {
     
     // Ensure positive for modulo
     if (h < 0i64) { h = h * -1i64; }
+    drop(npk_core_dalloc(buf));
     pass(h);
 };
 
@@ -40,6 +41,7 @@ pub func:bloom_hash2 = int64(string:key) {
     
     // Ensure positive for modulo
     if (h < 0i64) { h = h * -1i64; }
+    drop(npk_core_dalloc(buf));
     pass(h);
 };
 

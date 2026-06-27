@@ -1,0 +1,22 @@
+use "../src/util/mem_primitives.npk".*;
+pub func:failsafe = int32(tbb32:err) { exit(1); };
+pub func:main = int32() {
+    int64:ptr = npk_core_alloc(16i64);
+    int64:w_res = npk_mem_write_string(ptr, "hello");
+    println("w_res: " + string_from_int(w_res));
+    
+    int64:b0 = npk_mem_read_byte(ptr, 0i64);
+    int64:b1 = npk_mem_read_byte(ptr, 1i64);
+    int64:b2 = npk_mem_read_byte(ptr, 2i64);
+    int64:b3 = npk_mem_read_byte(ptr, 3i64);
+    int64:b4 = npk_mem_read_byte(ptr, 4i64);
+    
+    println("b0: " + string_from_int(b0));
+    println("b1: " + string_from_int(b1));
+    println("b2: " + string_from_int(b2));
+    println("b3: " + string_from_int(b3));
+    println("b4: " + string_from_int(b4));
+    
+    drop(npk_core_dalloc(ptr));
+    exit(0);
+};

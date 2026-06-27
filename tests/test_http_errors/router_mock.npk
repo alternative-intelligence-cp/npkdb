@@ -1,4 +1,4 @@
-pub func:send_typed = int64(int64:fd, int64:code, string:ct, string:body);
+use "mock_send_typed.npk".*;
 // router.npk — HTTP API Router
 use "../../nitpick-packages/packages/nitpick-server/src/nitpick_server.npk".*;
 // removed duplicate import
@@ -12,7 +12,7 @@ pub func:route_request = int32(int64:client_fd, ServerRequest:req, int64:ebr_tid
     println("DEBUG: route_request METHOD=[" + method + "] PATH=[" + path + "]");
     
     if (method == "GET" && path == "/") {
-        send_typed(client_fd, 200i64, "application/json", "{\"server\": \"npkdb\"}");
+        drop(send_typed(client_fd, 200i64, "application/json", "{\"server\": \"npkdb\"}"));
         pass(0i32);
     } else if (method == "POST" && path == "/collections") {
         pass(controller_create_collection(client_fd, req, "dummy_col"));
@@ -42,7 +42,7 @@ pub func:route_request = int32(int64:client_fd, ServerRequest:req, int64:ebr_tid
     
     // Not found
     string:err_json = "{\"error\": \"not found: method=" + method + " path=" + path + "\"}";
-    send_typed(client_fd, 404i64, "application/json", err_json);
+    drop(send_typed(client_fd, 404i64, "application/json", err_json));
     pass(0i32);
 };
 

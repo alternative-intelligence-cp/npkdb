@@ -29,6 +29,7 @@ pub func:wal_open = int64(string:path) {
     // MODE_644 = 420
     int64:c_path = string_to_cstr(path);
     Result<int64>:fd_res = sys(OPEN, c_path, 1089i64, 420i64);
+    drop(npk_core_dalloc(c_path));
     if (fd_res.is_error) {
         pass(0i64 - ERR_WAL_OPEN_FAILED);
     }
@@ -378,6 +379,7 @@ pub func:wal_batch_append_delete = int64(int64:wal_state_ptr, int64:wal_fd, stri
 pub func:wal_open_read = int64(string:path) {
     int64:c_path = string_to_cstr(path);
     Result<int64>:fd_res = sys(OPEN, c_path, 2i64, 0i64); // O_RDWR = 2
+    drop(npk_core_dalloc(c_path));
     if (fd_res.is_error) {
         pass(0i64);
     }
@@ -508,6 +510,7 @@ pub func:wal_replay = int64(string:wal_path, int64:active_mt) {
 pub func:wal_truncate = int64(string:path) {
     int64:c_path = string_to_cstr(path);
     Result<int64>:fd_res = sys(OPEN, c_path, 513i64, 420i64); // O_WRONLY | O_TRUNC = 513
+    drop(npk_core_dalloc(c_path));
     if (fd_res.is_error) {
         pass(-1i64);
     }

@@ -43,7 +43,7 @@ pub func:is_valid_collection_name = bool(string:name) {
 };
 
 pub func:controller_create_collection = int32(int64:client_fd, ServerRequest:req, string:col_name) {
-    if (!is_valid_collection_name(col_name)) {
+    if (!(is_valid_collection_name(col_name) ? false)) {
         string:err = "{\"status\": \"error\", \"message\": \"invalid collection name\"}";
         drop(Server.send_typed(client_fd, 400i64, "application/json", err));
         pass(0i32);
@@ -61,10 +61,7 @@ pub func:controller_create_collection = int32(int64:client_fd, ServerRequest:req
     pass(0i32);
 };
 
-extern "nitpick_libc_thread" {
-    func:npk_shim_atomic_int64_create  = int64(int64:initial);
-    func:npk_shim_atomic_int64_fetch_add = int64(int64:handle, int64:value, int32:order);
-}
+
 
 pub int64:global_catalog_lock = 0i64;
 pub int64:global_graph_lock = 0i64;
@@ -384,11 +381,19 @@ pub func:controller_search = int32(int64:client_fd, ServerRequest:req, string:co
         drop(hnsw_pq_pop(res_pq, C));
         tfp64:dist = hnsw_pq_get_dist(C) ? 0.0tf;
         int32:slot = hnsw_pq_get_slot(C) ? 0i32;
+        int32:gen = hnsw_pq_get_gen(C) ? 0i32;
         
-        int64:slot64 = @cast_unchecked<int64>(slot);
+        int64:vec_id = 0i64;
+        int64:node_ptr = raw hnsw_arena_get_node(global_arena, slot, gen);
+        if (node_ptr != 0i64) {
+            int64:vec_offset = raw hnsw_node_get_vector_offset(node_ptr);
+            int64:vec_dim = raw hnsw_graph_get_vector_dim(global_graph);
+            vec_id = vec_offset / (vec_dim * 8i64);
+        }
+        
         flt64:dist_f64 = @cast_unchecked<flt64>(dist);
         string:dist_str = fmt_float(dist_f64, 4i64) ? "0.0000";
-        string:item = `{"document_id": "doc&{slot64}", "distance": &{dist_str}}`;
+        string:item = `{"document_id": "doc&{vec_id}", "distance": &{dist_str}}`;
         
         if (count > 0i64) {
             drop(serial_buffer_ensure(sbuf, 1i64));

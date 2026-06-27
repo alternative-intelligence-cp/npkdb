@@ -107,30 +107,30 @@ func:db_get = string(int64:wp, string:key) {
                     string:spath3 = spath2 + fid_str;
                     string:spath = spath3 + ".npkdb";
                     
-                    Result<int64>:reader_res = sstable_open_read(spath);
-                    int64:reader = raw reader_res;
+                    int64:reader = sstable_open_read(spath) ? 0i64;
                     if (reader != 0i64) {
-                        Result<int64>:rec_res = sstable_get(reader, key);
-                        int64:rec = rec_res;
-                        drop(sstable_close_read(reader));
+                        int64:rec = sstable_get(reader, key) ? 0i64;
                         if (rec != 0i64) {
                             int64:is_ts = sst_rec_is_tombstone(rec) ? 0i64;
                             if (is_ts == 1i64) {
                                 drop(sst_rec_free(rec));
+                                drop(sstable_close_read(reader));
+                                if (sstables != 0i64) { drop(npk_core_dalloc(sstables)); }
+                                pass("");
+                            }
+                            int64:val_len_r = sst_rec_val_len(rec) ? 0i64;
+                            int64:vptr3 = sst_rec_val_ptr(rec) ? 0i64;
+                            string:val_str = npk_mem_read_string(vptr3, val_len_r);
+                            drop(sst_rec_free(rec));
+                            drop(sstable_close_read(reader));
                             if (sstables != 0i64) { drop(npk_core_dalloc(sstables)); }
-                            pass("");
+                            pass(val_str);
                         }
-                        int64:val_len_r = sst_rec_val_len(rec);
-                        int64:vptr3 = sst_rec_val_ptr(rec);
-                        string:val_str = npk_mem_read_string(vptr3, val_len_r);
-                        drop(sst_rec_free(rec));
-                        if (sstables != 0i64) { drop(npk_core_dalloc(sstables)); }
-                        pass(val_str);
+                        drop(sstable_close_read(reader));
                     }
+                    i = i + 1i64;
                 }
-                i = i + 1i64;
-            }
-            if (sstables != 0i64) { drop(npk_core_dalloc(sstables)); }
+                drop(npk_core_dalloc(sstables));
             }
             lvl = lvl + 1i64;
         }

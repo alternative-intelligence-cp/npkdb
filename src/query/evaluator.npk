@@ -3,6 +3,7 @@
 use "ast_types.npk".*;
 use "path_eval.npk".*;
 use "../document/json_types.npk".*;
+use "../document/json_parser.npk".*;
 use "../document/json_serializer.npk".*;
 use "../util/error_codes.npk".*;
 use "../util/mem_primitives.npk".*;
